@@ -13,14 +13,14 @@
 
 import { describe, expect, it } from "vite-plus/test";
 import {
+  MAX_AUTHORS,
   MAX_INPUT_LENGTH,
   MAX_RECORDS,
   parseBibliographicFile,
   parseBibtex,
   parseCsv,
   parseZoteroJson,
-} from "@thomasfosterau/biblio/parse";
-import { MAX_AUTHORS } from "@thomasfosterau/biblio/record";
+} from "@thomasfosterau/biblio";
 
 /** Narrows a `ParseOutcome` to its `parsed` record, failing the test otherwise. */
 function expectParsed(outcome: ReturnType<typeof parseBibtex>[number]) {

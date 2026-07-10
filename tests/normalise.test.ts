@@ -17,7 +17,7 @@ import {
   normaliseOpenLibrary,
   openLibraryAuthorKeys,
   OpenLibraryEdition,
-} from "@thomasfosterau/biblio/normalise";
+} from "@thomasfosterau/biblio";
 
 const decodeEdition = Schema.decodeUnknownSync(OpenLibraryEdition);
 const decodeCrossref = Schema.decodeUnknownSync(CrossrefResponse);

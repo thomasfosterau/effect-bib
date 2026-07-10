@@ -22,13 +22,13 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import { FetchHttpClient } from "effect/unstable/http";
-import type { IngestedRecord } from "@thomasfosterau/biblio/record";
 import {
   BiblioLookup,
   biblioLookupClientLayer,
+  type IngestedRecord,
   InvalidIdentifier,
   LookupFailed,
-} from "@thomasfosterau/biblio/lookup";
+} from "@thomasfosterau/biblio";
 import { expectFailureInstanceOf, runTest } from "@test-helpers/effect";
 
 // ── Fetch router stub ────────────────────────────────────────────────

@@ -22,7 +22,7 @@ import {
   normaliseForMatch,
   scoreMatch,
   titleTokens,
-} from "@thomasfosterau/biblio/dedup-match";
+} from "@thomasfosterau/biblio";
 
 describe("normaliseForMatch", () => {
   it("strips diacritics, punctuation, and case", () => {
