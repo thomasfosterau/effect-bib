@@ -209,8 +209,9 @@ export const biblioLookupClientLayer: Layer.Layer<BiblioLookup, never, HttpClien
 
 /**
  * Production {@link BiblioLookup} layer, backed by the Worker global
- * fetch via `FetchHttpClient`. Provided on the per-request runtime
- * (`packages/server-core/src/effect/runtime.ts`) so the ingestion HTTP endpoint and
+ * fetch via `FetchHttpClient`. Provided on each app's own per-request
+ * runtime (`apps/web/src/lib/server/effect/runtime.ts`,
+ * `apps/api/src/runtime.ts`) so the ingestion HTTP endpoint and
  * Remote Form (#611) reach the live OpenLibrary / Crossref lookup; tests
  * inject a stub at the boundary instead.
  */
