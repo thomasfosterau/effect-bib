@@ -5,8 +5,8 @@
  * issue #610).
  *
  * The identifier-lookup slice (#600) dedups **only** on the exact
- * `(authoritySource, authorityId)` pair, so a record that arrives without a
- * usable identifier — or with a *different* identifier for the same work
+ * `entity_external_identifier` `(authority, external_id)` pair, so a record
+ * that arrives without a usable identifier — or with a *different* identifier for the same work
  * (a reprint ISBN, a preprint vs published DOI) — slips past it and forks a
  * duplicate Book Entity. This module is the deterministic decision behind a
  * second, fuzzy dedup pass: given an incoming record's title + author names

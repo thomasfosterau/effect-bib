@@ -38,8 +38,8 @@
  * a record carrying an ISBN is emitted as `source: "openlibrary"` keyed by
  * the normalised ISBN, and one carrying a DOI as `source: "crossref"`
  * keyed by the normalised DOI — so re-importing a work already ingested by
- * its identifier dedups against the same `(authoritySource, authorityId)`
- * unique index rather than forking. The trade-off: the `source` literal
+ * its identifier dedups against the same `entity_external_identifier`
+ * `(authority, external_id)` unique index rather than forking. The trade-off: the `source` literal
  * names the *authority* the identifier belongs to, not the *channel* the
  * record arrived through (a BibTeX entry with an ISBN reads as
  * "openlibrary"). That is intentional — dedup keys on the authority, and

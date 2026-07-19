@@ -18,7 +18,7 @@
  * Everything here is pure: identifier validation and the record shape
  * are unit-testable without a database or network. The provider field
  * doubles as the import provenance recorded on each created Entity via
- * the existing `entity.authoritySource` / `entity.authorityId` pair.
+ * `entity_external_identifier` (#864 S5/D5).
  *
  * @module lib/server/biblio/record
  */
@@ -27,9 +27,9 @@ import * as Schema from "effect/Schema";
 
 /**
  * The external authority a record was ingested from. Stored verbatim as
- * the created Entity's `authoritySource`, so re-import of the same
- * identifier de-duplicates against the `(authoritySource, authorityId)`
- * unique index rather than minting a new Entity.
+ * the created Entity's `entity_external_identifier.authority`, so
+ * re-import of the same identifier de-duplicates against the
+ * `(authority, external_id)` unique index rather than minting a new Entity.
  */
 // Runtime schema for the import-source literal; the type alias below is
 // consumed across biblio, the Schema value is the validation seam for the
