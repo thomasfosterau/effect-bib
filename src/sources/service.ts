@@ -7,25 +7,16 @@
  * over Effect's `HttpClient`.
  *
  * **Contract shape.** Per the B1 design doc
- * (docs/decisions/csl-shaped-core-for-the-biblio-toolkit.md), the contract
- * is extended *additively*:
- *
- * - `byIsbn` / `byDoi` — the **pre-B3 flat shape**, kept byte-for-byte so
- *   `apps/api`'s un-migrated `ingest.ts` (B4, #1071, owns that migration)
- *   keeps compiling and running unchanged. Backed by the same CSL-native
- *   source lookups below, collapsed through the B2 compatibility shim
- *   {@link cslRecordToIngestedRecord}. One behavioural note for B4: because
- *   {@link decodeIsbn} always canonicalises to the checksum-validated
- *   13-digit form, a `byIsbn` call keyed by a 10-digit ISBN now stamps the
- *   Book's `entity_external_identifier` under the 13-digit form rather
- *   than echoing the requested 10-digit string verbatim — a convergence
- *   the B2 identifier layer is *for* (a work's ISBN-10 and ISBN-13 dedup
- *   identically), not a functional regression, but worth flagging since
- *   it changes what gets persisted for that one case.
- * - `byIsbnRecord` / `byDoiRecord` / `byTitle` — the **new CSL-native
- *   surface**: `Option<BiblioRecord>` / `Option<BiblioRecord>` /
- *   `readonly BiblioRecord[]`. `byTitle` is the OpenAlex-justified addition
- *   the design doc names explicitly (ranked search candidates).
+ * (docs/decisions/csl-shaped-core-for-the-biblio-toolkit.md), the surface is
+ * CSL-native throughout: `byIsbnRecord` / `byDoiRecord` /
+ * `byTitle` — `Option<BiblioRecord>` / `Option<BiblioRecord>` /
+ * `readonly BiblioRecord[]`. `byTitle` is the OpenAlex-justified addition the
+ * design doc names explicitly (ranked search candidates). The pre-B3 flat
+ * `byIsbn` / `byDoi` compatibility methods (and the B2
+ * `cslRecordToIngestedRecord` shim they were backed by) were removed once
+ * B4 (#1071) migrated `apps/api`'s `ingest.ts` onto `byIsbnRecord`; the
+ * canonical ISBN-13 form `decodeIsbn` produces is what the create-graph
+ * stamps as the Book's `entity_external_identifier`.
  *
  * **Sources.** `byIsbnRecord` resolves via OpenLibrary, `byDoiRecord` via
  * Crossref (the same per-identifier authority pre-B3 used), `byTitle` via
@@ -48,7 +39,7 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import { FetchHttpClient, HttpClient, HttpClientRequest } from "effect/unstable/http";
 import { decodeDoi, decodeIsbn } from "../identifiers";
-import { cslRecordToIngestedRecord, type BiblioRecord, type IngestedRecord } from "../record";
+import { type BiblioRecord } from "../record";
 import { InvalidIdentifier, type LookupError } from "./errors";
 import { lookupCrossrefByDoi } from "./crossref";
 import { lookupOpenLibraryByIsbn } from "./openlibrary";
@@ -76,10 +67,6 @@ const USER_AGENT = "thomasfoster.au-biblio/1.0 (mailto:me@thomasfoster.au)";
 export class BiblioLookup extends Context.Service<
   BiblioLookup,
   {
-    /** @deprecated pre-B3 flat shape — see the module doc. Kept for `apps/api`. */
-    readonly byIsbn: (isbn: string) => Effect.Effect<Option.Option<IngestedRecord>, LookupError>;
-    /** @deprecated pre-B3 flat shape — see the module doc. Kept for `apps/api`. */
-    readonly byDoi: (doi: string) => Effect.Effect<Option.Option<IngestedRecord>, LookupError>;
     /** CSL-native ISBN lookup via OpenLibrary. */
     readonly byIsbnRecord: (
       isbn: string,
@@ -140,22 +127,7 @@ const makeBiblioLookup = Effect.fnUntraced(function* () {
     return yield* searchOpenAlexByTitle(client, query);
   });
 
-  // Legacy flat shape — see the module doc for why this stays.
-  const byIsbn = Effect.fn("BiblioLookup.byIsbn")(function* (raw: string) {
-    const record = yield* byIsbnRecord(raw);
-    return Option.flatMap(record, (value) =>
-      Option.fromNullishOr(cslRecordToIngestedRecord(value)),
-    );
-  });
-
-  const byDoi = Effect.fn("BiblioLookup.byDoi")(function* (raw: string) {
-    const record = yield* byDoiRecord(raw);
-    return Option.flatMap(record, (value) =>
-      Option.fromNullishOr(cslRecordToIngestedRecord(value)),
-    );
-  });
-
-  return { byIsbn, byDoi, byIsbnRecord, byDoiRecord, byTitle } as const;
+  return { byIsbnRecord, byDoiRecord, byTitle } as const;
 });
 
 /**

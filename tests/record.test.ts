@@ -2,10 +2,9 @@
  * Unit tests for the CSL-aligned record core (`src/record.ts`).
  *
  * Covers the surviving untrusted-text / year sanitisers, the CSL name /
- * date construction helpers, the `toCslJson` / `fromCslJson` interop
- * (including the "typed superset" round-trip invariant), and the temporary
- * `cslRecordToIngestedRecord` B4 shim. Identifier checksums live in
- * `identifiers.test.ts`. No network, no database.
+ * date construction helpers, and the `toCslJson` / `fromCslJson` interop
+ * (including the "typed superset" round-trip invariant). Identifier
+ * checksums live in `identifiers.test.ts`. No network, no database.
  *
  * @module tests/unit/biblio-record
  */
@@ -14,10 +13,8 @@ import * as Option from "effect/Option";
 import { describe, expect, it } from "vite-plus/test";
 import {
   cslNameDisplay,
-  cslRecordToIngestedRecord,
   dateFromYear,
   decodeDoi,
-  decodeIsbn,
   decodeIssn,
   fromCslJson,
   isCslItemType,
@@ -31,7 +28,6 @@ import {
   type BiblioRecord,
 } from "@thomasfosterau/biblio";
 
-const isbnOf = (raw: string) => Option.getOrThrow(decodeIsbn(raw));
 const doiOf = (raw: string) => Option.getOrThrow(decodeDoi(raw));
 const issnOf = (raw: string) => Option.getOrThrow(decodeIssn(raw));
 
@@ -218,67 +214,5 @@ describe("toCslJson / fromCslJson", () => {
 
   it("falls back to the document type for an unknown CSL type", () => {
     expect(fromCslJson({ type: "holo-novel", title: "t", DOI: "10.1000/x" }).type).toBe("document");
-  });
-});
-
-// ── B4 compatibility shim ─────────────────────────────────────────────
-
-describe("cslRecordToIngestedRecord", () => {
-  it("collapses an ISBN-bearing book to the flat openlibrary shape", () => {
-    const record: BiblioRecord = {
-      type: "book",
-      title: "Sapiens",
-      author: [{ family: "Harari", given: "Yuval Noah" }],
-      issued: dateFromYear(2015),
-      publisher: "Harper",
-      identifiers: { isbn: isbnOf("9780062316097") },
-      provenance: { source: "bibtex" },
-    };
-    expect(cslRecordToIngestedRecord(record)).toEqual({
-      source: "openlibrary",
-      authorityId: "9780062316097",
-      kind: "book",
-      title: "Sapiens",
-      publicationYear: 2015,
-      publisher: "Harper",
-      isbn10: "0062316095",
-      isbn13: "9780062316097",
-      doi: null,
-      authors: [{ name: "Yuval Noah Harari" }],
-    });
-  });
-
-  it("collapses a DOI-bearing record to the flat crossref shape", () => {
-    const record: BiblioRecord = {
-      type: "article-journal",
-      title: "A Paper",
-      identifiers: { doi: doiOf("10.1037/0003-066X.59.1.29") },
-      provenance: { source: "crossref" },
-    };
-    expect(cslRecordToIngestedRecord(record)).toMatchObject({
-      source: "crossref",
-      authorityId: "10.1037/0003-066x.59.1.29",
-      kind: "article",
-      doi: "10.1037/0003-066x.59.1.29",
-      isbn13: null,
-    });
-  });
-
-  it("returns null when the record can key on neither a title nor an identifier", () => {
-    expect(
-      cslRecordToIngestedRecord({
-        type: "book",
-        identifiers: {},
-        provenance: { source: "manual" },
-      }),
-    ).toBeNull();
-    expect(
-      cslRecordToIngestedRecord({
-        type: "book",
-        title: "Titled but unkeyed",
-        identifiers: {},
-        provenance: { source: "manual" },
-      }),
-    ).toBeNull();
   });
 });

@@ -22,9 +22,7 @@ import {
   decodeIssn,
   decodeOrcid,
   isbnForms,
-  isbnLength,
   normaliseDoi,
-  normaliseIsbn,
 } from "@thomasfosterau/biblio";
 
 // ── Deterministic pseudo-random generator (dependency-free property tests) ─
@@ -84,9 +82,8 @@ describe("decodeIsbn", () => {
     expect(Option.getOrNull(isbn)).toBe(convertIsbn10To13("080442957X"));
   });
 
-  it("rejects a checksum-invalid ISBN-13 (the pre-B2 scanner would have accepted the syntax)", () => {
+  it("rejects a checksum-invalid ISBN-13 (a syntactically well-formed 13-digit string)", () => {
     // A syntactically well-formed 13-digit string with a wrong check digit.
-    expect(normaliseIsbn("9780140449137")).toBe("9780140449137"); // syntax-only legacy accepts
     expect(Option.isNone(decodeIsbn("9780140449137"))).toBe(true); // checksum rejects
   });
 
@@ -244,20 +241,5 @@ describe("decodeOrcid", () => {
       expect(Option.isNone(decodeOrcid(mutated))).toBe(true);
     }
     expect(generated).toBeGreaterThan(0);
-  });
-});
-
-// ── Legacy syntax-only helpers (retained for the B4 shim) ─────────────
-
-describe("legacy normaliseIsbn / isbnLength", () => {
-  it("normaliseIsbn strips punctuation without validating the checksum", () => {
-    expect(normaliseIsbn("978-0-14-044913-6")).toBe("9780140449136");
-    expect(normaliseIsbn("080442957x")).toBe("080442957X");
-    expect(normaliseIsbn("../../etc/passwd")).toBeNull();
-  });
-
-  it("isbnLength classifies the cleaned form", () => {
-    expect(isbnLength("9780140449136")).toBe(13);
-    expect(isbnLength("080442957X")).toBe(10);
   });
 });

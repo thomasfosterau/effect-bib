@@ -19,13 +19,10 @@
  * throwing on partial or hostile input.
  *
  * The **CSL → WEMI lift is not this module's job** — mapping a record onto
- * the site's FRBR/LRM spine is apps/api business logic (B4, #1071). The
- * package stops at the CSL record.
+ * the site's FRBR/LRM spine is apps/api business logic (B4, #1071, landed).
+ * The package stops at the CSL record.
  *
- * Everything here is pure and persistence-free. During the B2/B3 window a
- * deprecated {@link cslRecordToIngestedRecord} shim collapses a record back
- * to the pre-B2 flat {@link IngestedRecord} so the un-migrated consumers
- * compile; B4 deletes it.
+ * Everything here is pure and persistence-free.
  *
  * @module biblio/record
  */
@@ -39,7 +36,6 @@ import {
   decodeIssn,
   decodeOrcid,
   Isbn,
-  isbnForms,
   Issn,
   Orcid,
 } from "./identifiers";
@@ -654,103 +650,4 @@ function collectCslExtra(obj: Record<string, unknown>): Record<string, unknown> 
     if (!KNOWN_CSL_KEYS.has(key)) extra[key] = value;
   }
   return extra;
-}
-
-// ── Legacy flat record (deprecated — B4 shim / un-refit consumers) ────
-
-/**
- * @deprecated The pre-B2 authority literal. Retained so the un-refit
- * source clients and the {@link cslRecordToIngestedRecord} shim compile
- * during the B2/B3 window; removed at B4 (#1071).
- */
-export const ImportSource = Schema.Literals(["openlibrary", "crossref"]);
-export type ImportSource = typeof ImportSource.Type;
-
-/**
- * @deprecated Pre-B2 bare-string contributor. Superseded by {@link CslName};
- * retained for the flat {@link IngestedRecord} shim until B4.
- */
-export interface IngestedAuthor {
-  readonly name: string;
-}
-
-/**
- * @deprecated The pre-B2 flat ingested-record shape. Superseded by
- * {@link BiblioRecord}; retained so `ingest.ts` / `import.ts` compile
- * against the {@link cslRecordToIngestedRecord} shim during the B2/B3
- * window. B4 (#1071) migrates the consumers onto {@link BiblioRecord} and
- * deletes this together with the shim.
- */
-export interface IngestedRecord {
-  readonly source: ImportSource;
-  readonly authorityId: string;
-  readonly kind: "book" | "article";
-  readonly title: string;
-  readonly publicationYear: number | null;
-  readonly publisher: string | null;
-  readonly isbn10: string | null;
-  readonly isbn13: string | null;
-  readonly doi: string | null;
-  readonly authors: readonly IngestedAuthor[];
-}
-
-/** Collects bounded author display names from a record's `author` list. */
-function authorDisplayNames(record: BiblioRecord): IngestedAuthor[] {
-  const authors: IngestedAuthor[] = [];
-  for (const name of record.author ?? []) {
-    if (authors.length >= MAX_AUTHORS) break;
-    const display = cslNameDisplay(name);
-    if (display !== null) authors.push({ name: display });
-  }
-  return authors;
-}
-
-/**
- * @deprecated **Temporary B2/B3 compatibility shim.** Collapses a
- * {@link BiblioRecord} back to the pre-B2 flat {@link IngestedRecord} so
- * `ingest.ts` / `import.ts` keep working before the B4 consumer migration
- * (#1071) — which deletes this. Mirrors the pre-B2 identifier→authority
- * mapping: an ISBN keys the OpenLibrary authority as a Book, else a DOI
- * keys Crossref as an Article. Returns `null` when the record can key on
- * neither (nothing the flat shape can represent), so the caller skips it.
- */
-export function cslRecordToIngestedRecord(record: BiblioRecord): IngestedRecord | null {
-  const title = sanitiseText(record.title);
-  if (title === null) return null;
-  const publicationYear = yearOf(record.issued);
-  const publisher = record.publisher ?? null;
-  const authors = authorDisplayNames(record);
-
-  const isbn = record.identifiers.isbn;
-  if (isbn !== undefined) {
-    const { isbn13, isbn10 } = isbnForms(isbn);
-    return {
-      source: "openlibrary",
-      authorityId: isbn13,
-      kind: "book",
-      title,
-      publicationYear,
-      publisher,
-      isbn10,
-      isbn13,
-      doi: null,
-      authors,
-    };
-  }
-  const doi = record.identifiers.doi;
-  if (doi !== undefined) {
-    return {
-      source: "crossref",
-      authorityId: doi,
-      kind: "article",
-      title,
-      publicationYear,
-      publisher,
-      isbn10: null,
-      isbn13: null,
-      doi,
-      authors,
-    };
-  }
-  return null;
 }

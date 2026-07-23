@@ -244,27 +244,3 @@ export function decodeOrcid(raw: string): Option.Option<Orcid> {
   const canonical = `${cleaned.slice(0, 4)}-${cleaned.slice(4, 8)}-${cleaned.slice(8, 12)}-${cleaned.slice(12)}`;
   return Option.some(Orcid.make(canonical));
 }
-
-// ── Legacy syntax-only helpers (deprecated — B4 shim / un-refit sources) ─
-
-/**
- * @deprecated Syntax-only ISBN normaliser (no checksum) that returns the
- * cleaned input form as a plain string. Retained only so the not-yet-refit
- * source clients (`normalise.ts`, `lookup.ts`) and the `ingest.ts` SSRF
- * guard compile unchanged until B3/B4; new code decodes via
- * {@link decodeIsbn}. Removed when the consumers migrate (B4, #1071).
- */
-export function normaliseIsbn(raw: string): string | null {
-  const cleaned = cleanIsbn(raw);
-  if (/^\d{9}[\dX]$/.test(cleaned)) return cleaned;
-  if (/^\d{13}$/.test(cleaned)) return cleaned;
-  return null;
-}
-
-/**
- * @deprecated Classifies a legacy {@link normaliseIsbn} string as 10- or
- * 13-digit. Retained for the un-refit source clients; removed at B4.
- */
-export function isbnLength(normalised: string): 10 | 13 {
-  return normalised.length === 13 ? 13 : 10;
-}

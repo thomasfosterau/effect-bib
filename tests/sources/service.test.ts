@@ -2,11 +2,9 @@
  * Unit tests for the composed {@link BiblioLookup} service
  * (`src/sources/service.ts`, biblio B3, issue #1070).
  *
- * Covers both surfaces the module doc describes:
- * - the **pre-B3 flat shape** `byIsbn` / `byDoi` — kept for `apps/api`'s
- *   un-migrated `ingest.ts` consumer, now backed by the CSL-native source
- *   clients and collapsed through `cslRecordToIngestedRecord`;
- * - the **CSL-native additions** `byIsbnRecord` / `byDoiRecord` / `byTitle`.
+ * Covers the CSL-native surface `byIsbnRecord` / `byDoiRecord` / `byTitle`
+ * (the pre-B3 flat `byIsbn` / `byDoi` compatibility methods were removed once
+ * B4 (#1071) migrated `apps/api`'s `ingest.ts` onto `byIsbnRecord`).
  *
  * Reuses the live-recorded OpenLibrary/Crossref/OpenAlex fixtures from the
  * sibling per-source test files. The network is stubbed at
@@ -22,7 +20,6 @@ import * as Option from "effect/Option";
 import {
   BiblioLookup,
   biblioLookupClientLayer,
-  type IngestedRecord,
   InvalidIdentifier,
   LookupFailed,
 } from "@thomasfosterau/biblio";
@@ -61,38 +58,35 @@ const withLookup = <A, E>(
     never
   >;
 
-// ── Legacy flat shape (apps/api compatibility) ─────────────────────────
+// ── CSL-native surface ──────────────────────────────────────────────────
 
-describe("BiblioLookup.byIsbn (legacy)", () => {
-  it("collapses the OpenLibrary CSL record into the flat IngestedRecord shape", async () => {
+describe("BiblioLookup.byIsbnRecord", () => {
+  it("resolves an OpenLibrary ISBN lookup to a CSL BiblioRecord", async () => {
     const { layer } = stubRouter({
       "https://openlibrary.org/isbn/9780199535675.json": { status: 200, body: ulyssesEdition },
       "https://openlibrary.org/authors/OL31827A.json": { status: 200, body: ulyssesAuthor },
     });
-    const result = (await runTest(
-      withLookup(layer, (lookup) => lookup.byIsbn("978-0-19-953567-5")),
-    )) as Option.Option<IngestedRecord>;
+    const result = await runTest(
+      withLookup(layer, (lookup) => lookup.byIsbnRecord("978-0-19-953567-5")),
+    );
     const record = Option.getOrThrow(result);
-    expect(record.source).toBe("openlibrary");
-    expect(record.kind).toBe("book");
+    expect(record.type).toBe("book");
     expect(record.title).toBe("Ulysses");
-    expect(record.authors).toEqual([{ name: "James Joyce" }]);
-    expect(record.isbn13).toBe("9780199535675");
-    expect(record.publicationYear).toBe(2008);
-    expect(record.publisher).toBe("Oxford University Press");
-    expect(record.doi).toBeNull();
+    expect(record.identifiers.isbn).toBe("9780199535675");
   });
 
   it("returns Option.none on a clean 404", async () => {
     const { layer } = stubRouter({});
-    const result = await runTest(withLookup(layer, (lookup) => lookup.byIsbn("9780199535675")));
+    const result = await runTest(
+      withLookup(layer, (lookup) => lookup.byIsbnRecord("9780199535675")),
+    );
     expect(Option.isNone(result)).toBe(true);
   });
 
   it("fails with InvalidIdentifier for a malformed ISBN", async () => {
     const { layer } = stubRouter({});
     await expectFailureInstanceOf(
-      withLookup(layer, (lookup) => lookup.byIsbn("not-an-isbn")),
+      withLookup(layer, (lookup) => lookup.byIsbnRecord("not-an-isbn")),
       InvalidIdentifier,
     );
   });
@@ -102,69 +96,16 @@ describe("BiblioLookup.byIsbn (legacy)", () => {
       "https://openlibrary.org/isbn/9780199535675.json": { status: 503, body: {} },
     });
     await expectFailureInstanceOf(
-      withLookup(layer, (lookup) => lookup.byIsbn("9780199535675")),
+      withLookup(layer, (lookup) => lookup.byIsbnRecord("9780199535675")),
       LookupFailed,
     );
   });
 });
 
-describe("BiblioLookup.byDoi (legacy)", () => {
+describe("BiblioLookup.byDoiRecord", () => {
   const doi = "10.1037/0003-066x.59.1.29";
 
-  it("collapses the Crossref CSL record into the flat IngestedRecord shape", async () => {
-    const { layer } = stubRouter({
-      [`https://api.crossref.org/works/${encodeURIComponent(doi)}`]: {
-        status: 200,
-        body: rayResponse,
-      },
-    });
-    const result = (await runTest(
-      withLookup(layer, (lookup) => lookup.byDoi(doi)),
-    )) as Option.Option<IngestedRecord>;
-    const record = Option.getOrThrow(result);
-    expect(record.source).toBe("crossref");
-    expect(record.kind).toBe("article");
-    expect(record.title).toBe("How the Mind Hurts and Heals the Body.");
-    expect(record.doi).toBe(doi);
-    expect(record.publicationYear).toBe(2004);
-    expect(record.authors).toEqual([{ name: "Oakley Ray" }]);
-  });
-
-  it("returns Option.none on a clean 404", async () => {
-    const { layer } = stubRouter({});
-    const result = await runTest(withLookup(layer, (lookup) => lookup.byDoi("10.9999/missing")));
-    expect(Option.isNone(result)).toBe(true);
-  });
-
-  it("fails with InvalidIdentifier for a malformed DOI", async () => {
-    const { layer } = stubRouter({});
-    await expectFailureInstanceOf(
-      withLookup(layer, (lookup) => lookup.byDoi("11.not/a-doi")),
-      InvalidIdentifier,
-    );
-  });
-});
-
-// ── CSL-native additions ────────────────────────────────────────────────
-
-describe("BiblioLookup.byIsbnRecord", () => {
-  it("resolves the same lookup as byIsbn but yields a CSL BiblioRecord", async () => {
-    const { layer } = stubRouter({
-      "https://openlibrary.org/isbn/9780199535675.json": { status: 200, body: ulyssesEdition },
-      "https://openlibrary.org/authors/OL31827A.json": { status: 200, body: ulyssesAuthor },
-    });
-    const result = await runTest(
-      withLookup(layer, (lookup) => lookup.byIsbnRecord("9780199535675")),
-    );
-    const record = Option.getOrThrow(result);
-    expect(record.type).toBe("book");
-    expect(record.identifiers.isbn).toBe("9780199535675");
-  });
-});
-
-describe("BiblioLookup.byDoiRecord", () => {
-  it("resolves the same lookup as byDoi but yields a CSL BiblioRecord", async () => {
-    const doi = "10.1037/0003-066x.59.1.29";
+  it("resolves a Crossref DOI lookup to a CSL BiblioRecord", async () => {
     const { layer } = stubRouter({
       [`https://api.crossref.org/works/${encodeURIComponent(doi)}`]: {
         status: 200,
@@ -174,7 +115,24 @@ describe("BiblioLookup.byDoiRecord", () => {
     const result = await runTest(withLookup(layer, (lookup) => lookup.byDoiRecord(doi)));
     const record = Option.getOrThrow(result);
     expect(record.type).toBe("article-journal");
+    expect(record.title).toBe("How the Mind Hurts and Heals the Body.");
     expect(record.identifiers.doi).toBe(doi);
+  });
+
+  it("returns Option.none on a clean 404", async () => {
+    const { layer } = stubRouter({});
+    const result = await runTest(
+      withLookup(layer, (lookup) => lookup.byDoiRecord("10.9999/missing")),
+    );
+    expect(Option.isNone(result)).toBe(true);
+  });
+
+  it("fails with InvalidIdentifier for a malformed DOI", async () => {
+    const { layer } = stubRouter({});
+    await expectFailureInstanceOf(
+      withLookup(layer, (lookup) => lookup.byDoiRecord("11.not/a-doi")),
+      InvalidIdentifier,
+    );
   });
 });
 
