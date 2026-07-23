@@ -1,6 +1,7 @@
-/** @module lib/biblio */
+/** @module biblio */
 
 export * from "./dedup-match";
+export * from "./identifiers";
 export * from "./lookup";
 export * from "./normalise";
 export * from "./parse";

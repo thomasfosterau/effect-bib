@@ -19,14 +19,12 @@
  */
 
 import * as Schema from "effect/Schema";
+import { isbnLength, normaliseDoi, normaliseIsbn } from "./identifiers";
 import {
   type IngestedAuthor,
   type IngestedRecord,
-  isbnLength,
   MAX_AUTHORS,
   MAX_TEXT_FIELD_LENGTH,
-  normaliseDoi,
-  normaliseIsbn,
   sanitiseText,
   sanitiseYear,
 } from "./record";

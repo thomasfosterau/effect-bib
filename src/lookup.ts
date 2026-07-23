@@ -43,7 +43,8 @@ import {
   openLibraryAuthorName,
   OpenLibraryEdition,
 } from "./normalise";
-import { type IngestedRecord, normaliseDoi, normaliseIsbn } from "./record";
+import { normaliseDoi, normaliseIsbn } from "./identifiers";
+import { type IngestedRecord } from "./record";
 
 const OPENLIBRARY_BASE = "https://openlibrary.org";
 const CROSSREF_BASE = "https://api.crossref.org";

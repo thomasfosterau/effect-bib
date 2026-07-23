@@ -17,9 +17,11 @@ import { describe, expect, it } from "vite-plus/test";
 import {
   authorSurname,
   bestConfidentMatch,
+  type BiblioRecord,
   isConfidentMatch,
   matchConfidence,
   normaliseForMatch,
+  recordMatchInput,
   scoreMatch,
   titleTokens,
 } from "@thomasfosterau/biblio";
@@ -180,5 +182,27 @@ describe("bestConfidentMatch", () => {
       { id: "strong", title: "Sapiens", authors: ["Yuval Noah Harari"] },
     ]);
     expect(result?.id).toBe("strong");
+  });
+});
+
+describe("recordMatchInput", () => {
+  it("projects a CSL record onto the title + display-name shape the scorer needs", () => {
+    const record: BiblioRecord = {
+      type: "book",
+      title: "Sapiens",
+      author: [{ family: "Harari", given: "Yuval Noah" }, { literal: "World Bank" }, {}],
+      identifiers: {},
+      provenance: { source: "bibtex" },
+    };
+    expect(recordMatchInput(record)).toEqual({
+      title: "Sapiens",
+      authors: ["Yuval Noah Harari", "World Bank"],
+    });
+  });
+
+  it("tolerates a record with no title or authors", () => {
+    expect(
+      recordMatchInput({ type: "document", identifiers: {}, provenance: { source: "manual" } }),
+    ).toEqual({ title: "", authors: [] });
   });
 });

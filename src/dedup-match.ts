@@ -27,8 +27,10 @@
  * `pg_trgm` similarity probe); this module owns the normalisation, scoring,
  * and threshold that turn a candidate into a yes/no.
  *
- * @module lib/server/biblio/dedup-match
+ * @module biblio/dedup-match
  */
+
+import { type BiblioRecord, cslNameDisplay } from "./record";
 
 /**
  * Leading articles dropped from a title's token set: they carry no
@@ -108,6 +110,23 @@ function jaccard(a: ReadonlySet<string>, b: ReadonlySet<string>): number {
 export interface MatchInput {
   readonly title: string;
   readonly authors: readonly string[];
+}
+
+/**
+ * Projects a CSL-aligned {@link BiblioRecord} onto the minimal
+ * {@link MatchInput} the scorer needs — the title and the contributor
+ * **display names** derived from the structured CSL names. The scorer
+ * stays decoupled from the full record model (and from DB rows, which
+ * `ingest.ts` projects the same shape from), so the fuzzy-match path is
+ * untouched by record-shape changes beyond how names/titles are extracted.
+ */
+export function recordMatchInput(record: BiblioRecord): MatchInput {
+  const authors: string[] = [];
+  for (const name of record.author ?? []) {
+    const display = cslNameDisplay(name);
+    if (display !== null) authors.push(display);
+  }
+  return { title: record.title ?? "", authors };
 }
 
 /** The similarity axes scored for a candidate pair. */
