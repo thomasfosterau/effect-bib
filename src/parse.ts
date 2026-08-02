@@ -35,7 +35,14 @@
  */
 
 import * as Option from "effect/Option";
-import { decodeDoi, decodeIsbn, decodeIssn, type Doi, type Isbn, type Issn } from "./identifiers";
+import {
+  decodeDoi,
+  decodeIsbn,
+  decodeIssn,
+  type Doi,
+  type Isbn,
+  type Issn,
+} from "./identifiers.ts";
 import {
   type BiblioRecord,
   type CslItemType,
@@ -49,7 +56,7 @@ import {
   type RecordIdentifiers,
   sanitiseText,
   sanitiseYear,
-} from "./record";
+} from "./record.ts";
 
 // ── Public surface ────────────────────────────────────────────────────
 

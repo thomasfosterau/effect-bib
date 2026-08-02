@@ -25,10 +25,10 @@ import {
   normaliseOpenAlexRecord,
   searchOpenAlexByTitle,
   type OpenAlexWork,
-} from "../../src/sources/openalex";
-import { LookupFailed } from "../../src/sources/errors";
+} from "../../src/sources/openalex.ts";
+import { LookupFailed } from "../../src/sources/errors.ts";
 import { expectFailureInstanceOf, runTest } from "@test-helpers/effect";
-import { filteredClient, stubRouter } from "./stub-http";
+import { filteredClient, stubRouter } from "./stub-http.ts";
 
 const fixture = (name: string): unknown =>
   JSON.parse(readFileSync(new URL(`../fixtures/${name}`, import.meta.url), "utf-8"));

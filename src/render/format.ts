@@ -17,10 +17,10 @@
  * @module biblio/render/format
  */
 
-import type { BiblioRecord, CslDate, CslName } from "../record";
-import { yearOf } from "../record";
-import type { RenderContext } from "./types";
-import type { Locale } from "./types";
+import type { BiblioRecord, CslDate, CslName } from "../record.ts";
+import { yearOf } from "../record.ts";
+import type { RenderContext } from "./types.ts";
+import type { Locale } from "./types.ts";
 
 /** How a given name is reduced to initials. */
 export interface InitialsOptions {

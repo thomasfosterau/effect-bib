@@ -24,7 +24,7 @@ import {
   LookupFailed,
 } from "@thomasfosterau/biblio";
 import { expectFailureInstanceOf, runTest } from "@test-helpers/effect";
-import { stubRouter } from "./stub-http";
+import { stubRouter } from "./stub-http.ts";
 
 const fixture = (name: string): unknown =>
   JSON.parse(readFileSync(new URL(`../fixtures/${name}`, import.meta.url), "utf-8"));

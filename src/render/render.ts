@@ -16,15 +16,15 @@
  * @module biblio/render/render
  */
 
-import type { BiblioRecord } from "../record";
-import { enLocale } from "./locale";
+import type { BiblioRecord } from "../record.ts";
+import { enLocale } from "./locale.ts";
 import type {
   CitationStyle,
   RenderContext,
   RenderedBibliography,
   RenderedEntry,
   RenderOptions,
-} from "./types";
+} from "./types.ts";
 
 /** Fills in the default locale when the caller omits one. */
 function resolveContext(options: RenderOptions): RenderContext {

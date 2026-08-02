@@ -19,8 +19,8 @@ import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { HttpClient, HttpClientResponse, type HttpClientError } from "effect/unstable/http";
-import { sanitiseText } from "../record";
-import { LookupFailed, type LookupSource } from "./errors";
+import { sanitiseText } from "../record.ts";
+import { LookupFailed, type LookupSource } from "./errors.ts";
 
 /** Classifies an HttpClientError as a 404 (→ not found) or a real fault. */
 function isNotFound(error: HttpClientError.HttpClientError): boolean {

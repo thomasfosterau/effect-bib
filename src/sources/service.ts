@@ -7,7 +7,7 @@
  * over Effect's `HttpClient`.
  *
  * **Contract shape.** Per the B1 design doc
- * (docs/decisions/csl-shaped-core-for-the-biblio-toolkit.md), the surface is
+ * (docs/decisions/bibliographic-toolkit.md), the surface is
  * CSL-native throughout: `byIsbnRecord` / `byDoiRecord` /
  * `byTitle` — `Option<BiblioRecord>` / `Option<BiblioRecord>` /
  * `readonly BiblioRecord[]`. `byTitle` is the OpenAlex-justified addition the
@@ -38,14 +38,14 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import { FetchHttpClient, HttpClient, HttpClientRequest } from "effect/unstable/http";
-import { decodeDoi, decodeIsbn } from "../identifiers";
-import { type BiblioRecord } from "../record";
-import { InvalidIdentifier, type LookupError } from "./errors";
-import { lookupCrossrefByDoi } from "./crossref";
-import { lookupOpenLibraryByIsbn } from "./openlibrary";
-import { searchOpenAlexByTitle } from "./openalex";
+import { decodeDoi, decodeIsbn } from "../identifiers.ts";
+import { type BiblioRecord } from "../record.ts";
+import { InvalidIdentifier, type LookupError } from "./errors.ts";
+import { lookupCrossrefByDoi } from "./crossref.ts";
+import { lookupOpenLibraryByIsbn } from "./openlibrary.ts";
+import { searchOpenAlexByTitle } from "./openalex.ts";
 
-export { InvalidIdentifier, LookupFailed, type LookupError, type LookupSource } from "./errors";
+export { InvalidIdentifier, LookupFailed, type LookupError, type LookupSource } from "./errors.ts";
 
 /**
  * A polite User-Agent. Crossref's etiquette asks callers to identify

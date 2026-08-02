@@ -17,7 +17,7 @@
  * @module biblio/render/styles/vancouver
  */
 
-import type { BiblioRecord } from "../../record";
+import type { BiblioRecord } from "../../record.ts";
 import {
   dispatchReference,
   formatNameList,
@@ -26,8 +26,8 @@ import {
   type NameListOptions,
   terminate,
   terminatedField,
-} from "../format";
-import type { CitationStyle, RenderContext } from "../types";
+} from "../format.ts";
+import type { CitationStyle, RenderContext } from "../types.ts";
 
 /** The editor role labels (style-local; distinct from APA's `"Ed."`). */
 const EDITOR = "editor";

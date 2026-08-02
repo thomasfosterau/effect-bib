@@ -20,7 +20,7 @@ import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { HttpClient } from "effect/unstable/http";
-import { decodeDoi, decodeIssn, type Doi, type Issn } from "../identifiers";
+import { decodeDoi, decodeIssn, type Doi, type Issn } from "../identifiers.ts";
 import {
   type BiblioRecord,
   type CslDate,
@@ -30,9 +30,9 @@ import {
   MAX_AUTHORS,
   sanitiseText,
   sanitiseYear,
-} from "../record";
-import { LookupFailed } from "./errors";
-import { firstString, makeGet } from "./http";
+} from "../record.ts";
+import { LookupFailed } from "./errors.ts";
+import { firstString, makeGet } from "./http.ts";
 
 const CROSSREF_BASE = "https://api.crossref.org";
 

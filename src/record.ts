@@ -3,7 +3,7 @@
  *
  * The CSL-aligned bibliographic record — the neutral centre of the
  * toolkit (biblio B2, issue #1069; design in
- * docs/decisions/csl-shaped-core-for-the-biblio-toolkit.md).
+ * docs/decisions/bibliographic-toolkit.md).
  *
  * A {@link BiblioRecord} is a typed **superset of CSL-JSON**: its core is
  * the closed CSL 1.0.2 vocabulary (item types, standard/name/date
@@ -38,7 +38,7 @@ import {
   Isbn,
   Issn,
   Orcid,
-} from "./identifiers";
+} from "./identifiers.ts";
 
 // ── Field bounds & untrusted-text sanitisers (survive from pre-B2) ────
 
@@ -67,7 +67,6 @@ const MAX_PUBLICATION_YEAR = 2200;
 // depending on any website-internal package, so each self-contained package
 // must carry its own untrusted-text sanitiser. Consolidating would break the
 // extraction property the whole package is built around.
-// fallow-ignore-next-line duplication
 export function sanitiseText(value: unknown): string | null {
   if (typeof value !== "string") return null;
   const collapsed = value.replace(/\s+/g, " ").trim();

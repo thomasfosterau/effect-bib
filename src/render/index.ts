@@ -9,7 +9,7 @@
  * coverage the site genuinely needs, the lean-dependency posture and Worker
  * bundle cost, determinism / no-network-at-render-time, and extraction-
  * trajectory friendliness). See
- * docs/decisions/csl-shaped-core-for-the-biblio-toolkit.md → "Rendering
+ * docs/decisions/bibliographic-toolkit.md → "Rendering
  * engine".
  *
  * Styles and locales are typed data inputs; rendering is pure and network-
@@ -19,8 +19,8 @@
  * @module biblio/render
  */
 
-export * from "./types";
-export * from "./locale";
-export * from "./format";
-export * from "./styles";
-export * from "./render";
+export * from "./types.ts";
+export * from "./locale.ts";
+export * from "./format.ts";
+export * from "./styles.ts";
+export * from "./render.ts";

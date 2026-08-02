@@ -19,7 +19,7 @@
  * @module biblio/render/styles/apa
  */
 
-import type { BiblioRecord } from "../../record";
+import type { BiblioRecord } from "../../record.ts";
 import {
   dispatchReference,
   formatNameList,
@@ -31,8 +31,8 @@ import {
   sortFamily,
   terminate,
   terminatedField,
-} from "../format";
-import type { CitationStyle, RenderContext } from "../types";
+} from "../format.ts";
+import type { CitationStyle, RenderContext } from "../types.ts";
 
 /** Author-list options: family-first, spaced periods, `", & "` before the last. */
 function authorNames(ctx: RenderContext): NameListOptions {

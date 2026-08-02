@@ -30,7 +30,7 @@
  * @module biblio/dedup-match
  */
 
-import { type BiblioRecord, cslNameDisplay } from "./record";
+import { type BiblioRecord, cslNameDisplay } from "./record.ts";
 
 /**
  * Leading articles dropped from a title's token set: they carry no

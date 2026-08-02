@@ -15,7 +15,7 @@
  * @module biblio/render/types
  */
 
-import type { BiblioRecord } from "../record";
+import type { BiblioRecord } from "../record.ts";
 
 /**
  * The localisable terms a style draws on. A {@link Locale} is a typed data

@@ -16,8 +16,8 @@ import { describe, expect, it } from "vite-plus/test";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { decodeDoi, isConfidentMatch, recordMatchInput, scoreMatch } from "@thomasfosterau/biblio";
-import { CrossrefResponse, normaliseCrossrefRecord } from "../../src/sources/crossref";
-import { normaliseOpenAlexRecord, type OpenAlexWork } from "../../src/sources/openalex";
+import { CrossrefResponse, normaliseCrossrefRecord } from "../../src/sources/crossref.ts";
+import { normaliseOpenAlexRecord, type OpenAlexWork } from "../../src/sources/openalex.ts";
 
 const fixture = (name: string): unknown =>
   JSON.parse(readFileSync(new URL(`../fixtures/${name}`, import.meta.url), "utf-8"));

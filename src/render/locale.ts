@@ -11,7 +11,7 @@
  * @module biblio/render/locale
  */
 
-import type { Locale } from "./types";
+import type { Locale } from "./types.ts";
 
 /** The default US-English locale terms. */
 export const enLocale: Locale = {
