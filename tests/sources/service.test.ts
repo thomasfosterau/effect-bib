@@ -13,9 +13,16 @@
  * @module tests/unit/biblio-sources-service
  */
 
+// This package's tsconfig deliberately carries no ambient `types` (portable
+// across Worker/Node) — these tests read fixture files at test time, so they
+// opt themselves into Node's globals rather than widening the package-wide
+// `types` array.
+/// <reference types="node" />
+
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vite-plus/test";
 import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import {
   BiblioLookup,
@@ -52,7 +59,7 @@ const withLookup = <A, E>(
   Effect.gen(function* () {
     const lookup = yield* BiblioLookup;
     return yield* use(lookup);
-  }).pipe(Effect.provide(biblioLookupClientLayer), Effect.provide(layer)) as Effect.Effect<
+  }).pipe(Effect.provide(biblioLookupClientLayer.pipe(Layer.provide(layer)))) as Effect.Effect<
     A,
     E,
     never

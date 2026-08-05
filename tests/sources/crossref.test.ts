@@ -12,6 +12,12 @@
  * @module tests/unit/biblio-sources-crossref
  */
 
+// This package's tsconfig deliberately carries no ambient `types` (portable
+// across Worker/Node) — these tests read fixture files at test time, so they
+// opt themselves into Node's globals rather than widening the package-wide
+// `types` array.
+/// <reference types="node" />
+
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vite-plus/test";
 import * as Effect from "effect/Effect";
