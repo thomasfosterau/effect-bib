@@ -17,7 +17,7 @@ export const LookupSource = Schema.Literals(["openlibrary", "crossref", "openale
 export type LookupSource = typeof LookupSource.Type;
 
 /** A bad identifier the caller supplied — fix the input, don't retry. */
-export class InvalidIdentifier extends Schema.TaggedErrorClass<InvalidIdentifier>()(
+export class InvalidIdentifier extends Schema.TaggedError<InvalidIdentifier>()(
   "InvalidIdentifier",
   {
     kind: Schema.Literals(["isbn", "doi"]),
@@ -26,7 +26,7 @@ export class InvalidIdentifier extends Schema.TaggedErrorClass<InvalidIdentifier
 ) {}
 
 /** An upstream transport / decode failure (network, 5xx, malformed body). */
-export class LookupFailed extends Schema.TaggedErrorClass<LookupFailed>()("LookupFailed", {
+export class LookupFailed extends Schema.TaggedError<LookupFailed>()("LookupFailed", {
   source: LookupSource,
   description: Schema.String,
 }) {}
