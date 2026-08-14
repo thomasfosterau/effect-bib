@@ -46,6 +46,7 @@ export default defineConfig({
     tasks: {
       check: {
         command: "tsc -p tsconfig.json",
+        dependsOn: [{ task: "check", from: "dependencies" }],
         input: cacheInputs,
         output: [],
       },
