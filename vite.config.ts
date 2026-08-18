@@ -27,8 +27,7 @@ const testMockAliases: Record<string, string> = {
  * Excluding node_modules alone would be unsafe: a dependency upgrade genuinely
  * must invalidate a type-check or a test run. So the lockfile comes back
  * explicitly, capturing the real dependency state without the bookkeeping
- * noise. Verified: node_modules churn no longer busts, while a pnpm-lock.yaml
- * edit and a source edit both still do, each naming the file responsible.
+ * noise.
  */
 const cacheInputs = [
   { auto: true },
