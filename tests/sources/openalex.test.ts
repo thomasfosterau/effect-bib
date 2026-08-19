@@ -33,7 +33,7 @@ import {
   type OpenAlexWork,
 } from "../../src/sources/openalex.ts";
 import { LookupFailed } from "../../src/sources/errors.ts";
-import { expectFailureInstanceOf, runTest } from "@test-helpers/effect";
+import { expectFailureInstanceOf, runTest } from "@thomasfosterau/test-helpers/effect";
 import { filteredClient, stubRouter } from "./stub-http.ts";
 
 const fixture = (name: string): unknown =>

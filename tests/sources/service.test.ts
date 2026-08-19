@@ -30,7 +30,7 @@ import {
   InvalidIdentifier,
   LookupFailed,
 } from "@thomasfosterau/biblio";
-import { expectFailureInstanceOf, runTest } from "@test-helpers/effect";
+import { expectFailureInstanceOf, runTest } from "@thomasfosterau/test-helpers/effect";
 import { stubRouter } from "./stub-http.ts";
 
 const fixture = (name: string): unknown =>

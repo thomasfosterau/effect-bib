@@ -1,7 +1,7 @@
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite-plus";
 
-// $env/$app/@test-helpers aliases — kept verbatim across every consumer's
+// $env/$app aliases — kept verbatim across every consumer's
 // vite.config.ts since the shared @thomasfosterau/test-config factory was
 // inlined per-file (#962); a mismatch here silently breaks this suite's
 // $env/$app resolution.
@@ -12,7 +12,6 @@ const testMockAliases: Record<string, string> = {
   "$app/env/private": mock("mocks/app-env-private.ts"),
   "$app/server": mock("__mocks__/$app/server.ts"),
   "$app/navigation": mock("__mocks__/$app/navigation.ts"),
-  "@test-helpers": mock("helpers"),
 };
 
 /**

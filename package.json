@@ -12,6 +12,7 @@
   },
   "devDependencies": {
     "@effect/language-service": "catalog:",
+    "@thomasfosterau/test-helpers": "workspace:*",
     "@types/node": "catalog:",
     "@vitest/coverage-istanbul": "catalog:"
   }
