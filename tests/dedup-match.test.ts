@@ -13,6 +13,8 @@
  * @module tests/unit/biblio-dedup-match
  */
 
+import * as Eq from "effect/Equal";
+import * as Option from "effect/Option";
 import { describe, expect, it } from "vite-plus/test";
 import {
   authorSurname,
@@ -43,7 +45,11 @@ describe("titleTokens", () => {
   });
 
   it("is order- and repetition-insensitive (a set)", () => {
-    expect(titleTokens("Lord of the Rings")).toEqual(titleTokens("Rings of the Lord"));
+    // `HashSet` equality is structural, so this compares membership rather
+    // than the (insertion-order-dependent) internal trie layout.
+    expect(Eq.equals(titleTokens("Lord of the Rings"), titleTokens("Rings of the Lord"))).toBe(
+      true,
+    );
   });
 });
 
@@ -76,7 +82,7 @@ describe("scoreMatch + isConfidentMatch", () => {
       authors: ["Yuval Noah Harari"],
     });
     expect(score.title).toBe(1);
-    expect(score.author).toBe(1);
+    expect(score.author).toStrictEqual(Option.some(1));
     expect(isConfidentMatch(score)).toBe(true);
   });
 
@@ -86,7 +92,7 @@ describe("scoreMatch + isConfidentMatch", () => {
       { title: "One Hundred Years of Solitude!", authors: ["G. García Márquez"] },
     );
     expect(score.title).toBe(1);
-    expect(score.author).toBe(1);
+    expect(score.author).toStrictEqual(Option.some(1));
     expect(isConfidentMatch(score)).toBe(true);
   });
 
@@ -96,7 +102,7 @@ describe("scoreMatch + isConfidentMatch", () => {
       authors: ["Some Other Author"],
     });
     expect(score.title).toBe(1);
-    expect(score.author).toBe(0);
+    expect(score.author).toStrictEqual(Option.some(0));
     expect(isConfidentMatch(score)).toBe(false);
   });
 
@@ -109,12 +115,12 @@ describe("scoreMatch + isConfidentMatch", () => {
     expect(isConfidentMatch(score)).toBe(false);
   });
 
-  it("treats absent authors on either side as no signal (null), not a match", () => {
+  it("treats absent authors on either side as no signal (None), not a match", () => {
     const score = scoreMatch(
       { title: "Beowulf", authors: [] },
       { title: "Beowulf", authors: ["Seamus Heaney"] },
     );
-    expect(score.author).toBeNull();
+    expect(score.author).toStrictEqual(Option.none());
   });
 
   it("with no author signal, confidently matches a near-exact multi-token title", () => {
@@ -122,7 +128,7 @@ describe("scoreMatch + isConfidentMatch", () => {
       { title: "The Great Gatsby", authors: [] },
       { title: "The Great Gatsby", authors: [] },
     );
-    expect(exact.author).toBeNull();
+    expect(exact.author).toStrictEqual(Option.none());
     expect(isConfidentMatch(exact)).toBe(true);
 
     const looser = scoreMatch(
@@ -138,7 +144,7 @@ describe("scoreMatch + isConfidentMatch", () => {
     // token matches.
     const score = scoreMatch({ title: "It", authors: [] }, { title: "It", authors: [] });
     expect(score.title).toBe(1);
-    expect(score.author).toBeNull();
+    expect(score.author).toStrictEqual(Option.none());
     expect(score.sharedTitleTokens).toBe(1);
     expect(isConfidentMatch(score)).toBe(false);
   });
@@ -155,9 +161,13 @@ describe("scoreMatch + isConfidentMatch", () => {
 
 describe("matchConfidence", () => {
   it("ranks a full title+author match above a title-only one", () => {
-    const both = matchConfidence({ title: 1, author: 1, sharedTitleTokens: 2 });
-    const titleOnly = matchConfidence({ title: 1, author: null, sharedTitleTokens: 2 });
-    const weakerAuthor = matchConfidence({ title: 1, author: 0.5, sharedTitleTokens: 2 });
+    const both = matchConfidence({ title: 1, author: Option.some(1), sharedTitleTokens: 2 });
+    const titleOnly = matchConfidence({ title: 1, author: Option.none(), sharedTitleTokens: 2 });
+    const weakerAuthor = matchConfidence({
+      title: 1,
+      author: Option.some(0.5),
+      sharedTitleTokens: 2,
+    });
     expect(both).toBeGreaterThan(weakerAuthor);
     expect(titleOnly).toBe(1);
   });

@@ -17,6 +17,10 @@
  * @module biblio/render/format
  */
 
+import * as Array from "effect/Array";
+import * as Option from "effect/Option";
+import * as Result from "effect/Result";
+import * as String from "effect/String";
 import type { BiblioRecord, CslDate, CslName } from "../record.ts";
 import { yearOf } from "../record.ts";
 import type { RenderContext } from "./types.ts";
@@ -55,34 +59,29 @@ export interface NameListOptions {
   readonly etAl: string;
 }
 
-/** Drops null/undefined/blank parts and trims the rest. */
-export function compact(parts: readonly (string | null | undefined)[]): string[] {
-  const out: string[] = [];
-  for (const part of parts) {
-    if (part === null || part === undefined) continue;
-    const trimmed = part.trim();
-    if (trimmed.length > 0) out.push(trimmed);
-  }
-  return out;
+/** Drops absent/blank parts and trims the rest. */
+export function compact(parts: readonly Option.Option<string>[]): string[] {
+  return Array.filterMap(parts, (part): Result.Result<string, void> => {
+    if (Option.isNone(part)) return Result.failVoid;
+    const trimmed = part.value.trim();
+    return String.isEmpty(trimmed) ? Result.failVoid : Result.succeed(trimmed);
+  });
 }
 
 /** Joins the non-blank parts with `separator`. */
-export function joinParts(
-  parts: readonly (string | null | undefined)[],
-  separator: string,
-): string {
+export function joinParts(parts: readonly Option.Option<string>[], separator: string): string {
   return compact(parts).join(separator);
 }
 
 /** Ensures `text` ends with terminal punctuation (a period is added if absent). */
 export function terminate(text: string): string {
-  if (text.length === 0) return text;
+  if (String.isEmpty(text)) return text;
   return /[.?!]$/.test(text) ? text : `${text}.`;
 }
 
-/** {@link terminate} an optional field, preserving `undefined`/absence as `null`. */
-export function terminatedField(value: string | undefined): string | null {
-  return value !== undefined ? terminate(value) : null;
+/** {@link terminate} an optional field, preserving absence. */
+export function terminatedField(value: Option.Option<string>): Option.Option<string> {
+  return Option.map(value, terminate);
 }
 
 /** Reduces a given name to initials per {@link InitialsOptions} (hyphens preserved). */
@@ -90,12 +89,12 @@ export function givenInitials(given: string, opts: InitialsOptions): string {
   const initialOf = (token: string): string =>
     token
       .split("-")
-      .filter((piece) => piece.length > 0)
+      .filter(String.isNonEmpty)
       .map((piece) => piece.charAt(0).toUpperCase() + (opts.periods ? "." : ""))
       .join("-");
   return given
     .split(/\s+/)
-    .filter((token) => token.length > 0)
+    .filter(String.isNonEmpty)
     .map(initialOf)
     .join(opts.spaced ? " " : "");
 }
@@ -106,7 +105,14 @@ export function givenInitials(given: string, opts: InitialsOptions): string {
  * into the family cluster, e.g. `"de Beauvoir"`).
  */
 export function familyName(name: CslName): string {
-  return joinParts([name["dropping-particle"], name["non-dropping-particle"], name.family], " ");
+  return joinParts(
+    [
+      Option.fromNullishOr(name["dropping-particle"]),
+      Option.fromNullishOr(name["non-dropping-particle"]),
+      Option.fromNullishOr(name.family),
+    ],
+    " ",
+  );
 }
 
 /**
@@ -115,12 +121,20 @@ export function familyName(name: CslName): string {
  * literal for organisational names.
  */
 export function sortFamily(name: CslName): string {
-  return joinParts([name["non-dropping-particle"], name.family, name.literal], " ").toLowerCase();
+  return joinParts(
+    [
+      Option.fromNullishOr(name["non-dropping-particle"]),
+      Option.fromNullishOr(name.family),
+      Option.fromNullishOr(name.literal),
+    ],
+    " ",
+  ).toLowerCase();
 }
 
 /** Combines a family cluster and given initials in the configured order. */
 function orderName(family: string, initials: string, opts: NameListOptions): string {
-  if (family.length === 0 || initials.length === 0) return family.length > 0 ? family : initials;
+  if (String.isEmpty(family) || String.isEmpty(initials))
+    return String.isNonEmpty(family) ? family : initials;
   return opts.familyFirst
     ? `${family}${opts.familyGivenSeparator}${initials}`
     : `${initials} ${family}`;
@@ -138,7 +152,7 @@ export function formatOneName(name: CslName, opts: NameListOptions): string {
 
 /** Renders a list of names, eliding past the style's cap with `et al.`. */
 export function formatNameList(names: readonly CslName[], opts: NameListOptions): string {
-  if (names.length === 0) return "";
+  if (Array.isReadonlyArrayEmpty(names)) return "";
   const rendered = names.map((name) => formatOneName(name, opts));
   if (names.length > opts.maxNames) {
     return `${rendered.slice(0, opts.displayBeforeEtAl).join(opts.delimiter)}, ${opts.etAl}`;
@@ -149,9 +163,10 @@ export function formatNameList(names: readonly CslName[], opts: NameListOptions)
 }
 
 /** The issued date's year as text, or the locale's no-date term. */
-export function issuedYearText(issued: CslDate | undefined, locale: Locale): string {
-  const year = yearOf(issued);
-  return year === null ? locale.noDate : String(year);
+export function issuedYearText(issued: Option.Option<CslDate>, locale: Locale): string {
+  // `yearOf` still takes/returns plain values — it is consumed by apps/api.
+  const year = yearOf(Option.getOrUndefined(issued));
+  return year === null ? locale.noDate : year.toString();
 }
 
 /** `p.` for a single page, `pp.` for a range (detected by a hyphen or en dash). */
@@ -164,11 +179,13 @@ export function doiUrl(doi: string): string {
   return `https://doi.org/${doi}`;
 }
 
-/** The record's explicit URL, falling back to a DOI resolver URL, or `null`. */
-export function preferredUrl(record: Pick<BiblioRecord, "URL" | "identifiers">): string | null {
-  if (record.URL !== undefined) return record.URL;
-  if (record.identifiers.doi !== undefined) return doiUrl(record.identifiers.doi);
-  return null;
+/** The record's explicit URL, falling back to a DOI resolver URL, or `None`. */
+export function preferredUrl(
+  record: Pick<BiblioRecord, "URL" | "identifiers">,
+): Option.Option<string> {
+  if (record.URL !== undefined) return Option.some(record.URL);
+  if (record.identifiers.doi !== undefined) return Option.some(doiUrl(record.identifiers.doi));
+  return Option.none();
 }
 
 /**
@@ -220,5 +237,11 @@ export type BodyRenderers = Readonly<Record<ReferenceClass, BodyRenderer>>;
  */
 export function dispatchReference(head: BodyRenderer, bodies: BodyRenderers): BodyRenderer {
   return (record, ctx) =>
-    joinParts([head(record, ctx), bodies[referenceClass(record.type)](record, ctx)], " ");
+    joinParts(
+      [
+        Option.some(head(record, ctx)),
+        Option.some(bodies[referenceClass(record.type)](record, ctx)),
+      ],
+      " ",
+    );
 }

@@ -30,8 +30,10 @@
  * @module biblio/identifiers
  */
 
+import * as Array from "effect/Array";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
+import * as String from "effect/String";
 
 // ── Branded types ─────────────────────────────────────────────────────
 
@@ -76,8 +78,11 @@ function isbnDigit(char: string): number {
  */
 function isValidIsbn10(cleaned: string): boolean {
   if (!/^\d{9}[\dX]$/.test(cleaned)) return false;
-  let sum = 0;
-  for (let i = 0; i < 10; i++) sum += (10 - i) * isbnDigit(cleaned[i]!);
+  const sum = Array.reduce(
+    cleaned.split(""),
+    0,
+    (acc, char, i) => acc + (10 - i) * isbnDigit(char),
+  );
   return sum % 11 === 0;
 }
 
@@ -87,24 +92,29 @@ function isValidIsbn10(cleaned: string): boolean {
  */
 function isValidIsbn13(cleaned: string): boolean {
   if (!/^\d{13}$/.test(cleaned)) return false;
-  let sum = 0;
-  for (let i = 0; i < 13; i++) sum += (i % 2 === 0 ? 1 : 3) * isbnDigit(cleaned[i]!);
+  const sum = Array.reduce(
+    cleaned.split(""),
+    0,
+    (acc, char, i) => acc + (i % 2 === 0 ? 1 : 3) * isbnDigit(char),
+  );
   return sum % 10 === 0;
 }
 
 /** The EAN-13 check digit for a 12-digit prefix. */
 function isbn13CheckDigit(twelve: string): string {
-  let sum = 0;
-  for (let i = 0; i < 12; i++) sum += (i % 2 === 0 ? 1 : 3) * isbnDigit(twelve[i]!);
-  return String((10 - (sum % 10)) % 10);
+  const sum = Array.reduce(
+    twelve.split(""),
+    0,
+    (acc, char, i) => acc + (i % 2 === 0 ? 1 : 3) * isbnDigit(char),
+  );
+  return ((10 - (sum % 10)) % 10).toString();
 }
 
 /** The mod-11 check digit (`X` = 10) for a 9-digit ISBN-10 body. */
 function isbn10CheckDigit(nine: string): string {
-  let sum = 0;
-  for (let i = 0; i < 9; i++) sum += (10 - i) * isbnDigit(nine[i]!);
+  const sum = Array.reduce(nine.split(""), 0, (acc, char, i) => acc + (10 - i) * isbnDigit(char));
   const remainder = (11 - (sum % 11)) % 11;
-  return remainder === 10 ? "X" : String(remainder);
+  return remainder === 10 ? "X" : remainder.toString();
 }
 
 /**
@@ -118,20 +128,27 @@ export function convertIsbn10To13(isbn10: string): string {
 }
 
 /**
- * Converts an ISBN-13 to its ISBN-10 form, or `null` when it has none —
- * only `978`-prefixed 13-forms convert back (a `979` ISBN has no ISBN-10).
- * The ISBN-10 check digit is recomputed (mod-11), not copied.
+ * Converts an ISBN-13 to its ISBN-10 form, or `Option.none()` when it has
+ * none — only `978`-prefixed 13-forms convert back (a `979` ISBN has no
+ * ISBN-10). The ISBN-10 check digit is recomputed (mod-11), not copied.
  */
-export function convertIsbn13To10(isbn13: string): string | null {
+export function convertIsbn13To10(isbn13: string): Option.Option<string> {
   const cleaned = cleanIsbn(isbn13);
-  if (!/^978\d{10}$/.test(cleaned)) return null;
+  if (!/^978\d{10}$/.test(cleaned)) return Option.none();
   const nine = cleaned.slice(3, 12);
-  return nine + isbn10CheckDigit(nine);
+  return Option.some(nine + isbn10CheckDigit(nine));
 }
 
+/*
+ * `isbn10` is NOT migrated to `Option`: `isbnForms` is consumed outside this
+ * package — `apps/api/src/biblio/csl-to-spine.ts` destructures `{ isbn13,
+ * isbn10 }` and feeds `isbn10` straight into a nullable Drizzle column — so
+ * the shape is a cross-package contract a later wave owns.
+ */
 /** Both canonical forms of a proven {@link Isbn}: the 13-form always, the 10-form when it exists. */
+// oxlint-disable-next-line effect/prefer-option-over-null -- cross-slice: apps/api consumes `isbn10` as a plain nullable
 export function isbnForms(isbn: Isbn): { readonly isbn13: string; readonly isbn10: string | null } {
-  return { isbn13: isbn, isbn10: convertIsbn13To10(isbn) };
+  return { isbn13: isbn, isbn10: Option.getOrNull(convertIsbn13To10(isbn)) };
 }
 
 /**
@@ -153,12 +170,12 @@ export function decodeIsbn(raw: string): Option.Option<Isbn> {
  * `doi:` scheme. A DOI is `10.<registrant>/<suffix>`; control characters,
  * whitespace, over-length values, and `..` path-traversal segments are
  * rejected before the value could reach a URL builder. Returns the bare
- * lowercased DOI string, or `null`.
+ * lowercased DOI string, or `Option.none()`.
  *
  * Kept verbatim from the pre-B2 `record.ts` normaliser — it was already
  * correct; B2 only brands the result via {@link decodeDoi}.
  */
-export function normaliseDoi(raw: string): string | null {
+export function normaliseDoi(raw: string): Option.Option<string> {
   const trimmed = raw.trim();
   // DOIs are case-insensitive; the registry canonicalises to lower case.
   const lowered = trimmed.toLowerCase();
@@ -167,20 +184,21 @@ export function normaliseDoi(raw: string): string | null {
     .replace(/^https?:\/\/(dx\.)?doi\.org\//, "")
     .replace(/^doi:/, "")
     .trim();
-  if (bare.length === 0 || bare.length > 256) return null;
+  if (String.isEmpty(bare) || bare.length > 256) return Option.none();
   // Reject ASCII control characters defensively before the value reaches
   // the URL builder. A codepoint check (not a literal-control-char regex)
   // keeps this source file free of control bytes.
-  for (let i = 0; i < bare.length; i++) {
-    const code = bare.charCodeAt(i);
-    if (code < 0x20 || code === 0x7f) return null;
-  }
+  const hasControlChar = Array.some(bare.split(""), (char) => {
+    const code = char.charCodeAt(0);
+    return code < 0x20 || code === 0x7f;
+  });
+  if (hasControlChar) return Option.none();
   // `10.` prefix, a registrant code, a slash, and a non-empty suffix with
   // no whitespace (`\S+` rules out spaces and the control chars above).
-  if (!/^10\.\d{2,9}\/\S+$/.test(bare)) return null;
+  if (!/^10\.\d{2,9}\/\S+$/.test(bare)) return Option.none();
   // Defence in depth: reject any `..` path-traversal segment.
-  if (bare.split("/").some((segment) => segment === "..")) return null;
-  return bare;
+  if (bare.split("/").some((segment) => segment === "..")) return Option.none();
+  return Option.some(bare);
 }
 
 /**
@@ -188,8 +206,7 @@ export function normaliseDoi(raw: string): string | null {
  * `Option.none()` for anything that isn't a well-formed DOI.
  */
 export function decodeDoi(raw: string): Option.Option<Doi> {
-  const bare = normaliseDoi(raw);
-  return bare === null ? Option.none() : Option.some(Doi.make(bare));
+  return Option.map(normaliseDoi(raw), Doi.make);
 }
 
 // ── ISSN ──────────────────────────────────────────────────────────────
@@ -200,8 +217,7 @@ export function decodeDoi(raw: string): Option.Option<Doi> {
  */
 function isValidIssn(cleaned: string): boolean {
   if (!/^\d{7}[\dX]$/.test(cleaned)) return false;
-  let sum = 0;
-  for (let i = 0; i < 8; i++) sum += (8 - i) * isbnDigit(cleaned[i]!);
+  const sum = Array.reduce(cleaned.split(""), 0, (acc, char, i) => acc + (8 - i) * isbnDigit(char));
   return sum % 11 === 0;
 }
 
@@ -225,10 +241,13 @@ export function decodeIssn(raw: string): Option.Option<Issn> {
  */
 function isValidOrcid(cleaned: string): boolean {
   if (!/^\d{15}[\dX]$/.test(cleaned)) return false;
-  let total = 0;
-  for (let i = 0; i < 15; i++) total = ((total + isbnDigit(cleaned[i]!)) * 2) % 11;
+  const total = Array.reduce(
+    cleaned.slice(0, 15).split(""),
+    0,
+    (acc, char) => ((acc + isbnDigit(char)) * 2) % 11,
+  );
   const result = (12 - (total % 11)) % 11;
-  const check = result === 10 ? "X" : String(result);
+  const check = result === 10 ? "X" : result.toString();
   return check === cleaned[15];
 }
 

@@ -17,6 +17,8 @@
  * @module biblio/render/styles/vancouver
  */
 
+import * as Option from "effect/Option";
+import * as String from "effect/String";
 import type { BiblioRecord } from "../../record.ts";
 import {
   dispatchReference,
@@ -51,26 +53,37 @@ function authorNames(ctx: RenderContext): NameListOptions {
 /** `"Smith JR, Doe AB."` — the author head, or `""` when unauthored. */
 function head(record: BiblioRecord, ctx: RenderContext): string {
   const names = formatNameList(record.author ?? [], authorNames(ctx));
-  return names.length > 0 ? terminate(names) : "";
+  return String.isNonEmpty(names) ? terminate(names) : "";
 }
 
-/** `"2nd ed."` when an edition is present, else `null`. */
-function editionSegment(record: BiblioRecord, ctx: RenderContext): string | null {
-  return record.edition !== undefined ? `${record.edition} ${ctx.locale.edition}` : null;
+/** `"2nd ed."` when an edition is present, else `None`. */
+function editionSegment(record: BiblioRecord, ctx: RenderContext): Option.Option<string> {
+  return record.edition !== undefined
+    ? Option.some(`${record.edition} ${ctx.locale.edition}`)
+    : Option.none();
 }
 
 /** `"London: Penguin; 2020"` — place/publisher/year imprint tail. */
 function imprint(record: BiblioRecord, ctx: RenderContext): string {
-  const place = joinParts([record["publisher-place"], record.publisher], ": ");
-  return joinParts([place, issuedYearText(record.issued, ctx.locale)], "; ");
+  const place = joinParts(
+    [Option.fromNullishOr(record["publisher-place"]), Option.fromNullishOr(record.publisher)],
+    ": ",
+  );
+  return joinParts(
+    [
+      Option.some(place),
+      Option.some(issuedYearText(Option.fromNullishOr(record.issued), ctx.locale)),
+    ],
+    "; ",
+  );
 }
 
 function book(record: BiblioRecord, ctx: RenderContext): string {
   return joinParts(
     [
-      terminatedField(record.title),
-      terminateOrNull(editionSegment(record, ctx)),
-      terminate(imprint(record, ctx)),
+      terminatedField(Option.fromNullishOr(record.title)),
+      terminatedField(editionSegment(record, ctx)),
+      Option.some(terminate(imprint(record, ctx))),
     ],
     " ",
   );
@@ -79,15 +92,20 @@ function book(record: BiblioRecord, ctx: RenderContext): string {
 function chapter(record: BiblioRecord, ctx: RenderContext): string {
   const editors = formatNameList(record.editor ?? [], authorNames(ctx));
   const label = (record.editor?.length ?? 0) > 1 ? EDITORS : EDITOR;
-  const inClause = editors.length > 0 ? `${ctx.locale.in}: ${editors}, ${label}.` : null;
-  const pages = record.page !== undefined ? `${ctx.locale.page} ${record.page}` : null;
+  const inClause = String.isNonEmpty(editors)
+    ? Option.some(`${ctx.locale.in}: ${editors}, ${label}.`)
+    : Option.none<string>();
+  const pages =
+    record.page !== undefined
+      ? Option.some(`${ctx.locale.page} ${record.page}`)
+      : Option.none<string>();
   return joinParts(
     [
-      terminatedField(record.title),
+      terminatedField(Option.fromNullishOr(record.title)),
       inClause,
-      terminatedField(record["container-title"]),
-      terminate(imprint(record, ctx)),
-      terminateOrNull(pages),
+      terminatedField(Option.fromNullishOr(record["container-title"])),
+      Option.some(terminate(imprint(record, ctx))),
+      terminatedField(pages),
     ],
     " ",
   );
@@ -99,22 +117,31 @@ function article(record: BiblioRecord, ctx: RenderContext): string {
       ? `${record.volume}${record.issue !== undefined ? `(${record.issue})` : ""}`
       : "";
   const page = record.page !== undefined ? `:${record.page}` : "";
-  const detail = `${issuedYearText(record.issued, ctx.locale)}${volIssue.length > 0 ? `;${volIssue}` : ""}${page}`;
+  const detail = `${issuedYearText(Option.fromNullishOr(record.issued), ctx.locale)}${String.isNonEmpty(volIssue) ? `;${volIssue}` : ""}${page}`;
   return joinParts(
-    [terminatedField(record.title), terminatedField(record["container-title"]), terminate(detail)],
+    [
+      terminatedField(Option.fromNullishOr(record.title)),
+      terminatedField(Option.fromNullishOr(record["container-title"])),
+      Option.some(terminate(detail)),
+    ],
     " ",
   );
 }
 
 function webpage(record: BiblioRecord, ctx: RenderContext): string {
   const titleInternet =
-    record.title !== undefined ? `${record.title} [${ctx.locale.internet}]` : null;
-  const available = record.URL !== undefined ? `${ctx.locale.availableFrom} ${record.URL}` : null;
+    record.title !== undefined
+      ? Option.some(`${record.title} [${ctx.locale.internet}]`)
+      : Option.none<string>();
+  const available =
+    record.URL !== undefined
+      ? Option.some(`${ctx.locale.availableFrom} ${record.URL}`)
+      : Option.none<string>();
   return joinParts(
     [
-      terminateOrNull(titleInternet),
-      terminatedField(record["container-title"]),
-      terminate(issuedYearText(record.issued, ctx.locale)),
+      terminatedField(titleInternet),
+      terminatedField(Option.fromNullishOr(record["container-title"])),
+      Option.some(terminate(issuedYearText(Option.fromNullishOr(record.issued), ctx.locale))),
       available,
     ],
     " ",
@@ -124,18 +151,13 @@ function webpage(record: BiblioRecord, ctx: RenderContext): string {
 function generic(record: BiblioRecord, ctx: RenderContext): string {
   return joinParts(
     [
-      terminatedField(record.title),
-      terminatedField(record["container-title"]),
-      terminatedField(record.publisher),
-      terminate(issuedYearText(record.issued, ctx.locale)),
+      terminatedField(Option.fromNullishOr(record.title)),
+      terminatedField(Option.fromNullishOr(record["container-title"])),
+      terminatedField(Option.fromNullishOr(record.publisher)),
+      Option.some(terminate(issuedYearText(Option.fromNullishOr(record.issued), ctx.locale))),
     ],
     " ",
   );
-}
-
-/** `terminate`, but preserves `null` (for computed optional segments). */
-function terminateOrNull(text: string | null): string | null {
-  return text === null ? null : terminate(text);
 }
 
 const renderReference = dispatchReference(head, {

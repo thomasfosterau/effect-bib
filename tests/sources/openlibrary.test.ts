@@ -13,36 +13,34 @@
  * @module tests/unit/biblio-sources-openlibrary
  */
 
-// This package's tsconfig deliberately carries no ambient `types` (portable
-// across Worker/Node) — these tests read fixture files at test time, so they
-// opt themselves into Node's globals rather than widening the package-wide
-// `types` array.
-/// <reference types="node" />
-
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vite-plus/test";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 import { decodeIsbn } from "@thomasfosterau/biblio";
 import {
   lookupOpenLibraryByIsbn,
   normaliseOpenLibraryRecord,
+  OpenLibraryAuthor,
   openLibraryAuthorKeys,
   openLibraryAuthorName,
-  type OpenLibraryAuthor,
-  type OpenLibraryEdition,
+  OpenLibraryEdition,
 } from "../../src/sources/openlibrary.ts";
 import { LookupFailed } from "../../src/sources/errors.ts";
 import { expectFailureInstanceOf, runTest } from "@thomasfosterau/test-helpers/effect";
 import { filteredClient, stubRouter } from "./stub-http.ts";
+import { expectSome } from "../assert.ts";
+import ulyssesAuthorBody from "../fixtures/openlibrary-ulysses-author.json" with { type: "json" };
+import ulyssesEditionBody from "../fixtures/openlibrary-ulysses-edition.json" with { type: "json" };
 
-const fixture = (name: string): unknown =>
-  JSON.parse(readFileSync(new URL(`../fixtures/${name}`, import.meta.url), "utf-8"));
+/** Decodes a loose object literal through the lenient upstream schemas. */
+const asEdition = Schema.decodeUnknownSync(OpenLibraryEdition);
+const asAuthor = Schema.decodeUnknownSync(OpenLibraryAuthor);
 
-const ulyssesEdition = fixture("openlibrary-ulysses-edition.json") as OpenLibraryEdition;
-const ulyssesAuthor = fixture("openlibrary-ulysses-author.json") as OpenLibraryAuthor;
+const ulyssesEdition = asEdition(ulyssesEditionBody);
+const ulyssesAuthor = asAuthor(ulyssesAuthorBody);
 
-const REQUESTED_ISBN = Option.getOrThrow(decodeIsbn("9780199535675"));
+const REQUESTED_ISBN = expectSome(decodeIsbn("9780199535675"), "an ISBN");
 
 describe("openLibraryAuthorKeys", () => {
   it("extracts valid /authors/OL...A keys, bounded", () => {
@@ -50,39 +48,39 @@ describe("openLibraryAuthorKeys", () => {
   });
 
   it("ignores refs without a well-formed author key", () => {
-    const edition = {
-      authors: [{ key: "/works/OL1W" }, { key: "not-a-key" }, {}],
-    } as OpenLibraryEdition;
+    const edition = asEdition({ authors: [{ key: "/works/OL1W" }, { key: "not-a-key" }, {}] });
     expect(openLibraryAuthorKeys(edition)).toEqual([]);
   });
 
   it("returns [] when there is no authors field", () => {
-    expect(openLibraryAuthorKeys({} as OpenLibraryEdition)).toEqual([]);
+    expect(openLibraryAuthorKeys(asEdition({}))).toEqual([]);
   });
 });
 
 describe("openLibraryAuthorName", () => {
   it("sanitises the author's display name", () => {
-    expect(openLibraryAuthorName(ulyssesAuthor)).toBe("James Joyce");
+    expect(openLibraryAuthorName(ulyssesAuthor)).toStrictEqual(Option.some("James Joyce"));
   });
 
   it("returns null for a missing name", () => {
-    expect(openLibraryAuthorName({} as OpenLibraryAuthor)).toBeNull();
+    expect(openLibraryAuthorName(asAuthor({}))).toStrictEqual(Option.none());
   });
 });
 
 describe("normaliseOpenLibraryRecord", () => {
   it("lifts a real edition into a CSL book record: publisher-place, subjects, structured author", () => {
-    const record = normaliseOpenLibraryRecord(ulyssesEdition, REQUESTED_ISBN, ["James Joyce"]);
-    expect(record).not.toBeNull();
-    expect(record!.type).toBe("book");
-    expect(record!.title).toBe("Ulysses");
-    expect(record!.publisher).toBe("Oxford University Press");
-    expect(record!["publisher-place"]).toBe("Oxford");
-    expect(record!.author).toEqual([{ family: "Joyce", given: "James" }]);
-    expect(record!.issued).toEqual({ "date-parts": [[2008]] });
-    expect(record!.identifiers.isbn).toBe(REQUESTED_ISBN);
-    expect(record!.provenance).toEqual({
+    const record = expectSome(
+      normaliseOpenLibraryRecord(ulyssesEdition, REQUESTED_ISBN, ["James Joyce"]),
+      "a record",
+    );
+    expect(record.type).toBe("book");
+    expect(record.title).toBe("Ulysses");
+    expect(record.publisher).toBe("Oxford University Press");
+    expect(record["publisher-place"]).toBe("Oxford");
+    expect(record.author).toEqual([{ family: "Joyce", given: "James" }]);
+    expect(record.issued).toEqual({ "date-parts": [[2008]] });
+    expect(record.identifiers.isbn).toBe(REQUESTED_ISBN);
+    expect(record.provenance).toEqual({
       source: "openlibrary",
       retrievedBy: {
         identifierType: "isbn",
@@ -90,7 +88,7 @@ describe("normaliseOpenLibraryRecord", () => {
         endpoint: `https://openlibrary.org/isbn/${REQUESTED_ISBN}.json`,
       },
     });
-    expect(record!.extra?.subject).toEqual([
+    expect(record.extra?.subject).toEqual([
       "City and town life -- Fiction",
       "Married people -- Fiction",
       "Jewish men -- Fiction",
@@ -102,45 +100,42 @@ describe("normaliseOpenLibraryRecord", () => {
   });
 
   it("folds a subtitle into the title", () => {
-    const edition = {
-      title: "Sapiens",
-      subtitle: "A Brief History of Humankind",
-    } as OpenLibraryEdition;
-    const record = normaliseOpenLibraryRecord(edition, REQUESTED_ISBN, []);
-    expect(record!.title).toBe("Sapiens: A Brief History of Humankind");
+    const edition = asEdition({ title: "Sapiens", subtitle: "A Brief History of Humankind" });
+    const record = expectSome(normaliseOpenLibraryRecord(edition, REQUESTED_ISBN, []));
+    expect(record.title).toBe("Sapiens: A Brief History of Humankind");
   });
 
   it("returns null when there is no usable title", () => {
-    expect(normaliseOpenLibraryRecord({} as OpenLibraryEdition, REQUESTED_ISBN, [])).toBeNull();
+    expect(normaliseOpenLibraryRecord(asEdition({}), REQUESTED_ISBN, [])).toStrictEqual(
+      Option.none(),
+    );
   });
 
   it("falls back to the requested ISBN when the upstream echoes none", () => {
-    const edition = { title: "A Book" } as OpenLibraryEdition;
-    const record = normaliseOpenLibraryRecord(edition, REQUESTED_ISBN, []);
-    expect(record!.identifiers.isbn).toBe(REQUESTED_ISBN);
+    const edition = asEdition({ title: "A Book" });
+    const record = expectSome(normaliseOpenLibraryRecord(edition, REQUESTED_ISBN, []));
+    expect(record.identifiers.isbn).toBe(REQUESTED_ISBN);
   });
 
   it("prefers an upstream-echoed checksum-valid ISBN over the requested one", () => {
-    const edition = { title: "A Book", isbn_13: ["9780062316097"] } as OpenLibraryEdition;
-    const record = normaliseOpenLibraryRecord(edition, REQUESTED_ISBN, []);
-    expect(record!.identifiers.isbn).toBe("9780062316097");
+    const edition = asEdition({ title: "A Book", isbn_13: ["9780062316097"] });
+    const record = expectSome(normaliseOpenLibraryRecord(edition, REQUESTED_ISBN, []));
+    expect(record.identifiers.isbn).toBe("9780062316097");
   });
 
   it("drops an unusable echoed ISBN and keeps the requested one", () => {
-    const edition = { title: "A Book", isbn_13: ["not-an-isbn"] } as OpenLibraryEdition;
-    const record = normaliseOpenLibraryRecord(edition, REQUESTED_ISBN, []);
-    expect(record!.identifiers.isbn).toBe(REQUESTED_ISBN);
+    const edition = asEdition({ title: "A Book", isbn_13: ["not-an-isbn"] });
+    const record = expectSome(normaliseOpenLibraryRecord(edition, REQUESTED_ISBN, []));
+    expect(record.identifiers.isbn).toBe(REQUESTED_ISBN);
   });
 
   it("omits issued/publisher-place/extra when the upstream carries none", () => {
-    const record = normaliseOpenLibraryRecord(
-      { title: "A Book" } as OpenLibraryEdition,
-      REQUESTED_ISBN,
-      [],
+    const record = expectSome(
+      normaliseOpenLibraryRecord(asEdition({ title: "A Book" }), REQUESTED_ISBN, []),
     );
-    expect(record!.issued).toBeUndefined();
-    expect(record!["publisher-place"]).toBeUndefined();
-    expect(record!.extra).toBeUndefined();
+    expect(record.issued).toBeUndefined();
+    expect(record["publisher-place"]).toBeUndefined();
+    expect(record.extra).toBeUndefined();
   });
 });
 
@@ -160,7 +155,7 @@ describe("lookupOpenLibraryByIsbn", () => {
       ),
     );
     expect(Option.isSome(result)).toBe(true);
-    const record = Option.getOrThrow(result);
+    const record = expectSome(result, "a record");
     expect(record.title).toBe("Ulysses");
     expect(record.author).toEqual([{ family: "Joyce", given: "James" }]);
     expect(urls).toContain("https://openlibrary.org/isbn/9780199535675.json");
@@ -195,7 +190,7 @@ describe("lookupOpenLibraryByIsbn", () => {
         layer,
       ),
     );
-    const record = Option.getOrThrow(result);
+    const record = expectSome(result, "a record");
     expect(record.author).toBeUndefined();
   });
 

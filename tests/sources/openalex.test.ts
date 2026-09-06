@@ -15,74 +15,68 @@
  * @module tests/unit/biblio-sources-openalex
  */
 
-// This package's tsconfig deliberately carries no ambient `types` (portable
-// across Worker/Node) — these tests read fixture files at test time, so they
-// opt themselves into Node's globals rather than widening the package-wide
-// `types` array.
-/// <reference types="node" />
-
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vite-plus/test";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 import { decodeDoi } from "@thomasfosterau/biblio";
 import {
   lookupOpenAlexByDoi,
   normaliseOpenAlexRecord,
+  OpenAlexWork,
   searchOpenAlexByTitle,
-  type OpenAlexWork,
 } from "../../src/sources/openalex.ts";
 import { LookupFailed } from "../../src/sources/errors.ts";
 import { expectFailureInstanceOf, runTest } from "@thomasfosterau/test-helpers/effect";
 import { filteredClient, stubRouter } from "./stub-http.ts";
+import { expectPresent, expectSome } from "../assert.ts";
+import rayWorkBody from "../fixtures/openalex-ray-2004.json" with { type: "json" };
+import searchResponse from "../fixtures/openalex-search-sapiens.json" with { type: "json" };
 
-const fixture = (name: string): unknown =>
-  JSON.parse(readFileSync(new URL(`../fixtures/${name}`, import.meta.url), "utf-8"));
+/** Decodes a loose object literal through the lenient `Work` schema. */
+const asWork = Schema.decodeUnknownSync(OpenAlexWork);
 
-const rayWork = fixture("openalex-ray-2004.json") as OpenAlexWork;
-const searchResponse = fixture("openalex-search-sapiens.json") as { results: unknown[] };
-const REQUESTED_DOI = Option.getOrThrow(decodeDoi("10.1037/0003-066x.59.1.29"));
+const rayWork = asWork(rayWorkBody);
+const REQUESTED_DOI = expectSome(decodeDoi("10.1037/0003-066x.59.1.29"), "a DOI");
 const MAILTO = "mailto=me%40thomasfoster.au";
 
 describe("normaliseOpenAlexRecord", () => {
   it("normalises a real work into a CSL record: container, biblio, structured author", () => {
-    const record = normaliseOpenAlexRecord(rayWork);
-    expect(record).not.toBeNull();
-    expect(record!.type).toBe("article-journal");
-    expect(record!.title).toBe("How the Mind Hurts and Heals the Body.");
-    expect(record!["container-title"]).toBe("American Psychologist");
-    expect(record!.volume).toBe("59");
-    expect(record!.issue).toBe("1");
-    expect(record!.page).toBe("29-40");
-    expect(record!.author).toEqual([{ family: "Ray", given: "Oakley S." }]);
-    expect(record!.issued).toEqual({ "date-parts": [[2004]] });
-    expect(record!.identifiers.doi).toBe(REQUESTED_DOI);
+    const record = expectSome(normaliseOpenAlexRecord(rayWork), "a record");
+    expect(record.type).toBe("article-journal");
+    expect(record.title).toBe("How the Mind Hurts and Heals the Body.");
+    expect(record["container-title"]).toBe("American Psychologist");
+    expect(record.volume).toBe("59");
+    expect(record.issue).toBe("1");
+    expect(record.page).toBe("29-40");
+    expect(record.author).toEqual([{ family: "Ray", given: "Oakley S." }]);
+    expect(record.issued).toEqual({ "date-parts": [[2004]] });
+    expect(record.identifiers.doi).toBe(REQUESTED_DOI);
   });
 
   it("returns null for a work with no title or display_name", () => {
-    expect(normaliseOpenAlexRecord({} as OpenAlexWork)).toBeNull();
+    expect(normaliseOpenAlexRecord(asWork({}))).toStrictEqual(Option.none());
   });
 
   it("falls back to display_name when title is absent", () => {
-    const record = normaliseOpenAlexRecord({ display_name: "A Work" } as OpenAlexWork);
-    expect(record!.title).toBe("A Work");
+    const record = expectSome(normaliseOpenAlexRecord(asWork({ display_name: "A Work" })));
+    expect(record.title).toBe("A Work");
   });
 
   it("maps an unlisted OpenAlex type to the document fallback", () => {
-    const record = normaliseOpenAlexRecord({ title: "X", type: "book-review" } as OpenAlexWork);
-    expect(record!.type).toBe("document");
+    const record = expectSome(normaliseOpenAlexRecord(asWork({ title: "X", type: "book-review" })));
+    expect(record.type).toBe("document");
   });
 
   it("falls back to the deprecated host_venue when primary_location is absent", () => {
-    const record = normaliseOpenAlexRecord({
-      title: "X",
-      host_venue: { display_name: "Old Venue" },
-    } as unknown as OpenAlexWork);
-    expect(record!["container-title"]).toBe("Old Venue");
+    const record = expectSome(
+      normaliseOpenAlexRecord(asWork({ title: "X", host_venue: { display_name: "Old Venue" } })),
+    );
+    expect(record["container-title"]).toBe("Old Venue");
   });
 
   it("omits doi/container-title/issued/author when the work carries none", () => {
-    const record = normaliseOpenAlexRecord({ title: "X" } as OpenAlexWork)!;
+    const record = expectSome(normaliseOpenAlexRecord(asWork({ title: "X" })));
     expect(record.identifiers.doi).toBeUndefined();
     expect(record["container-title"]).toBeUndefined();
     expect(record.issued).toBeUndefined();
@@ -90,15 +84,21 @@ describe("normaliseOpenAlexRecord", () => {
   });
 
   it("skips an authorship entry with no author display_name", () => {
-    const record = normaliseOpenAlexRecord({
-      title: "X",
-      authorships: [{ author: {} }, { author: { display_name: "Ada Lovelace" } }],
-    } as unknown as OpenAlexWork)!;
+    const record = expectSome(
+      normaliseOpenAlexRecord(
+        asWork({
+          title: "X",
+          authorships: [{ author: {} }, { author: { display_name: "Ada Lovelace" } }],
+        }),
+      ),
+    );
     expect(record.author).toEqual([{ family: "Lovelace", given: "Ada" }]);
   });
 
   it("drops an unusable echoed DOI rather than failing the record", () => {
-    const record = normaliseOpenAlexRecord({ title: "X", doi: "not a doi url" } as OpenAlexWork)!;
+    const record = expectSome(
+      normaliseOpenAlexRecord(asWork({ title: "X", doi: "not a doi url" })),
+    );
     expect(record.identifiers.doi).toBeUndefined();
   });
 });
@@ -117,7 +117,7 @@ describe("lookupOpenAlexByDoi", () => {
       ),
     );
     expect(Option.isSome(result)).toBe(true);
-    expect(Option.getOrThrow(result).title).toBe("How the Mind Hurts and Heals the Body.");
+    expect(expectSome(result).title).toBe("How the Mind Hurts and Heals the Body.");
     expect(urls).toContain(path);
   });
 
@@ -228,7 +228,7 @@ describe("searchOpenAlexByTitle", () => {
         layer,
       ),
     );
-    const requested = new URL(urls[0]!).searchParams.get("search")!;
+    const requested = expectPresent(new URL(expectPresent(urls[0])).searchParams.get("search"));
     expect(requested.length).toBe(500);
   });
 });

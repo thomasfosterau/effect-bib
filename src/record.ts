@@ -27,8 +27,14 @@
  * @module biblio/record
  */
 
+import * as Array from "effect/Array";
+import * as HashSet from "effect/HashSet";
 import * as Option from "effect/Option";
+import * as Predicate from "effect/Predicate";
+import * as Record from "effect/Record";
+import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
+import * as String from "effect/String";
 import {
   Doi,
   decodeDoi,
@@ -59,7 +65,7 @@ const MAX_PUBLICATION_YEAR = 2200;
 
 /**
  * Trims, collapses, and length-clamps an untrusted free-text value.
- * Returns `null` for empty / whitespace-only or non-string input.
+ * `Option.none()` for empty / whitespace-only or non-string input.
  */
 // reason: this clamp is duplicated verbatim in the sibling extraction-
 // trajectory packages (e.g. wikidata's candidate.ts) by design — the
@@ -67,28 +73,29 @@ const MAX_PUBLICATION_YEAR = 2200;
 // depending on any website-internal package, so each self-contained package
 // must carry its own untrusted-text sanitiser. Consolidating would break the
 // extraction property the whole package is built around.
-export function sanitiseText(value: unknown): string | null {
-  if (typeof value !== "string") return null;
+export function sanitiseText(value: unknown): Option.Option<string> {
+  if (!Predicate.isString(value)) return Option.none();
   const collapsed = value.replace(/\s+/g, " ").trim();
-  if (collapsed.length === 0) return null;
-  return collapsed.slice(0, MAX_TEXT_FIELD_LENGTH);
+  if (String.isEmpty(collapsed)) return Option.none();
+  return Option.some(collapsed.slice(0, MAX_TEXT_FIELD_LENGTH));
 }
 
 /**
- * Coerces an untrusted value to a plausible publication year, or `null`.
- * Accepts a number or a numeric string; rejects non-integers and years
- * outside {@link MIN_PUBLICATION_YEAR} … {@link MAX_PUBLICATION_YEAR}.
+ * Coerces an untrusted value to a plausible publication year, or
+ * `Option.none()`. Accepts a number or a numeric string; rejects
+ * non-integers and years outside {@link MIN_PUBLICATION_YEAR} …
+ * {@link MAX_PUBLICATION_YEAR}.
  */
-export function sanitiseYear(value: unknown): number | null {
-  const n = typeof value === "number" ? value : typeof value === "string" ? Number(value) : NaN;
-  if (!Number.isInteger(n)) return null;
-  if (n < MIN_PUBLICATION_YEAR || n > MAX_PUBLICATION_YEAR) return null;
-  return n;
+export function sanitiseYear(value: unknown): Option.Option<number> {
+  const n = Predicate.isNumber(value) ? value : Predicate.isString(value) ? Number(value) : NaN;
+  if (!Number.isInteger(n)) return Option.none();
+  if (n < MIN_PUBLICATION_YEAR || n > MAX_PUBLICATION_YEAR) return Option.none();
+  return Option.some(n);
 }
 
 /** Sanitises a CSL string variable that upstreams may send as a number (e.g. `volume`). */
-function sanitiseCslString(value: unknown): string | null {
-  if (typeof value === "number" && Number.isFinite(value)) return sanitiseText(String(value));
+function sanitiseCslString(value: unknown): Option.Option<string> {
+  if (Predicate.isNumber(value) && Number.isFinite(value)) return sanitiseText(value.toString());
   return sanitiseText(value);
 }
 
@@ -149,11 +156,11 @@ export const CslItemType = Schema.Literals([
 ]);
 export type CslItemType = typeof CslItemType.Type;
 
-const CSL_ITEM_TYPES: ReadonlySet<string> = new Set(CslItemType.literals);
+const CSL_ITEM_TYPES: HashSet.HashSet<string> = HashSet.fromIterable(CslItemType.literals);
 
 /** Narrows an arbitrary string to a known CSL item type. */
 export function isCslItemType(value: string): value is CslItemType {
-  return CSL_ITEM_TYPES.has(value);
+  return HashSet.has(CSL_ITEM_TYPES, value);
 }
 
 /**
@@ -313,7 +320,7 @@ const CSL_DATE_VARS = [
 type CslDateVar = (typeof CSL_DATE_VARS)[number];
 
 /** CSL keys the model consumes into typed slots; everything else is passthrough. */
-const KNOWN_CSL_KEYS: ReadonlySet<string> = new Set<string>([
+const KNOWN_CSL_KEYS: HashSet.HashSet<string> = HashSet.fromIterable<string>([
   "type",
   "ISBN",
   "DOI",
@@ -336,6 +343,17 @@ function isEmptyName(name: CslName): boolean {
     name.suffix === undefined
   );
 }
+
+/*
+ * The four `null`-returning helpers below are NOT migrated to `Option`, and
+ * must not be here: `makeCslName`, `parsePersonName`, `cslNameDisplay` and
+ * `yearOf` are all imported by `apps/api/src/biblio/{spine-to-csl,
+ * csl-to-spine}.ts`, which compare the results against `null` and feed
+ * `yearOf` into a nullable Drizzle column. Changing the signatures is a
+ * cross-package edit a later wave owns; the bodies below already use the
+ * migrated `Option`-returning sanitisers and convert at the return.
+ */
+/* oxlint-disable effect/prefer-option-over-null -- cross-slice: consumed as plain nullables by apps/api */
 
 /**
  * Builds a sanitised {@link CslName} from loose parts, dropping empty
@@ -361,18 +379,18 @@ export function makeCslName(parts: {
     orcid?: Orcid;
   } = {};
   const family = sanitiseText(parts.family);
-  if (family !== null) name.family = family;
+  if (Option.isSome(family)) name.family = family.value;
   const given = sanitiseText(parts.given);
-  if (given !== null) name.given = given;
+  if (Option.isSome(given)) name.given = given.value;
   const dropping = sanitiseText(parts.droppingParticle);
-  if (dropping !== null) name["dropping-particle"] = dropping;
+  if (Option.isSome(dropping)) name["dropping-particle"] = dropping.value;
   const nonDropping = sanitiseText(parts.nonDroppingParticle);
-  if (nonDropping !== null) name["non-dropping-particle"] = nonDropping;
+  if (Option.isSome(nonDropping)) name["non-dropping-particle"] = nonDropping.value;
   const suffix = sanitiseText(parts.suffix);
-  if (suffix !== null) name.suffix = suffix;
+  if (Option.isSome(suffix)) name.suffix = suffix.value;
   const literal = sanitiseText(parts.literal);
-  if (literal !== null) name.literal = literal;
-  if (typeof parts.orcid === "string") {
+  if (Option.isSome(literal)) name.literal = literal.value;
+  if (Predicate.isString(parts.orcid)) {
     const orcid = decodeOrcid(parts.orcid);
     if (Option.isSome(orcid)) name.orcid = orcid.value;
   }
@@ -386,13 +404,14 @@ export function makeCslName(parts: {
  * last token). Returns `null` for an empty name.
  */
 export function parsePersonName(raw: string): CslName | null {
-  const cleaned = sanitiseText(raw);
-  if (cleaned === null) return null;
+  const sanitised = sanitiseText(raw);
+  if (Option.isNone(sanitised)) return null;
+  const cleaned = sanitised.value;
   const comma = cleaned.indexOf(",");
   if (comma >= 0) {
     return makeCslName({ family: cleaned.slice(0, comma), given: cleaned.slice(comma + 1) });
   }
-  const tokens = cleaned.split(" ").filter((t) => t.length > 0);
+  const tokens = cleaned.split(" ").filter(String.isNonEmpty);
   if (tokens.length <= 1) return makeCslName({ family: cleaned });
   return makeCslName({ family: tokens[tokens.length - 1], given: tokens.slice(0, -1).join(" ") });
 }
@@ -417,8 +436,9 @@ export function dateFromYear(year: number): CslDate {
 /** The year of a {@link CslDate} — `date-parts[0][0]`, sanitised — or `null`. */
 export function yearOf(date: CslDate | undefined): number | null {
   const first = date?.["date-parts"]?.[0]?.[0];
-  return first === undefined ? null : sanitiseYear(first);
+  return first === undefined ? null : Option.getOrNull(sanitiseYear(first));
 }
+/* oxlint-enable effect/prefer-option-over-null */
 
 // ── CSL-JSON interop ──────────────────────────────────────────────────
 
@@ -448,48 +468,56 @@ function dateToCsl(date: CslDate): Record<string, unknown> {
  * (Zotero, citeproc) reads the result directly.
  */
 export function toCslJson(record: BiblioRecord): CslJsonItem {
-  const out: CslJsonItem = {};
-  // Passthrough first so modelled fields win over any stale carried key.
-  if (record.extra !== undefined) {
-    for (const [key, value] of Object.entries(record.extra)) out[key] = value;
-  }
-  out.type = record.type;
-  for (const key of CSL_STRING_VARS) {
-    const value = record[key as CslStringVar];
-    if (value !== undefined) out[key] = value;
-  }
-  for (const key of CSL_NAME_VARS) {
-    const value = record[key as CslNameVar];
-    if (value !== undefined) out[key] = value.map(nameToCsl);
-  }
-  for (const key of CSL_DATE_VARS) {
-    const value = record[key as CslDateVar];
-    if (value !== undefined) out[key] = dateToCsl(value);
-  }
   const { isbn, doi, issn } = record.identifiers;
-  if (isbn !== undefined) out.ISBN = isbn as string;
-  if (doi !== undefined) out.DOI = doi;
-  if (issn !== undefined) out.ISSN = issn;
-  return out;
+  return {
+    // Passthrough first so modelled fields win over any stale carried key.
+    ...record.extra,
+    type: record.type,
+    ...definedFields(CSL_STRING_VARS, (key: CslStringVar) => record[key]),
+    ...definedFields(CSL_NAME_VARS, (key: CslNameVar) => record[key]?.map(nameToCsl)),
+    ...definedFields(CSL_DATE_VARS, (key: CslDateVar) => {
+      const value = record[key];
+      return value === undefined ? undefined : dateToCsl(value);
+    }),
+    ...(isbn === undefined ? {} : { ISBN: isbn }),
+    ...(doi === undefined ? {} : { DOI: doi }),
+    ...(issn === undefined ? {} : { ISSN: issn }),
+  };
+}
+
+/** `{ key: projected }` for every key whose projected value is defined. */
+function definedFields<K extends string>(
+  keys: readonly K[],
+  project: (key: K) => unknown,
+): CslJsonItem {
+  return Record.fromEntries(
+    Array.filterMap(keys, (key): Result.Result<readonly [K, unknown], void> => {
+      const value = project(key);
+      return value === undefined ? Result.failVoid : Result.succeed([key, value] as const);
+    }),
+  );
 }
 
 /**
- * Reads one CSL name value into a structured {@link CslName}, or `null`.
- * Tolerates the Zotero single-field `name` as a `literal` fallback. Shared
- * by the CSL-JSON parser so name structuring lives in one place.
+ * Reads one CSL name value into a structured {@link CslName}, or
+ * `Option.none()`. Tolerates the Zotero single-field `name` as a `literal`
+ * fallback. Shared by the CSL-JSON parser so name structuring lives in one
+ * place.
  */
-export function readCslName(entry: unknown): CslName | null {
-  if (typeof entry !== "object" || entry === null) return null;
+export function readCslName(entry: unknown): Option.Option<CslName> {
+  if (!Predicate.isObjectOrArray(entry)) return Option.none();
   const obj = entry as Record<string, unknown>;
-  return makeCslName({
-    family: obj.family,
-    given: obj.given,
-    droppingParticle: obj["dropping-particle"],
-    nonDroppingParticle: obj["non-dropping-particle"],
-    suffix: obj.suffix,
-    literal: obj.literal ?? obj.name,
-    orcid: obj.orcid,
-  });
+  return Option.fromNullishOr(
+    makeCslName({
+      family: obj.family,
+      given: obj.given,
+      droppingParticle: obj["dropping-particle"],
+      nonDroppingParticle: obj["non-dropping-particle"],
+      suffix: obj.suffix,
+      literal: obj.literal ?? obj.name,
+      orcid: obj.orcid,
+    }),
+  );
 }
 
 /**
@@ -498,48 +526,46 @@ export function readCslName(entry: unknown): CslName | null {
  */
 export function readCslNameArray(value: unknown): CslName[] {
   if (!Array.isArray(value)) return [];
-  const names: CslName[] = [];
-  for (const entry of value) {
-    if (names.length >= MAX_AUTHORS) break;
+  return Array.filterMap(value, (entry): Result.Result<CslName, void> => {
     const name = readCslName(entry);
-    if (name !== null) names.push(name);
-  }
-  return names;
+    return Option.isNone(name) ? Result.failVoid : Result.succeed(name.value);
+  }).slice(0, MAX_AUTHORS);
 }
 
-/** As {@link readCslNameArray}, but folds an empty list to `undefined` for the record spread. */
-function fromCslNameList(value: unknown): readonly CslName[] | undefined {
+/** As {@link readCslNameArray}, but folds an empty list to `None` for the record spread. */
+function fromCslNameList(value: unknown): Option.Option<readonly CslName[]> {
   const names = readCslNameArray(value);
-  return names.length > 0 ? names : undefined;
+  return Array.isArrayNonEmpty(names) ? Option.some(names) : Option.none();
 }
 
-/** Cleans an untrusted CSL `date-parts` value to numeric parts, or `undefined`. */
-function cleanDateParts(parts: unknown): number[][] | undefined {
-  if (!Array.isArray(parts)) return undefined;
-  const cleaned: number[][] = [];
-  for (const part of parts) {
-    if (!Array.isArray(part)) continue;
-    const nums = part.filter((n): n is number => typeof n === "number" && Number.isFinite(n));
-    if (nums.length > 0) cleaned.push(nums);
-  }
-  return cleaned.length > 0 ? cleaned : undefined;
+/** Cleans an untrusted CSL `date-parts` value to numeric parts, or `None`. */
+function cleanDateParts(parts: unknown): Option.Option<number[][]> {
+  if (!Array.isArray(parts)) return Option.none();
+  const cleaned = Array.filterMap(parts, (part): Result.Result<number[], void> => {
+    if (!Array.isArray(part)) return Result.failVoid;
+    const nums = part.filter((n): n is number => Predicate.isNumber(n) && Number.isFinite(n));
+    return Array.isReadonlyArrayNonEmpty(nums) ? Result.succeed(nums) : Result.failVoid;
+  });
+  return Array.isArrayNonEmpty(cleaned) ? Option.some(cleaned) : Option.none();
 }
 
 /** A CSL `season` is a string or a number (1–4), else absent. */
-function readSeason(value: unknown): string | number | undefined {
-  return typeof value === "string" || typeof value === "number" ? value : undefined;
+function readSeason(value: unknown): Option.Option<string | number> {
+  return Predicate.isString(value) || Predicate.isNumber(value)
+    ? Option.some(value)
+    : Option.none();
 }
 
 /** A CSL `circa` flag is a boolean, number, or string, else absent. */
-function readCirca(value: unknown): boolean | number | string | undefined {
-  return typeof value === "boolean" || typeof value === "number" || typeof value === "string"
-    ? value
-    : undefined;
+function readCirca(value: unknown): Option.Option<boolean | number | string> {
+  return Predicate.isBoolean(value) || Predicate.isNumber(value) || Predicate.isString(value)
+    ? Option.some(value)
+    : Option.none();
 }
 
-/** Reads one CSL date value into a structured {@link CslDate}, or `undefined`. */
-function fromCslDateValue(value: unknown): CslDate | undefined {
-  if (typeof value !== "object" || value === null) return undefined;
+/** Reads one CSL date value into a structured {@link CslDate}, or `None`. */
+function fromCslDateValue(value: unknown): Option.Option<CslDate> {
+  if (!Predicate.isObjectOrArray(value)) return Option.none();
   const obj = value as Record<string, unknown>;
   const date: {
     "date-parts"?: readonly (readonly number[])[];
@@ -549,16 +575,21 @@ function fromCslDateValue(value: unknown): CslDate | undefined {
     raw?: string;
   } = {};
   const parts = cleanDateParts(obj["date-parts"]);
-  if (parts !== undefined) date["date-parts"] = parts;
+  if (Option.isSome(parts)) date["date-parts"] = parts.value;
   const season = readSeason(obj.season);
-  if (season !== undefined) date.season = season;
+  if (Option.isSome(season)) date.season = season.value;
   const circa = readCirca(obj.circa);
-  if (circa !== undefined) date.circa = circa;
+  if (Option.isSome(circa)) date.circa = circa.value;
   const literal = sanitiseText(obj.literal);
-  if (literal !== null) date.literal = literal;
+  if (Option.isSome(literal)) date.literal = literal.value;
   const raw = sanitiseText(obj.raw);
-  if (raw !== null) date.raw = raw;
-  return Object.keys(date).length > 0 ? date : undefined;
+  if (Option.isSome(raw)) date.raw = raw.value;
+  // Widened for the emptiness probe only: `Record.isEmptyReadonlyRecord` cannot
+  // take an object whose properties are optional under
+  // `exactOptionalPropertyTypes`.
+  return Record.isEmptyReadonlyRecord(date as Readonly<Record<string, unknown>>)
+    ? Option.none()
+    : Option.some(date);
 }
 
 /**
@@ -571,15 +602,13 @@ function fromCslDateValue(value: unknown): CslDate | undefined {
  */
 export function fromCslJson(item: unknown): BiblioRecord {
   const provenance: Provenance = { source: "csl-json" };
-  if (typeof item !== "object" || item === null) {
+  if (!Predicate.isObjectOrArray(item)) {
     return { type: "document", identifiers: {}, provenance };
   }
   const obj = item as Record<string, unknown>;
   const rawType = obj.type;
   const type: CslItemType =
-    typeof rawType === "string" && CSL_ITEM_TYPES.has(rawType)
-      ? (rawType as CslItemType)
-      : "document";
+    Predicate.isString(rawType) && isCslItemType(rawType) ? rawType : "document";
   const extra = collectCslExtra(obj);
   return {
     type,
@@ -588,54 +617,60 @@ export function fromCslJson(item: unknown): BiblioRecord {
     ...readCslDates(obj),
     identifiers: readCslIdentifiers(obj),
     provenance,
-    ...(Object.keys(extra).length > 0 ? { extra } : {}),
+    ...(Record.isEmptyRecord(extra) ? {} : { extra }),
   };
 }
 
 /** Reads the modelled CSL string variables, sanitised. */
 function readCslStrings(obj: Record<string, unknown>): Partial<Record<CslStringVar, string>> {
-  const strings: Partial<Record<CslStringVar, string>> = {};
-  for (const key of CSL_STRING_VARS) {
-    const value = sanitiseCslString(obj[key]);
-    if (value !== null) strings[key] = value;
-  }
-  return strings;
+  return Record.fromEntries(
+    Array.filterMap(
+      CSL_STRING_VARS,
+      (key): Result.Result<readonly [CslStringVar, string], void> => {
+        const value = sanitiseCslString(obj[key]);
+        return Option.isNone(value) ? Result.failVoid : Result.succeed([key, value.value] as const);
+      },
+    ),
+  );
 }
 
 /** Reads the modelled CSL name variables into structured name lists. */
 function readCslNames(
   obj: Record<string, unknown>,
 ): Partial<Record<CslNameVar, readonly CslName[]>> {
-  const names: Partial<Record<CslNameVar, readonly CslName[]>> = {};
-  for (const key of CSL_NAME_VARS) {
-    const list = fromCslNameList(obj[key]);
-    if (list !== undefined) names[key] = list;
-  }
-  return names;
+  return Record.fromEntries(
+    Array.filterMap(
+      CSL_NAME_VARS,
+      (key): Result.Result<readonly [CslNameVar, readonly CslName[]], void> => {
+        const list = fromCslNameList(obj[key]);
+        return Option.isNone(list) ? Result.failVoid : Result.succeed([key, list.value] as const);
+      },
+    ),
+  );
 }
 
 /** Reads the modelled CSL date variables into structured dates. */
 function readCslDates(obj: Record<string, unknown>): Partial<Record<CslDateVar, CslDate>> {
-  const dates: Partial<Record<CslDateVar, CslDate>> = {};
-  for (const key of CSL_DATE_VARS) {
-    const date = fromCslDateValue(obj[key]);
-    if (date !== undefined) dates[key] = date;
-  }
-  return dates;
+  return Record.fromEntries(
+    Array.filterMap(CSL_DATE_VARS, (key): Result.Result<readonly [CslDateVar, CslDate], void> => {
+      const date = fromCslDateValue(obj[key]);
+      return Option.isNone(date) ? Result.failVoid : Result.succeed([key, date.value] as const);
+    }),
+  );
 }
 
 /** Validates the free-string CSL identifiers into their branded slots (checksum failures dropped). */
 function readCslIdentifiers(obj: Record<string, unknown>): RecordIdentifiers {
   const identifiers: { isbn?: Isbn; doi?: Doi; issn?: Issn } = {};
-  if (typeof obj.ISBN === "string") {
+  if (Predicate.isString(obj.ISBN)) {
     const isbn = decodeIsbn(obj.ISBN);
     if (Option.isSome(isbn)) identifiers.isbn = isbn.value;
   }
-  if (typeof obj.DOI === "string") {
+  if (Predicate.isString(obj.DOI)) {
     const doi = decodeDoi(obj.DOI);
     if (Option.isSome(doi)) identifiers.doi = doi.value;
   }
-  if (typeof obj.ISSN === "string") {
+  if (Predicate.isString(obj.ISSN)) {
     const issn = decodeIssn(obj.ISSN);
     if (Option.isSome(issn)) identifiers.issn = issn.value;
   }
@@ -644,9 +679,5 @@ function readCslIdentifiers(obj: Record<string, unknown>): RecordIdentifiers {
 
 /** Captures the CSL keys the model doesn't consume into the passthrough map. */
 function collectCslExtra(obj: Record<string, unknown>): Record<string, unknown> {
-  const extra: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(obj)) {
-    if (!KNOWN_CSL_KEYS.has(key)) extra[key] = value;
-  }
-  return extra;
+  return Record.filter(obj, (_value, key) => !HashSet.has(KNOWN_CSL_KEYS, key));
 }

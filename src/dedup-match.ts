@@ -30,6 +30,11 @@
  * @module biblio/dedup-match
  */
 
+import * as Array from "effect/Array";
+import * as HashSet from "effect/HashSet";
+import * as Option from "effect/Option";
+import * as Result from "effect/Result";
+import * as String from "effect/String";
 import { type BiblioRecord, cslNameDisplay } from "./record.ts";
 
 /**
@@ -37,7 +42,7 @@ import { type BiblioRecord, cslNameDisplay } from "./record.ts";
  * disambiguating signal, and keeping them would sink a genuine match when
  * one source writes "The Hobbit" and another "Hobbit".
  */
-const TITLE_STOPWORDS: ReadonlySet<string> = new Set(["the", "a", "an"]);
+const TITLE_STOPWORDS: HashSet.HashSet<string> = HashSet.make("the", "a", "an");
 
 /**
  * Folds a free-text value to a comparison key: strips diacritics
@@ -61,11 +66,11 @@ export function normaliseForMatch(value: string): string {
  * and repetition don't matter ("Rings of the Lord" vs "Lord of the Rings"
  * compare equal), which is the right invariance for title-vs-title dedup.
  */
-export function titleTokens(title: string): ReadonlySet<string> {
+export function titleTokens(title: string): HashSet.HashSet<string> {
   const tokens = normaliseForMatch(title)
     .split(" ")
-    .filter((token) => token.length > 0 && !TITLE_STOPWORDS.has(token));
-  return new Set(tokens);
+    .filter((token) => String.isNonEmpty(token) && !HashSet.has(TITLE_STOPWORDS, token));
+  return HashSet.fromIterable(tokens);
 }
 
 /**
@@ -82,17 +87,14 @@ export function authorSurname(name: string): string {
   // otherwise the family name is the last token of "Given Surname".
   const commaIndex = name.indexOf(",");
   const familySource = commaIndex >= 0 ? name.slice(0, commaIndex) : name;
-  const parts = normaliseForMatch(familySource)
-    .split(" ")
-    .filter((part) => part.length > 0);
-  return parts.length > 0 ? parts[parts.length - 1]! : "";
+  const parts = normaliseForMatch(familySource).split(" ").filter(String.isNonEmpty);
+  const family = Array.last(parts);
+  return Option.isNone(family) ? "" : family.value;
 }
 
 /** Size of the intersection of two token sets, `|A ∩ B|`. */
-function intersectionSize(a: ReadonlySet<string>, b: ReadonlySet<string>): number {
-  let intersection = 0;
-  for (const token of a) if (b.has(token)) intersection += 1;
-  return intersection;
+function intersectionSize(a: HashSet.HashSet<string>, b: HashSet.HashSet<string>): number {
+  return Array.reduce(a, 0, (count, token) => (HashSet.has(b, token) ? count + 1 : count));
 }
 
 /**
@@ -100,10 +102,10 @@ function intersectionSize(a: ReadonlySet<string>, b: ReadonlySet<string>): numbe
  * either side yields `0`: absence of tokens is treated as no evidence of a
  * match, never as a (vacuous) perfect one.
  */
-function jaccard(a: ReadonlySet<string>, b: ReadonlySet<string>): number {
-  if (a.size === 0 || b.size === 0) return 0;
+function jaccard(a: HashSet.HashSet<string>, b: HashSet.HashSet<string>): number {
+  if (HashSet.isEmpty(a) || HashSet.isEmpty(b)) return 0;
   const intersection = intersectionSize(a, b);
-  return intersection / (a.size + b.size - intersection);
+  return intersection / (HashSet.size(a) + HashSet.size(b) - intersection);
 }
 
 /** A record's matchable shape: a title and zero or more author display names. */
@@ -121,11 +123,10 @@ export interface MatchInput {
  * untouched by record-shape changes beyond how names/titles are extracted.
  */
 export function recordMatchInput(record: BiblioRecord): MatchInput {
-  const authors: string[] = [];
-  for (const name of record.author ?? []) {
+  const authors = Array.filterMap(record.author ?? [], (name): Result.Result<string, void> => {
     const display = cslNameDisplay(name);
-    if (display !== null) authors.push(display);
-  }
+    return display === null ? Result.failVoid : Result.succeed(display);
+  });
   return { title: record.title ?? "", authors };
 }
 
@@ -134,12 +135,12 @@ export interface MatchScore {
   /** Title token-set Jaccard, `0..1`. */
   readonly title: number;
   /**
-   * Author surname-set Jaccard, `0..1`, or `null` when **either** side
-   * lists no authors — there is then no author signal to weigh, and the
+   * Author surname-set Jaccard, `0..1`, or `Option.none()` when **either**
+   * side lists no authors — there is then no author signal to weigh, and the
    * title carries the decision alone (under a stricter bar; see
    * {@link isConfidentMatch}).
    */
-  readonly author: number | null;
+  readonly author: Option.Option<number>;
   /**
    * Number of significant title tokens shared by both sides, `|A ∩ B|`. A
    * single shared token (e.g. two unrelated books both titled "It") is not
@@ -185,16 +186,16 @@ export function scoreMatch(incoming: MatchInput, candidate: MatchInput): MatchSc
   const title = jaccard(incomingTitleTokens, candidateTitleTokens);
   const sharedTitleTokens = intersectionSize(incomingTitleTokens, candidateTitleTokens);
 
-  const incomingSurnames = new Set(
-    incoming.authors.map(authorSurname).filter((surname) => surname.length > 0),
+  const incomingSurnames = HashSet.fromIterable(
+    incoming.authors.map(authorSurname).filter(String.isNonEmpty),
   );
-  const candidateSurnames = new Set(
-    candidate.authors.map(authorSurname).filter((surname) => surname.length > 0),
+  const candidateSurnames = HashSet.fromIterable(
+    candidate.authors.map(authorSurname).filter(String.isNonEmpty),
   );
   const author =
-    incomingSurnames.size === 0 || candidateSurnames.size === 0
-      ? null
-      : jaccard(incomingSurnames, candidateSurnames);
+    HashSet.isEmpty(incomingSurnames) || HashSet.isEmpty(candidateSurnames)
+      ? Option.none<number>()
+      : Option.some(jaccard(incomingSurnames, candidateSurnames));
 
   return { title, author, sharedTitleTokens };
 }
@@ -210,12 +211,12 @@ export function scoreMatch(incoming: MatchInput, candidate: MatchInput): MatchSc
  * below is *not* a confident match and falls through to creating a new Book.
  */
 export function isConfidentMatch(score: MatchScore): boolean {
-  if (score.author === null) {
+  if (Option.isNone(score.author)) {
     return (
       score.title >= TITLE_STRICT_THRESHOLD && score.sharedTitleTokens >= MIN_TITLE_TOKENS_NO_AUTHOR
     );
   }
-  return score.title >= TITLE_MATCH_THRESHOLD && score.author >= AUTHOR_MATCH_THRESHOLD;
+  return score.title >= TITLE_MATCH_THRESHOLD && score.author.value >= AUTHOR_MATCH_THRESHOLD;
 }
 
 /**
@@ -224,7 +225,7 @@ export function isConfidentMatch(score: MatchScore): boolean {
  * author breaks ties, and a no-author-signal pair ranks on its title alone.
  */
 export function matchConfidence(score: MatchScore): number {
-  return score.author === null ? score.title : score.title * 0.7 + score.author * 0.3;
+  return Option.isNone(score.author) ? score.title : score.title * 0.7 + score.author.value * 0.3;
 }
 
 /**
@@ -234,18 +235,26 @@ export function matchConfidence(score: MatchScore): number {
  * supplies pre-filtered candidates (e.g. trigram-similar Books with their
  * authors); this resolves the auto-dedup target. Pure and deterministic.
  */
+/*
+ * The `T | null` return is NOT migrated: `bestConfidentMatch` is imported by
+ * `apps/api/src/biblio/ingest.ts`, which consumes the plain nullable — a
+ * cross-package signature change a later wave owns. The fold's internal
+ * accumulator below is an `Option`.
+ */
+/* oxlint-disable effect/prefer-option-over-null -- cross-slice: apps/api consumes the plain nullable */
 export function bestConfidentMatch<T extends MatchInput>(
   incoming: MatchInput,
   candidates: readonly T[],
 ): T | null {
-  let best: { candidate: T; confidence: number } | null = null;
-  for (const candidate of candidates) {
+  /* oxlint-enable effect/prefer-option-over-null */
+  type Best = Option.Option<{ readonly candidate: T; readonly confidence: number }>;
+  const best = Array.reduce<T, Best>(candidates, Option.none(), (acc, candidate) => {
     const score = scoreMatch(incoming, candidate);
-    if (!isConfidentMatch(score)) continue;
+    if (!isConfidentMatch(score)) return acc;
     const confidence = matchConfidence(score);
-    if (best === null || confidence > best.confidence) {
-      best = { candidate, confidence };
-    }
-  }
-  return best === null ? null : best.candidate;
+    return Option.isNone(acc) || confidence > acc.value.confidence
+      ? Option.some({ candidate, confidence })
+      : acc;
+  });
+  return Option.isNone(best) ? null : best.value.candidate;
 }

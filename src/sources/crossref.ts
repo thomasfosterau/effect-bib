@@ -16,8 +16,11 @@
  * @module biblio/sources/crossref
  */
 
+import * as Array from "effect/Array";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
+import * as Predicate from "effect/Predicate";
+import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 import { HttpClient } from "effect/unstable/http";
 import { decodeDoi, decodeIssn, type Doi, type Issn } from "../identifiers.ts";
@@ -80,72 +83,78 @@ const CROSSREF_TYPES: Readonly<Record<string, CslItemType>> = {
 
 /** Maps a Crossref `message.type`, defaulting to `article-journal` (Crossref's overwhelming common case). */
 function crossrefType(raw: unknown): CslItemType {
-  return typeof raw === "string" ? (CROSSREF_TYPES[raw] ?? "article-journal") : "article-journal";
+  return Predicate.isString(raw) ? (CROSSREF_TYPES[raw] ?? "article-journal") : "article-journal";
 }
 
 /** Sanitises a value Crossref may send as a string or a number (`volume`, `issue`). */
-function stringField(value: unknown): string | null {
-  return typeof value === "number" && Number.isFinite(value)
+function stringField(value: unknown): Option.Option<string> {
+  return Predicate.isNumber(value) && Number.isFinite(value)
     ? sanitiseText(String(value))
     : sanitiseText(value);
 }
 
 /** Builds a structured {@link CslName} from a Crossref author `{ given, family, name, ORCID }` object. */
-function crossrefAuthorName(entry: unknown): CslName | null {
-  if (typeof entry !== "object" || entry === null) return null;
+function crossrefAuthorName(entry: unknown): Option.Option<CslName> {
+  if (!Predicate.isObjectOrArray(entry)) return Option.none();
   const obj = entry as { given?: unknown; family?: unknown; name?: unknown; ORCID?: unknown };
-  const hasStructured = typeof obj.family === "string" || typeof obj.given === "string";
-  return makeCslName({
-    family: obj.family,
-    given: obj.given,
-    // Some entries (organisations) carry a single `name` instead of
-    // family/given — fall back to it as the CSL `literal` form.
-    literal: hasStructured ? undefined : obj.name,
-    orcid: obj.ORCID,
-  });
+  const hasStructured = Predicate.isString(obj.family) || Predicate.isString(obj.given);
+  return Option.fromNullishOr(
+    makeCslName({
+      family: obj.family,
+      given: obj.given,
+      // Some entries (organisations) carry a single `name` instead of
+      // family/given — fall back to it as the CSL `literal` form.
+      literal: hasStructured ? undefined : obj.name,
+      orcid: obj.ORCID,
+    }),
+  );
 }
 
 /** Extracts a {@link CslDate} from a Crossref `date-parts` object, keeping month/day when present. */
-function crossrefDate(value: unknown): CslDate | undefined {
-  if (typeof value !== "object" || value === null) return undefined;
+function crossrefDate(value: unknown): Option.Option<CslDate> {
+  if (!Predicate.isObjectOrArray(value)) return Option.none();
   const dateParts = (value as { "date-parts"?: unknown })["date-parts"];
-  if (!Array.isArray(dateParts) || dateParts.length === 0) return undefined;
+  if (!Array.isArray(dateParts) || Array.isArrayEmpty(dateParts)) return Option.none();
   const first = dateParts[0];
-  if (!Array.isArray(first) || first.length === 0) return undefined;
-  const nums = first.filter((n): n is number => typeof n === "number" && Number.isFinite(n));
-  if (nums.length === 0) return undefined;
+  if (!Array.isArray(first) || Array.isArrayEmpty(first)) return Option.none();
+  const nums = first.filter((n): n is number => Predicate.isNumber(n) && Number.isFinite(n));
+  if (Array.isArrayEmpty(nums)) return Option.none();
   const year = sanitiseYear(nums[0]);
-  if (year === null) return undefined;
-  return { "date-parts": [[year, ...nums.slice(1)]] };
+  if (Option.isNone(year)) return Option.none();
+  return Option.some({ "date-parts": [[year.value, ...nums.slice(1)]] });
 }
 
-/** The first checksum-valid ISSN from Crossref's `ISSN` array, or `undefined`. */
-function firstIssn(values: readonly unknown[] | undefined): Issn | undefined {
-  for (const v of values ?? []) {
-    if (typeof v !== "string") continue;
-    const decoded = decodeIssn(v);
-    if (Option.isSome(decoded)) return decoded.value;
-  }
-  return undefined;
+/** The first checksum-valid ISSN from Crossref's `ISSN` array, or `None`. */
+function firstIssn(values: Option.Option<readonly unknown[]>): Option.Option<Issn> {
+  return Array.head(
+    Array.filterMap(
+      Option.isNone(values) ? [] : values.value,
+      (value): Result.Result<Issn, void> => {
+        if (!Predicate.isString(value)) return Result.failVoid;
+        const decoded = decodeIssn(value);
+        return Option.isNone(decoded) ? Result.failVoid : Result.succeed(decoded.value);
+      },
+    ),
+  );
 }
 
 /** The non-empty `message` body of a decoded {@link CrossrefResponse}. */
 type CrossrefMessage = NonNullable<CrossrefResponse["message"]>;
 
 /** Bounded, ordered author list from `message.author`. */
-function collectCrossrefAuthors(entries: readonly unknown[] | undefined): CslName[] {
-  const author: CslName[] = [];
-  for (const entry of entries ?? []) {
-    if (author.length >= MAX_AUTHORS) break;
-    const name = crossrefAuthorName(entry);
-    if (name !== null) author.push(name);
-  }
-  return author;
+function collectCrossrefAuthors(entries: Option.Option<readonly unknown[]>): CslName[] {
+  return Array.filterMap(
+    Option.isNone(entries) ? [] : entries.value,
+    (entry): Result.Result<CslName, void> => {
+      const name = crossrefAuthorName(entry);
+      return Option.isNone(name) ? Result.failVoid : Result.succeed(name.value);
+    },
+  ).slice(0, MAX_AUTHORS);
 }
 
 /** The record's DOI: the upstream-echoed one when it re-validates, else the requested one. */
 function crossrefDoi(message: CrossrefMessage, requestedDoi: Doi): Doi {
-  const echoed = typeof message.DOI === "string" ? decodeDoi(message.DOI) : Option.none<Doi>();
+  const echoed = Predicate.isString(message.DOI) ? decodeDoi(message.DOI) : Option.none<Doi>();
   return Option.getOrElse(echoed, () => requestedDoi);
 }
 
@@ -153,15 +162,15 @@ function crossrefDoi(message: CrossrefMessage, requestedDoi: Doi): Doi {
 interface CrossrefFields {
   readonly type: CslItemType;
   readonly title: string;
-  readonly containerTitle: string | null;
-  readonly publisher: string | null;
-  readonly volume: string | null;
-  readonly issue: string | null;
-  readonly page: string | null;
+  readonly containerTitle: Option.Option<string>;
+  readonly publisher: Option.Option<string>;
+  readonly volume: Option.Option<string>;
+  readonly issue: Option.Option<string>;
+  readonly page: Option.Option<string>;
   readonly author: readonly CslName[];
-  readonly issued: CslDate | undefined;
+  readonly issued: Option.Option<CslDate>;
   readonly doi: Doi;
-  readonly issn: Issn | undefined;
+  readonly issn: Option.Option<Issn>;
   readonly requestedDoi: Doi;
 }
 
@@ -184,14 +193,14 @@ function assembleCrossrefRecord(fields: CrossrefFields): BiblioRecord {
   return {
     type,
     title,
-    ...(containerTitle !== null ? { "container-title": containerTitle } : {}),
-    ...(publisher !== null ? { publisher } : {}),
-    ...(volume !== null ? { volume } : {}),
-    ...(issue !== null ? { issue } : {}),
-    ...(page !== null ? { page } : {}),
-    ...(author.length > 0 ? { author } : {}),
-    ...(issued !== undefined ? { issued } : {}),
-    identifiers: { doi, ...(issn !== undefined ? { issn } : {}) },
+    ...(Option.isSome(containerTitle) ? { "container-title": containerTitle.value } : {}),
+    ...(Option.isSome(publisher) ? { publisher: publisher.value } : {}),
+    ...(Option.isSome(volume) ? { volume: volume.value } : {}),
+    ...(Option.isSome(issue) ? { issue: issue.value } : {}),
+    ...(Option.isSome(page) ? { page: page.value } : {}),
+    ...(Array.isReadonlyArrayNonEmpty(author) ? { author } : {}),
+    ...(Option.isSome(issued) ? { issued: issued.value } : {}),
+    identifiers: { doi, ...(Option.isSome(issn) ? { issn: issn.value } : {}) },
     provenance: {
       source: "crossref",
       retrievedBy: {
@@ -208,31 +217,33 @@ function assembleCrossrefRecord(fields: CrossrefFields): BiblioRecord {
  * {@link BiblioRecord}. `requestedDoi` is the already-validated {@link Doi}
  * the lookup was keyed by; the record prefers the DOI Crossref echoes
  * (re-validated, never trusted verbatim) and falls back to the requested
- * one. Returns `null` when the record has no usable title.
+ * one. `Option.none()` when the record has no usable title.
  */
 export function normaliseCrossrefRecord(
   response: CrossrefResponse,
   requestedDoi: Doi,
-): BiblioRecord | null {
+): Option.Option<BiblioRecord> {
   const message = response.message;
-  if (!message) return null;
-  const title = firstString(message.title);
-  if (title === null) return null;
+  if (!message) return Option.none();
+  const title = firstString(Option.fromNullishOr(message.title));
+  if (Option.isNone(title)) return Option.none();
 
-  return assembleCrossrefRecord({
-    type: crossrefType(message.type),
-    title,
-    containerTitle: firstString(message["container-title"]),
-    publisher: sanitiseText(message.publisher),
-    volume: stringField(message.volume),
-    issue: stringField(message.issue),
-    page: stringField(message.page),
-    author: collectCrossrefAuthors(message.author),
-    issued: crossrefDate(message.published) ?? crossrefDate(message.issued),
-    doi: crossrefDoi(message, requestedDoi),
-    issn: firstIssn(message.ISSN),
-    requestedDoi,
-  });
+  return Option.some(
+    assembleCrossrefRecord({
+      type: crossrefType(message.type),
+      title: title.value,
+      containerTitle: firstString(Option.fromNullishOr(message["container-title"])),
+      publisher: sanitiseText(message.publisher),
+      volume: stringField(message.volume),
+      issue: stringField(message.issue),
+      page: stringField(message.page),
+      author: collectCrossrefAuthors(Option.fromNullishOr(message.author)),
+      issued: Option.firstSomeOf([crossrefDate(message.published), crossrefDate(message.issued)]),
+      doi: crossrefDoi(message, requestedDoi),
+      issn: firstIssn(Option.fromNullishOr(message.ISSN)),
+      requestedDoi,
+    }),
+  );
 }
 
 /**
@@ -251,5 +262,5 @@ export const lookupCrossrefByDoi = (
     // etc., which must not be read as path separators upstream.
     const response = yield* cr(`/works/${encodeURIComponent(doi)}`, CrossrefResponse);
     if (Option.isNone(response)) return Option.none();
-    return Option.fromNullishOr(normaliseCrossrefRecord(response.value, doi));
+    return normaliseCrossrefRecord(response.value, doi);
   });

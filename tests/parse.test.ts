@@ -12,6 +12,8 @@
  * @module tests/unit/biblio-parse
  */
 
+import * as Array from "effect/Array";
+import * as Schema from "effect/Schema";
 import { describe, expect, it } from "vite-plus/test";
 import {
   MAX_AUTHORS,
@@ -26,10 +28,14 @@ import {
   type ParseOutcome,
 } from "@thomasfosterau/biblio";
 
+/** Encodes a fixture value to the JSON text a parser receives. */
+const toJsonText = Schema.encodeSync(Schema.fromJsonString(Schema.Unknown));
+
 /** Narrows a `ParseOutcome` to its parsed record, failing the test otherwise. */
 function expectParsed(outcome: ParseOutcome) {
-  expect(outcome.outcome).toBe("parsed");
-  if (outcome.outcome !== "parsed") throw new Error("unreachable");
+  if (outcome.outcome !== "parsed") {
+    expect.fail(`expected a parsed outcome, got skipped (${outcome.reason})`);
+  }
   return outcome.record;
 }
 
@@ -143,9 +149,7 @@ describe("parseBibtex", () => {
   });
 
   it("clamps the author list to MAX_AUTHORS", () => {
-    const many = Array.from({ length: MAX_AUTHORS + 10 }, (_, i) => `Given${i} Family${i}`).join(
-      " and ",
-    );
+    const many = Array.makeBy(MAX_AUTHORS + 10, (i) => `Given${i} Family${i}`).join(" and ");
     const record = expectParsed(
       parseBibtex(`@book{x, title={t}, isbn={9780062316097}, author={${many}}}`)[0],
     );
@@ -158,7 +162,7 @@ describe("parseBibtex", () => {
 describe("parseZoteroJson", () => {
   it("maps a top-level array of CSL items", () => {
     const outcomes = parseZoteroJson(
-      JSON.stringify([
+      toJsonText([
         {
           type: "book",
           title: "Sapiens",
@@ -182,7 +186,7 @@ describe("parseZoteroJson", () => {
 
   it("accepts a { items: [...] } envelope and a `literal` creator", () => {
     const outcomes = parseZoteroJson(
-      JSON.stringify({
+      toJsonText({
         items: [
           { title: "Org Report", author: [{ literal: "World Bank" }], ISBN: "9780062316097" },
         ],
@@ -192,19 +196,17 @@ describe("parseZoteroJson", () => {
   });
 
   it("picks the first checksum-valid ISBN out of a space-separated ISBN field", () => {
-    const outcomes = parseZoteroJson(
-      JSON.stringify([{ title: "t", ISBN: "garbage 9780062316097" }]),
-    );
+    const outcomes = parseZoteroJson(toJsonText([{ title: "t", ISBN: "garbage 9780062316097" }]));
     expect(expectParsed(outcomes[0]).identifiers.isbn).toBe("9780062316097");
   });
 
   it("infers the item type from the identifier when `type` is absent", () => {
     const isbnItem = expectParsed(
-      parseZoteroJson(JSON.stringify([{ title: "t", ISBN: "9780062316097" }]))[0],
+      parseZoteroJson(toJsonText([{ title: "t", ISBN: "9780062316097" }]))[0],
     );
     expect(isbnItem.type).toBe("book");
     const doiItem = expectParsed(
-      parseZoteroJson(JSON.stringify([{ title: "t", DOI: "10.1000/x" }]))[0],
+      parseZoteroJson(toJsonText([{ title: "t", DOI: "10.1000/x" }]))[0],
     );
     expect(doiItem.type).toBe("article-journal");
   });
@@ -214,9 +216,7 @@ describe("parseZoteroJson", () => {
   });
 
   it("skips a non-object item as malformed but keeps parsing the rest", () => {
-    const outcomes = parseZoteroJson(
-      JSON.stringify([42, { title: "Good", ISBN: "9780062316097" }]),
-    );
+    const outcomes = parseZoteroJson(toJsonText([42, { title: "Good", ISBN: "9780062316097" }]));
     expect(outcomes[0]).toEqual({ outcome: "skipped", reason: "malformed" });
     expect(expectParsed(outcomes[1]).title).toBe("Good");
   });
@@ -386,9 +386,9 @@ describe("format independence", () => {
     expect(fromRis).toHaveLength(2);
     // The provenance envelope differs by construction (bibtex vs ris); the CSL
     // projection drops it, so equal CSL-JSON *is* the format-independence proof.
-    for (let i = 0; i < 2; i++) {
-      expect(toCslJson(fromBibtex[i])).toEqual(toCslJson(fromRis[i]));
-    }
+    Array.forEach(Array.zip(fromBibtex, fromRis), ([bibtexRecord, risRecord]) => {
+      expect(toCslJson(bibtexRecord)).toEqual(toCslJson(risRecord));
+    });
   });
 });
 
@@ -401,9 +401,9 @@ describe("parseBibliographicFile resource bounds", () => {
   });
 
   it("caps the number of emitted records at MAX_RECORDS", () => {
-    const entries = Array.from(
-      { length: MAX_RECORDS + 50 },
-      (_, i) => `{ "title": "t${i}", "ISBN": "9780062316097" }`,
+    const entries = Array.makeBy(
+      MAX_RECORDS + 50,
+      (i) => `{ "title": "t${i}", "ISBN": "9780062316097" }`,
     ).join(",");
     const outcomes = parseBibliographicFile(`[${entries}]`, "zotero-json");
     expect(outcomes.length).toBeLessThanOrEqual(MAX_RECORDS);

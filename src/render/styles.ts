@@ -20,7 +20,14 @@ export const builtInStyles: Readonly<Record<string, CitationStyle>> = {
   vancouver: vancouverStyle,
 };
 
+/*
+ * NOT migrated to `Option`: `getStyle` is imported by
+ * `apps/api/src/biblio/reference-render.ts`, which tests the result against
+ * `undefined`. Changing the signature is a cross-package edit a later wave
+ * owns.
+ */
 /** Resolves a built-in style by id, or `undefined` when unknown. */
+// oxlint-disable-next-line effect/prefer-option-over-null -- cross-slice: apps/api consumes the plain `undefined`
 export function getStyle(id: string): CitationStyle | undefined {
   return builtInStyles[id];
 }

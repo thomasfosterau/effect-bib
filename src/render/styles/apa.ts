@@ -19,6 +19,8 @@
  * @module biblio/render/styles/apa
  */
 
+import * as Option from "effect/Option";
+import * as String from "effect/String";
 import type { BiblioRecord } from "../../record.ts";
 import {
   dispatchReference,
@@ -57,48 +59,57 @@ function editorNames(ctx: RenderContext): NameListOptions {
 /** `"Author, A. A. (2020)."` — the author + year head shared by every class. */
 function head(record: BiblioRecord, ctx: RenderContext): string {
   const names = formatNameList(record.author ?? [], authorNames(ctx));
-  const year = issuedYearText(record.issued, ctx.locale);
-  return names.length > 0 ? `${terminate(names)} (${year}).` : `(${year}).`;
+  const year = issuedYearText(Option.fromNullishOr(record.issued), ctx.locale);
+  return String.isNonEmpty(names) ? `${terminate(names)} (${year}).` : `(${year}).`;
 }
 
-/** `"(2nd ed.)"` when an edition is present, else `null`. */
-function editionSuffix(record: BiblioRecord, ctx: RenderContext): string | null {
-  return record.edition !== undefined ? `(${record.edition} ${ctx.locale.edition})` : null;
+/** `"(2nd ed.)"` when an edition is present, else `None`. */
+function editionSuffix(record: BiblioRecord, ctx: RenderContext): Option.Option<string> {
+  return record.edition !== undefined
+    ? Option.some(`(${record.edition} ${ctx.locale.edition})`)
+    : Option.none();
 }
 
-/** The trailing DOI/URL segment, or `null`. */
-function urlSuffix(record: BiblioRecord): string | null {
+/** The trailing DOI/URL segment, or `None`. */
+function urlSuffix(record: BiblioRecord): Option.Option<string> {
   return preferredUrl(record);
 }
 
 /** `"In J. Smith (Ed.), Container title (pp. 12–30)"` — the chapter's container clause. */
-function containerClause(record: BiblioRecord, ctx: RenderContext): string | null {
+function containerClause(record: BiblioRecord, ctx: RenderContext): Option.Option<string> {
   const editors = formatNameList(record.editor ?? [], editorNames(ctx));
   const label = (record.editor?.length ?? 0) > 1 ? ctx.locale.editors : ctx.locale.editor;
   const pages =
-    record.page !== undefined ? `(${pagesLabel(record.page, ctx.locale)} ${record.page})` : null;
-  const container = joinParts([record["container-title"], pages], " ");
-  if (editors.length > 0) {
-    return `${ctx.locale.in} ${editors} (${label}), ${container}`;
+    record.page !== undefined
+      ? Option.some(`(${pagesLabel(record.page, ctx.locale)} ${record.page})`)
+      : Option.none<string>();
+  const container = joinParts([Option.fromNullishOr(record["container-title"]), pages], " ");
+  if (String.isNonEmpty(editors)) {
+    return Option.some(`${ctx.locale.in} ${editors} (${label}), ${container}`);
   }
-  return container.length > 0 ? container : null;
+  return String.isNonEmpty(container) ? Option.some(container) : Option.none();
 }
 
 function book(record: BiblioRecord, ctx: RenderContext): string {
   const title =
     record.title !== undefined
-      ? terminate(joinParts([record.title, editionSuffix(record, ctx)], " "))
-      : null;
-  return joinParts([title, terminatedField(record.publisher), urlSuffix(record)], " ");
+      ? Option.some(
+          terminate(joinParts([Option.some(record.title), editionSuffix(record, ctx)], " ")),
+        )
+      : Option.none<string>();
+  return joinParts(
+    [title, terminatedField(Option.fromNullishOr(record.publisher)), urlSuffix(record)],
+    " ",
+  );
 }
 
 function chapter(record: BiblioRecord, ctx: RenderContext): string {
   const container = containerClause(record, ctx);
   return joinParts(
     [
-      terminatedField(record.title),
-      container !== null ? terminate(container) : null,
-      terminatedField(record.publisher),
+      terminatedField(Option.fromNullishOr(record.title)),
+      Option.map(container, terminate),
+      terminatedField(Option.fromNullishOr(record.publisher)),
       urlSuffix(record),
     ],
     " ",
@@ -108,13 +119,16 @@ function chapter(record: BiblioRecord, ctx: RenderContext): string {
 function article(record: BiblioRecord): string {
   const volIssue =
     record.volume !== undefined
-      ? `${record.volume}${record.issue !== undefined ? `(${record.issue})` : ""}`
-      : null;
-  const locator = joinParts([record["container-title"], volIssue, record.page], ", ");
+      ? Option.some(`${record.volume}${record.issue !== undefined ? `(${record.issue})` : ""}`)
+      : Option.none<string>();
+  const locator = joinParts(
+    [Option.fromNullishOr(record["container-title"]), volIssue, Option.fromNullishOr(record.page)],
+    ", ",
+  );
   return joinParts(
     [
-      terminatedField(record.title),
-      locator.length > 0 ? terminate(locator) : null,
+      terminatedField(Option.fromNullishOr(record.title)),
+      String.isNonEmpty(locator) ? Option.some(terminate(locator)) : Option.none<string>(),
       urlSuffix(record),
     ],
     " ",
@@ -123,7 +137,11 @@ function article(record: BiblioRecord): string {
 
 function webpage(record: BiblioRecord): string {
   return joinParts(
-    [terminatedField(record.title), terminatedField(record["container-title"]), urlSuffix(record)],
+    [
+      terminatedField(Option.fromNullishOr(record.title)),
+      terminatedField(Option.fromNullishOr(record["container-title"])),
+      urlSuffix(record),
+    ],
     " ",
   );
 }
@@ -131,9 +149,9 @@ function webpage(record: BiblioRecord): string {
 function generic(record: BiblioRecord): string {
   return joinParts(
     [
-      terminatedField(record.title),
-      terminatedField(record["container-title"]),
-      terminatedField(record.publisher),
+      terminatedField(Option.fromNullishOr(record.title)),
+      terminatedField(Option.fromNullishOr(record["container-title"])),
+      terminatedField(Option.fromNullishOr(record.publisher)),
       urlSuffix(record),
     ],
     " ",
@@ -152,7 +170,7 @@ const renderReference = dispatchReference(head, {
 function sortKey(record: BiblioRecord): string {
   const first = record.author?.[0];
   const author = first !== undefined ? sortFamily(first) : (record.title ?? "").toLowerCase();
-  const year = String(record.issued?.["date-parts"]?.[0]?.[0] ?? 0).padStart(6, "0");
+  const year = (record.issued?.["date-parts"]?.[0]?.[0] ?? 0).toString().padStart(6, "0");
   return `${author} ${year} ${(record.title ?? "").toLowerCase()}`;
 }
 

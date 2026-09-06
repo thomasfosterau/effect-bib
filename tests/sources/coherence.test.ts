@@ -11,46 +11,38 @@
  * @module tests/unit/biblio-sources-coherence
  */
 
-// This package's tsconfig deliberately carries no ambient `types` (portable
-// across Worker/Node) — these tests read fixture files at test time, so they
-// opt themselves into Node's globals rather than widening the package-wide
-// `types` array.
-/// <reference types="node" />
-
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vite-plus/test";
-import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { decodeDoi, isConfidentMatch, recordMatchInput, scoreMatch } from "@thomasfosterau/biblio";
 import { CrossrefResponse, normaliseCrossrefRecord } from "../../src/sources/crossref.ts";
-import { normaliseOpenAlexRecord, type OpenAlexWork } from "../../src/sources/openalex.ts";
-
-const fixture = (name: string): unknown =>
-  JSON.parse(readFileSync(new URL(`../fixtures/${name}`, import.meta.url), "utf-8"));
+import { normaliseOpenAlexRecord, OpenAlexWork } from "../../src/sources/openalex.ts";
+import { expectSome } from "../assert.ts";
+import crossrefRayBody from "../fixtures/crossref-ray-2004.json" with { type: "json" };
+import openAlexRayBody from "../fixtures/openalex-ray-2004.json" with { type: "json" };
 
 describe("cross-source dedup coherence: Crossref vs OpenAlex", () => {
   it("scores the same DOI'd work from both sources as a confident match", () => {
-    const doi = Option.getOrThrow(decodeDoi("10.1037/0003-066x.59.1.29"));
+    const doi = expectSome(decodeDoi("10.1037/0003-066x.59.1.29"), "a DOI");
 
-    const crossrefResponse = Schema.decodeUnknownSync(CrossrefResponse)(
-      fixture("crossref-ray-2004.json"),
+    const crossrefResponse = Schema.decodeUnknownSync(CrossrefResponse)(crossrefRayBody);
+    const crossrefRecord = expectSome(
+      normaliseCrossrefRecord(crossrefResponse, doi),
+      "a Crossref record",
     );
-    const crossrefRecord = normaliseCrossrefRecord(crossrefResponse, doi);
-    const openAlexRecord = normaliseOpenAlexRecord(
-      fixture("openalex-ray-2004.json") as OpenAlexWork,
+    const openAlexRecord = expectSome(
+      normaliseOpenAlexRecord(Schema.decodeUnknownSync(OpenAlexWork)(openAlexRayBody)),
+      "an OpenAlex record",
     );
 
-    expect(crossrefRecord).not.toBeNull();
-    expect(openAlexRecord).not.toBeNull();
     // Both sources resolved the same DOI — the identity a real ingestion
     // pipeline would already dedup on before ever reaching the fuzzy
     // scorer. The coherence proof is that the *fuzzy* title/author scorer
     // — the one that runs when records disagree on identifier — also
     // agrees, independent of that shared DOI.
-    expect(crossrefRecord!.identifiers.doi).toBe(openAlexRecord!.identifiers.doi);
+    expect(crossrefRecord.identifiers.doi).toBe(openAlexRecord.identifiers.doi);
 
-    const incoming = recordMatchInput(crossrefRecord!);
-    const candidate = recordMatchInput(openAlexRecord!);
+    const incoming = recordMatchInput(crossrefRecord);
+    const candidate = recordMatchInput(openAlexRecord);
     const score = scoreMatch(incoming, candidate);
 
     expect(isConfidentMatch(score)).toBe(true);

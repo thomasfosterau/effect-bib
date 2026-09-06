@@ -15,6 +15,7 @@
  * @module biblio/render/types
  */
 
+import type * as Option from "effect/Option";
 import type { BiblioRecord } from "../record.ts";
 
 /**
@@ -88,10 +89,10 @@ export interface RenderedEntry {
   /** 1-based position in the rendered (sorted or citation-ordered) list. */
   readonly index: number;
   /**
-   * The list label for numeric styles (`"1."`), or `null` for author-date
-   * styles (which are unlabelled).
+   * The list label for numeric styles (`"1."`), or `Option.none()` for
+   * author-date styles (which are unlabelled).
    */
-  readonly label: string | null;
+  readonly label: Option.Option<string>;
   /** The formatted reference, plain text. */
   readonly text: string;
 }

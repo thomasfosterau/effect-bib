@@ -27,34 +27,34 @@ import {
   yearOf,
   type BiblioRecord,
 } from "@thomasfosterau/biblio";
+import { expectSome } from "./assert.ts";
 
-const doiOf = (raw: string) => Option.getOrThrow(decodeDoi(raw));
-const issnOf = (raw: string) => Option.getOrThrow(decodeIssn(raw));
+const doiOf = (raw: string) => expectSome(decodeDoi(raw), "a DOI");
+const issnOf = (raw: string) => expectSome(decodeIssn(raw), "an ISSN");
 
 // ── Surviving sanitisers ──────────────────────────────────────────────
 
 describe("sanitiseText", () => {
   it("trims and collapses internal whitespace", () => {
-    expect(sanitiseText("  hello   world \n")).toBe("hello world");
+    expect(sanitiseText("  hello   world \n")).toStrictEqual(Option.some("hello world"));
   });
 
-  it("returns null for whitespace-only or non-string input", () => {
-    expect(sanitiseText("   ")).toBeNull();
-    expect(sanitiseText(undefined)).toBeNull();
-    expect(sanitiseText(42)).toBeNull();
+  it("returns None for whitespace-only or non-string input", () => {
+    expect(sanitiseText("   ")).toStrictEqual(Option.none());
+    expect(sanitiseText(undefined)).toStrictEqual(Option.none());
+    expect(sanitiseText(42)).toStrictEqual(Option.none());
   });
 
   it("clamps an over-long value to the max field length", () => {
-    const result = sanitiseText("x".repeat(MAX_TEXT_FIELD_LENGTH + 500));
-    expect(result).not.toBeNull();
-    expect(result!.length).toBe(MAX_TEXT_FIELD_LENGTH);
+    const result = expectSome(sanitiseText("x".repeat(MAX_TEXT_FIELD_LENGTH + 500)));
+    expect(result.length).toBe(MAX_TEXT_FIELD_LENGTH);
   });
 });
 
 describe("sanitiseYear", () => {
   it("accepts a plausible integer year as a number or string", () => {
-    expect(sanitiseYear(2003)).toBe(2003);
-    expect(sanitiseYear("1998")).toBe(1998);
+    expect(sanitiseYear(2003)).toStrictEqual(Option.some(2003));
+    expect(sanitiseYear("1998")).toStrictEqual(Option.some(1998));
   });
 
   it.each([
@@ -64,7 +64,7 @@ describe("sanitiseYear", () => {
     ["non-numeric text", "not a year"],
     ["null", null],
   ])("rejects %s", (_label, value) => {
-    expect(sanitiseYear(value)).toBeNull();
+    expect(sanitiseYear(value)).toStrictEqual(Option.none());
   });
 });
 

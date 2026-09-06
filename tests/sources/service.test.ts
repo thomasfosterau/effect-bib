@@ -13,13 +13,6 @@
  * @module tests/unit/biblio-sources-service
  */
 
-// This package's tsconfig deliberately carries no ambient `types` (portable
-// across Worker/Node) — these tests read fixture files at test time, so they
-// opt themselves into Node's globals rather than widening the package-wide
-// `types` array.
-/// <reference types="node" />
-
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vite-plus/test";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
@@ -32,14 +25,11 @@ import {
 } from "@thomasfosterau/biblio";
 import { expectFailureInstanceOf, runTest } from "@thomasfosterau/test-helpers/effect";
 import { stubRouter } from "./stub-http.ts";
-
-const fixture = (name: string): unknown =>
-  JSON.parse(readFileSync(new URL(`../fixtures/${name}`, import.meta.url), "utf-8"));
-
-const ulyssesEdition = fixture("openlibrary-ulysses-edition.json");
-const ulyssesAuthor = fixture("openlibrary-ulysses-author.json");
-const rayResponse = fixture("crossref-ray-2004.json");
-const searchResponse = fixture("openalex-search-sapiens.json");
+import { expectSome } from "../assert.ts";
+import rayResponse from "../fixtures/crossref-ray-2004.json" with { type: "json" };
+import searchResponse from "../fixtures/openalex-search-sapiens.json" with { type: "json" };
+import ulyssesAuthor from "../fixtures/openlibrary-ulysses-author.json" with { type: "json" };
+import ulyssesEdition from "../fixtures/openlibrary-ulysses-edition.json" with { type: "json" };
 
 /**
  * Builds the `BiblioLookup` program over a stub layer, **without running
@@ -76,7 +66,7 @@ describe("BiblioLookup.byIsbnRecord", () => {
     const result = await runTest(
       withLookup(layer, (lookup) => lookup.byIsbnRecord("978-0-19-953567-5")),
     );
-    const record = Option.getOrThrow(result);
+    const record = expectSome(result, "a record");
     expect(record.type).toBe("book");
     expect(record.title).toBe("Ulysses");
     expect(record.identifiers.isbn).toBe("9780199535675");
@@ -120,7 +110,7 @@ describe("BiblioLookup.byDoiRecord", () => {
       },
     });
     const result = await runTest(withLookup(layer, (lookup) => lookup.byDoiRecord(doi)));
-    const record = Option.getOrThrow(result);
+    const record = expectSome(result, "a record");
     expect(record.type).toBe("article-journal");
     expect(record.title).toBe("How the Mind Hurts and Heals the Body.");
     expect(record.identifiers.doi).toBe(doi);

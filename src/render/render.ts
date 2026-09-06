@@ -16,6 +16,9 @@
  * @module biblio/render/render
  */
 
+import * as Array from "effect/Array";
+import * as Option from "effect/Option";
+import * as Order from "effect/Order";
 import type { BiblioRecord } from "../record.ts";
 import { enLocale } from "./locale.ts";
 import type {
@@ -31,24 +34,17 @@ function resolveContext(options: RenderOptions): RenderContext {
   return { locale: options.locale ?? enLocale };
 }
 
-/** Deterministic code-unit string comparison (no locale dependence). */
-function compareStrings(a: string, b: string): number {
-  if (a < b) return -1;
-  if (a > b) return 1;
-  return 0;
-}
-
 /**
  * The records in display order: sorted by sort key for `author-date` styles,
- * left in citation order for `numeric`. `Array.prototype.sort` is stable, so
- * sort-key ties keep input order.
+ * left in citation order for `numeric`. `Array.sort` delegates to
+ * `Array.prototype.sort`, which is stable, so sort-key ties keep input order.
  */
 function orderRecords(
   records: readonly BiblioRecord[],
   style: CitationStyle,
 ): readonly BiblioRecord[] {
   if (style.category === "numeric") return records;
-  return [...records].sort((a, b) => compareStrings(style.sortKey(a), style.sortKey(b)));
+  return Array.sort(records, Order.mapInput(Order.String, style.sortKey));
 }
 
 /** Renders a single record to a formatted reference string. */
@@ -69,7 +65,7 @@ export function renderBibliography(
   const ordered = orderRecords(records, style);
   const entries: RenderedEntry[] = ordered.map((record, i) => ({
     index: i + 1,
-    label: style.category === "numeric" ? `${i + 1}.` : null,
+    label: style.category === "numeric" ? Option.some(`${i + 1}.`) : Option.none(),
     text: style.renderReference(record, ctx),
   }));
   return { style: style.id, entries };
@@ -81,6 +77,8 @@ export function renderBibliography(
  */
 export function bibliographyToText(bibliography: RenderedBibliography): string {
   return bibliography.entries
-    .map((entry) => (entry.label !== null ? `${entry.label} ${entry.text}` : entry.text))
+    .map((entry) =>
+      Option.isSome(entry.label) ? `${entry.label.value} ${entry.text}` : entry.text,
+    )
     .join("\n");
 }

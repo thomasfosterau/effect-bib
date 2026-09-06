@@ -12,7 +12,9 @@
  * @module tests/unit/biblio-identifiers
  */
 
+import * as Array from "effect/Array";
 import * as Option from "effect/Option";
+import * as Result from "effect/Result";
 import { describe, expect, it } from "vite-plus/test";
 import {
   convertIsbn10To13,
@@ -24,6 +26,7 @@ import {
   isbnForms,
   normaliseDoi,
 } from "@thomasfosterau/biblio";
+import { expectPresent, expectSome } from "./assert.ts";
 
 // ── Deterministic pseudo-random generator (dependency-free property tests) ─
 
@@ -41,30 +44,31 @@ const CHECK_CHARS = "0123456789X";
 
 /** A random string of `n` decimal digits. */
 function randomDigits(rng: () => number, n: number): string {
-  let out = "";
-  for (let i = 0; i < n; i++) out += DIGITS[Math.floor(rng() * 10)];
-  return out;
+  return Array.makeBy(n, () => DIGITS[Math.floor(rng() * 10)]).join("");
 }
 
 /**
  * Finds the single check character (`0`–`9` or `X`) that makes `body`
- * decode under `decode`, or `null` if the scheme admits none for this body.
+ * decode under `decode`, or `None` if the scheme admits none for this body.
  * Lets a checksum be exercised without duplicating its algorithm here.
  */
-function findValidCheck<T>(body: string, decode: (raw: string) => Option.Option<T>): string | null {
-  for (const check of CHECK_CHARS) {
-    if (Option.isSome(decode(body + check))) return check;
-  }
-  return null;
+function findValidCheck<T>(
+  body: string,
+  decode: (raw: string) => Option.Option<T>,
+): Option.Option<string> {
+  return Array.findFirst(CHECK_CHARS.split(""), (check) => Option.isSome(decode(body + check)));
 }
 
 /** Mutates one character of `value` to a different digit (deterministically). */
 function mutateDigit(rng: () => number, value: string): string {
-  const positions = [...value].map((c, i) => (/\d/.test(c) ? i : -1)).filter((i) => i >= 0);
-  const at = positions[Math.floor(rng() * positions.length)]!;
-  const original = value[at]!;
-  let replacement = original;
-  while (replacement === original) replacement = DIGITS[Math.floor(rng() * 10)]!;
+  const positions = Array.filterMap(value.split(""), (c, i): Result.Result<number, void> =>
+    /\d/.test(c) ? Result.succeed(i) : Result.failVoid,
+  );
+  const at = expectPresent(positions[Math.floor(rng() * positions.length)], "a digit position");
+  const original = Number(expectPresent(value[at], "a digit"));
+  // One draw, rotated forward on a collision, so the digit always changes.
+  const drawn = Math.floor(rng() * 10);
+  const replacement = String(drawn === original ? (drawn + 1) % 10 : drawn);
   return value.slice(0, at) + replacement + value.slice(at + 1);
 }
 
@@ -100,42 +104,40 @@ describe("decodeIsbn", () => {
 
   it("property: freshly-generated valid ISBN-13s decode; any single-digit mutation fails", () => {
     const rng = makeRng(0x1b7);
-    for (let n = 0; n < 200; n++) {
+    Array.forEach(Array.range(1, 200), () => {
       const isbn13 = convertIsbn10To13(`${randomDigits(rng, 9)}0`);
       expect(Option.getOrNull(decodeIsbn(isbn13))).toBe(isbn13);
       expect(Option.isNone(decodeIsbn(mutateDigit(rng, isbn13)))).toBe(true);
-    }
+    });
   });
 
   it("property: valid ISBN-10s decode to their 13-form; any single-digit mutation fails", () => {
     const rng = makeRng(0x2c8);
-    for (let n = 0; n < 200; n++) {
+    Array.forEach(Array.range(1, 200), () => {
       const isbn13 = convertIsbn10To13(`${randomDigits(rng, 9)}0`);
-      const isbn10 = convertIsbn13To10(isbn13);
-      expect(isbn10).not.toBeNull();
-      expect(Option.getOrNull(decodeIsbn(isbn10!))).toBe(isbn13);
+      const isbn10 = expectSome(convertIsbn13To10(isbn13), "an ISBN-10 form");
+      expect(Option.getOrNull(decodeIsbn(isbn10))).toBe(isbn13);
       // Mutating a body digit of the 10-form invalidates the mod-11 checksum.
-      const mutated = mutateDigit(rng, isbn10!.slice(0, 9)) + isbn10!.slice(9);
+      const mutated = mutateDigit(rng, isbn10.slice(0, 9)) + isbn10.slice(9);
       expect(Option.isNone(decodeIsbn(mutated))).toBe(true);
-    }
+    });
   });
 });
 
 describe("ISBN 10 ↔ 13 conversion", () => {
   it("round-trips a 978-prefixed ISBN through both conversions", () => {
-    expect(convertIsbn13To10("9780140449136")).toBe("0140449132");
+    expect(convertIsbn13To10("9780140449136")).toStrictEqual(Option.some("0140449132"));
     expect(convertIsbn10To13("0140449132")).toBe("9780140449136");
   });
 
-  it("returns null converting a 979-prefixed ISBN-13 to a (nonexistent) ISBN-10", () => {
+  it("returns None converting a 979-prefixed ISBN-13 to a (nonexistent) ISBN-10", () => {
     const isbn13 = convertIsbn10To13(`${randomDigits(makeRng(9), 9)}0`).replace(/^978/, "979");
-    expect(convertIsbn13To10(isbn13)).toBeNull();
+    expect(convertIsbn13To10(isbn13)).toStrictEqual(Option.none());
   });
 
   it("isbnForms exposes both canonical forms of a proven ISBN", () => {
     const isbn = decodeIsbn("9780140449136");
-    expect(Option.isSome(isbn)).toBe(true);
-    expect(isbnForms(Option.getOrThrow(isbn))).toEqual({
+    expect(isbnForms(expectSome(isbn, "an ISBN"))).toEqual({
       isbn13: "9780140449136",
       isbn10: "0140449132",
     });
@@ -146,15 +148,17 @@ describe("ISBN 10 ↔ 13 conversion", () => {
 
 describe("decodeDoi / normaliseDoi", () => {
   it("lower-cases and keeps a well-formed DOI", () => {
-    expect(normaliseDoi("10.1037/0003-066X.59.1.29")).toBe("10.1037/0003-066x.59.1.29");
+    expect(normaliseDoi("10.1037/0003-066X.59.1.29")).toStrictEqual(
+      Option.some("10.1037/0003-066x.59.1.29"),
+    );
     expect(Option.getOrNull(decodeDoi("10.1037/0003-066X.59.1.29"))).toBe(
       "10.1037/0003-066x.59.1.29",
     );
   });
 
   it("strips a doi.org resolver prefix and a doi: scheme", () => {
-    expect(normaliseDoi("https://doi.org/10.1000/182")).toBe("10.1000/182");
-    expect(normaliseDoi("doi:10.1000/182")).toBe("10.1000/182");
+    expect(normaliseDoi("https://doi.org/10.1000/182")).toStrictEqual(Option.some("10.1000/182"));
+    expect(normaliseDoi("doi:10.1000/182")).toStrictEqual(Option.some("10.1000/182"));
   });
 
   it.each([
@@ -164,17 +168,17 @@ describe("decodeDoi / normaliseDoi", () => {
     ["contains a space", "10.1000/ xyz"],
     ["a path-traversal attempt", "10.1000/../../secret"],
   ])("rejects %s", (_label, value) => {
-    expect(normaliseDoi(value)).toBeNull();
+    expect(normaliseDoi(value)).toStrictEqual(Option.none());
     expect(Option.isNone(decodeDoi(value))).toBe(true);
   });
 
   it("rejects a DOI containing a control character", () => {
     const withControl = `10.1000/x${String.fromCharCode(0x07)}y`;
-    expect(normaliseDoi(withControl)).toBeNull();
+    expect(normaliseDoi(withControl)).toStrictEqual(Option.none());
   });
 
   it("rejects an over-long DOI", () => {
-    expect(normaliseDoi(`10.1000/${"a".repeat(300)}`)).toBeNull();
+    expect(normaliseDoi(`10.1000/${"a".repeat(300)}`)).toStrictEqual(Option.none());
   });
 });
 
@@ -197,17 +201,15 @@ describe("decodeIssn", () => {
 
   it("property: generated valid ISSNs decode; any single-digit mutation fails", () => {
     const rng = makeRng(0x3d9);
-    let generated = 0;
-    for (let n = 0; n < 300 && generated < 150; n++) {
+    const generated = Array.reduce(Array.range(1, 300), 0, (count) => {
+      if (count >= 150) return count;
       const body = randomDigits(rng, 7);
       const check = findValidCheck(body, decodeIssn);
-      if (check === null) continue;
-      generated++;
-      const issn = body + check;
-      expect(Option.isSome(decodeIssn(issn))).toBe(true);
-      const mutated = mutateDigit(rng, body) + check;
-      expect(Option.isNone(decodeIssn(mutated))).toBe(true);
-    }
+      if (Option.isNone(check)) return count;
+      expect(Option.isSome(decodeIssn(body + check.value))).toBe(true);
+      expect(Option.isNone(decodeIssn(mutateDigit(rng, body) + check.value))).toBe(true);
+      return count + 1;
+    });
     expect(generated).toBeGreaterThan(0);
   });
 });
@@ -229,17 +231,15 @@ describe("decodeOrcid", () => {
 
   it("property: generated valid ORCIDs decode; any single-digit mutation fails", () => {
     const rng = makeRng(0x4ea);
-    let generated = 0;
-    for (let n = 0; n < 400 && generated < 150; n++) {
+    const generated = Array.reduce(Array.range(1, 400), 0, (count) => {
+      if (count >= 150) return count;
       const body = randomDigits(rng, 15);
       const check = findValidCheck(body, decodeOrcid);
-      if (check === null) continue;
-      generated++;
-      const orcid = body + check;
-      expect(Option.isSome(decodeOrcid(orcid))).toBe(true);
-      const mutated = mutateDigit(rng, body) + check;
-      expect(Option.isNone(decodeOrcid(mutated))).toBe(true);
-    }
+      if (Option.isNone(check)) return count;
+      expect(Option.isSome(decodeOrcid(body + check.value))).toBe(true);
+      expect(Option.isNone(decodeOrcid(mutateDigit(rng, body) + check.value))).toBe(true);
+      return count + 1;
+    });
     expect(generated).toBeGreaterThan(0);
   });
 });

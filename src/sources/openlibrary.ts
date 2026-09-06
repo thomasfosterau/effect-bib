@@ -17,8 +17,11 @@
  * @module biblio/sources/openlibrary
  */
 
+import * as Array from "effect/Array";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
+import * as Predicate from "effect/Predicate";
+import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 import { HttpClient } from "effect/unstable/http";
 import { decodeIsbn, type Isbn } from "../identifiers.ts";
@@ -74,69 +77,57 @@ export type OpenLibraryAuthor = typeof OpenLibraryAuthor.Type;
 
 /** Extracts the `/authors/OL...A` keys referenced by an edition record. */
 export function openLibraryAuthorKeys(edition: OpenLibraryEdition): readonly string[] {
-  const refs = edition.authors ?? [];
-  const keys: string[] = [];
-  for (const ref of refs) {
-    if (keys.length >= MAX_AUTHORS) break;
-    if (typeof ref === "object" && ref !== null && "key" in ref) {
-      const key = (ref as { key: unknown }).key;
-      // Author keys look like `/authors/OL12345A`; the strict class is the
-      // SSRF guard for the follow-up author lookup URL.
-      if (typeof key === "string" && /^\/authors\/OL\d+A$/.test(key)) {
-        keys.push(key);
-      }
-    }
-  }
-  return keys;
+  return Array.filterMap(edition.authors ?? [], (ref): Result.Result<string, void> => {
+    if (!Predicate.isObjectOrArray(ref) || !("key" in ref)) return Result.failVoid;
+    const key = (ref as { key: unknown }).key;
+    // Author keys look like `/authors/OL12345A`; the strict class is the
+    // SSRF guard for the follow-up author lookup URL.
+    return Predicate.isString(key) && /^\/authors\/OL\d+A$/.test(key)
+      ? Result.succeed(key)
+      : Result.failVoid;
+  }).slice(0, MAX_AUTHORS);
 }
 
 /** Reads the OpenLibrary author `name` field, sanitised. */
-export function openLibraryAuthorName(author: OpenLibraryAuthor): string | null {
+export function openLibraryAuthorName(author: OpenLibraryAuthor): Option.Option<string> {
   return sanitiseText(author.name);
 }
 
 /** Extracts a {@link CslDate} carrying just the year from a free-text `publish_date` like "Jan 2003". */
-function dateFromPublishDate(value: unknown): CslDate | undefined {
-  const text = typeof value === "string" ? value : null;
-  if (text === null) return undefined;
-  const match = text.match(/(\d{4})/);
-  const year = match ? sanitiseYear(match[1]) : null;
-  return year === null ? undefined : dateFromYear(year);
+function dateFromPublishDate(value: unknown): Option.Option<CslDate> {
+  if (!Predicate.isString(value)) return Option.none();
+  const match = value.match(/(\d{4})/);
+  const year = match ? sanitiseYear(match[1]) : Option.none<number>();
+  return Option.isNone(year) ? Option.none() : Option.some(dateFromYear(year.value));
 }
 
 /** Picks the first checksum-valid ISBN literal echoed by the upstream 13/10 arrays, else the requested one. */
 function pickIsbn(edition: OpenLibraryEdition, requested: Isbn): Isbn {
-  for (const list of [edition.isbn_13, edition.isbn_10]) {
-    for (const v of list ?? []) {
-      if (typeof v !== "string") continue;
-      const decoded = decodeIsbn(v);
-      if (Option.isSome(decoded)) return decoded.value;
-    }
-  }
-  return requested;
+  const candidates = Array.flatMap([edition.isbn_13, edition.isbn_10], (list) => list ?? []);
+  const decoded = Array.filterMap(candidates, (value): Result.Result<Isbn, void> => {
+    if (!Predicate.isString(value)) return Result.failVoid;
+    const isbn = decodeIsbn(value);
+    return Option.isNone(isbn) ? Result.failVoid : Result.succeed(isbn.value);
+  });
+  return Option.getOrElse(Array.head(decoded), () => requested);
 }
 
 /** Bounded, sanitised subject strings for the `extra.subject` passthrough. */
-function subjectList(values: readonly unknown[] | undefined): readonly string[] | undefined {
-  if (!values) return undefined;
-  const subjects: string[] = [];
-  for (const v of values) {
-    if (subjects.length >= MAX_SUBJECTS) break;
-    const s = sanitiseText(v);
-    if (s !== null) subjects.push(s);
-  }
-  return subjects.length > 0 ? subjects : undefined;
+function subjectList(values: Option.Option<readonly unknown[]>): Option.Option<readonly string[]> {
+  if (Option.isNone(values)) return Option.none();
+  const subjects = Array.filterMap(values.value, (value): Result.Result<string, void> => {
+    const text = sanitiseText(value);
+    return Option.isNone(text) ? Result.failVoid : Result.succeed(text.value);
+  }).slice(0, MAX_SUBJECTS);
+  return Array.isArrayNonEmpty(subjects) ? Option.some(subjects) : Option.none();
 }
 
 /** Structures a bounded list of author display names into {@link CslName}s. */
 function structuredAuthors(names: readonly string[]): CslName[] {
-  const authors: CslName[] = [];
-  for (const name of names) {
-    if (authors.length >= MAX_AUTHORS) break;
+  return Array.filterMap(names, (name): Result.Result<CslName, void> => {
     const parsed = parsePersonName(name);
-    if (parsed !== null) authors.push(parsed);
-  }
-  return authors;
+    return parsed === null ? Result.failVoid : Result.succeed(parsed);
+  }).slice(0, MAX_AUTHORS);
 }
 
 /**
@@ -145,33 +136,35 @@ function structuredAuthors(names: readonly string[]): CslName[] {
  * already-validated {@link Isbn} the lookup was keyed by; it is the
  * fallback identifier when the upstream body echoes none of its own.
  *
- * Returns `null` when the record has no usable title — we won't emit a
+ * `Option.none()` when the record has no usable title — we won't emit a
  * titleless book.
  */
 export function normaliseOpenLibraryRecord(
   edition: OpenLibraryEdition,
   requestedIsbn: Isbn,
   authorNames: readonly string[],
-): BiblioRecord | null {
+): Option.Option<BiblioRecord> {
   const baseTitle = sanitiseText(edition.title);
-  if (baseTitle === null) return null;
+  if (Option.isNone(baseTitle)) return Option.none();
   const subtitle = sanitiseText(edition.subtitle);
-  const title = subtitle ? `${baseTitle}: ${subtitle}`.slice(0, MAX_TEXT_FIELD_LENGTH) : baseTitle;
+  const title = Option.isNone(subtitle)
+    ? baseTitle.value
+    : `${baseTitle.value}: ${subtitle.value}`.slice(0, MAX_TEXT_FIELD_LENGTH);
 
   const isbn = pickIsbn(edition, requestedIsbn);
-  const publisher = firstString(edition.publishers);
-  const publisherPlace = firstString(edition.publish_places);
+  const publisher = firstString(Option.fromNullishOr(edition.publishers));
+  const publisherPlace = firstString(Option.fromNullishOr(edition.publish_places));
   const issued = dateFromPublishDate(edition.publish_date);
   const author = structuredAuthors(authorNames);
-  const subject = subjectList(edition.subjects);
+  const subject = subjectList(Option.fromNullishOr(edition.subjects));
 
-  return {
+  return Option.some({
     type: "book",
     title,
-    ...(publisher !== null ? { publisher } : {}),
-    ...(publisherPlace !== null ? { "publisher-place": publisherPlace } : {}),
-    ...(author.length > 0 ? { author } : {}),
-    ...(issued !== undefined ? { issued } : {}),
+    ...(Option.isSome(publisher) ? { publisher: publisher.value } : {}),
+    ...(Option.isSome(publisherPlace) ? { "publisher-place": publisherPlace.value } : {}),
+    ...(Array.isReadonlyArrayNonEmpty(author) ? { author } : {}),
+    ...(Option.isSome(issued) ? { issued: issued.value } : {}),
     identifiers: { isbn },
     provenance: {
       source: "openlibrary",
@@ -181,8 +174,8 @@ export function normaliseOpenLibraryRecord(
         endpoint: `${OPENLIBRARY_BASE}/isbn/${requestedIsbn}.json`,
       },
     },
-    ...(subject !== undefined ? { extra: { subject } } : {}),
-  };
+    ...(Option.isSome(subject) ? { extra: { subject: subject.value } } : {}),
+  });
 }
 
 /**
@@ -203,16 +196,19 @@ export const lookupOpenLibraryByIsbn = (
     const edition = yield* ol(`/isbn/${isbn}.json`, OpenLibraryEdition);
     if (Option.isNone(edition)) return Option.none();
 
-    const authorNames: string[] = [];
-    for (const key of openLibraryAuthorKeys(edition.value)) {
-      if (authorNames.length >= MAX_AUTHORS) break;
-      // `key` is validated `/authors/OL\d+A` — safe in the path.
-      const author = yield* ol(`${key}.json`, OpenLibraryAuthor);
-      if (Option.isSome(author)) {
-        const name = openLibraryAuthorName(author.value);
-        if (name !== null) authorNames.push(name);
-      }
-    }
+    // Sequential (`concurrency: 1`): OpenLibrary is a courtesy-rate-limited
+    // public API, and the author lookups must stay in edition order.
+    // `key` is validated `/authors/OL\d+A` — safe in the path.
+    const authors = yield* Effect.forEach(
+      openLibraryAuthorKeys(edition.value),
+      (key) => ol(`${key}.json`, OpenLibraryAuthor),
+      { concurrency: 1 },
+    );
+    const authorNames = Array.filterMap(authors, (author): Result.Result<string, void> => {
+      if (Option.isNone(author)) return Result.failVoid;
+      const name = openLibraryAuthorName(author.value);
+      return Option.isNone(name) ? Result.failVoid : Result.succeed(name.value);
+    });
 
-    return Option.fromNullishOr(normaliseOpenLibraryRecord(edition.value, isbn, authorNames));
+    return normaliseOpenLibraryRecord(edition.value, isbn, authorNames);
   });

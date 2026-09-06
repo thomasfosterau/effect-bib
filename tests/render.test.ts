@@ -12,7 +12,10 @@
  * @module tests/unit/biblio-render
  */
 
+import * as Array from "effect/Array";
 import * as Option from "effect/Option";
+import * as Order from "effect/Order";
+import * as Record from "effect/Record";
 import { describe, expect, it } from "vite-plus/test";
 import {
   apaStyle,
@@ -45,17 +48,15 @@ import {
   terminate,
   vancouverStyle,
 } from "@thomasfosterau/biblio";
+import { expectPresent, expectSome } from "./assert.ts";
 
 // ── Test data builders (kept trivial for a low CRAP score) ────────────
 
-const cslName = (family: string, given: string, extra: Record<string, unknown> = {}): CslName => {
-  const name = makeCslName({ family, given, ...extra });
-  if (name === null) throw new Error("test name builder produced an empty name");
-  return name;
-};
+const cslName = (family: string, given: string, extra: Record<string, unknown> = {}): CslName =>
+  expectPresent(makeCslName({ family, given, ...extra }), "a non-empty name");
 
-const doi = (raw: string) => Option.getOrThrow(decodeDoi(raw));
-const isbn = (raw: string) => Option.getOrThrow(decodeIsbn(raw));
+const doi = (raw: string) => expectSome(decodeDoi(raw), "a DOI");
+const isbn = (raw: string) => expectSome(decodeIsbn(raw), "an ISBN");
 
 const book: BiblioRecord = {
   type: "book",
@@ -219,7 +220,7 @@ describe("author elision", () => {
   const many: BiblioRecord = {
     type: "article-journal",
     title: "A large collaboration study",
-    author: Array.from({ length: 8 }, (_, i) => cslName(`Author${i}`, `First${i}`)),
+    author: Array.makeBy(8, (i) => cslName(`Author${i}`, `First${i}`)),
     "container-title": "Big Science",
     volume: "1",
     page: "1-9",
@@ -372,20 +373,28 @@ describe("getStyle / builtInStyles", () => {
   });
 
   it("exposes both built-in styles", () => {
-    expect(Object.keys(builtInStyles).sort()).toEqual(["apa", "vancouver"]);
+    expect(Array.sort(Record.keys(builtInStyles), Order.String)).toEqual(["apa", "vancouver"]);
   });
 });
 
 // ── format.ts primitives ──────────────────────────────────────────────
 
 describe("compact / joinParts", () => {
-  it("drops null, undefined, and blank parts and trims", () => {
-    expect(compact(["a", null, undefined, "  ", " b "])).toEqual(["a", "b"]);
+  it("drops absent and blank parts and trims", () => {
+    expect(
+      compact([
+        Option.some("a"),
+        Option.none(),
+        Option.none(),
+        Option.some("  "),
+        Option.some(" b "),
+      ]),
+    ).toEqual(["a", "b"]);
   });
 
   it("joins the surviving parts with a separator", () => {
-    expect(joinParts(["a", null, "b"], ", ")).toBe("a, b");
-    expect(joinParts([null, undefined], " ")).toBe("");
+    expect(joinParts([Option.some("a"), Option.none(), Option.some("b")], ", ")).toBe("a, b");
+    expect(joinParts([Option.none(), Option.none()], " ")).toBe("");
   });
 });
 
@@ -434,8 +443,10 @@ describe("familyName / sortFamily", () => {
   });
 
   it("sorts an organisational (literal) name by its literal", () => {
-    const org = makeCslName({ literal: "World Health Organization" });
-    if (org === null) throw new Error("literal name should not be empty");
+    const org = expectPresent(
+      makeCslName({ literal: "World Health Organization" }),
+      "a literal name",
+    );
     expect(sortFamily(org)).toBe("world health organization");
   });
 });
@@ -454,8 +465,7 @@ describe("formatOneName", () => {
   };
 
   it("renders a literal name verbatim", () => {
-    const org = makeCslName({ literal: "OpenAI" });
-    if (org === null) throw new Error("literal name should not be empty");
+    const org = expectPresent(makeCslName({ literal: "OpenAI" }), "a literal name");
     expect(formatOneName(org, apaOpts)).toBe("OpenAI");
   });
 
@@ -470,14 +480,12 @@ describe("formatOneName", () => {
   });
 
   it("renders a family-only name", () => {
-    const n = makeCslName({ family: "Aristotle" });
-    if (n === null) throw new Error("family name should not be empty");
+    const n = expectPresent(makeCslName({ family: "Aristotle" }), "a family name");
     expect(formatOneName(n, apaOpts)).toBe("Aristotle");
   });
 
   it("renders a given-only name", () => {
-    const n = makeCslName({ given: "Cher" });
-    if (n === null) throw new Error("given name should not be empty");
+    const n = expectPresent(makeCslName({ given: "Cher" }), "a given name");
     expect(formatOneName(n, apaOpts)).toBe("C.");
   });
 
@@ -499,7 +507,7 @@ describe("formatNameList", () => {
     displayBeforeEtAl: 2,
     etAl: "et al.",
   };
-  const names = (n: number) => Array.from({ length: n }, (_, i) => cslName(`Fam${i}`, `Giv${i}`));
+  const names = (n: number) => Array.makeBy(n, (i) => cslName(`Fam${i}`, `Giv${i}`));
 
   it("returns empty string for no names", () => {
     expect(formatNameList([], opts)).toBe("");
@@ -520,11 +528,11 @@ describe("formatNameList", () => {
 
 describe("issuedYearText", () => {
   it("returns the year of the issued date", () => {
-    expect(issuedYearText(dateFromYear(1984), enLocale)).toBe("1984");
+    expect(issuedYearText(Option.some(dateFromYear(1984)), enLocale)).toBe("1984");
   });
 
   it("returns the no-date term when the date is absent", () => {
-    expect(issuedYearText(undefined, enLocale)).toBe("n.d.");
+    expect(issuedYearText(Option.none(), enLocale)).toBe("n.d.");
   });
 });
 
@@ -544,19 +552,19 @@ describe("doiUrl / preferredUrl", () => {
   });
 
   it("prefers an explicit URL", () => {
-    expect(preferredUrl({ URL: "https://example.com", identifiers: {} })).toBe(
-      "https://example.com",
+    expect(preferredUrl({ URL: "https://example.com", identifiers: {} })).toStrictEqual(
+      Option.some("https://example.com"),
     );
   });
 
   it("falls back to a DOI resolver URL", () => {
-    expect(preferredUrl({ identifiers: { doi: doi("10.1234/jsb.2004.0043") } })).toBe(
-      "https://doi.org/10.1234/jsb.2004.0043",
+    expect(preferredUrl({ identifiers: { doi: doi("10.1234/jsb.2004.0043") } })).toStrictEqual(
+      Option.some("https://doi.org/10.1234/jsb.2004.0043"),
     );
   });
 
-  it("returns null when neither is present", () => {
-    expect(preferredUrl({ identifiers: {} })).toBeNull();
+  it("returns None when neither is present", () => {
+    expect(preferredUrl({ identifiers: {} })).toStrictEqual(Option.none());
   });
 });
 
@@ -583,11 +591,11 @@ describe("renderBibliography output shape", () => {
   it("numbers numeric-style entries and leaves author-date entries unlabelled", () => {
     const numeric = renderBibliography(mixed, { style: vancouverStyle });
     expect(numeric.style).toBe("vancouver");
-    expect(numeric.entries[0].label).toBe("1.");
+    expect(numeric.entries[0].label).toStrictEqual(Option.some("1."));
     expect(numeric.entries[0].index).toBe(1);
 
     const dated = renderBibliography(mixed, { style: apaStyle });
-    expect(dated.entries[0].label).toBeNull();
+    expect(dated.entries[0].label).toStrictEqual(Option.none());
   });
 });
 

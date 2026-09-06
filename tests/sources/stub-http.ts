@@ -9,6 +9,7 @@
 
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Schema from "effect/Schema";
 import { FetchHttpClient, HttpClient } from "effect/unstable/http";
 
 export interface StubRoute {
@@ -41,17 +42,18 @@ export function stubRouter(routes: Record<string, StubRoute>): {
   readonly layer: Layer.Layer<HttpClient.HttpClient>;
 } {
   const urls: string[] = [];
+  const toJsonText = Schema.encodeSync(Schema.fromJsonString(Schema.Unknown));
   const fetch: typeof globalThis.fetch = async (input, init) => {
     const request = new Request(input, init);
     urls.push(request.url);
     const route = routes[request.url];
     if (!route) {
-      return new Response(JSON.stringify({ error: "not found" }), {
+      return new Response(toJsonText({ error: "not found" }), {
         status: 404,
         headers: { "content-type": "application/json" },
       });
     }
-    return new Response(JSON.stringify(route.body), {
+    return new Response(toJsonText(route.body), {
       status: route.status,
       headers: { "content-type": "application/json" },
     });

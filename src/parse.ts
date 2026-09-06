@@ -34,7 +34,15 @@
  * @module biblio/parse
  */
 
+import * as Array from "effect/Array";
+import * as Match from "effect/Match";
+import * as MutableHashMap from "effect/MutableHashMap";
 import * as Option from "effect/Option";
+import * as Predicate from "effect/Predicate";
+import * as Record from "effect/Record";
+import * as Result from "effect/Result";
+import * as Schema from "effect/Schema";
+import * as String from "effect/String";
 import {
   decodeDoi,
   decodeIsbn,
@@ -110,16 +118,13 @@ export const MAX_INPUT_LENGTH = 8_000_000;
  */
 export function parseBibliographicFile(content: string, format: ImportFormat): ParseOutcome[] {
   if (content.length > MAX_INPUT_LENGTH) return [];
-  switch (format) {
-    case "bibtex":
-      return parseBibtex(content);
-    case "zotero-json":
-      return parseZoteroJson(content);
-    case "csv":
-      return parseCsv(content);
-    case "ris":
-      return parseRis(content);
-  }
+  return Match.value(format).pipe(
+    Match.when("bibtex", () => parseBibtex(content)),
+    Match.when("zotero-json", () => parseZoteroJson(content)),
+    Match.when("csv", () => parseCsv(content)),
+    Match.when("ris", () => parseRis(content)),
+    Match.exhaustive,
+  );
 }
 
 // ── Shared record assembly ────────────────────────────────────────────
@@ -130,8 +135,8 @@ export function parseBibliographicFile(content: string, format: ImportFormat): P
  * values are still raw — {@link toOutcome} runs the decoders / sanitisers.
  */
 interface RawFields {
-  /** The CSL item type, or `undefined` to infer it from the identifier. */
-  readonly type?: CslItemType | undefined;
+  /** The CSL item type, or `Option.none()` to infer it from the identifier. */
+  readonly type: Option.Option<CslItemType>;
   readonly title: unknown;
   readonly subtitle?: unknown;
   readonly year?: unknown;
@@ -147,9 +152,9 @@ interface RawFields {
   readonly editors?: readonly CslName[];
 }
 
-/** Decodes a raw value through a branded-identifier decoder, or `null`. */
-function decodeId<T>(decode: (raw: string) => Option.Option<T>, value: unknown): T | null {
-  return typeof value === "string" ? Option.getOrNull(decode(value)) : null;
+/** Decodes a raw value through a branded-identifier decoder, or `None`. */
+function decodeId<T>(decode: (raw: string) => Option.Option<T>, value: unknown): Option.Option<T> {
+  return Predicate.isString(value) ? decode(value) : Option.none();
 }
 
 /** The subset of CSL string variables the parsers populate. */
@@ -165,21 +170,26 @@ type ParserStringVar = "publisher" | "container-title" | "volume" | "issue" | "p
  */
 function toOutcome(fields: RawFields, source: ProvenanceSource): ParseOutcome {
   const title = sanitiseTitle(fields.title, fields.subtitle);
-  if (title === null) return { outcome: "skipped", reason: "no-title" };
+  if (Option.isNone(title)) return { outcome: "skipped", reason: "no-title" };
+  const year = sanitiseYear(fields.year);
 
   const isbn = decodeId<Isbn>(decodeIsbn, fields.isbn);
   const doi = decodeId<Doi>(decodeDoi, fields.doi);
   const issn = decodeId<Issn>(decodeIssn, fields.issn);
-  if (isbn === null && doi === null) return { outcome: "skipped", reason: "no-identifier" };
+  if (Option.isNone(isbn) && Option.isNone(doi)) {
+    return { outcome: "skipped", reason: "no-identifier" };
+  }
 
   const record: BiblioRecord = {
-    type: fields.type ?? (isbn !== null ? "book" : "article-journal"),
-    title,
+    type: Option.isSome(fields.type)
+      ? fields.type.value
+      : Option.isSome(isbn)
+        ? "book"
+        : "article-journal",
+    title: title.value,
     ...collectStringVars(fields),
     ...collectContributors(fields),
-    ...(sanitiseYear(fields.year) !== null
-      ? { issued: dateFromYear(sanitiseYear(fields.year)!) }
-      : {}),
+    ...(Option.isNone(year) ? {} : { issued: dateFromYear(year.value) }),
     identifiers: assembleIdentifiers(isbn, doi, issn),
     provenance: { source },
   };
@@ -188,14 +198,14 @@ function toOutcome(fields: RawFields, source: ProvenanceSource): ParseOutcome {
 
 /** Assembles the validated identifier sub-record from the decoded values. */
 function assembleIdentifiers(
-  isbn: Isbn | null,
-  doi: Doi | null,
-  issn: Issn | null,
+  isbn: Option.Option<Isbn>,
+  doi: Option.Option<Doi>,
+  issn: Option.Option<Issn>,
 ): RecordIdentifiers {
   return {
-    ...(isbn !== null ? { isbn } : {}),
-    ...(doi !== null ? { doi } : {}),
-    ...(issn !== null ? { issn } : {}),
+    ...(Option.isSome(isbn) ? { isbn: isbn.value } : {}),
+    ...(Option.isSome(doi) ? { doi: doi.value } : {}),
+    ...(Option.isSome(issn) ? { issn: issn.value } : {}),
   };
 }
 
@@ -214,8 +224,10 @@ function collectStringVars(fields: RawFields): Partial<Record<ParserStringVar, s
 function collectContributors(fields: RawFields): Partial<Pick<BiblioRecord, "author" | "editor">> {
   const editors = fields.editors ?? [];
   return {
-    ...(fields.names.length > 0 ? { author: fields.names.slice(0, MAX_AUTHORS) } : {}),
-    ...(editors.length > 0 ? { editor: editors.slice(0, MAX_AUTHORS) } : {}),
+    ...(Array.isReadonlyArrayNonEmpty(fields.names)
+      ? { author: fields.names.slice(0, MAX_AUTHORS) }
+      : {}),
+    ...(Array.isReadonlyArrayNonEmpty(editors) ? { editor: editors.slice(0, MAX_AUTHORS) } : {}),
   };
 }
 
@@ -226,30 +238,27 @@ function assignString(
   value: unknown,
 ): void {
   const clean = sanitiseText(value);
-  if (clean !== null) target[key] = clean;
+  if (Option.isSome(clean)) target[key] = clean.value;
 }
 
 /**
  * Sanitises the title, folding a subtitle in the `Title: Subtitle` shape
- * the OpenLibrary normaliser uses so both import paths agree. Returns
- * `null` when there is no usable title.
+ * the OpenLibrary normaliser uses so both import paths agree.
+ * `Option.none()` when there is no usable title.
  */
-function sanitiseTitle(rawTitle: unknown, rawSubtitle: unknown): string | null {
+function sanitiseTitle(rawTitle: unknown, rawSubtitle: unknown): Option.Option<string> {
   const base = sanitiseText(rawTitle);
-  if (base === null) return null;
+  if (Option.isNone(base)) return Option.none();
   const subtitle = sanitiseText(rawSubtitle);
-  return subtitle === null ? base : sanitiseText(`${base}: ${subtitle}`);
+  return Option.isNone(subtitle) ? base : sanitiseText(`${base.value}: ${subtitle.value}`);
 }
 
 /** Structures a list of display-form names, bounded and empties dropped. */
 function structuredNames(raw: readonly string[]): CslName[] {
-  const names: CslName[] = [];
-  for (const value of raw) {
-    if (names.length >= MAX_AUTHORS) break;
+  return Array.filterMap(raw, (value): Result.Result<CslName, void> => {
     const name = parsePersonName(value);
-    if (name !== null) names.push(name);
-  }
-  return names;
+    return name === null ? Result.failVoid : Result.succeed(name);
+  }).slice(0, MAX_AUTHORS);
 }
 
 // ── BibTeX ────────────────────────────────────────────────────────────
@@ -275,6 +284,7 @@ function splitBibtexEntries(content: string): BibtexEntry[] {
   const entries: BibtexEntry[] = [];
   let i = 0;
   const n = content.length;
+  // oxlint-disable-next-line effect/imperative-loops -- character-position scanner: an `Arr.*` form needs `content.split("")`, one array element per UTF-16 unit of an input bounded only by MAX_INPUT_LENGTH (8 MB), so the rewrite is a memory-DoS regression on the exact hostile input this scanner is bounded against.
   while (i < n && entries.length < MAX_RECORDS) {
     const at = content.indexOf("@", i);
     if (at === -1) break;
@@ -291,6 +301,7 @@ function splitBibtexEntries(content: string): BibtexEntry[] {
     }
     let depth = 0;
     let j = open;
+    // oxlint-disable-next-line effect/imperative-loops -- brace-depth balancer over character positions; materialising the (MAX_INPUT_LENGTH = 8 MB) body as a character array to fold over is a memory-DoS regression, and the loop must stop at the matching `}` rather than traverse to the end.
     for (; j < n; j++) {
       const c = content[j];
       if (c === "{") depth++;
@@ -322,12 +333,13 @@ function unwrapBibtexValue(value: string): string {
 // reason: an irreducible single-pass field scanner; the depth / quote / comma
 // branches are the BibTeX value grammar and share a running cursor.
 // fallow-ignore-next-line complexity
-function parseBibtexFields(body: string): Map<string, string> {
-  const fields = new Map<string, string>();
+function parseBibtexFields(body: string): MutableHashMap.MutableHashMap<string, string> {
+  const fields = MutableHashMap.empty<string, string>();
   const firstComma = body.indexOf(",");
   if (firstComma === -1) return fields;
   let i = firstComma + 1;
   const n = body.length;
+  // oxlint-disable-next-line effect/imperative-loops -- field scanner driven by a character cursor; an `Arr.*` form needs `body.split("")`, one array element per UTF-16 unit of an entry body bounded only by MAX_INPUT_LENGTH (8 MB), so the rewrite is a memory-DoS regression.
   while (i < n) {
     const eq = body.indexOf("=", i);
     if (eq === -1) break;
@@ -335,6 +347,7 @@ function parseBibtexFields(body: string): Map<string, string> {
     let j = eq + 1;
     let depth = 0;
     let inQuote = false;
+    // oxlint-disable-next-line effect/imperative-loops -- brace/quote-depth scan over character positions; folding needs the whole (MAX_INPUT_LENGTH = 8 MB) body as a character array, and the scan must stop at the field-terminating comma rather than traverse to the end.
     while (j < n) {
       const c = body[j];
       if (c === "{") depth++;
@@ -344,16 +357,16 @@ function parseBibtexFields(body: string): Map<string, string> {
       j++;
     }
     const value = body.slice(eq + 1, j);
-    if (key.length > 0) fields.set(key, unwrapBibtexValue(value));
+    if (String.isNonEmpty(key)) MutableHashMap.set(fields, key, unwrapBibtexValue(value));
     i = j + 1;
   }
   return fields;
 }
 
 /** Splits a BibTeX name field on the ` and ` separator into display names. */
-function splitBibtexNames(raw: string | undefined): string[] {
-  if (raw === undefined) return [];
-  return raw.split(/\s+and\s+/i);
+function splitBibtexNames(raw: Option.Option<string>): string[] {
+  if (Option.isNone(raw)) return [];
+  return raw.value.split(/\s+and\s+/i);
 }
 
 /** BibTeX `@type` → CSL item type; unlisted types fall back to `document`. */
@@ -377,44 +390,45 @@ function bibtexType(kind: string): CslItemType {
 
 /** Parses a BibTeX document into per-entry {@link ParseOutcome}s. */
 export function parseBibtex(content: string): ParseOutcome[] {
-  const outcomes: ParseOutcome[] = [];
-  for (const entry of splitBibtexEntries(content)) {
-    if (outcomes.length >= MAX_RECORDS) break;
+  return Array.map(splitBibtexEntries(content).slice(0, MAX_RECORDS), (entry) => {
     const fields = parseBibtexFields(entry.body);
-    outcomes.push(
-      toOutcome(
-        {
-          type: bibtexType(entry.kind),
-          title: fields.get("title"),
-          subtitle: fields.get("subtitle"),
-          year: fields.get("year") ?? fields.get("date"),
-          publisher: fields.get("publisher"),
-          containerTitle: fields.get("journal") ?? fields.get("booktitle"),
-          volume: fields.get("volume"),
-          issue: fields.get("number"),
-          page: fields.get("pages"),
-          isbn: fields.get("isbn"),
-          issn: fields.get("issn"),
-          doi: fields.get("doi"),
-          names: structuredNames(splitBibtexNames(fields.get("author"))),
-          editors: structuredNames(splitBibtexNames(fields.get("editor"))),
-        },
-        "bibtex",
-      ),
+    const field = (key: string): Option.Option<string> => MutableHashMap.get(fields, key);
+    // `RawFields` carries still-untrusted values the sanitisers run over, so
+    // the `Option`s unwrap to plain values at that seam.
+    const raw = (key: string): unknown => Option.getOrUndefined(field(key));
+    return toOutcome(
+      {
+        type: Option.some(bibtexType(entry.kind)),
+        title: raw("title"),
+        subtitle: raw("subtitle"),
+        year: raw("year") ?? raw("date"),
+        publisher: raw("publisher"),
+        containerTitle: raw("journal") ?? raw("booktitle"),
+        volume: raw("volume"),
+        issue: raw("number"),
+        page: raw("pages"),
+        isbn: raw("isbn"),
+        issn: raw("issn"),
+        doi: raw("doi"),
+        names: structuredNames(splitBibtexNames(field("author"))),
+        editors: structuredNames(splitBibtexNames(field("editor"))),
+      },
+      "bibtex",
     );
-  }
-  return outcomes;
+  });
 }
 
 // ── Zotero / CSL-JSON ─────────────────────────────────────────────────
 
 /** Reads the year from a CSL `issued` date object (`date-parts` or `raw`). */
 function cslYear(entry: unknown): unknown {
-  if (typeof entry !== "object" || entry === null) return undefined;
+  if (!Predicate.isObjectOrArray(entry)) return undefined;
   const obj = entry as { "date-parts"?: unknown; raw?: unknown };
   const parts = obj["date-parts"];
-  if (Array.isArray(parts) && Array.isArray(parts[0]) && parts[0].length > 0) return parts[0][0];
-  if (typeof obj.raw === "string") {
+  if (Array.isArray(parts) && Array.isArray(parts[0]) && Array.isArrayNonEmpty(parts[0])) {
+    return parts[0][0];
+  }
+  if (Predicate.isString(obj.raw)) {
     const match = obj.raw.match(/(\d{4})/);
     return match ? match[1] : undefined;
   }
@@ -424,19 +438,18 @@ function cslYear(entry: unknown): unknown {
 /**
  * Reads the first checksum-valid ISBN from a CSL `ISBN` field, which
  * Zotero emits as either a single string or a space / comma separated
- * list. Returns the raw token so {@link toOutcome} decodes it canonically.
+ * list. Yields the raw token so {@link toOutcome} decodes it canonically.
  */
-function cslFirstIsbn(value: unknown): string | undefined {
-  if (typeof value !== "string") return undefined;
-  for (const candidate of value.split(/[\s,;]+/)) {
-    if (Option.isSome(decodeIsbn(candidate))) return candidate;
-  }
-  return undefined;
+function cslFirstIsbn(value: unknown): Option.Option<string> {
+  if (!Predicate.isString(value)) return Option.none();
+  return Array.findFirst(value.split(/[\s,;]+/), (candidate) =>
+    Option.isSome(decodeIsbn(candidate)),
+  );
 }
 
-/** Reads the first CSL item type present, or `undefined` to infer it. */
-function cslType(value: unknown): CslItemType | undefined {
-  return typeof value === "string" && isCslItemType(value) ? value : undefined;
+/** Reads the first CSL item type present, or `None` to infer it. */
+function cslType(value: unknown): Option.Option<CslItemType> {
+  return Predicate.isString(value) && isCslItemType(value) ? Option.some(value) : Option.none();
 }
 
 /**
@@ -446,24 +459,18 @@ function cslType(value: unknown): CslItemType | undefined {
  * item is skipped as `malformed`.
  */
 export function parseZoteroJson(content: string): ParseOutcome[] {
-  let data: unknown;
-  try {
-    data = JSON.parse(content);
-  } catch {
-    return [{ outcome: "skipped", reason: "malformed" }];
-  }
-  const outcomes: ParseOutcome[] = [];
-  for (const item of cslItems(data)) {
-    if (outcomes.length >= MAX_RECORDS) break;
-    outcomes.push(cslItemOutcome(item));
-  }
-  return outcomes;
+  const data = decodeJsonBody(content);
+  if (Option.isNone(data)) return [{ outcome: "skipped", reason: "malformed" }];
+  return Array.map(cslItems(data.value).slice(0, MAX_RECORDS), cslItemOutcome);
 }
+
+/** Decodes an untrusted JSON document body; `None` when the text is not JSON. */
+const decodeJsonBody = Schema.decodeUnknownOption(Schema.fromJsonString(Schema.Unknown));
 
 /** Resolves the item list from a parsed CSL body — array or `{ items }` envelope. */
 function cslItems(data: unknown): readonly unknown[] {
   if (Array.isArray(data)) return data;
-  if (typeof data === "object" && data !== null) {
+  if (Predicate.isObjectOrArray(data)) {
     const items = (data as { items?: unknown }).items;
     if (Array.isArray(items)) return items;
   }
@@ -472,7 +479,7 @@ function cslItems(data: unknown): readonly unknown[] {
 
 /** Maps one CSL item object to a {@link ParseOutcome} (non-object → malformed). */
 function cslItemOutcome(item: unknown): ParseOutcome {
-  if (typeof item !== "object" || item === null) {
+  if (!Predicate.isObjectOrArray(item)) {
     return { outcome: "skipped", reason: "malformed" };
   }
   const obj = item as Record<string, unknown>;
@@ -486,9 +493,9 @@ function cslItemOutcome(item: unknown): ParseOutcome {
       volume: obj.volume,
       issue: obj.issue,
       page: obj.page,
-      isbn: cslFirstIsbn(obj.ISBN),
-      issn: typeof obj.ISSN === "string" ? obj.ISSN : undefined,
-      doi: typeof obj.DOI === "string" ? obj.DOI : undefined,
+      isbn: Option.getOrUndefined(cslFirstIsbn(obj.ISBN)),
+      issn: Predicate.isString(obj.ISSN) ? obj.ISSN : undefined,
+      doi: Predicate.isString(obj.DOI) ? obj.DOI : undefined,
       names: readCslNameArray(obj.author),
       editors: readCslNameArray(obj.editor),
     },
@@ -507,6 +514,7 @@ function parseCsvLine(line: string): string[] {
   const cells: string[] = [];
   let cur = "";
   let inQuote = false;
+  // oxlint-disable-next-line effect/imperative-loops -- RFC-4180 cell scanner: it needs to skip the second character of a `""` escape (`i++`), which a fold cannot express, and `line.split("")` would allocate one array element per UTF-16 unit of a line bounded only by MAX_INPUT_LENGTH (8 MB) — a memory-DoS regression on a hostile single-line file.
   for (let i = 0; i < line.length; i++) {
     const c = line[i];
     if (inQuote) {
@@ -538,17 +546,18 @@ function splitCsvRows(content: string): string[] {
   const rows: string[] = [];
   let cur = "";
   let inQuote = false;
+  // oxlint-disable-next-line effect/imperative-loops -- RFC-4180 row scanner: it needs to skip the `\n` of a CRLF pair (`i++`), which a fold cannot express, and `content.split("")` would allocate one array element per UTF-16 unit of an input bounded only by MAX_INPUT_LENGTH (8 MB) — a memory-DoS regression.
   for (let i = 0; i < content.length; i++) {
     const c = content[i];
     if (c === '"') inQuote = !inQuote;
     if ((c === "\n" || c === "\r") && !inQuote) {
       if (c === "\r" && content[i + 1] === "\n") i++; // CRLF
-      if (cur.length > 0) rows.push(cur);
+      if (String.isNonEmpty(cur)) rows.push(cur);
       cur = "";
       if (rows.length > MAX_RECORDS) break;
     } else cur += c;
   }
-  if (cur.length > 0) rows.push(cur);
+  if (String.isNonEmpty(cur)) rows.push(cur);
   return rows;
 }
 
@@ -563,16 +572,22 @@ const CSV_COLUMNS = {
   doi: ["doi"],
 } as const;
 
+/** A logical CSV column name. */
+type CsvColumn = keyof typeof CSV_COLUMNS;
+
 /** Builds a logical-column → cell-index map from a header row. */
-function csvHeaderIndex(header: readonly string[]): Map<keyof typeof CSV_COLUMNS, number> {
+function csvHeaderIndex(header: readonly string[]): Partial<Record<CsvColumn, number>> {
   const normalised = header.map((h) => h.replace(/\s+/g, " ").trim().toLowerCase());
-  const index = new Map<keyof typeof CSV_COLUMNS, number>();
-  for (const key of Object.keys(CSV_COLUMNS) as (keyof typeof CSV_COLUMNS)[]) {
-    const aliases = CSV_COLUMNS[key];
-    const at = normalised.findIndex((h) => (aliases as readonly string[]).includes(h));
-    if (at !== -1) index.set(key, at);
-  }
-  return index;
+  return Record.fromEntries(
+    Array.filterMap(
+      Record.keys(CSV_COLUMNS),
+      (key): Result.Result<readonly [CsvColumn, number], void> => {
+        const aliases: readonly string[] = CSV_COLUMNS[key];
+        const at = normalised.findIndex((h) => aliases.includes(h));
+        return at === -1 ? Result.failVoid : Result.succeed([key, at] as const);
+      },
+    ),
+  );
 }
 
 /**
@@ -584,41 +599,36 @@ function csvHeaderIndex(header: readonly string[]): Map<keyof typeof CSV_COLUMNS
  */
 export function parseCsv(content: string): ParseOutcome[] {
   const rows = splitCsvRows(content);
-  if (rows.length === 0) return [];
+  if (Array.isArrayEmpty(rows)) return [];
   const header = parseCsvLine(rows[0]);
   const index = csvHeaderIndex(header);
-  if (!index.has("title")) return [{ outcome: "skipped", reason: "malformed" }];
+  if (index.title === undefined) return [{ outcome: "skipped", reason: "malformed" }];
 
-  const cell = (cells: readonly string[], key: keyof typeof CSV_COLUMNS): unknown => {
-    const at = index.get(key);
+  const cell = (cells: readonly string[], key: CsvColumn): unknown => {
+    const at = index[key];
     return at === undefined ? undefined : cells[at];
   };
 
-  const outcomes: ParseOutcome[] = [];
-  for (let r = 1; r < rows.length; r++) {
-    if (outcomes.length >= MAX_RECORDS) break;
-    const cells = parseCsvLine(rows[r]);
+  return Array.map(rows.slice(1, MAX_RECORDS + 1), (row) => {
+    const cells = parseCsvLine(row);
     const authorCell = cell(cells, "author");
-    const authorNames =
-      typeof authorCell === "string"
-        ? authorCell.split(/\s*(?:;|\sand\s)\s*/i).filter((s) => s.trim().length > 0)
-        : [];
-    outcomes.push(
-      toOutcome(
-        {
-          title: cell(cells, "title"),
-          year: cell(cells, "year"),
-          publisher: cell(cells, "publisher"),
-          isbn: cell(cells, "isbn"),
-          issn: cell(cells, "issn"),
-          doi: cell(cells, "doi"),
-          names: structuredNames(authorNames),
-        },
-        "csv",
-      ),
+    const authorNames = Predicate.isString(authorCell)
+      ? authorCell.split(/\s*(?:;|\sand\s)\s*/i).filter((s) => String.isNonEmpty(s.trim()))
+      : [];
+    return toOutcome(
+      {
+        type: Option.none(),
+        title: cell(cells, "title"),
+        year: cell(cells, "year"),
+        publisher: cell(cells, "publisher"),
+        isbn: cell(cells, "isbn"),
+        issn: cell(cells, "issn"),
+        doi: cell(cells, "doi"),
+        names: structuredNames(authorNames),
+      },
+      "csv",
     );
-  }
-  return outcomes;
+  });
 }
 
 // ── RIS ───────────────────────────────────────────────────────────────
@@ -633,53 +643,70 @@ export function parseCsv(content: string): ParseOutcome[] {
 // reason: an irreducible single-pass record scanner; the TY/ER/other-tag
 // branches are the RIS record grammar and share the running record buffer.
 // fallow-ignore-next-line complexity
-function splitRisRecords(content: string): Map<string, string[]>[] {
-  const records: Map<string, string[]>[] = [];
-  let current: Map<string, string[]> | null = null;
-  const push = (record: Map<string, string[]>): boolean => {
+function splitRisRecords(content: string): RisRecord[] {
+  const records: RisRecord[] = [];
+  /** Appends a finished record; `false` once the record cap is reached. */
+  const push = (record: RisRecord): boolean => {
     records.push(record);
     return records.length < MAX_RECORDS;
   };
-  for (const line of content.split(/\r?\n/)) {
-    const match = /^([A-Z][A-Z0-9])\s{2}-\s?(.*)$/.exec(line);
-    if (match === null) continue;
-    const tag = match[1];
-    const value = match[2].trim();
-    if (tag === "TY") {
-      if (current !== null && !push(current)) return records;
-      current = new Map<string, string[]>();
-      addRisTag(current, tag, value);
-    } else if (tag === "ER") {
-      if (current !== null) {
-        const flushed = current;
-        current = null;
-        if (!push(flushed)) return records;
+  const trailing = Array.reduce(
+    content.split(/\r?\n/),
+    { current: Option.none(), done: false } as {
+      readonly current: Option.Option<RisRecord>;
+      readonly done: boolean;
+    },
+    (state, line) => {
+      if (state.done) return state;
+      const match = /^([A-Z][A-Z0-9])\s{2}-\s?(.*)$/.exec(line);
+      if (match === null) return state;
+      const tag = match[1];
+      const value = match[2].trim();
+      if (tag === "TY") {
+        if (Option.isSome(state.current) && !push(state.current.value)) {
+          return { current: Option.none(), done: true };
+        }
+        const started: RisRecord = MutableHashMap.empty();
+        addRisTag(started, tag, value);
+        return { current: Option.some(started), done: false };
       }
-    } else if (current !== null) {
-      addRisTag(current, tag, value);
-    }
+      if (tag === "ER") {
+        if (Option.isNone(state.current)) return state;
+        return { current: Option.none(), done: !push(state.current.value) };
+      }
+      if (Option.isSome(state.current)) addRisTag(state.current.value, tag, value);
+      return state;
+    },
+  );
+  if (Option.isSome(trailing.current) && records.length < MAX_RECORDS) {
+    records.push(trailing.current.value);
   }
-  if (current !== null && records.length < MAX_RECORDS) records.push(current);
   return records;
 }
 
+/** One RIS record: each two-character tag mapped to its values, in order. */
+type RisRecord = MutableHashMap.MutableHashMap<string, string[]>;
+
 /** Appends a tag value to an RIS record's multimap. */
-function addRisTag(record: Map<string, string[]>, tag: string, value: string): void {
-  const existing = record.get(tag);
-  if (existing === undefined) record.set(tag, [value]);
-  else existing.push(value);
+function addRisTag(record: RisRecord, tag: string, value: string): void {
+  const existing = MutableHashMap.get(record, tag);
+  if (Option.isNone(existing)) MutableHashMap.set(record, tag, [value]);
+  else existing.value.push(value);
 }
 
-/** The first value of an RIS tag, or `undefined`. */
-function risFirst(record: Map<string, string[]>, tag: string): string | undefined {
-  return record.get(tag)?.[0];
+/** The first value of an RIS tag, or `None`. */
+function risFirst(record: RisRecord, tag: string): Option.Option<string> {
+  return Option.flatMap(MutableHashMap.get(record, tag), Array.head);
 }
 
 /** All values across a set of RIS tags, in order. */
-function risAll(record: Map<string, string[]>, tags: readonly string[]): string[] {
-  const values: string[] = [];
-  for (const tag of tags) for (const value of record.get(tag) ?? []) values.push(value);
-  return values;
+function risAll(record: RisRecord, tags: readonly string[]): string[] {
+  return Array.flatMap(tags, (tag) => risValues(record, tag));
+}
+
+/** All values recorded for one RIS tag, in order. */
+function risValues(record: RisRecord, tag: string): readonly string[] {
+  return Option.getOrElse(MutableHashMap.get(record, tag), (): string[] => []);
 }
 
 /** RIS `TY` → CSL item type; unlisted types fall back to `document`. */
@@ -702,53 +729,73 @@ const RIS_TYPES: Readonly<Record<string, CslItemType>> = {
 };
 
 /** Maps an RIS `TY` type to a CSL item type, defaulting to `document`. */
-function risType(ty: string | undefined): CslItemType {
-  return RIS_TYPES[ty ?? ""] ?? "document";
+function risType(ty: Option.Option<string>): CslItemType {
+  return RIS_TYPES[Option.isNone(ty) ? "" : ty.value] ?? "document";
 }
 
 /** Extracts a 4-digit year from an RIS date value (`2015`, `2015/01/01/`, …). */
-function risYear(value: string | undefined): string | undefined {
-  if (value === undefined) return undefined;
-  const match = value.match(/(\d{4})/);
-  return match ? match[1] : undefined;
+function risYear(value: Option.Option<string>): Option.Option<string> {
+  if (Option.isNone(value)) return Option.none();
+  const match = value.value.match(/(\d{4})/);
+  return match ? Option.some(match[1]) : Option.none();
 }
 
 /** Builds a CSL `page` range from RIS `SP` / `EP` tags. */
-function risPages(sp: string | undefined, ep: string | undefined): string | undefined {
-  if (sp === undefined) return ep;
-  return ep === undefined ? sp : `${sp}-${ep}`;
+function risPages(sp: Option.Option<string>, ep: Option.Option<string>): Option.Option<string> {
+  if (Option.isNone(sp)) return ep;
+  return Option.isNone(ep) ? sp : Option.some(`${sp.value}-${ep.value}`);
 }
 
 /** Picks the first RIS `SN` value that is a valid ISBN / ISSN respectively. */
-function risSerials(record: Map<string, string[]>): { isbn?: string; issn?: string } {
-  const result: { isbn?: string; issn?: string } = {};
-  for (const value of record.get("SN") ?? []) {
-    if (result.isbn === undefined && Option.isSome(decodeIsbn(value))) result.isbn = value;
-    if (result.issn === undefined && Option.isSome(decodeIssn(value))) result.issn = value;
-  }
-  return result;
+function risSerials(record: RisRecord): { isbn?: string; issn?: string } {
+  const values = risValues(record, "SN");
+  const isbn = Array.findFirst(values, (value) => Option.isSome(decodeIsbn(value)));
+  const issn = Array.findFirst(values, (value) => Option.isSome(decodeIssn(value)));
+  return {
+    ...(Option.isSome(isbn) ? { isbn: isbn.value } : {}),
+    ...(Option.isSome(issn) ? { issn: issn.value } : {}),
+  };
 }
 
 /** Maps one RIS record multimap to a {@link ParseOutcome}. */
-function risRecordOutcome(record: Map<string, string[]>): ParseOutcome {
+function risRecordOutcome(record: RisRecord): ParseOutcome {
   const serials = risSerials(record);
   return toOutcome(
     {
-      type: risType(risFirst(record, "TY")),
-      title: risFirst(record, "TI") ?? risFirst(record, "T1") ?? risFirst(record, "BT"),
-      year: risYear(risFirst(record, "PY") ?? risFirst(record, "Y1") ?? risFirst(record, "DA")),
-      publisher: risFirst(record, "PB"),
-      containerTitle:
-        risFirst(record, "JO") ??
-        risFirst(record, "JF") ??
-        risFirst(record, "T2") ??
-        risFirst(record, "J2"),
-      volume: risFirst(record, "VL"),
-      issue: risFirst(record, "IS"),
-      page: risPages(risFirst(record, "SP"), risFirst(record, "EP")),
+      type: Option.some(risType(risFirst(record, "TY"))),
+      title: Option.getOrUndefined(
+        Option.firstSomeOf([
+          risFirst(record, "TI"),
+          risFirst(record, "T1"),
+          risFirst(record, "BT"),
+        ]),
+      ),
+      year: Option.getOrUndefined(
+        risYear(
+          Option.firstSomeOf([
+            risFirst(record, "PY"),
+            risFirst(record, "Y1"),
+            risFirst(record, "DA"),
+          ]),
+        ),
+      ),
+      publisher: Option.getOrUndefined(risFirst(record, "PB")),
+      containerTitle: Option.getOrUndefined(
+        Option.firstSomeOf([
+          risFirst(record, "JO"),
+          risFirst(record, "JF"),
+          risFirst(record, "T2"),
+          risFirst(record, "J2"),
+        ]),
+      ),
+      volume: Option.getOrUndefined(risFirst(record, "VL")),
+      issue: Option.getOrUndefined(risFirst(record, "IS")),
+      page: Option.getOrUndefined(risPages(risFirst(record, "SP"), risFirst(record, "EP"))),
       isbn: serials.isbn,
       issn: serials.issn,
-      doi: risFirst(record, "DO") ?? risFirst(record, "DOI"),
+      doi: Option.getOrUndefined(
+        Option.firstSomeOf([risFirst(record, "DO"), risFirst(record, "DOI")]),
+      ),
       names: structuredNames(risAll(record, ["AU", "A1"])),
       editors: structuredNames(risAll(record, ["ED", "A2"])),
     },
@@ -758,10 +805,5 @@ function risRecordOutcome(record: Map<string, string[]>): ParseOutcome {
 
 /** Parses an RIS document into per-entry {@link ParseOutcome}s. */
 export function parseRis(content: string): ParseOutcome[] {
-  const outcomes: ParseOutcome[] = [];
-  for (const record of splitRisRecords(content)) {
-    if (outcomes.length >= MAX_RECORDS) break;
-    outcomes.push(risRecordOutcome(record));
-  }
-  return outcomes;
+  return Array.map(splitRisRecords(content).slice(0, MAX_RECORDS), risRecordOutcome);
 }
