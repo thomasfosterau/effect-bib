@@ -82,6 +82,8 @@ export const OpenAlexSearchResponse = Schema.Struct({
 });
 export type OpenAlexSearchResponse = typeof OpenAlexSearchResponse.Type;
 
+const decodeOpenAlexWork = Schema.decodeUnknownOption(OpenAlexWork);
+
 /** OpenAlex `type` → CSL item type; unlisted types fall back to `document`. */
 const OPENALEX_TYPES: Readonly<Record<string, CslItemType>> = {
   article: "article-journal",
@@ -269,7 +271,7 @@ export const searchOpenAlexByTitle = (
     return Array.filterMap(
       response.value.results ?? [],
       (raw): Result.Result<BiblioRecord, void> => {
-        const decoded = Schema.decodeUnknownOption(OpenAlexWork)(raw);
+        const decoded = decodeOpenAlexWork(raw);
         if (Option.isNone(decoded)) return Result.failVoid;
         const record = normaliseOpenAlexRecord(decoded.value);
         return Option.isNone(record) ? Result.failVoid : Result.succeed(record.value);
