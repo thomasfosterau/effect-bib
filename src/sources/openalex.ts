@@ -228,11 +228,11 @@ export function normaliseOpenAlexRecord(work: OpenAlexWork): Option.Option<Bibli
  * authority and wires this source in for `byTitle` search; this function
  * is what the cross-source dedup coherence proof exercises directly.
  */
-export const lookupOpenAlexByDoi = (
+export const lookupOpenAlexByDoi: (
   client: HttpClient.HttpClient,
   doi: Doi,
-): Effect.Effect<Option.Option<BiblioRecord>, LookupFailed> =>
-  Effect.gen(function* () {
+) => Effect.Effect<Option.Option<BiblioRecord>, LookupFailed> = Effect.fn("lookupOpenAlexByDoi")(
+  function* (client: HttpClient.HttpClient, doi: Doi) {
     const get = makeGet(client, OPENALEX_BASE, "openalex");
     const mailto = encodeURIComponent(CONTACT_EMAIL);
     // The `doi:` id form is OpenAlex's documented DOI-lookup shorthand;
@@ -242,7 +242,8 @@ export const lookupOpenAlexByDoi = (
     const work = yield* get(path, OpenAlexWork);
     if (Option.isNone(work)) return Option.none();
     return normaliseOpenAlexRecord(work.value);
-  });
+  },
+);
 
 /**
  * Searches OpenAlex works by title, returning up to {@link MAX_SEARCH_RESULTS}
@@ -253,11 +254,11 @@ export const lookupOpenAlexByDoi = (
  * transport/decode fault on the search request itself fails on the typed
  * channel.
  */
-export const searchOpenAlexByTitle = (
+export const searchOpenAlexByTitle: (
   client: HttpClient.HttpClient,
   query: string,
-): Effect.Effect<readonly BiblioRecord[], LookupFailed> =>
-  Effect.gen(function* () {
+) => Effect.Effect<readonly BiblioRecord[], LookupFailed> = Effect.fn("searchOpenAlexByTitle")(
+  function* (client: HttpClient.HttpClient, query: string) {
     const safeQuery = query.slice(0, MAX_QUERY_LENGTH);
     const params = new URLSearchParams({
       search: safeQuery,
@@ -277,4 +278,5 @@ export const searchOpenAlexByTitle = (
         return Option.isNone(record) ? Result.failVoid : Result.succeed(record.value);
       },
     );
-  });
+  },
+);

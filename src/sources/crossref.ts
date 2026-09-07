@@ -252,15 +252,16 @@ export function normaliseCrossrefRecord(
  * on any other upstream fault. `client` is expected to already carry the
  * polite User-Agent and `filterStatusOk` (composed once in `service.ts`).
  */
-export const lookupCrossrefByDoi = (
+export const lookupCrossrefByDoi: (
   client: HttpClient.HttpClient,
   doi: Doi,
-): Effect.Effect<Option.Option<BiblioRecord>, LookupFailed> =>
-  Effect.gen(function* () {
+) => Effect.Effect<Option.Option<BiblioRecord>, LookupFailed> = Effect.fn("lookupCrossrefByDoi")(
+  function* (client: HttpClient.HttpClient, doi: Doi) {
     const cr = makeGet(client, CROSSREF_BASE, "crossref");
     // Percent-encode the DOI: a valid DOI suffix may contain `/`, `(`, `)`
     // etc., which must not be read as path separators upstream.
     const response = yield* cr(`/works/${encodeURIComponent(doi)}`, CrossrefResponse);
     if (Option.isNone(response)) return Option.none();
     return normaliseCrossrefRecord(response.value, doi);
-  });
+  },
+);

@@ -185,30 +185,31 @@ export function normaliseOpenLibraryRecord(
  * on any other upstream fault. `client` is expected to already carry the
  * polite User-Agent and `filterStatusOk` (composed once in `service.ts`).
  */
-export const lookupOpenLibraryByIsbn = (
+export const lookupOpenLibraryByIsbn: (
   client: HttpClient.HttpClient,
   isbn: Isbn,
-): Effect.Effect<Option.Option<BiblioRecord>, LookupFailed> =>
-  Effect.gen(function* () {
-    const ol = makeGet(client, OPENLIBRARY_BASE, "openlibrary");
-    // `isbn` is exclusively digits (the identifier layer's SSRF guard) —
-    // safe in the path.
-    const edition = yield* ol(`/isbn/${isbn}.json`, OpenLibraryEdition);
-    if (Option.isNone(edition)) return Option.none();
+) => Effect.Effect<Option.Option<BiblioRecord>, LookupFailed> = Effect.fn(
+  "lookupOpenLibraryByIsbn",
+)(function* (client: HttpClient.HttpClient, isbn: Isbn) {
+  const ol = makeGet(client, OPENLIBRARY_BASE, "openlibrary");
+  // `isbn` is exclusively digits (the identifier layer's SSRF guard) —
+  // safe in the path.
+  const edition = yield* ol(`/isbn/${isbn}.json`, OpenLibraryEdition);
+  if (Option.isNone(edition)) return Option.none();
 
-    // Sequential (`concurrency: 1`): OpenLibrary is a courtesy-rate-limited
-    // public API, and the author lookups must stay in edition order.
-    // `key` is validated `/authors/OL\d+A` — safe in the path.
-    const authors = yield* Effect.forEach(
-      openLibraryAuthorKeys(edition.value),
-      (key) => ol(`${key}.json`, OpenLibraryAuthor),
-      { concurrency: 1 },
-    );
-    const authorNames = Array.filterMap(authors, (author): Result.Result<string, void> => {
-      if (Option.isNone(author)) return Result.failVoid;
-      const name = openLibraryAuthorName(author.value);
-      return Option.isNone(name) ? Result.failVoid : Result.succeed(name.value);
-    });
-
-    return normaliseOpenLibraryRecord(edition.value, isbn, authorNames);
+  // Sequential (`concurrency: 1`): OpenLibrary is a courtesy-rate-limited
+  // public API, and the author lookups must stay in edition order.
+  // `key` is validated `/authors/OL\d+A` — safe in the path.
+  const authors = yield* Effect.forEach(
+    openLibraryAuthorKeys(edition.value),
+    (key) => ol(`${key}.json`, OpenLibraryAuthor),
+    { concurrency: 1 },
+  );
+  const authorNames = Array.filterMap(authors, (author): Result.Result<string, void> => {
+    if (Option.isNone(author)) return Result.failVoid;
+    const name = openLibraryAuthorName(author.value);
+    return Option.isNone(name) ? Result.failVoid : Result.succeed(name.value);
   });
+
+  return normaliseOpenLibraryRecord(edition.value, isbn, authorNames);
+});
