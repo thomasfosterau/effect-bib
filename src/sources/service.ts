@@ -7,7 +7,7 @@
  * over Effect's `HttpClient`.
  *
  * **Contract shape.** Per the B1 design doc
- * (docs/decisions/bibliographic-toolkit.md), the surface is
+ * (), the surface is
  * CSL-native throughout: `byIsbnRecord` / `byDoiRecord` /
  * `byTitle` — `Option<BiblioRecord>` / `Option<BiblioRecord>` /
  * `readonly BiblioRecord[]`. `byTitle` is the OpenAlex-justified addition the

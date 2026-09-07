@@ -3,7 +3,7 @@
  *
  * The CSL-aligned bibliographic record — the neutral centre of the
  * toolkit (biblio B2, issue #1069; design in
- * docs/decisions/bibliographic-toolkit.md).
+ * ).
  *
  * A {@link BiblioRecord} is a typed **superset of CSL-JSON**: its core is
  * the closed CSL 1.0.2 vocabulary (item types, standard/name/date

@@ -9,7 +9,7 @@
  * coverage the site genuinely needs, the lean-dependency posture and Worker
  * bundle cost, determinism / no-network-at-render-time, and extraction-
  * trajectory friendliness). See
- * docs/decisions/bibliographic-toolkit.md → "Rendering
+ *  → "Rendering
  * engine".
  *
  * Styles and locales are typed data inputs; rendering is pure and network-
