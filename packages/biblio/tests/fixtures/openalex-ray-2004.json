@@ -1,0 +1,961 @@
+{
+  "id": "https://openalex.org/W1979741137",
+  "doi": "https://doi.org/10.1037/0003-066x.59.1.29",
+  "title": "How the Mind Hurts and Heals the Body.",
+  "display_name": "How the Mind Hurts and Heals the Body.",
+  "publication_year": 2004,
+  "publication_date": "2004-01-01",
+  "ids": {
+    "openalex": "https://openalex.org/W1979741137",
+    "doi": "https://doi.org/10.1037/0003-066x.59.1.29",
+    "mag": "1979741137",
+    "pmid": "https://pubmed.ncbi.nlm.nih.gov/14736318"
+  },
+  "language": "en",
+  "primary_location": {
+    "id": "doi:10.1037/0003-066x.59.1.29",
+    "is_oa": false,
+    "landing_page_url": "https://doi.org/10.1037/0003-066x.59.1.29",
+    "pdf_url": null,
+    "source": {
+      "id": "https://openalex.org/S80146597",
+      "display_name": "American Psychologist",
+      "issn_l": "0003-066X",
+      "issn": ["0003-066X", "1935-990X"],
+      "is_oa": false,
+      "is_in_doaj": false,
+      "is_core": true,
+      "host_organization": "https://openalex.org/P4310320262",
+      "host_organization_name": "American Psychological Association",
+      "host_organization_lineage": ["https://openalex.org/P4310320262"],
+      "host_organization_lineage_names": ["American Psychological Association"],
+      "type": "journal"
+    },
+    "license": null,
+    "license_id": null,
+    "version": "publishedVersion",
+    "is_accepted": true,
+    "is_published": true,
+    "raw_source_name": "American Psychologist",
+    "raw_type": "journal-article"
+  },
+  "type": "article",
+  "indexed_in": ["crossref", "pubmed"],
+  "open_access": {
+    "is_oa": false,
+    "oa_status": "closed",
+    "oa_url": null,
+    "any_repository_has_fulltext": false
+  },
+  "authorships": [
+    {
+      "author_position": "first",
+      "author": {
+        "id": "https://openalex.org/A5109933565",
+        "display_name": "Oakley S. Ray",
+        "orcid": null
+      },
+      "institutions": [
+        {
+          "id": "https://openalex.org/I200719446",
+          "display_name": "Vanderbilt University",
+          "ror": "https://ror.org/02vm5rt34",
+          "country_code": "US",
+          "type": "education",
+          "lineage": ["https://openalex.org/I200719446"]
+        }
+      ],
+      "countries": ["US"],
+      "is_corresponding": true,
+      "raw_author_name": "Oakley Ray",
+      "raw_affiliation_strings": [
+        "Departments of Psychology, Psychiatry, and Pharmacology, Vanderbilt University, 2014 Broadway, Suite 372, Nashville, TN 37203, USA. oray@cinp.org",
+        "Departments of Psychology, Psychiatry, and Pharmacology, Vanderbilt University, Nashville, TN, US"
+      ],
+      "raw_orcid": null,
+      "affiliations": [
+        {
+          "raw_affiliation_string": "Departments of Psychology, Psychiatry, and Pharmacology, Vanderbilt University, 2014 Broadway, Suite 372, Nashville, TN 37203, USA. oray@cinp.org",
+          "institution_ids": ["https://openalex.org/I200719446"]
+        },
+        {
+          "raw_affiliation_string": "Departments of Psychology, Psychiatry, and Pharmacology, Vanderbilt University, Nashville, TN, US",
+          "institution_ids": ["https://openalex.org/I200719446"]
+        }
+      ]
+    }
+  ],
+  "institutions": [],
+  "countries_distinct_count": 1,
+  "institutions_distinct_count": 1,
+  "corresponding_author_ids": ["https://openalex.org/A5109933565"],
+  "corresponding_institution_ids": ["https://openalex.org/I200719446"],
+  "apc_list": null,
+  "apc_paid": null,
+  "fwci": 13.1303,
+  "has_fulltext": false,
+  "cited_by_count": 181,
+  "citation_normalized_percentile": {
+    "value": 0.99355255,
+    "is_in_top_1_percent": true,
+    "is_in_top_10_percent": true
+  },
+  "cited_by_percentile_year": { "min": 90, "max": 99 },
+  "biblio": { "volume": "59", "issue": "1", "first_page": "29", "last_page": "40" },
+  "is_retracted": false,
+  "is_paratext": false,
+  "is_xpac": false,
+  "primary_topic": {
+    "id": "https://openalex.org/T10509",
+    "display_name": "Religion, Spirituality, and Psychology",
+    "score": 0.9936000108718872,
+    "subfield": { "id": "https://openalex.org/subfields/3306", "display_name": "Health" },
+    "field": { "id": "https://openalex.org/fields/33", "display_name": "Social Sciences" },
+    "domain": { "id": "https://openalex.org/domains/2", "display_name": "Social Sciences" }
+  },
+  "topics": [
+    {
+      "id": "https://openalex.org/T10509",
+      "display_name": "Religion, Spirituality, and Psychology",
+      "score": 0.9936000108718872,
+      "subfield": { "id": "https://openalex.org/subfields/3306", "display_name": "Health" },
+      "field": { "id": "https://openalex.org/fields/33", "display_name": "Social Sciences" },
+      "domain": { "id": "https://openalex.org/domains/2", "display_name": "Social Sciences" }
+    },
+    {
+      "id": "https://openalex.org/T12521",
+      "display_name": "Death Anxiety and Social Exclusion",
+      "score": 0.9776999950408936,
+      "subfield": {
+        "id": "https://openalex.org/subfields/3207",
+        "display_name": "Social Psychology"
+      },
+      "field": { "id": "https://openalex.org/fields/32", "display_name": "Psychology" },
+      "domain": { "id": "https://openalex.org/domains/2", "display_name": "Social Sciences" }
+    },
+    {
+      "id": "https://openalex.org/T12448",
+      "display_name": "Paranormal Experiences and Beliefs",
+      "score": 0.9761000275611877,
+      "subfield": {
+        "id": "https://openalex.org/subfields/3207",
+        "display_name": "Social Psychology"
+      },
+      "field": { "id": "https://openalex.org/fields/32", "display_name": "Psychology" },
+      "domain": { "id": "https://openalex.org/domains/2", "display_name": "Social Sciences" }
+    }
+  ],
+  "keywords": [
+    {
+      "id": "https://openalex.org/keywords/psychology",
+      "display_name": "Psychology",
+      "score": 0.6293755769729614
+    },
+    {
+      "id": "https://openalex.org/keywords/mind\u2013body-problem",
+      "display_name": "Mind\u2013body problem",
+      "score": 0.5848545432090759
+    },
+    {
+      "id": "https://openalex.org/keywords/brain-anatomy",
+      "display_name": "Brain anatomy",
+      "score": 0.5073844790458679
+    },
+    {
+      "id": "https://openalex.org/keywords/sociology-of-health-and-illness",
+      "display_name": "Sociology of health and illness",
+      "score": 0.4220725893974304
+    },
+    {
+      "id": "https://openalex.org/keywords/cognitive-science",
+      "display_name": "Cognitive science",
+      "score": 0.38156697154045105
+    },
+    {
+      "id": "https://openalex.org/keywords/epistemology",
+      "display_name": "Epistemology",
+      "score": 0.2062925398349762
+    },
+    {
+      "id": "https://openalex.org/keywords/medicine",
+      "display_name": "Medicine",
+      "score": 0.19392496347427368
+    },
+    {
+      "id": "https://openalex.org/keywords/health-care",
+      "display_name": "Health care",
+      "score": 0.12918758392333984
+    }
+  ],
+  "concepts": [
+    {
+      "id": "https://openalex.org/C15744967",
+      "wikidata": "https://www.wikidata.org/wiki/Q9418",
+      "display_name": "Psychology",
+      "level": 0,
+      "score": 0.6293755769729614
+    },
+    {
+      "id": "https://openalex.org/C20497413",
+      "wikidata": "https://www.wikidata.org/wiki/Q2741122",
+      "display_name": "Mind\u2013body problem",
+      "level": 2,
+      "score": 0.5848545432090759
+    },
+    {
+      "id": "https://openalex.org/C2988762625",
+      "wikidata": "https://www.wikidata.org/wiki/Q492038",
+      "display_name": "Brain anatomy",
+      "level": 3,
+      "score": 0.5073844790458679
+    },
+    {
+      "id": "https://openalex.org/C3557399",
+      "wikidata": "https://www.wikidata.org/wiki/Q7552854",
+      "display_name": "Sociology of health and illness",
+      "level": 3,
+      "score": 0.4220725893974304
+    },
+    {
+      "id": "https://openalex.org/C188147891",
+      "wikidata": "https://www.wikidata.org/wiki/Q147638",
+      "display_name": "Cognitive science",
+      "level": 1,
+      "score": 0.38156697154045105
+    },
+    {
+      "id": "https://openalex.org/C111472728",
+      "wikidata": "https://www.wikidata.org/wiki/Q9471",
+      "display_name": "Epistemology",
+      "level": 1,
+      "score": 0.2062925398349762
+    },
+    {
+      "id": "https://openalex.org/C71924100",
+      "wikidata": "https://www.wikidata.org/wiki/Q11190",
+      "display_name": "Medicine",
+      "level": 0,
+      "score": 0.19392496347427368
+    },
+    {
+      "id": "https://openalex.org/C160735492",
+      "wikidata": "https://www.wikidata.org/wiki/Q31207",
+      "display_name": "Health care",
+      "level": 2,
+      "score": 0.12918758392333984
+    },
+    {
+      "id": "https://openalex.org/C126838900",
+      "wikidata": "https://www.wikidata.org/wiki/Q77604",
+      "display_name": "Radiology",
+      "level": 1,
+      "score": 0.0
+    },
+    {
+      "id": "https://openalex.org/C138885662",
+      "wikidata": "https://www.wikidata.org/wiki/Q5891",
+      "display_name": "Philosophy",
+      "level": 0,
+      "score": 0.0
+    },
+    {
+      "id": "https://openalex.org/C50522688",
+      "wikidata": "https://www.wikidata.org/wiki/Q189833",
+      "display_name": "Economic growth",
+      "level": 1,
+      "score": 0.0
+    },
+    {
+      "id": "https://openalex.org/C162324750",
+      "wikidata": "https://www.wikidata.org/wiki/Q8134",
+      "display_name": "Economics",
+      "level": 0,
+      "score": 0.0
+    },
+    {
+      "id": "https://openalex.org/C143409427",
+      "wikidata": "https://www.wikidata.org/wiki/Q161238",
+      "display_name": "Magnetic resonance imaging",
+      "level": 2,
+      "score": 0.0
+    }
+  ],
+  "mesh": [
+    {
+      "descriptor_ui": "D001290",
+      "descriptor_name": "Attitude",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D001290",
+      "descriptor_name": "Attitude",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D001290",
+      "descriptor_name": "Attitude",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D003643",
+      "descriptor_name": "Death",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": true
+    },
+    {
+      "descriptor_ui": "D003643",
+      "descriptor_name": "Death",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": true
+    },
+    {
+      "descriptor_ui": "D003643",
+      "descriptor_name": "Death",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": true
+    },
+    {
+      "descriptor_ui": "D005260",
+      "descriptor_name": "Female",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D005260",
+      "descriptor_name": "Female",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D005260",
+      "descriptor_name": "Female",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D006304",
+      "descriptor_name": "Health Status",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D006304",
+      "descriptor_name": "Health Status",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D006304",
+      "descriptor_name": "Health Status",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D006801",
+      "descriptor_name": "Humans",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D006801",
+      "descriptor_name": "Humans",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D006801",
+      "descriptor_name": "Humans",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D007107",
+      "descriptor_name": "Immune System",
+      "qualifier_ui": "Q000502",
+      "qualifier_name": "physiology",
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D007107",
+      "descriptor_name": "Immune System",
+      "qualifier_ui": "Q000502",
+      "qualifier_name": "physiology",
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D007107",
+      "descriptor_name": "Immune System",
+      "qualifier_ui": "Q000502",
+      "qualifier_name": "physiology",
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D008016",
+      "descriptor_name": "Life Change Events",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": true
+    },
+    {
+      "descriptor_ui": "D008016",
+      "descriptor_name": "Life Change Events",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": true
+    },
+    {
+      "descriptor_ui": "D008016",
+      "descriptor_name": "Life Change Events",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": true
+    },
+    {
+      "descriptor_ui": "D008297",
+      "descriptor_name": "Male",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D008297",
+      "descriptor_name": "Male",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D008297",
+      "descriptor_name": "Male",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D011603",
+      "descriptor_name": "Psychophysiology",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": true
+    },
+    {
+      "descriptor_ui": "D011603",
+      "descriptor_name": "Psychophysiology",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": true
+    },
+    {
+      "descriptor_ui": "D011603",
+      "descriptor_name": "Psychophysiology",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": true
+    },
+    {
+      "descriptor_ui": "D011613",
+      "descriptor_name": "Psychotherapy",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D011613",
+      "descriptor_name": "Psychotherapy",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D011613",
+      "descriptor_name": "Psychotherapy",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D012140",
+      "descriptor_name": "Respiratory Tract Diseases",
+      "qualifier_ui": "Q000276",
+      "qualifier_name": "immunology",
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D012140",
+      "descriptor_name": "Respiratory Tract Diseases",
+      "qualifier_ui": "Q000276",
+      "qualifier_name": "immunology",
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D012140",
+      "descriptor_name": "Respiratory Tract Diseases",
+      "qualifier_ui": "Q000276",
+      "qualifier_name": "immunology",
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D012140",
+      "descriptor_name": "Respiratory Tract Diseases",
+      "qualifier_ui": "Q000523",
+      "qualifier_name": "psychology",
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D012140",
+      "descriptor_name": "Respiratory Tract Diseases",
+      "qualifier_ui": "Q000523",
+      "qualifier_name": "psychology",
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D012140",
+      "descriptor_name": "Respiratory Tract Diseases",
+      "qualifier_ui": "Q000523",
+      "qualifier_name": "psychology",
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D012944",
+      "descriptor_name": "Social Support",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D012944",
+      "descriptor_name": "Social Support",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D012944",
+      "descriptor_name": "Social Support",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D013315",
+      "descriptor_name": "Stress, Psychological",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": true
+    },
+    {
+      "descriptor_ui": "D013315",
+      "descriptor_name": "Stress, Psychological",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": true
+    },
+    {
+      "descriptor_ui": "D013315",
+      "descriptor_name": "Stress, Psychological",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": true
+    },
+    {
+      "descriptor_ui": "D017741",
+      "descriptor_name": "Survivors",
+      "qualifier_ui": "Q000523",
+      "qualifier_name": "psychology",
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D017741",
+      "descriptor_name": "Survivors",
+      "qualifier_ui": "Q000523",
+      "qualifier_name": "psychology",
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D017741",
+      "descriptor_name": "Survivors",
+      "qualifier_ui": "Q000523",
+      "qualifier_name": "psychology",
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D018454",
+      "descriptor_name": "Spouses",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D018454",
+      "descriptor_name": "Spouses",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D018454",
+      "descriptor_name": "Spouses",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": false
+    }
+  ],
+  "locations_count": 4,
+  "locations": [
+    {
+      "id": "doi:10.1037/0003-066x.59.1.29",
+      "is_oa": false,
+      "landing_page_url": "https://doi.org/10.1037/0003-066x.59.1.29",
+      "pdf_url": null,
+      "source": {
+        "id": "https://openalex.org/S80146597",
+        "display_name": "American Psychologist",
+        "issn_l": "0003-066X",
+        "issn": ["0003-066X", "1935-990X"],
+        "is_oa": false,
+        "is_in_doaj": false,
+        "is_core": true,
+        "host_organization": "https://openalex.org/P4310320262",
+        "host_organization_name": "American Psychological Association",
+        "host_organization_lineage": ["https://openalex.org/P4310320262"],
+        "host_organization_lineage_names": ["American Psychological Association"],
+        "type": "journal"
+      },
+      "license": null,
+      "license_id": null,
+      "version": "publishedVersion",
+      "is_accepted": true,
+      "is_published": true,
+      "raw_source_name": "American Psychologist",
+      "raw_type": "journal-article"
+    },
+    {
+      "id": "pmid:14736318",
+      "is_oa": false,
+      "landing_page_url": "https://pubmed.ncbi.nlm.nih.gov/14736318",
+      "pdf_url": null,
+      "source": {
+        "id": "https://openalex.org/S4306525036",
+        "display_name": "PubMed",
+        "issn_l": null,
+        "issn": null,
+        "is_oa": false,
+        "is_in_doaj": false,
+        "is_core": false,
+        "host_organization": "https://openalex.org/I1299303238",
+        "host_organization_name": "National Institutes of Health",
+        "host_organization_lineage": ["https://openalex.org/I1299303238"],
+        "host_organization_lineage_names": [],
+        "type": "repository"
+      },
+      "license": null,
+      "license_id": null,
+      "version": "publishedVersion",
+      "is_accepted": true,
+      "is_published": true,
+      "raw_source_name": "The American psychologist",
+      "raw_type": null
+    },
+    {
+      "id": "pmh:oai:CiteSeerX.psu:10.1.1.500.5909",
+      "is_oa": false,
+      "landing_page_url": "http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.500.5909",
+      "pdf_url": null,
+      "source": null,
+      "license": null,
+      "license_id": null,
+      "version": "submittedVersion",
+      "is_accepted": false,
+      "is_published": false,
+      "raw_source_name": "http://drfoust.net/how.pdf",
+      "raw_type": "text"
+    },
+    {
+      "id": "pmh:oai:CiteSeerX.psu:10.1.1.559.5260",
+      "is_oa": false,
+      "landing_page_url": "http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.559.5260",
+      "pdf_url": null,
+      "source": null,
+      "license": null,
+      "license_id": null,
+      "version": "submittedVersion",
+      "is_accepted": false,
+      "is_published": false,
+      "raw_source_name": "http://www.apa.org/pubs/journals/releases/amp-59129.pdf",
+      "raw_type": "text"
+    }
+  ],
+  "best_oa_location": null,
+  "sustainable_development_goals": [
+    {
+      "id": "https://metadata.un.org/sdg/16",
+      "display_name": "Peace, Justice and strong institutions",
+      "score": 0.4699999988079071
+    }
+  ],
+  "awards": [],
+  "funders": [],
+  "has_content": { "pdf": false, "grobid_xml": false },
+  "content_urls": null,
+  "referenced_works_count": 126,
+  "referenced_works": [
+    "https://openalex.org/W203274500",
+    "https://openalex.org/W627400870",
+    "https://openalex.org/W641886397",
+    "https://openalex.org/W1488711795",
+    "https://openalex.org/W1530155851",
+    "https://openalex.org/W1585972926",
+    "https://openalex.org/W1586673924",
+    "https://openalex.org/W1597579900",
+    "https://openalex.org/W1751804940",
+    "https://openalex.org/W1965525834",
+    "https://openalex.org/W1973842167",
+    "https://openalex.org/W1974099967",
+    "https://openalex.org/W1976685911",
+    "https://openalex.org/W1978153655",
+    "https://openalex.org/W1978762354",
+    "https://openalex.org/W1984793579",
+    "https://openalex.org/W1986883807",
+    "https://openalex.org/W1992842381",
+    "https://openalex.org/W1999770518",
+    "https://openalex.org/W2002938037",
+    "https://openalex.org/W2005592836",
+    "https://openalex.org/W2005989636",
+    "https://openalex.org/W2007889692",
+    "https://openalex.org/W2009077748",
+    "https://openalex.org/W2009435090",
+    "https://openalex.org/W2010346503",
+    "https://openalex.org/W2014416444",
+    "https://openalex.org/W2016755611",
+    "https://openalex.org/W2019714595",
+    "https://openalex.org/W2019973368",
+    "https://openalex.org/W2020065949",
+    "https://openalex.org/W2020134316",
+    "https://openalex.org/W2023305103",
+    "https://openalex.org/W2024503927",
+    "https://openalex.org/W2027064931",
+    "https://openalex.org/W2027258760",
+    "https://openalex.org/W2027271613",
+    "https://openalex.org/W2029340592",
+    "https://openalex.org/W2029718968",
+    "https://openalex.org/W2033090463",
+    "https://openalex.org/W2033813489",
+    "https://openalex.org/W2034131677",
+    "https://openalex.org/W2035317071",
+    "https://openalex.org/W2037695894",
+    "https://openalex.org/W2038804442",
+    "https://openalex.org/W2039119985",
+    "https://openalex.org/W2039924099",
+    "https://openalex.org/W2042211216",
+    "https://openalex.org/W2044902803",
+    "https://openalex.org/W2045797182",
+    "https://openalex.org/W2046464121",
+    "https://openalex.org/W2053649784",
+    "https://openalex.org/W2055500474",
+    "https://openalex.org/W2057064918",
+    "https://openalex.org/W2057969861",
+    "https://openalex.org/W2063193366",
+    "https://openalex.org/W2067877381",
+    "https://openalex.org/W2070165343",
+    "https://openalex.org/W2071534502",
+    "https://openalex.org/W2074503428",
+    "https://openalex.org/W2075048511",
+    "https://openalex.org/W2076349792",
+    "https://openalex.org/W2077155993",
+    "https://openalex.org/W2079482219",
+    "https://openalex.org/W2080132542",
+    "https://openalex.org/W2080256520",
+    "https://openalex.org/W2080709277",
+    "https://openalex.org/W2082111741",
+    "https://openalex.org/W2088575045",
+    "https://openalex.org/W2099365033",
+    "https://openalex.org/W2100826189",
+    "https://openalex.org/W2106173816",
+    "https://openalex.org/W2107866587",
+    "https://openalex.org/W2118857534",
+    "https://openalex.org/W2120255892",
+    "https://openalex.org/W2121013564",
+    "https://openalex.org/W2121629542",
+    "https://openalex.org/W2125479329",
+    "https://openalex.org/W2126041442",
+    "https://openalex.org/W2131103063",
+    "https://openalex.org/W2134435022",
+    "https://openalex.org/W2142649538",
+    "https://openalex.org/W2143072217",
+    "https://openalex.org/W2153303099",
+    "https://openalex.org/W2171120557",
+    "https://openalex.org/W2212401464",
+    "https://openalex.org/W2326729955",
+    "https://openalex.org/W2326748749",
+    "https://openalex.org/W2327530675",
+    "https://openalex.org/W2404470449",
+    "https://openalex.org/W2412374183",
+    "https://openalex.org/W2470607173",
+    "https://openalex.org/W2472047633",
+    "https://openalex.org/W2484447355",
+    "https://openalex.org/W2606246501",
+    "https://openalex.org/W2613643176",
+    "https://openalex.org/W2780775774",
+    "https://openalex.org/W2796711341",
+    "https://openalex.org/W2953601685",
+    "https://openalex.org/W3156005017",
+    "https://openalex.org/W4211191719",
+    "https://openalex.org/W4241320443",
+    "https://openalex.org/W4241420110",
+    "https://openalex.org/W4241954445",
+    "https://openalex.org/W4241991303",
+    "https://openalex.org/W4242275304",
+    "https://openalex.org/W4243473118",
+    "https://openalex.org/W4244686411",
+    "https://openalex.org/W4245017960",
+    "https://openalex.org/W4247186192",
+    "https://openalex.org/W4249285509",
+    "https://openalex.org/W4249934977",
+    "https://openalex.org/W4251603555",
+    "https://openalex.org/W4253123171",
+    "https://openalex.org/W4253139217",
+    "https://openalex.org/W4253740718",
+    "https://openalex.org/W4254380736",
+    "https://openalex.org/W4388325459",
+    "https://openalex.org/W6608262472",
+    "https://openalex.org/W6644836556",
+    "https://openalex.org/W6681434161",
+    "https://openalex.org/W6713188351",
+    "https://openalex.org/W6720767963",
+    "https://openalex.org/W6747311706",
+    "https://openalex.org/W6826630366",
+    "https://openalex.org/W6836084577"
+  ],
+  "related_works": [
+    "https://openalex.org/W634237186",
+    "https://openalex.org/W2039744579",
+    "https://openalex.org/W2559649128",
+    "https://openalex.org/W2368035244",
+    "https://openalex.org/W2103541999",
+    "https://openalex.org/W2401090476",
+    "https://openalex.org/W66440452",
+    "https://openalex.org/W4250120635",
+    "https://openalex.org/W4230240367",
+    "https://openalex.org/W1979741137"
+  ],
+  "abstract_inverted_index": {
+    "The": [0, 48],
+    "author": [1],
+    "reviews": [2],
+    "some": [3],
+    "of": [4, 26, 55, 66],
+    "the": [5, 12, 37, 40, 51, 60, 63, 67, 104],
+    "social": [6],
+    "and": [7, 18, 33, 39, 44, 59, 76, 83, 91, 96, 112],
+    "behavioral": [8],
+    "factors": [9],
+    "acting": [10],
+    "on": [11],
+    "brain": [13, 49, 90, 106],
+    "that": [14],
+    "influence": [15],
+    "health,": [16],
+    "illness,": [17, 58],
+    "death.": [19],
+    "Supported": [20],
+    "with": [21],
+    "data": [22],
+    "from": [23],
+    "several": [24],
+    "areas": [25],
+    "research,": [27],
+    "his": [28],
+    "proposal": [29],
+    "for": [30, 42, 103],
+    "understanding": [31],
+    "health": [32],
+    "illness": [34],
+    "provides": [35],
+    "both": [36],
+    "concepts": [38],
+    "mechanisms": [41],
+    "studying": [43],
+    "explaining": [45],
+    "mind-body": [46, 70],
+    "relationships.": [47],
+    "is": [50, 62],
+    "body's": [52],
+    "first": [53],
+    "line": [54],
+    "defense": [56],
+    "against": [57],
+    "mind": [61],
+    "emergent": [64],
+    "functioning": [65, 105],
+    "brain.": [68],
+    "This": [69],
+    "approach": [71],
+    "incorporates": [72],
+    "ideas,": [73],
+    "belief": [74],
+    "systems,": [75],
+    "hopes": [77],
+    "as": [78, 80],
+    "well": [79],
+    "biochemistry,": [81],
+    "physiology,": [82],
+    "anatomy.": [84],
+    "Changing": [85],
+    "thoughts": [86],
+    "imply": [87],
+    "a": [88, 93, 101],
+    "changing": [89, 94],
+    "thus": [92],
+    "biology": [95],
+    "body.": [97],
+    "Belief": [98],
+    "systems": [99],
+    "provide": [100],
+    "baseline": [102],
+    "upon": [107],
+    "which": [108],
+    "other": [109],
+    "variables": [110],
+    "act": [111],
+    "have": [113],
+    "their": [114],
+    "effects.": [115]
+  },
+  "counts_by_year": [
+    { "year": 2026, "cited_by_count": 2 },
+    { "year": 2025, "cited_by_count": 2 },
+    { "year": 2024, "cited_by_count": 1 },
+    { "year": 2023, "cited_by_count": 4 },
+    { "year": 2022, "cited_by_count": 11 },
+    { "year": 2021, "cited_by_count": 6 },
+    { "year": 2020, "cited_by_count": 5 },
+    { "year": 2019, "cited_by_count": 5 },
+    { "year": 2018, "cited_by_count": 6 },
+    { "year": 2017, "cited_by_count": 6 },
+    { "year": 2016, "cited_by_count": 8 },
+    { "year": 2015, "cited_by_count": 8 },
+    { "year": 2014, "cited_by_count": 7 },
+    { "year": 2013, "cited_by_count": 6 },
+    { "year": 2012, "cited_by_count": 9 }
+  ],
+  "updated_date": "2026-07-15T18:14:33.161393",
+  "created_date": "2025-10-10T00:00:00"
+}

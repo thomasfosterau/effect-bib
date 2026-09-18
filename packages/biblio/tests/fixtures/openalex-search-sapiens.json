@@ -1,0 +1,2080 @@
+{
+  "meta": {
+    "count": 2135,
+    "db_response_time_ms": 68,
+    "page": 1,
+    "per_page": 5,
+    "groups_count": null,
+    "x_query": {
+      "oql": "works where full text has (Sapiens Yuval Noah Harari)",
+      "oqo": {
+        "get_rows": "works",
+        "filter_rows": [
+          {
+            "column_id": "fulltext.search",
+            "value": "Sapiens Yuval Noah Harari",
+            "operator": "has"
+          }
+        ]
+      },
+      "url": "/works?filter=fulltext.search:Sapiens Yuval Noah Harari&per_page=5"
+    },
+    "cost_usd": 0.001
+  },
+  "results": [
+    {
+      "id": "https://openalex.org/W1636189349",
+      "doi": "https://doi.org/10.5860/choice.190494",
+      "title": "Sapiens: a brief history of humankind",
+      "display_name": "Sapiens: a brief history of humankind",
+      "relevance_score": 1612.3007,
+      "publication_year": 2015,
+      "publication_date": "2015-06-18",
+      "ids": {
+        "openalex": "https://openalex.org/W1636189349",
+        "doi": "https://doi.org/10.5860/choice.190494",
+        "mag": "1636189349"
+      },
+      "language": "en",
+      "primary_location": {
+        "id": "doi:10.5860/choice.190494",
+        "is_oa": false,
+        "landing_page_url": "https://doi.org/10.5860/choice.190494",
+        "pdf_url": null,
+        "source": {
+          "id": "https://openalex.org/S2764375719",
+          "display_name": "Choice Reviews Online",
+          "issn_l": "0009-4978",
+          "issn": ["0009-4978", "1523-8253", "1943-5975"],
+          "is_oa": false,
+          "is_in_doaj": false,
+          "is_core": true,
+          "host_organization": "https://openalex.org/P4310316146",
+          "host_organization_name": "Association of College and Research Libraries",
+          "host_organization_lineage": [
+            "https://openalex.org/P4310316146",
+            "https://openalex.org/P4310315903"
+          ],
+          "host_organization_lineage_names": [
+            "Association of College and Research Libraries",
+            "American Library Association"
+          ],
+          "type": "journal"
+        },
+        "license": null,
+        "license_id": null,
+        "version": "publishedVersion",
+        "is_accepted": true,
+        "is_published": true,
+        "raw_source_name": "Choice Reviews Online",
+        "raw_type": "journal-article"
+      },
+      "type": "book-review",
+      "indexed_in": ["crossref"],
+      "open_access": {
+        "is_oa": false,
+        "oa_status": "closed",
+        "oa_url": null,
+        "any_repository_has_fulltext": false
+      },
+      "authorships": [
+        {
+          "author_position": "first",
+          "author": {
+            "id": "https://openalex.org/A5019691568",
+            "display_name": "Yuval Noah Harari",
+            "orcid": null
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I193775966",
+              "display_name": "Yonsei University",
+              "ror": "https://ror.org/01wjejq96",
+              "country_code": "KR",
+              "type": "education",
+              "lineage": ["https://openalex.org/I193775966"]
+            }
+          ],
+          "countries": ["KR"],
+          "is_corresponding": true,
+          "raw_author_name": "Harari, Yuval Noah, 1976-",
+          "raw_affiliation_strings": ["Yonsei university"],
+          "raw_orcid": null,
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Yonsei university",
+              "institution_ids": ["https://openalex.org/I193775966"]
+            }
+          ]
+        }
+      ],
+      "institutions": [],
+      "countries_distinct_count": 1,
+      "institutions_distinct_count": 1,
+      "corresponding_author_ids": ["https://openalex.org/A5019691568"],
+      "corresponding_institution_ids": ["https://openalex.org/I193775966"],
+      "apc_list": null,
+      "apc_paid": null,
+      "fwci": null,
+      "has_fulltext": false,
+      "cited_by_count": 2158,
+      "citation_normalized_percentile": null,
+      "cited_by_percentile_year": null,
+      "biblio": { "volume": "52", "issue": "11", "first_page": "52", "last_page": "5967" },
+      "is_retracted": false,
+      "is_paratext": false,
+      "is_xpac": false,
+      "primary_topic": {
+        "id": "https://openalex.org/T12788",
+        "display_name": "Space Science and Extraterrestrial Life",
+        "score": 0.6146000027656555,
+        "subfield": {
+          "id": "https://openalex.org/subfields/3103",
+          "display_name": "Astronomy and Astrophysics"
+        },
+        "field": {
+          "id": "https://openalex.org/fields/31",
+          "display_name": "Physics and Astronomy"
+        },
+        "domain": { "id": "https://openalex.org/domains/3", "display_name": "Physical Sciences" }
+      },
+      "topics": [
+        {
+          "id": "https://openalex.org/T12788",
+          "display_name": "Space Science and Extraterrestrial Life",
+          "score": 0.6146000027656555,
+          "subfield": {
+            "id": "https://openalex.org/subfields/3103",
+            "display_name": "Astronomy and Astrophysics"
+          },
+          "field": {
+            "id": "https://openalex.org/fields/31",
+            "display_name": "Physics and Astronomy"
+          },
+          "domain": { "id": "https://openalex.org/domains/3", "display_name": "Physical Sciences" }
+        }
+      ],
+      "keywords": [
+        {
+          "id": "https://openalex.org/keywords/homo-sapiens",
+          "display_name": "Homo sapiens",
+          "score": 0.6940052509307861
+        },
+        {
+          "id": "https://openalex.org/keywords/history",
+          "display_name": "History",
+          "score": 0.48904380202293396
+        },
+        {
+          "id": "https://openalex.org/keywords/environmental-ethics",
+          "display_name": "Environmental ethics",
+          "score": 0.40270543098449707
+        },
+        {
+          "id": "https://openalex.org/keywords/archaeology",
+          "display_name": "Archaeology",
+          "score": 0.321000874042511
+        },
+        {
+          "id": "https://openalex.org/keywords/philosophy",
+          "display_name": "Philosophy",
+          "score": 0.25542253255844116
+        }
+      ],
+      "concepts": [
+        {
+          "id": "https://openalex.org/C2777938546",
+          "wikidata": "https://www.wikidata.org/wiki/Q5",
+          "display_name": "Homo sapiens",
+          "level": 2,
+          "score": 0.6940052509307861
+        },
+        {
+          "id": "https://openalex.org/C95457728",
+          "wikidata": "https://www.wikidata.org/wiki/Q309",
+          "display_name": "History",
+          "level": 0,
+          "score": 0.48904380202293396
+        },
+        {
+          "id": "https://openalex.org/C95124753",
+          "wikidata": "https://www.wikidata.org/wiki/Q875686",
+          "display_name": "Environmental ethics",
+          "level": 1,
+          "score": 0.40270543098449707
+        },
+        {
+          "id": "https://openalex.org/C166957645",
+          "wikidata": "https://www.wikidata.org/wiki/Q23498",
+          "display_name": "Archaeology",
+          "level": 1,
+          "score": 0.321000874042511
+        },
+        {
+          "id": "https://openalex.org/C138885662",
+          "wikidata": "https://www.wikidata.org/wiki/Q5891",
+          "display_name": "Philosophy",
+          "level": 0,
+          "score": 0.25542253255844116
+        }
+      ],
+      "mesh": [],
+      "locations_count": 6,
+      "locations": [
+        {
+          "id": "doi:10.5860/choice.190494",
+          "is_oa": false,
+          "landing_page_url": "https://doi.org/10.5860/choice.190494",
+          "pdf_url": null,
+          "source": {
+            "id": "https://openalex.org/S2764375719",
+            "display_name": "Choice Reviews Online",
+            "issn_l": "0009-4978",
+            "issn": ["0009-4978", "1523-8253", "1943-5975"],
+            "is_oa": false,
+            "is_in_doaj": false,
+            "is_core": true,
+            "host_organization": "https://openalex.org/P4310316146",
+            "host_organization_name": "Association of College and Research Libraries",
+            "host_organization_lineage": [
+              "https://openalex.org/P4310316146",
+              "https://openalex.org/P4310315903"
+            ],
+            "host_organization_lineage_names": [
+              "Association of College and Research Libraries",
+              "American Library Association"
+            ],
+            "type": "journal"
+          },
+          "license": null,
+          "license_id": null,
+          "version": "publishedVersion",
+          "is_accepted": true,
+          "is_published": true,
+          "raw_source_name": "Choice Reviews Online",
+          "raw_type": "journal-article"
+        },
+        {
+          "id": "pmh:oai:aleph.bib-bvb.de:BVB01-027580312",
+          "is_oa": false,
+          "landing_page_url": null,
+          "pdf_url": null,
+          "source": null,
+          "license": null,
+          "license_id": null,
+          "version": "submittedVersion",
+          "is_accepted": false,
+          "is_published": false,
+          "raw_source_name": null,
+          "raw_type": "text"
+        },
+        {
+          "id": "pmh:oai:aleph.bib-bvb.de:BVB01-028800918",
+          "is_oa": false,
+          "landing_page_url": "http://static.harpercollins.com/harperimages/isbn/large/7/9780062316097.jpg",
+          "pdf_url": null,
+          "source": null,
+          "license": null,
+          "license_id": null,
+          "version": "submittedVersion",
+          "is_accepted": false,
+          "is_published": false,
+          "raw_source_name": null,
+          "raw_type": "text"
+        },
+        {
+          "id": "pmh:oai:aleph.bib-bvb.de:BVB01-030678387",
+          "is_oa": false,
+          "landing_page_url": "http://bvbr.bib-bvb.de:8991/F?func=service&doc_library=BVB01&local_base=BVB01&doc_number=030678387&sequence=000002&line_number=0001&func_code=DB_RECORDS&service_type=MEDIA",
+          "pdf_url": null,
+          "source": null,
+          "license": null,
+          "license_id": null,
+          "version": "submittedVersion",
+          "is_accepted": false,
+          "is_published": false,
+          "raw_source_name": null,
+          "raw_type": "text"
+        },
+        {
+          "id": "pmh:oai:bibliotecavirtualdefensa.es:995034",
+          "is_oa": false,
+          "landing_page_url": "https://bibliotecavirtual.defensa.gob.es/BVMDefensa/es/consulta/registro.do?id=995034",
+          "pdf_url": null,
+          "source": {
+            "id": "https://openalex.org/S4377196928",
+            "display_name": "Virtual Defense Library (Ministerio de Defensa)",
+            "issn_l": null,
+            "issn": null,
+            "is_oa": false,
+            "is_in_doaj": false,
+            "is_core": false,
+            "host_organization": "https://openalex.org/I4210162908",
+            "host_organization_name": "Ministerio de Defensa",
+            "host_organization_lineage": ["https://openalex.org/I4210162908"],
+            "host_organization_lineage_names": [],
+            "type": "repository"
+          },
+          "license": null,
+          "license_id": null,
+          "version": "submittedVersion",
+          "is_accepted": false,
+          "is_published": false,
+          "raw_source_name": "",
+          "raw_type": "Libros"
+        },
+        {
+          "id": "pmh:oai:cds.cern.ch:2223867",
+          "is_oa": false,
+          "landing_page_url": "http://cds.cern.ch/record/2223867",
+          "pdf_url": null,
+          "source": {
+            "id": "https://openalex.org/S4306400735",
+            "display_name": "International Linear Collider",
+            "issn_l": null,
+            "issn": null,
+            "is_oa": false,
+            "is_in_doaj": false,
+            "is_core": false,
+            "host_organization": null,
+            "host_organization_name": null,
+            "host_organization_lineage": [],
+            "host_organization_lineage_names": [],
+            "type": "repository"
+          },
+          "license": null,
+          "license_id": null,
+          "version": "submittedVersion",
+          "is_accepted": false,
+          "is_published": false,
+          "raw_source_name": "",
+          "raw_type": null
+        }
+      ],
+      "best_oa_location": null,
+      "sustainable_development_goals": [
+        {
+          "display_name": "Peace, Justice and strong institutions",
+          "id": "https://metadata.un.org/sdg/16",
+          "score": 0.6499999761581421
+        }
+      ],
+      "awards": [],
+      "funders": [],
+      "has_content": { "grobid_xml": false, "pdf": false },
+      "content_urls": null,
+      "referenced_works_count": 0,
+      "referenced_works": [],
+      "related_works": [
+        "https://openalex.org/W2899084033",
+        "https://openalex.org/W122800452",
+        "https://openalex.org/W279682321",
+        "https://openalex.org/W3120667788",
+        "https://openalex.org/W4386574598",
+        "https://openalex.org/W1004557661",
+        "https://openalex.org/W1563732125",
+        "https://openalex.org/W2151645171",
+        "https://openalex.org/W2163929161",
+        "https://openalex.org/W2722588522"
+      ],
+      "abstract_inverted_index": {
+        "From": [0, 110],
+        "a": [1, 5, 79, 82],
+        "renowned": [2],
+        "historian": [3],
+        "comes": [4],
+        "groundbreaking": [6],
+        "narrative": [7],
+        "of": [8, 31, 48, 75, 107, 126, 150, 173, 238],
+        "humanity\u2019s": [9],
+        "creation": [10],
+        "and": [11, 22, 27, 131, 143, 207, 219, 224, 232, 247],
+        "evolution\u2014a": [12],
+        "#1": [13],
+        "international": [14],
+        "bestseller\u2014that": [15],
+        "explores": [16],
+        "the": [17, 62, 73, 91, 105, 112, 119, 124, 148, 163, 181, 189, 195],
+        "ways": [18],
+        "in": [19, 118],
+        "which": [20],
+        "biology": [21],
+        "history": [23, 74, 130],
+        "have": [24, 116, 168, 177],
+        "defined": [25],
+        "us": [26, 157],
+        "enhanced": [28],
+        "our": [29],
+        "understanding": [30],
+        "what": [32, 65, 208],
+        "it": [33],
+        "means": [34],
+        "to": [35, 61, 68, 122, 133, 158, 170, 191, 212, 229],
+        "be": [36],
+        "\u201chuman.\u201d": [37],
+        "One": [38],
+        "hundred": [39],
+        "thousand": [40],
+        "years": [41, 102],
+        "ago,": [42],
+        "at": [43],
+        "least": [44],
+        "six": [45],
+        "different": [46],
+        "species": [47],
+        "humans": [49, 115, 167],
+        "inhabited": [50],
+        "Earth.": [51],
+        "Yet": [52],
+        "today": [53],
+        "there": [54],
+        "is": [55, 203, 227, 233],
+        "only": [56, 194],
+        "one\u2014homo": [57],
+        "sapiens.": [58],
+        "What": [59],
+        "happened": [60],
+        "others?": [63],
+        "And": [64],
+        "may": [66],
+        "happen": [67],
+        "us?": [69],
+        "Most": [70],
+        "books": [71],
+        "about": [72, 100],
+        "humanity": [76],
+        "pursue": [77],
+        "either": [78],
+        "historical": [80],
+        "or": [81],
+        "biological": [83],
+        "approach,": [84],
+        "but": [85, 199],
+        "Dr.": [86, 153],
+        "Yuval": [87],
+        "Noah": [88],
+        "Harari": [89, 154],
+        "breaks": [90],
+        "mold": [92],
+        "with": [93, 104, 140],
+        "this": [94, 204, 222],
+        "highly": [95],
+        "original": [96],
+        "book": [97],
+        "that": [98, 176],
+        "begins": [99],
+        "70,000": [101],
+        "ago": [103],
+        "appearance": [106],
+        "modern": [108],
+        "cognition.": [109],
+        "examining": [111],
+        "role": [113],
+        "evolving": [114],
+        "played": [117],
+        "global": [120],
+        "ecosystem": [121],
+        "charting": [123],
+        "rise": [125],
+        "empires,": [127],
+        "Sapiens": [128],
+        "integrates": [129],
+        "science": [132],
+        "reconsider": [134],
+        "accepted": [135],
+        "narratives,": [136],
+        "connect": [137],
+        "past": [138, 182],
+        "developments": [139],
+        "contemporary": [141],
+        "concerns,": [142],
+        "examine": [144],
+        "specific": [145],
+        "events": [146],
+        "within": [147],
+        "context": [149],
+        "larger": [151],
+        "ideas.": [152],
+        "also": [155, 200],
+        "compels": [156],
+        "look": [159],
+        "ahead,": [160],
+        "because": [161],
+        "over": [162],
+        "last": [164],
+        "few": [165],
+        "decades": [166],
+        "begun": [169],
+        "bend": [171],
+        "laws": [172],
+        "natural": [174],
+        "selection": [175],
+        "governed": [178],
+        "life": [179],
+        "for": [180, 236],
+        "four": [183],
+        "billion": [184],
+        "years.": [185],
+        "We": [186],
+        "are": [187],
+        "acquiring": [188],
+        "ability": [190],
+        "design": [192],
+        "not": [193],
+        "world": [196],
+        "around": [197],
+        "us,": [198, 206],
+        "ourselves.": [201],
+        "Where": [202],
+        "leading": [205],
+        "do": [209],
+        "we": [210],
+        "want": [211],
+        "become?": [213],
+        "Featuring": [214],
+        "27": [215],
+        "photographs,": [216],
+        "6": [217],
+        "maps,": [218],
+        "25": [220],
+        "illustrations/diagrams,": [221],
+        "provocative": [223],
+        "insightful": [225],
+        "work": [226],
+        "sure": [228],
+        "spark": [230],
+        "debate": [231],
+        "essential": [234],
+        "reading": [235],
+        "aficionados": [237],
+        "Jared": [239],
+        "Diamond,": [240],
+        "James": [241],
+        "Gleick,": [242],
+        "Matt": [243],
+        "Ridley,": [244],
+        "Robert": [245],
+        "Wright,": [246],
+        "Sharon": [248],
+        "Moalem.": [249]
+      },
+      "counts_by_year": [
+        { "year": 2025, "cited_by_count": 134 },
+        { "year": 2024, "cited_by_count": 185 },
+        { "year": 2023, "cited_by_count": 175 },
+        { "year": 2022, "cited_by_count": 194 },
+        { "year": 2021, "cited_by_count": 343 },
+        { "year": 2020, "cited_by_count": 370 },
+        { "year": 2019, "cited_by_count": 307 },
+        { "year": 2018, "cited_by_count": 211 },
+        { "year": 2017, "cited_by_count": 128 },
+        { "year": 2016, "cited_by_count": 77 },
+        { "year": 2015, "cited_by_count": 29 },
+        { "year": 2014, "cited_by_count": 1 },
+        { "year": 2013, "cited_by_count": 2 }
+      ],
+      "updated_date": "2026-07-14T23:27:15.235271",
+      "created_date": "2025-10-10T00:00:00"
+    },
+    {
+      "id": "https://openalex.org/W2594342313",
+      "doi": "https://doi.org/10.17104/9783406704024",
+      "title": "Homo Deus",
+      "display_name": "Homo Deus",
+      "relevance_score": 758.75586,
+      "publication_year": 2017,
+      "publication_date": "2017-01-01",
+      "ids": {
+        "openalex": "https://openalex.org/W2594342313",
+        "doi": "https://doi.org/10.17104/9783406704024",
+        "mag": "2594342313"
+      },
+      "language": "br",
+      "primary_location": {
+        "id": "doi:10.17104/9783406704024",
+        "is_oa": false,
+        "landing_page_url": "https://doi.org/10.17104/9783406704024",
+        "pdf_url": null,
+        "source": null,
+        "license": null,
+        "license_id": null,
+        "version": "publishedVersion",
+        "is_accepted": true,
+        "is_published": true,
+        "raw_source_name": null,
+        "raw_type": "monograph"
+      },
+      "type": "book",
+      "indexed_in": ["crossref"],
+      "open_access": {
+        "is_oa": false,
+        "oa_status": "closed",
+        "oa_url": null,
+        "any_repository_has_fulltext": false
+      },
+      "authorships": [
+        {
+          "author_position": "first",
+          "author": {
+            "id": "https://openalex.org/A5019691568",
+            "display_name": "Yuval Noah Harari",
+            "orcid": null
+          },
+          "institutions": [],
+          "countries": [],
+          "is_corresponding": true,
+          "raw_author_name": "Yuval Noah Harari",
+          "raw_affiliation_strings": [],
+          "raw_orcid": null,
+          "affiliations": []
+        }
+      ],
+      "institutions": [],
+      "countries_distinct_count": 0,
+      "institutions_distinct_count": 0,
+      "corresponding_author_ids": ["https://openalex.org/A5019691568"],
+      "corresponding_institution_ids": [],
+      "apc_list": null,
+      "apc_paid": null,
+      "fwci": 112.1647,
+      "has_fulltext": false,
+      "cited_by_count": 1218,
+      "citation_normalized_percentile": {
+        "value": 0.99889868,
+        "is_in_top_1_percent": true,
+        "is_in_top_10_percent": true
+      },
+      "cited_by_percentile_year": { "min": 99, "max": 100 },
+      "biblio": { "volume": null, "issue": null, "first_page": null, "last_page": null },
+      "is_retracted": false,
+      "is_paratext": false,
+      "is_xpac": false,
+      "primary_topic": {
+        "id": "https://openalex.org/T12788",
+        "display_name": "Space Science and Extraterrestrial Life",
+        "score": 0.5108000040054321,
+        "subfield": {
+          "id": "https://openalex.org/subfields/3103",
+          "display_name": "Astronomy and Astrophysics"
+        },
+        "field": {
+          "id": "https://openalex.org/fields/31",
+          "display_name": "Physics and Astronomy"
+        },
+        "domain": { "id": "https://openalex.org/domains/3", "display_name": "Physical Sciences" }
+      },
+      "topics": [
+        {
+          "id": "https://openalex.org/T12788",
+          "display_name": "Space Science and Extraterrestrial Life",
+          "score": 0.5108000040054321,
+          "subfield": {
+            "id": "https://openalex.org/subfields/3103",
+            "display_name": "Astronomy and Astrophysics"
+          },
+          "field": {
+            "id": "https://openalex.org/fields/31",
+            "display_name": "Physics and Astronomy"
+          },
+          "domain": { "id": "https://openalex.org/domains/3", "display_name": "Physical Sciences" }
+        }
+      ],
+      "keywords": [
+        {
+          "id": "https://openalex.org/keywords/philosophy",
+          "display_name": "Philosophy",
+          "score": 0.6354448795318604
+        },
+        {
+          "id": "https://openalex.org/keywords/humanities",
+          "display_name": "Humanities",
+          "score": 0.38542571663856506
+        },
+        {
+          "id": "https://openalex.org/keywords/theology",
+          "display_name": "Theology",
+          "score": 0.3329148292541504
+        }
+      ],
+      "concepts": [
+        {
+          "id": "https://openalex.org/C138885662",
+          "wikidata": "https://www.wikidata.org/wiki/Q5891",
+          "display_name": "Philosophy",
+          "level": 0,
+          "score": 0.6354448795318604
+        },
+        {
+          "id": "https://openalex.org/C15708023",
+          "wikidata": "https://www.wikidata.org/wiki/Q80083",
+          "display_name": "Humanities",
+          "level": 1,
+          "score": 0.38542571663856506
+        },
+        {
+          "id": "https://openalex.org/C27206212",
+          "wikidata": "https://www.wikidata.org/wiki/Q34178",
+          "display_name": "Theology",
+          "level": 1,
+          "score": 0.3329148292541504
+        }
+      ],
+      "mesh": [],
+      "locations_count": 1,
+      "locations": [
+        {
+          "id": "doi:10.17104/9783406704024",
+          "is_oa": false,
+          "landing_page_url": "https://doi.org/10.17104/9783406704024",
+          "pdf_url": null,
+          "source": null,
+          "license": null,
+          "license_id": null,
+          "version": "publishedVersion",
+          "is_accepted": true,
+          "is_published": true,
+          "raw_source_name": null,
+          "raw_type": "monograph"
+        }
+      ],
+      "best_oa_location": null,
+      "sustainable_development_goals": [],
+      "awards": [],
+      "funders": [],
+      "has_content": { "grobid_xml": false, "pdf": false },
+      "content_urls": null,
+      "referenced_works_count": 0,
+      "referenced_works": [],
+      "related_works": [
+        "https://openalex.org/W2748952813",
+        "https://openalex.org/W93312527",
+        "https://openalex.org/W2603296253",
+        "https://openalex.org/W1589203209",
+        "https://openalex.org/W2557454913",
+        "https://openalex.org/W828925460",
+        "https://openalex.org/W11365241",
+        "https://openalex.org/W1013667899",
+        "https://openalex.org/W2559405764",
+        "https://openalex.org/W157591366"
+      ],
+      "abstract_inverted_index": {
+        "In": [0, 19, 111],
+        "seinem": [1],
+        "Kultbuch": [2],
+        "\u201eEine": [3],
+        "kurze": [4],
+        "Geschichte": [5],
+        "der": [6, 63, 80, 96],
+        "Menschheit\u201c": [7],
+        "erkl\u00e4rte": [8],
+        "Yuval": [9],
+        "Noah": [10],
+        "Harari,": [11],
+        "wie": [12, 51],
+        "unsere": [13],
+        "Spezies": [14],
+        "die": [15, 30, 41, 105],
+        "Erde": [16],
+        "erobern": [17],
+        "konnte.": [18],
+        "\u201eHomo": [20],
+        "Deus\u201c": [21],
+        "st\u00f6\u00dft": [22],
+        "er": [23, 74],
+        "vor": [24],
+        "in": [25],
+        "eine": [26, 59],
+        "noch": [27],
+        "verborgene": [28],
+        "Welt:": [29],
+        "Zukunft.": [31],
+        "Was": [32, 91],
+        "wird": [33, 67],
+        "mit": [34],
+        "uns": [35, 94, 121],
+        "und": [36, 54, 95, 117],
+        "unserem": [37],
+        "Planeten": [38],
+        "passieren,": [39],
+        "wenn": [40, 73, 101],
+        "neuen": [42],
+        "Technologien": [43],
+        "dem": [44, 69],
+        "Menschen": [45, 84, 131],
+        "gottgleiche": [46],
+        "F\u00e4higkeiten": [47],
+        "verleihen": [48],
+        "\u2013": [49, 53],
+        "sch\u00f6pferische": [50],
+        "zerst\u00f6rerische": [52],
+        "das": [55],
+        "Leben": [56],
+        "selbst": [57],
+        "auf": [58],
+        "v\u00f6llig": [60],
+        "neue": [61],
+        "Stufe": [62],
+        "Evolution": [64],
+        "heben?": [65],
+        "Wie": [66],
+        "es": [68],
+        "Homo": [70, 77],
+        "Sapiens": [71],
+        "ergehen,": [72],
+        "einen": [75],
+        "technikverst\u00e4rkten": [76],
+        "Deus": [78],
+        "erschafft,": [79],
+        "sich": [81],
+        "vom": [82, 89],
+        "heutigen": [83],
+        "deutlicher": [85],
+        "unterscheidet": [86],
+        "als": [87, 109],
+        "dieser": [88],
+        "Neandertaler?": [90],
+        "bleibt": [92],
+        "von": [93],
+        "modernen": [97],
+        "Religion": [98],
+        "des": [99],
+        "Humanismus,": [100],
+        "wir": [102, 120, 128],
+        "Maschinen": [103],
+        "konstruieren,": [104],
+        "alles": [106],
+        "besser": [107],
+        "k\u00f6nnen": [108],
+        "wir?": [110],
+        "unserer": [112],
+        "Gier": [113],
+        "nach": [114],
+        "Gesundheit,": [115],
+        "Gl\u00fcck": [116],
+        "Macht": [118],
+        "k\u00f6nnten": [119],
+        "ganz": [122],
+        "allm\u00e4hlich": [123],
+        "so": [124],
+        "weit": [125],
+        "ver\u00e4ndern,": [126],
+        "bis": [127],
+        "schlie\u00dflich": [129],
+        "keine": [130],
+        "mehr": [132],
+        "sind.": [133]
+      },
+      "counts_by_year": [
+        { "year": 2026, "cited_by_count": 52 },
+        { "year": 2025, "cited_by_count": 160 },
+        { "year": 2024, "cited_by_count": 119 },
+        { "year": 2023, "cited_by_count": 242 },
+        { "year": 2022, "cited_by_count": 130 },
+        { "year": 2021, "cited_by_count": 183 },
+        { "year": 2020, "cited_by_count": 137 },
+        { "year": 2019, "cited_by_count": 97 },
+        { "year": 2018, "cited_by_count": 69 },
+        { "year": 2017, "cited_by_count": 28 }
+      ],
+      "updated_date": "2026-07-16T13:24:37.021932",
+      "created_date": "2017-03-16T00:00:00"
+    },
+    {
+      "id": "https://openalex.org/W2897558098",
+      "doi": null,
+      "title": "Homo deus: a brief history of tomorrow",
+      "display_name": "Homo deus: a brief history of tomorrow",
+      "relevance_score": 748.163,
+      "publication_year": 2017,
+      "publication_date": "2017-01-01",
+      "ids": { "openalex": "https://openalex.org/W2897558098", "mag": "2897558098" },
+      "language": "en",
+      "primary_location": {
+        "id": "pmh:oai:aleph.bib-bvb.de:BVB01-029631486",
+        "is_oa": false,
+        "landing_page_url": "https://bvbr.bib-bvb.de:443/F?func=service&doc_library=BVB01&local_base=BVB01&doc_number=029631486&sequence=000002&line_number=0001&func_code=DB_RECORDS&service_type=MEDIA",
+        "pdf_url": null,
+        "source": null,
+        "license": null,
+        "license_id": null,
+        "version": "submittedVersion",
+        "is_accepted": false,
+        "is_published": false,
+        "raw_source_name": null,
+        "raw_type": "text"
+      },
+      "type": "article",
+      "indexed_in": [],
+      "open_access": {
+        "is_oa": false,
+        "oa_status": "closed",
+        "oa_url": null,
+        "any_repository_has_fulltext": false
+      },
+      "authorships": [
+        {
+          "author_position": "first",
+          "author": {
+            "id": "https://openalex.org/A5019691568",
+            "display_name": "Yuval Noah Harari",
+            "orcid": null
+          },
+          "institutions": [],
+          "countries": [],
+          "is_corresponding": true,
+          "raw_author_name": "Yuval Noah Harari",
+          "raw_affiliation_strings": [],
+          "raw_orcid": null,
+          "affiliations": []
+        }
+      ],
+      "institutions": [],
+      "countries_distinct_count": 0,
+      "institutions_distinct_count": 0,
+      "corresponding_author_ids": ["https://openalex.org/A5019691568"],
+      "corresponding_institution_ids": [],
+      "apc_list": null,
+      "apc_paid": null,
+      "fwci": 427.2442,
+      "has_fulltext": false,
+      "cited_by_count": 1170,
+      "citation_normalized_percentile": {
+        "value": 0.99998329,
+        "is_in_top_1_percent": true,
+        "is_in_top_10_percent": true
+      },
+      "cited_by_percentile_year": { "min": 89, "max": 100 },
+      "biblio": { "volume": null, "issue": null, "first_page": null, "last_page": null },
+      "is_retracted": false,
+      "is_paratext": false,
+      "is_xpac": false,
+      "primary_topic": {
+        "id": "https://openalex.org/T11203",
+        "display_name": "Jewish and Middle Eastern Studies",
+        "score": 0.929099977016449,
+        "subfield": {
+          "id": "https://openalex.org/subfields/3312",
+          "display_name": "Sociology and Political Science"
+        },
+        "field": { "id": "https://openalex.org/fields/33", "display_name": "Social Sciences" },
+        "domain": { "id": "https://openalex.org/domains/2", "display_name": "Social Sciences" }
+      },
+      "topics": [
+        {
+          "id": "https://openalex.org/T11203",
+          "display_name": "Jewish and Middle Eastern Studies",
+          "score": 0.929099977016449,
+          "subfield": {
+            "id": "https://openalex.org/subfields/3312",
+            "display_name": "Sociology and Political Science"
+          },
+          "field": { "id": "https://openalex.org/fields/33", "display_name": "Social Sciences" },
+          "domain": { "id": "https://openalex.org/domains/2", "display_name": "Social Sciences" }
+        }
+      ],
+      "keywords": [
+        {
+          "id": "https://openalex.org/keywords/hebrew",
+          "display_name": "Hebrew",
+          "score": 0.6117337942123413
+        },
+        {
+          "id": "https://openalex.org/keywords/division",
+          "display_name": "Division (mathematics)",
+          "score": 0.524259090423584
+        },
+        {
+          "id": "https://openalex.org/keywords/history",
+          "display_name": "History",
+          "score": 0.43339940905570984
+        },
+        {
+          "id": "https://openalex.org/keywords/genealogy",
+          "display_name": "Genealogy",
+          "score": 0.3964240849018097
+        },
+        {
+          "id": "https://openalex.org/keywords/ancient-history",
+          "display_name": "Ancient history",
+          "score": 0.3526564836502075
+        },
+        {
+          "id": "https://openalex.org/keywords/art",
+          "display_name": "Art",
+          "score": 0.34839653968811035
+        },
+        {
+          "id": "https://openalex.org/keywords/classics",
+          "display_name": "Classics",
+          "score": 0.33565616607666016
+        },
+        {
+          "id": "https://openalex.org/keywords/art-history",
+          "display_name": "Art history",
+          "score": 0.3294437527656555
+        },
+        {
+          "id": "https://openalex.org/keywords/mathematics",
+          "display_name": "Mathematics",
+          "score": 0.03497302532196045
+        },
+        {
+          "id": "https://openalex.org/keywords/arithmetic",
+          "display_name": "Arithmetic",
+          "score": 0.029543429613113403
+        }
+      ],
+      "concepts": [
+        {
+          "id": "https://openalex.org/C91304198",
+          "wikidata": "https://www.wikidata.org/wiki/Q9288",
+          "display_name": "Hebrew",
+          "level": 2,
+          "score": 0.6117337942123413
+        },
+        {
+          "id": "https://openalex.org/C60798267",
+          "wikidata": "https://www.wikidata.org/wiki/Q1226939",
+          "display_name": "Division (mathematics)",
+          "level": 2,
+          "score": 0.524259090423584
+        },
+        {
+          "id": "https://openalex.org/C95457728",
+          "wikidata": "https://www.wikidata.org/wiki/Q309",
+          "display_name": "History",
+          "level": 0,
+          "score": 0.43339940905570984
+        },
+        {
+          "id": "https://openalex.org/C53553401",
+          "wikidata": "https://www.wikidata.org/wiki/Q47307",
+          "display_name": "Genealogy",
+          "level": 1,
+          "score": 0.3964240849018097
+        },
+        {
+          "id": "https://openalex.org/C195244886",
+          "wikidata": "https://www.wikidata.org/wiki/Q41493",
+          "display_name": "Ancient history",
+          "level": 1,
+          "score": 0.3526564836502075
+        },
+        {
+          "id": "https://openalex.org/C142362112",
+          "wikidata": "https://www.wikidata.org/wiki/Q735",
+          "display_name": "Art",
+          "level": 0,
+          "score": 0.34839653968811035
+        },
+        {
+          "id": "https://openalex.org/C74916050",
+          "wikidata": "https://www.wikidata.org/wiki/Q841090",
+          "display_name": "Classics",
+          "level": 1,
+          "score": 0.33565616607666016
+        },
+        {
+          "id": "https://openalex.org/C52119013",
+          "wikidata": "https://www.wikidata.org/wiki/Q50637",
+          "display_name": "Art history",
+          "level": 1,
+          "score": 0.3294437527656555
+        },
+        {
+          "id": "https://openalex.org/C33923547",
+          "wikidata": "https://www.wikidata.org/wiki/Q395",
+          "display_name": "Mathematics",
+          "level": 0,
+          "score": 0.03497302532196045
+        },
+        {
+          "id": "https://openalex.org/C94375191",
+          "wikidata": "https://www.wikidata.org/wiki/Q11205",
+          "display_name": "Arithmetic",
+          "level": 1,
+          "score": 0.029543429613113403
+        }
+      ],
+      "mesh": [],
+      "locations_count": 3,
+      "locations": [
+        {
+          "id": "pmh:oai:aleph.bib-bvb.de:BVB01-029631486",
+          "is_oa": false,
+          "landing_page_url": "https://bvbr.bib-bvb.de:443/F?func=service&doc_library=BVB01&local_base=BVB01&doc_number=029631486&sequence=000002&line_number=0001&func_code=DB_RECORDS&service_type=MEDIA",
+          "pdf_url": null,
+          "source": null,
+          "license": null,
+          "license_id": null,
+          "version": "submittedVersion",
+          "is_accepted": false,
+          "is_published": false,
+          "raw_source_name": null,
+          "raw_type": "text"
+        },
+        {
+          "id": "pmh:oai:aleph.bib-bvb.de:BVB01-029648120",
+          "is_oa": false,
+          "landing_page_url": null,
+          "pdf_url": null,
+          "source": null,
+          "license": null,
+          "license_id": null,
+          "version": "submittedVersion",
+          "is_accepted": false,
+          "is_published": false,
+          "raw_source_name": null,
+          "raw_type": "text"
+        },
+        {
+          "id": "pmh:oai:cds.cern.ch:2319925",
+          "is_oa": false,
+          "landing_page_url": "http://cds.cern.ch/record/2319925",
+          "pdf_url": null,
+          "source": {
+            "id": "https://openalex.org/S4306400735",
+            "display_name": "International Linear Collider",
+            "issn_l": null,
+            "issn": null,
+            "is_oa": false,
+            "is_in_doaj": false,
+            "is_core": false,
+            "host_organization": null,
+            "host_organization_name": null,
+            "host_organization_lineage": [],
+            "host_organization_lineage_names": [],
+            "type": "repository"
+          },
+          "license": null,
+          "license_id": null,
+          "version": "submittedVersion",
+          "is_accepted": false,
+          "is_published": false,
+          "raw_source_name": "",
+          "raw_type": null
+        }
+      ],
+      "best_oa_location": null,
+      "sustainable_development_goals": [],
+      "awards": [],
+      "funders": [],
+      "has_content": { "grobid_xml": false, "pdf": false },
+      "content_urls": null,
+      "referenced_works_count": 0,
+      "referenced_works": [],
+      "related_works": [
+        "https://openalex.org/W2594342313",
+        "https://openalex.org/W1636189349",
+        "https://openalex.org/W648152870",
+        "https://openalex.org/W2895901034",
+        "https://openalex.org/W2169558102",
+        "https://openalex.org/W2573660794",
+        "https://openalex.org/W2900548288",
+        "https://openalex.org/W2526781987",
+        "https://openalex.org/W1631150390",
+        "https://openalex.org/W2951875216",
+        "https://openalex.org/W2752099845",
+        "https://openalex.org/W2913707464",
+        "https://openalex.org/W2145482038",
+        "https://openalex.org/W181665514",
+        "https://openalex.org/W2752384816",
+        "https://openalex.org/W2166445532",
+        "https://openalex.org/W313134013",
+        "https://openalex.org/W2226396244",
+        "https://openalex.org/W2001771035",
+        "https://openalex.org/W1505563434"
+      ],
+      "abstract_inverted_index": {
+        "Yuval": [0],
+        "Noah": [1],
+        "Harari,": [2],
+        "author": [3],
+        "of": [4, 83, 164, 172, 236],
+        "the": [5, 39, 47, 89, 162, 165, 169, 190, 198, 209, 233, 243],
+        "critically-acclaimed": [6],
+        "New": [7],
+        "York": [8],
+        "Times": [9],
+        "bestseller": [10],
+        "and": [11, 21, 30, 49, 54, 73, 80, 115, 126, 159, 181, 193, 246],
+        "international": [12],
+        "phenomenon": [13],
+        "Sapiens,": [14],
+        "returns": [15],
+        "with": [16],
+        "an": [17],
+        "equally": [18],
+        "original,": [19],
+        "compelling,": [20],
+        "provocative": [22],
+        "book,": [23],
+        "turning": [24],
+        "his": [25, 67],
+        "focus": [26],
+        "toward": [27],
+        "humanity\u2019s": [28],
+        "future,": [29],
+        "our": [31, 227],
+        "quest": [32],
+        "to": [33, 45, 60, 139, 203],
+        "upgrade": [34],
+        "humans": [35],
+        "into": [36, 85],
+        "gods.": [37],
+        "Over": [38],
+        "past": [40],
+        "century": [41],
+        "humankind": [42],
+        "has": [43],
+        "managed": [44],
+        "do": [46, 213],
+        "impossible": [48],
+        "rein": [50],
+        "in": [51, 66],
+        "famine,": [52, 157],
+        "plague,": [53, 158],
+        "war.": [55],
+        "This": [56, 231, 238],
+        "may": [57],
+        "seem": [58],
+        "hard": [59],
+        "accept,": [61],
+        "but,": [62],
+        "as": [63],
+        "Harari": [64],
+        "explains": [65],
+        "trademark": [68],
+        "style\u2014thorough,": [69],
+        "yet": [70],
+        "riveting\u2014famine,": [71],
+        "plague": [72],
+        "war": [74, 160],
+        "have": [75],
+        "been": [76],
+        "transformed": [77],
+        "from": [78, 96, 101, 108, 112, 141, 146, 216, 226],
+        "incomprehensible": [79],
+        "uncontrollable": [81],
+        "forces": [82],
+        "nature": [84],
+        "manageable": [86],
+        "challenges.": [87],
+        "For": [88],
+        "first": [90],
+        "time": [91],
+        "ever,": [92],
+        "more": [93, 105, 116, 137],
+        "people": [94, 106, 117],
+        "die": [95, 107, 140],
+        "eating": [97, 102],
+        "too": [98, 103],
+        "much": [99],
+        "than": [100, 111, 120, 145],
+        "little;": [104],
+        "old": [109],
+        "age": [110],
+        "infectious": [113],
+        "diseases;": [114],
+        "commit": [118],
+        "suicide": [119],
+        "are": [121],
+        "killed": [122],
+        "by": [123, 150],
+        "soldiers,": [124],
+        "terrorists": [125],
+        "criminals": [127],
+        "put": [128],
+        "together.": [129],
+        "The": [130],
+        "average": [131],
+        "American": [132],
+        "is": [133, 232, 239],
+        "a": [134],
+        "thousand": [135],
+        "times": [136],
+        "likely": [138],
+        "binging": [142],
+        "at": [143, 161],
+        "McDonalds": [144],
+        "being": [147],
+        "blown": [148],
+        "up": [149],
+        "Al": [151],
+        "Qaeda.": [152],
+        "What": [153],
+        "then": [154],
+        "will": [155, 177, 184, 196, 220],
+        "replace": [156],
+        "top": [163],
+        "human": [166],
+        "agenda?": [167],
+        "As": [168],
+        "self-made": [170],
+        "gods": [171],
+        "planet": [173],
+        "earth,": [174],
+        "what": [175],
+        "destinies": [176],
+        "we": [178, 185, 214, 221],
+        "set": [179],
+        "ourselves,": [180],
+        "which": [182],
+        "quests": [183],
+        "undertake?": [186],
+        "Homo": [187, 240],
+        "Deus": [188],
+        "explores": [189],
+        "projects,": [191],
+        "dreams": [192],
+        "nightmares": [194],
+        "that": [195, 248],
+        "shape": [197],
+        "twenty-first": [199],
+        "century\u2014from": [200],
+        "overcoming": [201],
+        "death": [202],
+        "creating": [204],
+        "artificial": [205],
+        "life.": [206],
+        "It": [207],
+        "asks": [208],
+        "fundamental": [210],
+        "questions:": [211],
+        "Where": [212],
+        "go": [215],
+        "here?": [217],
+        "And": [218],
+        "how": [219],
+        "protect": [222],
+        "this": [223],
+        "fragile": [224],
+        "world": [225],
+        "own": [228],
+        "destructive": [229],
+        "powers?": [230],
+        "next": [234],
+        "stage": [235],
+        "evolution.": [237],
+        "Deus.": [241],
+        "With": [242],
+        "same": [244],
+        "insight": [245],
+        "clarity": [247],
+        "made": [249],
+        "Sapiens": [250]
+      },
+      "counts_by_year": [
+        { "year": 2025, "cited_by_count": 29 },
+        { "year": 2024, "cited_by_count": 67 },
+        { "year": 2023, "cited_by_count": 128 },
+        { "year": 2022, "cited_by_count": 115 },
+        { "year": 2021, "cited_by_count": 182 },
+        { "year": 2020, "cited_by_count": 238 },
+        { "year": 2019, "cited_by_count": 188 },
+        { "year": 2018, "cited_by_count": 154 },
+        { "year": 2017, "cited_by_count": 61 },
+        { "year": 2016, "cited_by_count": 4 },
+        { "year": 2014, "cited_by_count": 1 },
+        { "year": 2013, "cited_by_count": 1 }
+      ],
+      "updated_date": "2026-07-15T18:14:33.161393",
+      "created_date": "2025-10-10T00:00:00"
+    },
+    {
+      "id": "https://openalex.org/W2902354970",
+      "doi": "https://doi.org/10.13128/ccselap-23420",
+      "title": "Sapiens: A Brief History of Humankind di Yuval Noah Harari, Harvill Secker, London, 2014",
+      "display_name": "Sapiens: A Brief History of Humankind di Yuval Noah Harari, Harvill Secker, London, 2014",
+      "relevance_score": 679.0814,
+      "publication_year": 2019,
+      "publication_date": "2019-07-29",
+      "ids": {
+        "openalex": "https://openalex.org/W2902354970",
+        "doi": "https://doi.org/10.13128/ccselap-23420",
+        "mag": "2902354970"
+      },
+      "language": "it",
+      "primary_location": {
+        "id": "pmh:oai:doaj.org/article:6ea3a7cab3db47fd9caa91b926856bc6",
+        "is_oa": true,
+        "landing_page_url": "https://doaj.org/article/6ea3a7cab3db47fd9caa91b926856bc6",
+        "pdf_url": null,
+        "source": {
+          "id": "https://openalex.org/S4306401280",
+          "display_name": "DOAJ (DOAJ: Directory of Open Access Journals)",
+          "issn_l": null,
+          "issn": null,
+          "is_oa": false,
+          "is_in_doaj": false,
+          "is_core": false,
+          "host_organization": null,
+          "host_organization_name": null,
+          "host_organization_lineage": [],
+          "host_organization_lineage_names": [],
+          "type": "repository"
+        },
+        "license": "cc-by-sa",
+        "license_id": "https://openalex.org/licenses/cc-by-sa",
+        "version": "submittedVersion",
+        "is_accepted": false,
+        "is_published": false,
+        "raw_source_name": "Comparative Cultural Studies, Vol 2, Iss 4 (2018)",
+        "raw_type": "article"
+      },
+      "type": "article",
+      "indexed_in": ["datacite", "doaj"],
+      "open_access": {
+        "is_oa": true,
+        "oa_status": "green",
+        "oa_url": "https://doaj.org/article/6ea3a7cab3db47fd9caa91b926856bc6",
+        "any_repository_has_fulltext": true
+      },
+      "authorships": [
+        {
+          "author_position": "first",
+          "author": {
+            "id": "https://openalex.org/A5081938117",
+            "display_name": "Giovanna Campani",
+            "orcid": "https://orcid.org/0000-0002-6954-1054"
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I45084792",
+              "display_name": "University of Florence",
+              "ror": "https://ror.org/04jr1s763",
+              "country_code": "IT",
+              "type": "education",
+              "lineage": ["https://openalex.org/I45084792"]
+            }
+          ],
+          "countries": ["IT"],
+          "is_corresponding": true,
+          "raw_author_name": "Campani, Giovanna",
+          "raw_affiliation_strings": ["Universit\u00e0 di Firenze"],
+          "raw_orcid": null,
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Universit\u00e0 di Firenze",
+              "institution_ids": ["https://openalex.org/I45084792"]
+            }
+          ]
+        }
+      ],
+      "institutions": [],
+      "countries_distinct_count": 1,
+      "institutions_distinct_count": 1,
+      "corresponding_author_ids": ["https://openalex.org/A5081938117"],
+      "corresponding_institution_ids": ["https://openalex.org/I45084792"],
+      "apc_list": null,
+      "apc_paid": null,
+      "fwci": 18.0237,
+      "has_fulltext": false,
+      "cited_by_count": 30,
+      "citation_normalized_percentile": {
+        "value": 0.9880103,
+        "is_in_top_1_percent": false,
+        "is_in_top_10_percent": true
+      },
+      "cited_by_percentile_year": { "min": 94, "max": 99 },
+      "biblio": { "volume": null, "issue": null, "first_page": null, "last_page": null },
+      "is_retracted": false,
+      "is_paratext": false,
+      "is_xpac": false,
+      "primary_topic": {
+        "id": "https://openalex.org/T11070",
+        "display_name": "Soviet and Russian History",
+        "score": 0.04309999942779541,
+        "subfield": {
+          "id": "https://openalex.org/subfields/3320",
+          "display_name": "Political Science and International Relations"
+        },
+        "field": { "id": "https://openalex.org/fields/33", "display_name": "Social Sciences" },
+        "domain": { "id": "https://openalex.org/domains/2", "display_name": "Social Sciences" }
+      },
+      "topics": [
+        {
+          "id": "https://openalex.org/T11070",
+          "display_name": "Soviet and Russian History",
+          "score": 0.04309999942779541,
+          "subfield": {
+            "id": "https://openalex.org/subfields/3320",
+            "display_name": "Political Science and International Relations"
+          },
+          "field": { "id": "https://openalex.org/fields/33", "display_name": "Social Sciences" },
+          "domain": { "id": "https://openalex.org/domains/2", "display_name": "Social Sciences" }
+        }
+      ],
+      "keywords": [
+        {
+          "id": "https://openalex.org/keywords/homo-sapiens",
+          "display_name": "Homo sapiens",
+          "score": 0.6131467223167419
+        },
+        {
+          "id": "https://openalex.org/keywords/history",
+          "display_name": "History",
+          "score": 0.3205971121788025
+        },
+        {
+          "id": "https://openalex.org/keywords/archaeology",
+          "display_name": "Archaeology",
+          "score": 0.2430187463760376
+        }
+      ],
+      "concepts": [
+        {
+          "id": "https://openalex.org/C2777938546",
+          "wikidata": "https://www.wikidata.org/wiki/Q5",
+          "display_name": "Homo sapiens",
+          "level": 2,
+          "score": 0.6131467223167419
+        },
+        {
+          "id": "https://openalex.org/C95457728",
+          "wikidata": "https://www.wikidata.org/wiki/Q309",
+          "display_name": "History",
+          "level": 0,
+          "score": 0.3205971121788025
+        },
+        {
+          "id": "https://openalex.org/C166957645",
+          "wikidata": "https://www.wikidata.org/wiki/Q23498",
+          "display_name": "Archaeology",
+          "level": 1,
+          "score": 0.2430187463760376
+        }
+      ],
+      "mesh": [],
+      "locations_count": 2,
+      "locations": [
+        {
+          "id": "pmh:oai:doaj.org/article:6ea3a7cab3db47fd9caa91b926856bc6",
+          "is_oa": true,
+          "landing_page_url": "https://doaj.org/article/6ea3a7cab3db47fd9caa91b926856bc6",
+          "pdf_url": null,
+          "source": {
+            "id": "https://openalex.org/S4306401280",
+            "display_name": "DOAJ (DOAJ: Directory of Open Access Journals)",
+            "issn_l": null,
+            "issn": null,
+            "is_oa": false,
+            "is_in_doaj": false,
+            "is_core": false,
+            "host_organization": null,
+            "host_organization_name": null,
+            "host_organization_lineage": [],
+            "host_organization_lineage_names": [],
+            "type": "repository"
+          },
+          "license": "cc-by-sa",
+          "license_id": "https://openalex.org/licenses/cc-by-sa",
+          "version": "submittedVersion",
+          "is_accepted": false,
+          "is_published": false,
+          "raw_source_name": "Comparative Cultural Studies, Vol 2, Iss 4 (2018)",
+          "raw_type": "article"
+        },
+        {
+          "id": "doi:10.13128/ccselap-23420",
+          "is_oa": true,
+          "landing_page_url": "https://doi.org/10.13128/ccselap-23420",
+          "pdf_url": null,
+          "source": null,
+          "license": null,
+          "license_id": null,
+          "version": null,
+          "is_accepted": false,
+          "is_published": null,
+          "raw_source_name": null,
+          "raw_type": "article-journal"
+        }
+      ],
+      "best_oa_location": {
+        "id": "pmh:oai:doaj.org/article:6ea3a7cab3db47fd9caa91b926856bc6",
+        "is_oa": true,
+        "landing_page_url": "https://doaj.org/article/6ea3a7cab3db47fd9caa91b926856bc6",
+        "pdf_url": null,
+        "source": {
+          "id": "https://openalex.org/S4306401280",
+          "display_name": "DOAJ (DOAJ: Directory of Open Access Journals)",
+          "issn_l": null,
+          "issn": null,
+          "is_oa": false,
+          "is_in_doaj": false,
+          "is_core": false,
+          "host_organization": null,
+          "host_organization_name": null,
+          "host_organization_lineage": [],
+          "host_organization_lineage_names": [],
+          "type": "repository"
+        },
+        "license": "cc-by-sa",
+        "license_id": "https://openalex.org/licenses/cc-by-sa",
+        "version": "submittedVersion",
+        "is_accepted": false,
+        "is_published": false,
+        "raw_source_name": "Comparative Cultural Studies, Vol 2, Iss 4 (2018)",
+        "raw_type": "article"
+      },
+      "sustainable_development_goals": [],
+      "awards": [],
+      "funders": [],
+      "has_content": { "grobid_xml": false, "pdf": false },
+      "content_urls": null,
+      "referenced_works_count": 0,
+      "referenced_works": [],
+      "related_works": [
+        "https://openalex.org/W122800452",
+        "https://openalex.org/W279682321",
+        "https://openalex.org/W3120667788",
+        "https://openalex.org/W4386574598",
+        "https://openalex.org/W1004557661",
+        "https://openalex.org/W1563732125",
+        "https://openalex.org/W2151645171",
+        "https://openalex.org/W2163929161",
+        "https://openalex.org/W2722588522",
+        "https://openalex.org/W3129690273"
+      ],
+      "abstract_inverted_index": null,
+      "counts_by_year": [
+        { "year": 2021, "cited_by_count": 7 },
+        { "year": 2020, "cited_by_count": 3 },
+        { "year": 2019, "cited_by_count": 7 },
+        { "year": 2018, "cited_by_count": 5 },
+        { "year": 2017, "cited_by_count": 6 },
+        { "year": 2016, "cited_by_count": 2 }
+      ],
+      "updated_date": "2026-05-06T08:25:59.206177",
+      "created_date": "2025-10-10T00:00:00"
+    },
+    {
+      "id": "https://openalex.org/W2884505777",
+      "doi": "https://doi.org/10.7213/rev.dir.econ.soc.v9i1.24035",
+      "title": "Resenha: \u201cSapiens: uma breve hist\u00f3ria da humanidade\u201d, de Yuval Noah Harari",
+      "display_name": "Resenha: \u201cSapiens: uma breve hist\u00f3ria da humanidade\u201d, de Yuval Noah Harari",
+      "relevance_score": 667.22205,
+      "publication_year": 2018,
+      "publication_date": "2018-07-18",
+      "ids": {
+        "openalex": "https://openalex.org/W2884505777",
+        "doi": "https://doi.org/10.7213/rev.dir.econ.soc.v9i1.24035",
+        "mag": "2884505777"
+      },
+      "language": "pt",
+      "primary_location": {
+        "id": "doi:10.7213/rev.dir.econ.soc.v9i1.24035",
+        "is_oa": true,
+        "landing_page_url": "https://doi.org/10.7213/rev.dir.econ.soc.v9i1.24035",
+        "pdf_url": "https://periodicos.pucpr.br/index.php/direitoeconomico/article/download/24035/22836",
+        "source": {
+          "id": "https://openalex.org/S4210238555",
+          "display_name": "Revista de Direito Econ\u00f4mico e Socioambiental",
+          "issn_l": "2179-345X",
+          "issn": ["2179-345X", "2179-8214"],
+          "is_oa": true,
+          "is_in_doaj": true,
+          "is_core": false,
+          "host_organization": "https://openalex.org/P4310312036",
+          "host_organization_name": "Pontif\u00edcia Universidade Cat\u00f3lica do Paran\u00e1, Programa de P\u00f3s-Gradua\u00e7\u00e3o em Direito",
+          "host_organization_lineage": ["https://openalex.org/P4310312036"],
+          "host_organization_lineage_names": [
+            "Pontif\u00edcia Universidade Cat\u00f3lica do Paran\u00e1, Programa de P\u00f3s-Gradua\u00e7\u00e3o em Direito"
+          ],
+          "type": "journal"
+        },
+        "license": "cc-by",
+        "license_id": "https://openalex.org/licenses/cc-by",
+        "version": "publishedVersion",
+        "is_accepted": true,
+        "is_published": true,
+        "raw_source_name": "Revista de Direito Econ\u00f4mico e Socioambiental",
+        "raw_type": "journal-article"
+      },
+      "type": "article",
+      "indexed_in": ["crossref", "doaj"],
+      "open_access": {
+        "is_oa": true,
+        "oa_status": "diamond",
+        "oa_url": "https://periodicos.pucpr.br/index.php/direitoeconomico/article/download/24035/22836",
+        "any_repository_has_fulltext": true
+      },
+      "authorships": [
+        {
+          "author_position": "first",
+          "author": {
+            "id": "https://openalex.org/A5054229620",
+            "display_name": "Am\u00e9lia do Carmo Sampaio Rossi",
+            "orcid": null
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I176838256",
+              "display_name": "Pontif\u00edcia Universidade Cat\u00f3lica do Paran\u00e1",
+              "ror": "https://ror.org/02x1vjk79",
+              "country_code": "BR",
+              "type": "education",
+              "lineage": ["https://openalex.org/I176838256"]
+            }
+          ],
+          "countries": ["BR"],
+          "is_corresponding": true,
+          "raw_author_name": "Am\u00e9lia Do Carmo Sampaio Rossi",
+          "raw_affiliation_strings": ["Pontif\u00edcia Universidade Cat\u00f3lica do Paran\u00e1"],
+          "raw_orcid": null,
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Pontif\u00edcia Universidade Cat\u00f3lica do Paran\u00e1",
+              "institution_ids": ["https://openalex.org/I176838256"]
+            }
+          ]
+        }
+      ],
+      "institutions": [],
+      "countries_distinct_count": 1,
+      "institutions_distinct_count": 1,
+      "corresponding_author_ids": ["https://openalex.org/A5054229620"],
+      "corresponding_institution_ids": ["https://openalex.org/I176838256"],
+      "apc_list": null,
+      "apc_paid": null,
+      "fwci": 32.5207,
+      "has_fulltext": false,
+      "cited_by_count": 25,
+      "citation_normalized_percentile": {
+        "value": 0.9956494,
+        "is_in_top_1_percent": true,
+        "is_in_top_10_percent": true
+      },
+      "cited_by_percentile_year": { "min": 89, "max": 99 },
+      "biblio": { "volume": "9", "issue": "1", "first_page": "427", "last_page": "427" },
+      "is_retracted": false,
+      "is_paratext": false,
+      "is_xpac": false,
+      "primary_topic": {
+        "id": "https://openalex.org/T11858",
+        "display_name": "Urban Development and Societal Issues",
+        "score": 0.5690000057220459,
+        "subfield": {
+          "id": "https://openalex.org/subfields/3322",
+          "display_name": "Urban Studies"
+        },
+        "field": { "id": "https://openalex.org/fields/33", "display_name": "Social Sciences" },
+        "domain": { "id": "https://openalex.org/domains/2", "display_name": "Social Sciences" }
+      },
+      "topics": [
+        {
+          "id": "https://openalex.org/T11858",
+          "display_name": "Urban Development and Societal Issues",
+          "score": 0.5690000057220459,
+          "subfield": {
+            "id": "https://openalex.org/subfields/3322",
+            "display_name": "Urban Studies"
+          },
+          "field": { "id": "https://openalex.org/fields/33", "display_name": "Social Sciences" },
+          "domain": { "id": "https://openalex.org/domains/2", "display_name": "Social Sciences" }
+        }
+      ],
+      "keywords": [
+        {
+          "id": "https://openalex.org/keywords/humanities",
+          "display_name": "Humanities",
+          "score": 0.7647516131401062
+        },
+        {
+          "id": "https://openalex.org/keywords/philosophy",
+          "display_name": "Philosophy",
+          "score": 0.5860766172409058
+        },
+        {
+          "id": "https://openalex.org/keywords/art",
+          "display_name": "Art",
+          "score": 0.3947927951812744
+        }
+      ],
+      "concepts": [
+        {
+          "id": "https://openalex.org/C15708023",
+          "wikidata": "https://www.wikidata.org/wiki/Q80083",
+          "display_name": "Humanities",
+          "level": 1,
+          "score": 0.7647516131401062
+        },
+        {
+          "id": "https://openalex.org/C138885662",
+          "wikidata": "https://www.wikidata.org/wiki/Q5891",
+          "display_name": "Philosophy",
+          "level": 0,
+          "score": 0.5860766172409058
+        },
+        {
+          "id": "https://openalex.org/C142362112",
+          "wikidata": "https://www.wikidata.org/wiki/Q735",
+          "display_name": "Art",
+          "level": 0,
+          "score": 0.3947927951812744
+        }
+      ],
+      "mesh": [],
+      "locations_count": 4,
+      "locations": [
+        {
+          "id": "doi:10.7213/rev.dir.econ.soc.v9i1.24035",
+          "is_oa": true,
+          "landing_page_url": "https://doi.org/10.7213/rev.dir.econ.soc.v9i1.24035",
+          "pdf_url": "https://periodicos.pucpr.br/index.php/direitoeconomico/article/download/24035/22836",
+          "source": {
+            "id": "https://openalex.org/S4210238555",
+            "display_name": "Revista de Direito Econ\u00f4mico e Socioambiental",
+            "issn_l": "2179-345X",
+            "issn": ["2179-345X", "2179-8214"],
+            "is_oa": true,
+            "is_in_doaj": true,
+            "is_core": false,
+            "host_organization": "https://openalex.org/P4310312036",
+            "host_organization_name": "Pontif\u00edcia Universidade Cat\u00f3lica do Paran\u00e1, Programa de P\u00f3s-Gradua\u00e7\u00e3o em Direito",
+            "host_organization_lineage": ["https://openalex.org/P4310312036"],
+            "host_organization_lineage_names": [
+              "Pontif\u00edcia Universidade Cat\u00f3lica do Paran\u00e1, Programa de P\u00f3s-Gradua\u00e7\u00e3o em Direito"
+            ],
+            "type": "journal"
+          },
+          "license": "cc-by",
+          "license_id": "https://openalex.org/licenses/cc-by",
+          "version": "publishedVersion",
+          "is_accepted": true,
+          "is_published": true,
+          "raw_source_name": "Revista de Direito Econ\u00f4mico e Socioambiental",
+          "raw_type": "journal-article"
+        },
+        {
+          "id": "pmh:oai:americanae.aecid.es:2311285",
+          "is_oa": true,
+          "landing_page_url": "https://periodicos.pucpr.br/index.php/direitoeconomico/article/view/24035",
+          "pdf_url": null,
+          "source": {
+            "id": "https://openalex.org/S4306400786",
+            "display_name": "Americanae (AECID Library)",
+            "issn_l": null,
+            "issn": null,
+            "is_oa": false,
+            "is_in_doaj": false,
+            "is_core": false,
+            "host_organization": null,
+            "host_organization_name": null,
+            "host_organization_lineage": [],
+            "host_organization_lineage_names": [],
+            "type": "repository"
+          },
+          "license": "cc-by-nc",
+          "license_id": "https://openalex.org/licenses/cc-by-nc",
+          "version": "submittedVersion",
+          "is_accepted": false,
+          "is_published": false,
+          "raw_source_name": "Revista de Direito Econ\u00f4mico e Socioambiental; v. 9, n. 1 (2018): janeiro/abril; 427-432",
+          "raw_type": "<dc:type>info:eu-repo/semantics/article"
+        },
+        {
+          "id": "pmh:oai:doaj.org/article:3dc172686ab64f99a514fc03c6f8da16",
+          "is_oa": true,
+          "landing_page_url": "https://doaj.org/article/3dc172686ab64f99a514fc03c6f8da16",
+          "pdf_url": null,
+          "source": {
+            "id": "https://openalex.org/S4306401280",
+            "display_name": "DOAJ (DOAJ: Directory of Open Access Journals)",
+            "issn_l": null,
+            "issn": null,
+            "is_oa": false,
+            "is_in_doaj": false,
+            "is_core": false,
+            "host_organization": null,
+            "host_organization_name": null,
+            "host_organization_lineage": [],
+            "host_organization_lineage_names": [],
+            "type": "repository"
+          },
+          "license": "cc-by-sa",
+          "license_id": "https://openalex.org/licenses/cc-by-sa",
+          "version": "submittedVersion",
+          "is_accepted": false,
+          "is_published": false,
+          "raw_source_name": "Revista de Direito Econ\u00f4mico e Socioambiental, Vol 9, Iss 1, Pp 427-432 (2018)",
+          "raw_type": "article"
+        },
+        {
+          "id": "pmh:oai:ojs.periodicos.pucpr.br:article/24035",
+          "is_oa": true,
+          "landing_page_url": "https://periodicos.pucpr.br/direitoeconomico/article/view/24035",
+          "pdf_url": null,
+          "source": {
+            "id": "https://openalex.org/S4306402641",
+            "display_name": "LA Referencia (Red Federada de Repositorios Institucionales de Publicaciones Cient\u00edficas)",
+            "issn_l": null,
+            "issn": null,
+            "is_oa": false,
+            "is_in_doaj": false,
+            "is_core": false,
+            "host_organization": "https://openalex.org/I4383465926",
+            "host_organization_name": "LA Referencia",
+            "host_organization_lineage": ["https://openalex.org/I4383465926"],
+            "host_organization_lineage_names": [],
+            "type": "repository"
+          },
+          "license": "cc-by-nc",
+          "license_id": "https://openalex.org/licenses/cc-by-nc",
+          "version": "submittedVersion",
+          "is_accepted": false,
+          "is_published": false,
+          "raw_source_name": "instacron:PUC_PR",
+          "raw_type": "info:eu-repo/semantics/article"
+        }
+      ],
+      "best_oa_location": {
+        "id": "doi:10.7213/rev.dir.econ.soc.v9i1.24035",
+        "is_oa": true,
+        "landing_page_url": "https://doi.org/10.7213/rev.dir.econ.soc.v9i1.24035",
+        "pdf_url": "https://periodicos.pucpr.br/index.php/direitoeconomico/article/download/24035/22836",
+        "source": {
+          "id": "https://openalex.org/S4210238555",
+          "display_name": "Revista de Direito Econ\u00f4mico e Socioambiental",
+          "issn_l": "2179-345X",
+          "issn": ["2179-345X", "2179-8214"],
+          "is_oa": true,
+          "is_in_doaj": true,
+          "is_core": false,
+          "host_organization": "https://openalex.org/P4310312036",
+          "host_organization_name": "Pontif\u00edcia Universidade Cat\u00f3lica do Paran\u00e1, Programa de P\u00f3s-Gradua\u00e7\u00e3o em Direito",
+          "host_organization_lineage": ["https://openalex.org/P4310312036"],
+          "host_organization_lineage_names": [
+            "Pontif\u00edcia Universidade Cat\u00f3lica do Paran\u00e1, Programa de P\u00f3s-Gradua\u00e7\u00e3o em Direito"
+          ],
+          "type": "journal"
+        },
+        "license": "cc-by",
+        "license_id": "https://openalex.org/licenses/cc-by",
+        "version": "publishedVersion",
+        "is_accepted": true,
+        "is_published": true,
+        "raw_source_name": "Revista de Direito Econ\u00f4mico e Socioambiental",
+        "raw_type": "journal-article"
+      },
+      "sustainable_development_goals": [
+        {
+          "display_name": "Peace, Justice and strong institutions",
+          "id": "https://metadata.un.org/sdg/16",
+          "score": 0.4000000059604645
+        }
+      ],
+      "awards": [],
+      "funders": [],
+      "has_content": { "grobid_xml": true, "pdf": true },
+      "content_urls": {
+        "pdf": "https://content.openalex.org/works/W2884505777.pdf",
+        "grobid_xml": "https://content.openalex.org/works/W2884505777.grobid-xml"
+      },
+      "referenced_works_count": 0,
+      "referenced_works": [],
+      "related_works": [
+        "https://openalex.org/W4387497383",
+        "https://openalex.org/W3183948672",
+        "https://openalex.org/W3173606202",
+        "https://openalex.org/W3110381201",
+        "https://openalex.org/W2948807893",
+        "https://openalex.org/W2935909890",
+        "https://openalex.org/W2778153218",
+        "https://openalex.org/W2758277628",
+        "https://openalex.org/W2748952813",
+        "https://openalex.org/W1531601525"
+      ],
+      "abstract_inverted_index": {
+        "Nesta": [0],
+        "obra": [1],
+        "o": [2],
+        "autor": [3, 53],
+        "Yuval": [4],
+        "Harari,": [5],
+        "historiador,": [6],
+        "doutor": [7],
+        "em": [8, 22],
+        "Hist\u00f3ria": [9],
+        "pela": [10, 35, 91],
+        "Universidade": [11, 16],
+        "de": [12, 18, 27, 75, 80, 93, 100],
+        "Oxford,": [13],
+        "professor": [14],
+        "da": [15, 37, 41],
+        "Hebraica": [17],
+        "Jerusal\u00e9m": [19],
+        "e": [20, 32, 39, 57, 69, 77, 88],
+        "especializado": [21],
+        "hist\u00f3ria": [23, 36],
+        "mundial,": [24],
+        "nos": [25],
+        "leva": [26],
+        "maneira": [28],
+        "muito": [29],
+        "leve,": [30],
+        "interessante": [31],
+        "tamb\u00e9m": [33, 96],
+        "pol\u00eamica,": [34],
+        "passagem": [38],
+        "evolu\u00e7\u00e3o": [40],
+        "esp\u00e9cie": [42],
+        "humana": [43],
+        "pelo": [44, 97],
+        "planeta": [45],
+        "Terra.": [46],
+        "Importante": [47],
+        "notar": [48],
+        "que": [49],
+        "a": [50, 73, 78, 85],
+        "perspectiva": [51],
+        "do": [52, 103],
+        "n\u00e3o": [54],
+        "\u00e9": [55],
+        "apenas": [56],
+        "exclusivamente": [58],
+        "hist\u00f3rica,": [59],
+        "mas": [60, 95],
+        "uma": [61],
+        "combina\u00e7\u00e3o": [62],
+        "interdisciplinar": [63],
+        "entre": [64],
+        "hist\u00f3ria,": [65],
+        "biologia,": [66],
+        "antropologia,": [67],
+        "economia": [68],
+        "considera\u00e7\u00f5es": [70],
+        "filos\u00f3ficas": [71],
+        "como": [72],
+        "ideia": [74, 79],
+        "felicidade": [76],
+        "justi\u00e7a.": [81],
+        "Esta": [82],
+        "caracter\u00edstica": [83],
+        "deixa": [84],
+        "leitura": [86],
+        "enriquecida": [87],
+        "extremamente": [89],
+        "agrad\u00e1vel,": [90],
+        "gama": [92],
+        "informa\u00e7\u00f5es,": [94],
+        "senso": [98],
+        "refinado": [99],
+        "humor": [101],
+        "cr\u00edtico": [102],
+        "autor.": [104]
+      },
+      "counts_by_year": [
+        { "year": 2022, "cited_by_count": 1 },
+        { "year": 2021, "cited_by_count": 9 },
+        { "year": 2020, "cited_by_count": 6 },
+        { "year": 2019, "cited_by_count": 7 },
+        { "year": 2018, "cited_by_count": 1 },
+        { "year": 2017, "cited_by_count": 1 }
+      ],
+      "updated_date": "2026-07-02T09:51:11.867554",
+      "created_date": "2018-08-03T00:00:00"
+    }
+  ],
+  "group_by": []
+}
