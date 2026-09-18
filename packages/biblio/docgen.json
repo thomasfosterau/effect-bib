@@ -1,0 +1,6 @@
+{
+  "$schema": "../../node_modules/@effect/docgen/schema.json",
+  "exclude": ["src/index.ts", "src/sources/index.ts"],
+  "parseCompilerOptions": "./tsconfig.build.json",
+  "examplesCompilerOptions": "./tsconfig.build.json"
+}
