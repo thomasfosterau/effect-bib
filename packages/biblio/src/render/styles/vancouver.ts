@@ -15,6 +15,7 @@
  * labels rather than locale terms, since they differ from APA's `"Ed."`.
  *
  * @module biblio/render/styles/vancouver
+ * @since 0.1.0
  */
 
 import * as Option from "effect/Option";
@@ -173,7 +174,11 @@ function sortKey(): string {
   return "";
 }
 
-/** The Vancouver (numeric) citation style. */
+/**
+ * The Vancouver (numeric) citation style.
+ *
+ * @since 0.1.0
+ */
 export const vancouverStyle: CitationStyle = {
   id: "vancouver",
   title: "Vancouver",

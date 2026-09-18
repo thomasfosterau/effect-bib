@@ -93,6 +93,21 @@ export default defineConfig({
       "effect/avoid-option-getorthrow": "warn",
       "effect/no-barrel-imports": "warn",
       "effect/throw-in-effect-gen": "warn",
+      // Rules the preset gained after the website copy was last linted
+      // (plugin 0.5): the lenient upstream-response decoders take `unknown`
+      // by design (`no-unknown-parameters` / `no-unknown-returns`), the CSL
+      // vocabulary maps are open dictionaries on purpose
+      // (`no-known-value-widening`), the optional-CSL-key spreads are how
+      // `exactOptionalPropertyTypes` records omit a key
+      // (`no-conditional-empty-object-spread`), and the narrowings on
+      // untrusted JSON carry their reasoning in prose rather than a
+      // `SAFETY:` marker (`require-safety-comment-for-type-assertion`).
+      "effect/no-conditional-empty-object-spread": "warn",
+      "effect/no-unknown-parameters": "warn",
+      "effect/no-unknown-returns": "warn",
+      "effect/no-known-value-widening": "warn",
+      "effect/no-service-constructor-imports": "warn",
+      "effect/require-safety-comment-for-type-assertion": "warn",
       "typescript/no-explicit-any": "off",
       "typescript/no-empty-object-type": "off",
       "typescript/ban-ts-comment": "off",
@@ -107,9 +122,15 @@ export default defineConfig({
       // service rules have no satisfiable fix in these files. The entry-point
       // graph test walks the source tree with `node:fs` for the same reason.
       {
-        files: ["**/vite.config.ts", "**/vitest.config.ts", "**/tests/entry-points.test.ts"],
+        files: [
+          "**/vite.config.ts",
+          "**/vitest.config.ts",
+          "**/tests/entry-points.test.ts",
+          "**/tests/fixtures/*.mjs",
+        ],
         rules: {
           "effect/avoid-node-imports": "off",
+          "effect/use-command-executor-service": "off",
           "effect/avoid-sync-fs": "off",
           "effect/avoid-process-env": "off",
           "effect/use-console-service": "off",

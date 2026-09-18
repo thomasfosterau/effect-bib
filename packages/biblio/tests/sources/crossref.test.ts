@@ -23,7 +23,7 @@ import {
   normaliseCrossrefRecord,
 } from "../../src/sources/crossref.ts";
 import { LookupFailed } from "../../src/sources/errors.ts";
-import { expectFailureInstanceOf, runTest } from "@thomasfosterau/test-helpers/effect";
+import { expectFailureInstanceOf, runTest } from "../effect.ts";
 import { filteredClient, stubRouter } from "./stub-http.ts";
 import { expectSome } from "../assert.ts";
 import rayResponseBody from "../fixtures/crossref-ray-2004.json" with { type: "json" };

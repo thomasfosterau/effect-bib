@@ -22,6 +22,7 @@
  * OpenLibrary / Crossref clients.
  *
  * @module biblio/sources/openalex
+ * @since 0.1.0
  */
 
 import * as Array from "effect/Array";
@@ -59,6 +60,8 @@ const MAX_QUERY_LENGTH = 500;
  * Lenient schema for one OpenAlex `Work` object — from both the
  * single-work lookup and the `results` array of a search response. Only
  * the fields we read are modelled, all optional.
+ *
+ * @since 0.1.0
  */
 export const OpenAlexWork = Schema.Struct({
   doi: Schema.optional(Schema.Unknown),
@@ -74,12 +77,22 @@ export const OpenAlexWork = Schema.Struct({
   biblio: Schema.optional(Schema.Unknown),
   authorships: Schema.optional(Schema.Array(Schema.Unknown)),
 });
+/**
+ * @since 0.1.0
+ */
 export type OpenAlexWork = typeof OpenAlexWork.Type;
 
-/** Lenient schema for the `GET /works?search=...` envelope. */
+/**
+ * Lenient schema for the `GET /works?search=...` envelope.
+ *
+ * @since 0.1.0
+ */
 export const OpenAlexSearchResponse = Schema.Struct({
   results: Schema.optional(Schema.Array(Schema.Unknown)),
 });
+/**
+ * @since 0.1.0
+ */
 export type OpenAlexSearchResponse = typeof OpenAlexSearchResponse.Type;
 
 const decodeOpenAlexWork = Schema.decodeUnknownOption(OpenAlexWork);
@@ -185,6 +198,8 @@ function openAlexAuthors(value: Option.Option<readonly unknown[]>): CslName[] {
 /**
  * Normalises one OpenAlex `Work` into a CSL-aligned {@link BiblioRecord}.
  * `Option.none()` when the work has no usable title.
+ *
+ * @since 0.1.0
  */
 export function normaliseOpenAlexRecord(work: OpenAlexWork): Option.Option<BiblioRecord> {
   const title = Option.firstSomeOf([sanitiseText(work.title), sanitiseText(work.display_name)]);
@@ -227,6 +242,8 @@ export function normaliseOpenAlexRecord(work: OpenAlexWork): Option.Option<Bibli
  * the composed {@link BiblioLookup} keeps Crossref as the primary DOI
  * authority and wires this source in for `byTitle` search; this function
  * is what the cross-source dedup coherence proof exercises directly.
+ *
+ * @since 0.1.0
  */
 export const lookupOpenAlexByDoi: (
   client: HttpClient.HttpClient,
@@ -253,6 +270,8 @@ export const lookupOpenAlexByDoi: (
  * untrusted-input posture); an empty result set is not an error. Only a
  * transport/decode fault on the search request itself fails on the typed
  * channel.
+ *
+ * @since 0.1.0
  */
 export const searchOpenAlexByTitle: (
   client: HttpClient.HttpClient,

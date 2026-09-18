@@ -27,7 +27,7 @@ import {
   searchOpenAlexByTitle,
 } from "../../src/sources/openalex.ts";
 import { LookupFailed } from "../../src/sources/errors.ts";
-import { expectFailureInstanceOf, runTest } from "@thomasfosterau/test-helpers/effect";
+import { expectFailureInstanceOf, runTest } from "../effect.ts";
 import { filteredClient, stubRouter } from "./stub-http.ts";
 import { expectPresent, expectSome } from "../assert.ts";
 import rayWorkBody from "../fixtures/openalex-ray-2004.json" with { type: "json" };

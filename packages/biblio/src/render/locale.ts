@@ -9,11 +9,16 @@
  * caller can supply its own without touching the engine.
  *
  * @module biblio/render/locale
+ * @since 0.1.0
  */
 
 import type { Locale } from "./types.ts";
 
-/** The default US-English locale terms. */
+/**
+ * The default US-English locale terms.
+ *
+ * @since 0.1.0
+ */
 export const enLocale: Locale = {
   id: "en-US",
   and: "and",

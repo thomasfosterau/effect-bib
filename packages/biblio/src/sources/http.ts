@@ -13,6 +13,7 @@
  * `container-title` style fields.
  *
  * @module biblio/sources/http
+ * @since 0.1.0
  */
 
 import * as Array from "effect/Array";
@@ -28,7 +29,11 @@ function isNotFound(error: HttpClientError.HttpClientError): boolean {
   return error.reason._tag === "StatusCodeError" && error.reason.response.status === 404;
 }
 
-/** The first plausible sanitised string from an upstream array, or `None`. */
+/**
+ * The first plausible sanitised string from an upstream array, or `None`.
+ *
+ * @since 0.1.0
+ */
 export function firstString(values: Option.Option<readonly unknown[]>): Option.Option<string> {
   if (Option.isNone(values)) return Option.none();
   const first = Array.findFirst(values.value, (value) => Option.isSome(sanitiseText(value)));
@@ -47,6 +52,8 @@ function describeHttpError(error: HttpClientError.HttpClientError): string {
  * the body through `schema`, mapping 404 → `Option.none()` and every other
  * failure → a {@link LookupFailed} on the typed channel. Shared by every
  * source client so the untrusted-response discipline lives in one place.
+ *
+ * @since 0.1.0
  */
 export const makeGet =
   (client: HttpClient.HttpClient, base: string, source: LookupSource) =>

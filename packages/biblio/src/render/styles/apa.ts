@@ -17,6 +17,7 @@
  * documented at their call sites.
  *
  * @module biblio/render/styles/apa
+ * @since 0.1.0
  */
 
 import * as Option from "effect/Option";
@@ -174,7 +175,11 @@ function sortKey(record: BiblioRecord): string {
   return `${author} ${year} ${(record.title ?? "").toLowerCase()}`;
 }
 
-/** The APA 7th-edition citation style. */
+/**
+ * The APA 7th-edition citation style.
+ *
+ * @since 0.1.0
+ */
 export const apaStyle: CitationStyle = {
   id: "apa",
   title: "APA 7th edition",

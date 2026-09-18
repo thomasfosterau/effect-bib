@@ -28,6 +28,7 @@
  * and threshold that turn a candidate into a yes/no.
  *
  * @module biblio/dedup-match
+ * @since 0.1.0
  */
 
 import * as Array from "effect/Array";
@@ -50,6 +51,8 @@ const TITLE_STOPWORDS: HashSet.HashSet<string> = HashSet.make("the", "a", "an");
  * non-alphanumeric characters to a single space. So "Lévi-Strauss, Claude"
  * and "levi strauss claude" fold together, and punctuation / casing /
  * accent variation between sources stops mattering.
+ *
+ * @since 0.1.0
  */
 export function normaliseForMatch(value: string): string {
   return value
@@ -65,6 +68,8 @@ export function normaliseForMatch(value: string): string {
  * leading-article stopwords dropped. A set (not a list) so token *order*
  * and repetition don't matter ("Rings of the Lord" vs "Lord of the Rings"
  * compare equal), which is the right invariance for title-vs-title dedup.
+ *
+ * @since 0.1.0
  */
 export function titleTokens(title: string): HashSet.HashSet<string> {
   const tokens = normaliseForMatch(title)
@@ -81,6 +86,8 @@ export function titleTokens(title: string): HashSet.HashSet<string> {
  * "Harari, Yuval Noah", "Yuval Noah Harari", and "Y. N. Harari" all reduce
  * to "harari". Returns `""` for a name that normalises to nothing (filtered
  * out by the caller).
+ *
+ * @since 0.1.0
  */
 export function authorSurname(name: string): string {
   // "Surname, Given" → the family name is everything before the first comma;
@@ -108,7 +115,11 @@ function jaccard(a: HashSet.HashSet<string>, b: HashSet.HashSet<string>): number
   return intersection / (HashSet.size(a) + HashSet.size(b) - intersection);
 }
 
-/** A record's matchable shape: a title and zero or more author display names. */
+/**
+ * A record's matchable shape: a title and zero or more author display names.
+ *
+ * @since 0.1.0
+ */
 export interface MatchInput {
   readonly title: string;
   readonly authors: readonly string[];
@@ -121,6 +132,8 @@ export interface MatchInput {
  * stays decoupled from the full record model (and from DB rows, which
  * `ingest.ts` projects the same shape from), so the fuzzy-match path is
  * untouched by record-shape changes beyond how names/titles are extracted.
+ *
+ * @since 0.1.0
  */
 export function recordMatchInput(record: BiblioRecord): MatchInput {
   const authors = Array.filterMap(record.author ?? [], (name): Result.Result<string, void> => {
@@ -130,7 +143,11 @@ export function recordMatchInput(record: BiblioRecord): MatchInput {
   return { title: record.title ?? "", authors };
 }
 
-/** The similarity axes scored for a candidate pair. */
+/**
+ * The similarity axes scored for a candidate pair.
+ *
+ * @since 0.1.0
+ */
 export interface MatchScore {
   /** Title token-set Jaccard, `0..1`. */
   readonly title: number;
@@ -179,6 +196,23 @@ const MIN_TITLE_TOKENS_NO_AUTHOR = 2;
 /**
  * Scores an incoming record against a candidate existing Book on the axes
  * {@link MatchScore} describes. Pure and symmetric.
+ *
+ * @example
+ * ```ts
+ * import { isConfidentMatch, scoreMatch } from "@thomasfosterau/biblio"
+ *
+ * // Leading articles, punctuation and initials fold away before scoring.
+ * const score = scoreMatch(
+ *   { title: "The Hobbit", authors: ["J. R. R. Tolkien"] },
+ *   { title: "Hobbit", authors: ["Tolkien, J.R.R."] },
+ * )
+ * console.log(score.title, score.sharedTitleTokens)
+ * // → 1 1
+ * console.log(isConfidentMatch(score))
+ * // → true
+ * ```
+ *
+ * @since 0.1.0
  */
 export function scoreMatch(incoming: MatchInput, candidate: MatchInput): MatchScore {
   const incomingTitleTokens = titleTokens(incoming.title);
@@ -209,6 +243,8 @@ export function scoreMatch(incoming: MatchInput, candidate: MatchInput): MatchSc
  * least {@link MIN_TITLE_TOKENS_NO_AUTHOR} significant tokens — so a bare,
  * uncorroborated one-word title never collapses two distinct works. Anything
  * below is *not* a confident match and falls through to creating a new Book.
+ *
+ * @since 0.1.0
  */
 export function isConfidentMatch(score: MatchScore): boolean {
   if (Option.isNone(score.author)) {
@@ -223,6 +259,8 @@ export function isConfidentMatch(score: MatchScore): boolean {
  * A single rank value over a {@link MatchScore} so the caller can pick the
  * **best** among several confident candidates: the title dominates, the
  * author breaks ties, and a no-author-signal pair ranks on its title alone.
+ *
+ * @since 0.1.0
  */
 export function matchConfidence(score: MatchScore): number {
   return Option.isNone(score.author) ? score.title : score.title * 0.7 + score.author.value * 0.3;
@@ -242,6 +280,22 @@ export function matchConfidence(score: MatchScore): number {
  * accumulator below is an `Option`.
  */
 /* oxlint-disable effect/prefer-option-over-null -- cross-slice: apps/api consumes the plain nullable */
+/**
+ * @example
+ * ```ts
+ * import { bestConfidentMatch } from "@thomasfosterau/biblio"
+ *
+ * const incoming = { title: "The Hobbit", authors: ["J. R. R. Tolkien"] }
+ * const best = bestConfidentMatch(incoming, [
+ *   { id: 1, title: "The Silmarillion", authors: ["Tolkien"] },
+ *   { id: 2, title: "Hobbit", authors: ["Tolkien, J.R.R."] },
+ * ])
+ * console.log(best?.id)
+ * // → 2
+ * ```
+ *
+ * @since 0.1.0
+ */
 export function bestConfidentMatch<T extends MatchInput>(
   incoming: MatchInput,
   candidates: readonly T[],

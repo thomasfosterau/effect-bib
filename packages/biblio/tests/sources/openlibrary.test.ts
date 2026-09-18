@@ -27,7 +27,7 @@ import {
   OpenLibraryEdition,
 } from "../../src/sources/openlibrary.ts";
 import { LookupFailed } from "../../src/sources/errors.ts";
-import { expectFailureInstanceOf, runTest } from "@thomasfosterau/test-helpers/effect";
+import { expectFailureInstanceOf, runTest } from "../effect.ts";
 import { filteredClient, stubRouter } from "./stub-http.ts";
 import { expectSome } from "../assert.ts";
 import ulyssesAuthorBody from "../fixtures/openlibrary-ulysses-author.json" with { type: "json" };

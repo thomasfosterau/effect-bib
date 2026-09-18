@@ -32,6 +32,7 @@
  * record arrived through.
  *
  * @module biblio/parse
+ * @since 0.1.0
  */
 
 import * as Array from "effect/Array";
@@ -68,10 +69,18 @@ import {
 
 // ── Public surface ────────────────────────────────────────────────────
 
-/** The file formats this module can parse. */
+/**
+ * The file formats this module can parse.
+ *
+ * @since 0.1.0
+ */
 export type ImportFormat = "bibtex" | "zotero-json" | "csv" | "ris";
 
-/** Why a source entry produced no importable record. */
+/**
+ * Why a source entry produced no importable record.
+ *
+ * @since 0.1.0
+ */
 export type SkipReason =
   /** The entry carried neither a usable ISBN nor a usable DOI to key on. */
   | "no-identifier"
@@ -80,25 +89,39 @@ export type SkipReason =
   /** The entry was structurally unparseable (e.g. a truncated BibTeX body). */
   | "malformed";
 
-/** A source entry that did not yield a record, with the reason it was dropped. */
+/**
+ * A source entry that did not yield a record, with the reason it was dropped.
+ *
+ * @since 0.1.0
+ */
 export interface SkippedEntry {
   readonly outcome: "skipped";
   readonly reason: SkipReason;
 }
 
-/** A source entry that parsed into an importable {@link BiblioRecord}. */
+/**
+ * A source entry that parsed into an importable {@link BiblioRecord}.
+ *
+ * @since 0.1.0
+ */
 export interface ParsedEntry {
   readonly outcome: "parsed";
   readonly record: BiblioRecord;
 }
 
-/** The per-entry result of parsing one source entry. */
+/**
+ * The per-entry result of parsing one source entry.
+ *
+ * @since 0.1.0
+ */
 export type ParseOutcome = ParsedEntry | SkippedEntry;
 
 /**
  * Hard cap on how many entries a single uploaded file may yield. A larger
  * file has its tail ignored — the parser stops emitting once the cap is
  * hit, so a hostile file can't make the importer allocate unbounded work.
+ *
+ * @since 0.1.0
  */
 export const MAX_RECORDS = 5000;
 
@@ -106,6 +129,8 @@ export const MAX_RECORDS = 5000;
  * Hard cap on the raw input length, in UTF-16 code units. A larger file is
  * rejected up front (the whole upload is dropped) before any per-entry
  * parsing runs. ~8 MB comfortably holds tens of thousands of entries.
+ *
+ * @since 0.1.0
  */
 export const MAX_INPUT_LENGTH = 8_000_000;
 
@@ -115,6 +140,33 @@ export const MAX_INPUT_LENGTH = 8_000_000;
  * input-length cap the whole upload is dropped (returns `[]`); otherwise
  * every recognised entry yields exactly one outcome, up to
  * {@link MAX_RECORDS}.
+ *
+ * @example
+ * ```ts
+ * import { parseBibliographicFile } from "@thomasfosterau/biblio"
+ *
+ * // (Each entry on one line here only because a line-leading `@` would read
+ * // as a JSDoc tag; a real file has the usual layout.)
+ * const bibtex = [
+ *   "@book{harari2015, title = {Sapiens: A Brief History of Humankind},",
+ *   "  author = {Harari, Yuval Noah}, publisher = {Harper}, year = {2015},",
+ *   "  isbn = {9780062316097}}",
+ *   "@article{untitled, author = {Nobody}, year = {2020}}",
+ * ].join("\n")
+ *
+ * const outcomes = parseBibliographicFile(bibtex, "bibtex")
+ *
+ * // One outcome per entry: the book parsed, the titleless article was
+ * // skipped with a reason rather than failing the batch.
+ * console.log(outcomes.map((outcome) => outcome.outcome))
+ * // → ["parsed", "skipped"]
+ * console.log(outcomes[0].outcome === "parsed" ? outcomes[0].record.identifiers.isbn : undefined)
+ * // → "9780062316097"
+ * console.log(outcomes[1].outcome === "skipped" ? outcomes[1].reason : undefined)
+ * // → "no-title"
+ * ```
+ *
+ * @since 0.1.0
  */
 export function parseBibliographicFile(content: string, format: ImportFormat): ParseOutcome[] {
   if (content.length > MAX_INPUT_LENGTH) return [];
@@ -388,7 +440,11 @@ function bibtexType(kind: string): CslItemType {
   return BIBTEX_TYPES[kind] ?? "document";
 }
 
-/** Parses a BibTeX document into per-entry {@link ParseOutcome}s. */
+/**
+ * Parses a BibTeX document into per-entry {@link ParseOutcome}s.
+ *
+ * @since 0.1.0
+ */
 export function parseBibtex(content: string): ParseOutcome[] {
   return Array.map(splitBibtexEntries(content).slice(0, MAX_RECORDS), (entry) => {
     const fields = parseBibtexFields(entry.body);
@@ -457,6 +513,8 @@ function cslType(value: unknown): Option.Option<CslItemType> {
  * Accepts a top-level array of item objects or a `{ items: [...] }`
  * envelope. Invalid JSON yields a single `malformed` outcome; a non-object
  * item is skipped as `malformed`.
+ *
+ * @since 0.1.0
  */
 export function parseZoteroJson(content: string): ParseOutcome[] {
   const data = decodeJsonBody(content);
@@ -596,6 +654,8 @@ function csvHeaderIndex(header: readonly string[]): Partial<Record<CsvColumn, nu
  * irrelevant. Authors in a single cell may be separated by `;` or ` and `.
  * A file with no header, or a header lacking a `title` column, yields a
  * single `malformed` outcome. The item type is inferred from the identifier.
+ *
+ * @since 0.1.0
  */
 export function parseCsv(content: string): ParseOutcome[] {
   const rows = splitCsvRows(content);
@@ -803,7 +863,11 @@ function risRecordOutcome(record: RisRecord): ParseOutcome {
   );
 }
 
-/** Parses an RIS document into per-entry {@link ParseOutcome}s. */
+/**
+ * Parses an RIS document into per-entry {@link ParseOutcome}s.
+ *
+ * @since 0.1.0
+ */
 export function parseRis(content: string): ParseOutcome[] {
   return Array.map(splitRisRecords(content).slice(0, MAX_RECORDS), risRecordOutcome);
 }

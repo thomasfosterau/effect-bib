@@ -28,6 +28,7 @@
  * this module only produces proven identifiers.
  *
  * @module biblio/identifiers
+ * @since 0.1.0
  */
 
 import * as Array from "effect/Array";
@@ -43,20 +44,46 @@ import * as String from "effect/String";
  * identity used for dedup). The 10-form, where it exists, is recovered on
  * demand via {@link isbnForms}. The value is exclusively digits — the
  * path-segment SSRF guard for any URL built from it.
+ *
+ * @since 0.1.0
  */
 export const Isbn = Schema.String.pipe(Schema.brand("Isbn"));
+/**
+ * @since 0.1.0
+ */
 export type Isbn = typeof Isbn.Type;
 
-/** A proven DOI, canonicalised to lower case with resolver/scheme prefixes stripped. */
+/**
+ * A proven DOI, canonicalised to lower case with resolver/scheme prefixes stripped.
+ *
+ * @since 0.1.0
+ */
 export const Doi = Schema.String.pipe(Schema.brand("Doi"));
+/**
+ * @since 0.1.0
+ */
 export type Doi = typeof Doi.Type;
 
-/** A proven ISSN in canonical `NNNN-NNNN` form (an `X` check digit upper-cased). */
+/**
+ * A proven ISSN in canonical `NNNN-NNNN` form (an `X` check digit upper-cased).
+ *
+ * @since 0.1.0
+ */
 export const Issn = Schema.String.pipe(Schema.brand("Issn"));
+/**
+ * @since 0.1.0
+ */
 export type Issn = typeof Issn.Type;
 
-/** A proven ORCID in canonical `0000-0002-1825-0097` form. */
+/**
+ * A proven ORCID in canonical `0000-0002-1825-0097` form.
+ *
+ * @since 0.1.0
+ */
 export const Orcid = Schema.String.pipe(Schema.brand("Orcid"));
+/**
+ * @since 0.1.0
+ */
 export type Orcid = typeof Orcid.Type;
 
 // ── ISBN ──────────────────────────────────────────────────────────────
@@ -121,6 +148,8 @@ function isbn10CheckDigit(nine: string): string {
  * Converts a checksum-valid ISBN-10 to its ISBN-13 form: `978` + the
  * first nine digits + a recomputed EAN check digit. Assumes a validated
  * input (callers pass only values that cleared {@link isValidIsbn10}).
+ *
+ * @since 0.1.0
  */
 export function convertIsbn10To13(isbn10: string): string {
   const twelve = `978${cleanIsbn(isbn10).slice(0, 9)}`;
@@ -131,6 +160,8 @@ export function convertIsbn10To13(isbn10: string): string {
  * Converts an ISBN-13 to its ISBN-10 form, or `Option.none()` when it has
  * none — only `978`-prefixed 13-forms convert back (a `979` ISBN has no
  * ISBN-10). The ISBN-10 check digit is recomputed (mod-11), not copied.
+ *
+ * @since 0.1.0
  */
 export function convertIsbn13To10(isbn13: string): Option.Option<string> {
   const cleaned = cleanIsbn(isbn13);
@@ -145,7 +176,11 @@ export function convertIsbn13To10(isbn13: string): Option.Option<string> {
  * isbn10 }` and feeds `isbn10` straight into a nullable Drizzle column — so
  * the shape is a cross-package contract a later wave owns.
  */
-/** Both canonical forms of a proven {@link Isbn}: the 13-form always, the 10-form when it exists. */
+/**
+ * Both canonical forms of a proven {@link Isbn}: the 13-form always, the 10-form when it exists.
+ *
+ * @since 0.1.0
+ */
 // oxlint-disable-next-line effect/prefer-option-over-null -- cross-slice: apps/api consumes `isbn10` as a plain nullable
 export function isbnForms(isbn: Isbn): { readonly isbn13: string; readonly isbn10: string | null } {
   return { isbn13: isbn, isbn10: Option.getOrNull(convertIsbn13To10(isbn)) };
@@ -155,6 +190,27 @@ export function isbnForms(isbn: Isbn): { readonly isbn13: string; readonly isbn1
  * Lenient ISBN decoder: accepts a hyphenated / spaced ISBN-10 or ISBN-13,
  * validates its checksum, and returns the canonical 13-form branded
  * {@link Isbn} — or `Option.none()` for anything that isn't a proven ISBN.
+ *
+ * @example
+ * ```ts
+ * import * as Option from "effect/Option"
+ * import { decodeIsbn, isbnForms } from "@thomasfosterau/biblio"
+ *
+ * // Hyphens and spaces are ignored; an ISBN-10 canonicalises to its 13-form.
+ * const isbn = decodeIsbn("0-06-231609-5")
+ * console.log(Option.getOrNull(isbn))
+ * // → "9780062316097"
+ *
+ * // Both forms are recoverable from the proven value.
+ * console.log(Option.map(isbn, isbnForms))
+ * // → Option.some({ isbn13: "9780062316097", isbn10: "0062316095" })
+ *
+ * // A checksum failure is `Option.none()`, never a throw.
+ * console.log(Option.isNone(decodeIsbn("978-0-06-231609-8")))
+ * // → true
+ * ```
+ *
+ * @since 0.1.0
  */
 export function decodeIsbn(raw: string): Option.Option<Isbn> {
   const cleaned = cleanIsbn(raw);
@@ -174,6 +230,8 @@ export function decodeIsbn(raw: string): Option.Option<Isbn> {
  *
  * Kept verbatim from the pre-B2 `record.ts` normaliser — it was already
  * correct; B2 only brands the result via {@link decodeDoi}.
+ *
+ * @since 0.1.0
  */
 export function normaliseDoi(raw: string): Option.Option<string> {
   const trimmed = raw.trim();
@@ -204,6 +262,21 @@ export function normaliseDoi(raw: string): Option.Option<string> {
 /**
  * Lenient DOI decoder: the hardened {@link normaliseDoi} plus branding.
  * `Option.none()` for anything that isn't a well-formed DOI.
+ *
+ * @example
+ * ```ts
+ * import * as Option from "effect/Option"
+ * import { decodeDoi } from "@thomasfosterau/biblio"
+ *
+ * // A pasted resolver URL is stripped and the DOI lower-cased.
+ * console.log(Option.getOrNull(decodeDoi("https://doi.org/10.1038/NPHYS1170")))
+ * // → "10.1038/nphys1170"
+ *
+ * console.log(Option.isNone(decodeDoi("not a doi")))
+ * // → true
+ * ```
+ *
+ * @since 0.1.0
  */
 export function decodeDoi(raw: string): Option.Option<Doi> {
   return Option.map(normaliseDoi(raw), Doi.make);
@@ -225,6 +298,17 @@ function isValidIssn(cleaned: string): boolean {
  * Lenient ISSN decoder: accepts a hyphenated or bare 8-character ISSN,
  * validates the mod-11 checksum, and returns the canonical `NNNN-NNNN`
  * branded {@link Issn} — or `Option.none()`.
+ *
+ * @example
+ * ```ts
+ * import * as Option from "effect/Option"
+ * import { decodeIssn } from "@thomasfosterau/biblio"
+ *
+ * console.log(Option.getOrNull(decodeIssn("00280836")))
+ * // → "0028-0836"
+ * ```
+ *
+ * @since 0.1.0
  */
 export function decodeIssn(raw: string): Option.Option<Issn> {
   const cleaned = raw.replace(/[\s-]/g, "").toUpperCase();
@@ -255,6 +339,17 @@ function isValidOrcid(cleaned: string): boolean {
  * Lenient ORCID decoder: strips a leading `https://orcid.org/`, validates
  * the ISO 7064 checksum, and returns the canonical
  * `0000-0002-1825-0097` branded {@link Orcid} — or `Option.none()`.
+ *
+ * @example
+ * ```ts
+ * import * as Option from "effect/Option"
+ * import { decodeOrcid } from "@thomasfosterau/biblio"
+ *
+ * console.log(Option.getOrNull(decodeOrcid("https://orcid.org/0000-0002-1825-0097")))
+ * // → "0000-0002-1825-0097"
+ * ```
+ *
+ * @since 0.1.0
  */
 export function decodeOrcid(raw: string): Option.Option<Orcid> {
   const bare = raw.trim().replace(/^https?:\/\/orcid\.org\//i, "");

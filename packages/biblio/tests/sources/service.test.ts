@@ -22,8 +22,8 @@ import {
   biblioLookupClientLayer,
   InvalidIdentifier,
   LookupFailed,
-} from "@thomasfosterau/biblio";
-import { expectFailureInstanceOf, runTest } from "@thomasfosterau/test-helpers/effect";
+} from "@thomasfosterau/biblio/sources";
+import { expectFailureInstanceOf, runTest } from "../effect.ts";
 import { stubRouter } from "./stub-http.ts";
 import { expectSome } from "../assert.ts";
 import rayResponse from "../fixtures/crossref-ray-2004.json" with { type: "json" };

@@ -14,6 +14,7 @@
  * (input) order and carry a `"1."`-style label.
  *
  * @module biblio/render/render
+ * @since 0.1.0
  */
 
 import * as Array from "effect/Array";
@@ -47,7 +48,32 @@ function orderRecords(
   return Array.sort(records, Order.mapInput(Order.String, style.sortKey));
 }
 
-/** Renders a single record to a formatted reference string. */
+/**
+ * Renders a single record to a formatted reference string.
+ *
+ * @example
+ * ```ts
+ * import { apaStyle, fromCslJson, renderReference, vancouverStyle } from "@thomasfosterau/biblio"
+ *
+ * const article = fromCslJson({
+ *   type: "article-journal",
+ *   title: "Can loneliness be lethal?",
+ *   author: [{ family: "Ray", given: "Oakley" }],
+ *   "container-title": "Nature",
+ *   volume: "431",
+ *   page: "231-232",
+ *   issued: { "date-parts": [[2004]] },
+ *   DOI: "10.1038/431231a",
+ * })
+ *
+ * console.log(renderReference(article, { style: apaStyle }))
+ * // → "Ray, O. (2004). Can loneliness be lethal? Nature, 431, 231-232. https://doi.org/10.1038/431231a"
+ * console.log(renderReference(article, { style: vancouverStyle }))
+ * // → "Ray O. Can loneliness be lethal? Nature. 2004;431:231-232."
+ * ```
+ *
+ * @since 0.1.0
+ */
 export function renderReference(record: BiblioRecord, options: RenderOptions): string {
   return options.style.renderReference(record, resolveContext(options));
 }
@@ -55,6 +81,24 @@ export function renderReference(record: BiblioRecord, options: RenderOptions): s
 /**
  * Renders a bibliography of records to structured {@link RenderedEntry}s in
  * display order — sorted for author-date styles, numbered for numeric.
+ *
+ * @example
+ * ```ts
+ * import { apaStyle, bibliographyToText, fromCslJson, renderBibliography, vancouverStyle } from "@thomasfosterau/biblio"
+ *
+ * const book = fromCslJson({ type: "book", title: "Sapiens", publisher: "Harper", author: [{ family: "Harari", given: "Yuval Noah" }], issued: { "date-parts": [[2015]] } })
+ * const article = fromCslJson({ type: "article-journal", title: "Can loneliness be lethal?", author: [{ family: "Ray", given: "Oakley" }], "container-title": "Nature", volume: "431", page: "231-232", issued: { "date-parts": [[2004]] } })
+ *
+ * // Author-date styles sort by author / year / title and carry no label.
+ * console.log(bibliographyToText(renderBibliography([article, book], { style: apaStyle })))
+ * // → "Harari, Y. N. (2015). Sapiens. Harper.\nRay, O. (2004). Can loneliness be lethal? Nature, 431, 231-232."
+ *
+ * // Numeric styles keep citation order and number each entry.
+ * console.log(bibliographyToText(renderBibliography([article, book], { style: vancouverStyle })))
+ * // → "1. Ray O. Can loneliness be lethal? Nature. 2004;431:231-232.\n2. Harari YN. Sapiens. Harper; 2015."
+ * ```
+ *
+ * @since 0.1.0
  */
 export function renderBibliography(
   records: readonly BiblioRecord[],
@@ -74,6 +118,8 @@ export function renderBibliography(
 /**
  * Flattens a {@link RenderedBibliography} to a display string — one entry per
  * line, numeric labels prefixed. Handy for plain-text export and snapshots.
+ *
+ * @since 0.1.0
  */
 export function bibliographyToText(bibliography: RenderedBibliography): string {
   return bibliography.entries

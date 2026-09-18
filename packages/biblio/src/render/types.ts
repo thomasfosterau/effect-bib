@@ -13,6 +13,7 @@
  * (`render.ts`) is a pure function of `(records, style, locale)`.
  *
  * @module biblio/render/types
+ * @since 0.1.0
  */
 
 import type * as Option from "effect/Option";
@@ -22,6 +23,8 @@ import type { BiblioRecord } from "../record.ts";
  * The localisable terms a style draws on. A {@link Locale} is a typed data
  * input — the render engine never fetches one. Only the terms the built-in
  * styles need are modelled; the shape can grow additively.
+ *
+ * @since 0.1.0
  */
 export interface Locale {
   /** BCP-47-ish identifier, e.g. `"en-US"`. */
@@ -50,7 +53,11 @@ export interface Locale {
   readonly internet: string;
 }
 
-/** The immutable inputs every reference renderer is threaded. */
+/**
+ * The immutable inputs every reference renderer is threaded.
+ *
+ * @since 0.1.0
+ */
 export interface RenderContext {
   readonly locale: Locale;
 }
@@ -60,6 +67,8 @@ export interface RenderContext {
  * drives list ordering and labelling — `"author-date"` styles sort by
  * {@link CitationStyle.sortKey} and carry no label; `"numeric"` styles keep
  * citation (input) order and are numbered.
+ *
+ * @since 0.1.0
  */
 export interface CitationStyle {
   /** Stable lookup id, e.g. `"apa"`. */
@@ -77,14 +86,22 @@ export interface CitationStyle {
   readonly sortKey: (record: BiblioRecord) => string;
 }
 
-/** Options for a single-reference or whole-bibliography render. */
+/**
+ * Options for a single-reference or whole-bibliography render.
+ *
+ * @since 0.1.0
+ */
 export interface RenderOptions {
   readonly style: CitationStyle;
   /** Defaults to {@link module:biblio/render/locale.enLocale} when omitted. */
   readonly locale?: Locale;
 }
 
-/** One rendered reference in a bibliography. */
+/**
+ * One rendered reference in a bibliography.
+ *
+ * @since 0.1.0
+ */
 export interface RenderedEntry {
   /** 1-based position in the rendered (sorted or citation-ordered) list. */
   readonly index: number;
@@ -97,7 +114,11 @@ export interface RenderedEntry {
   readonly text: string;
 }
 
-/** A fully rendered bibliography — the engine's structured output. */
+/**
+ * A fully rendered bibliography — the engine's structured output.
+ *
+ * @since 0.1.0
+ */
 export interface RenderedBibliography {
   /** The id of the style used. */
   readonly style: string;

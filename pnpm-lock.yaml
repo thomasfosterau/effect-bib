@@ -135,6 +135,10 @@ importers:
         version: '@typescript/typescript6@6.0.2'
 
   tests/dist-consumer:
+    dependencies:
+      effect:
+        specifier: 4.0.0-rc.115
+        version: 4.0.0-rc.115
     devDependencies:
       '@types/node':
         specifier: 'catalog:'

@@ -31,6 +31,7 @@
  * unchanged from pre-B3.
  *
  * @module biblio/sources/service
+ * @since 0.1.0
  */
 
 import * as Context from "effect/Context";
@@ -44,8 +45,6 @@ import { InvalidIdentifier, type LookupError } from "./errors.ts";
 import { lookupCrossrefByDoi } from "./crossref.ts";
 import { lookupOpenLibraryByIsbn } from "./openlibrary.ts";
 import { searchOpenAlexByTitle } from "./openalex.ts";
-
-export { InvalidIdentifier, LookupFailed, type LookupError, type LookupSource } from "./errors.ts";
 
 /**
  * A polite User-Agent. Crossref's etiquette asks callers to identify
@@ -63,6 +62,35 @@ const USER_AGENT = "thomasfoster.au-biblio/1.0 (mailto:me@thomasfoster.au)";
  * `byTitle` never fails on an empty result set — a search with no matches
  * is a valid, non-error outcome, so it returns `[]` rather than
  * `Option.none()`.
+ *
+ * @example
+ * ```ts
+ * import * as Effect from "effect/Effect"
+ * import * as Layer from "effect/Layer"
+ * import * as Option from "effect/Option"
+ * import { BiblioLookup, biblioLookupLayer } from "@thomasfosterau/biblio/sources"
+ *
+ * const program = Effect.gen(function* () {
+ *   const lookup = yield* BiblioLookup
+ *   return yield* lookup.byIsbnRecord("978-0-06-231609-7")
+ * })
+ *
+ * // Production: over the global fetch. (Not run here — no network in docs.)
+ * export const live = program.pipe(Effect.provide(biblioLookupLayer))
+ *
+ * // A test stub is just another implementation of the same service.
+ * const stub = Layer.succeed(BiblioLookup, {
+ *   byIsbnRecord: () => Effect.succeed(Option.none()),
+ *   byDoiRecord: () => Effect.succeed(Option.none()),
+ *   byTitle: () => Effect.succeed([]),
+ * })
+ * Effect.runPromise(program.pipe(Effect.provide(stub))).then((found) => {
+ *   console.log(Option.isNone(found))
+ *   // → true
+ * })
+ * ```
+ *
+ * @since 0.1.0
  */
 export class BiblioLookup extends Context.Service<
   BiblioLookup,
@@ -136,6 +164,8 @@ const makeBiblioLookup = Effect.fnUntraced(function* () {
  * a test supplies a stubbed fetch under the same `FetchHttpClient` slot.
  * Kept separate from {@link biblioLookupLayer} so tests can inject their own
  * client without bundling the global fetch.
+ *
+ * @since 0.1.0
  */
 export const biblioLookupClientLayer: Layer.Layer<BiblioLookup, never, HttpClient.HttpClient> =
   Layer.effect(BiblioLookup)(makeBiblioLookup());
@@ -147,6 +177,8 @@ export const biblioLookupClientLayer: Layer.Layer<BiblioLookup, never, HttpClien
  * so the ingestion HTTP endpoint and Remote Form (#611) reach the live
  * OpenLibrary / Crossref / OpenAlex lookups; tests inject a stub at the
  * boundary instead.
+ *
+ * @since 0.1.0
  */
 export const biblioLookupLayer: Layer.Layer<BiblioLookup> = biblioLookupClientLayer.pipe(
   Layer.provide(FetchHttpClient.layer),

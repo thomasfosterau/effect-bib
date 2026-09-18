@@ -15,6 +15,7 @@
  * trusts what it extracts and sanitises.
  *
  * @module biblio/sources/openlibrary
+ * @since 0.1.0
  */
 
 import * as Array from "effect/Array";
@@ -49,6 +50,8 @@ const MAX_SUBJECTS = 50;
  * Only the fields we read are modelled, all optional; `Schema.Unknown`
  * arrays absorb the `authors` reference objects whose shape we resolve
  * separately. Unknown extra keys are ignored.
+ *
+ * @since 0.1.0
  */
 export const OpenLibraryEdition = Schema.Struct({
   title: Schema.optional(Schema.Unknown),
@@ -64,18 +67,30 @@ export const OpenLibraryEdition = Schema.Struct({
   // lookups below.
   authors: Schema.optional(Schema.Array(Schema.Unknown)),
 });
+/**
+ * @since 0.1.0
+ */
 export type OpenLibraryEdition = typeof OpenLibraryEdition.Type;
 
 /**
  * Lenient schema for an OpenLibrary `/authors/<id>.json` record — we read
  * only the display `name`.
+ *
+ * @since 0.1.0
  */
 export const OpenLibraryAuthor = Schema.Struct({
   name: Schema.optional(Schema.Unknown),
 });
+/**
+ * @since 0.1.0
+ */
 export type OpenLibraryAuthor = typeof OpenLibraryAuthor.Type;
 
-/** Extracts the `/authors/OL...A` keys referenced by an edition record. */
+/**
+ * Extracts the `/authors/OL...A` keys referenced by an edition record.
+ *
+ * @since 0.1.0
+ */
 export function openLibraryAuthorKeys(edition: OpenLibraryEdition): readonly string[] {
   return Array.filterMap(edition.authors ?? [], (ref): Result.Result<string, void> => {
     if (!Predicate.isObjectOrArray(ref) || !("key" in ref)) return Result.failVoid;
@@ -88,7 +103,11 @@ export function openLibraryAuthorKeys(edition: OpenLibraryEdition): readonly str
   }).slice(0, MAX_AUTHORS);
 }
 
-/** Reads the OpenLibrary author `name` field, sanitised. */
+/**
+ * Reads the OpenLibrary author `name` field, sanitised.
+ *
+ * @since 0.1.0
+ */
 export function openLibraryAuthorName(author: OpenLibraryAuthor): Option.Option<string> {
   return sanitiseText(author.name);
 }
@@ -138,6 +157,8 @@ function structuredAuthors(names: readonly string[]): CslName[] {
  *
  * `Option.none()` when the record has no usable title — we won't emit a
  * titleless book.
+ *
+ * @since 0.1.0
  */
 export function normaliseOpenLibraryRecord(
   edition: OpenLibraryEdition,
@@ -184,6 +205,8 @@ export function normaliseOpenLibraryRecord(
  * `Option.none()` on a clean 404 from the edition lookup; a {@link LookupFailed}
  * on any other upstream fault. `client` is expected to already carry the
  * polite User-Agent and `filterStatusOk` (composed once in `service.ts`).
+ *
+ * @since 0.1.0
  */
 export const lookupOpenLibraryByIsbn: (
   client: HttpClient.HttpClient,

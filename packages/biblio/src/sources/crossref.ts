@@ -14,6 +14,7 @@
  * and sanitises.
  *
  * @module biblio/sources/crossref
+ * @since 0.1.0
  */
 
 import * as Array from "effect/Array";
@@ -42,6 +43,8 @@ const CROSSREF_BASE = "https://api.crossref.org";
 /**
  * Lenient schema for the Crossref `/works/<doi>` response envelope. Only
  * the `message` fields we read are modelled, all optional.
+ *
+ * @since 0.1.0
  */
 export const CrossrefResponse = Schema.Struct({
   message: Schema.optional(
@@ -62,6 +65,9 @@ export const CrossrefResponse = Schema.Struct({
     }),
   ),
 });
+/**
+ * @since 0.1.0
+ */
 export type CrossrefResponse = typeof CrossrefResponse.Type;
 
 /** Crossref `message.type` → CSL item type; unlisted types fall back to `article-journal`. */
@@ -218,6 +224,8 @@ function assembleCrossrefRecord(fields: CrossrefFields): BiblioRecord {
  * the lookup was keyed by; the record prefers the DOI Crossref echoes
  * (re-validated, never trusted verbatim) and falls back to the requested
  * one. `Option.none()` when the record has no usable title.
+ *
+ * @since 0.1.0
  */
 export function normaliseCrossrefRecord(
   response: CrossrefResponse,
@@ -251,6 +259,8 @@ export function normaliseCrossrefRecord(
  * {@link BiblioRecord}. `Option.none()` on a clean 404; a {@link LookupFailed}
  * on any other upstream fault. `client` is expected to already carry the
  * polite User-Agent and `filterStatusOk` (composed once in `service.ts`).
+ *
+ * @since 0.1.0
  */
 export const lookupCrossrefByDoi: (
   client: HttpClient.HttpClient,

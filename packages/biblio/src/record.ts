@@ -25,6 +25,7 @@
  * Everything here is pure and persistence-free.
  *
  * @module biblio/record
+ * @since 0.1.0
  */
 
 import * as Array from "effect/Array";
@@ -52,10 +53,16 @@ import {
  * Upper bound on any single free-text field copied from an untrusted
  * source. Clamped before persistence so a hostile or malformed value
  * can't push an unbounded blob downstream (defence in depth).
+ *
+ * @since 0.1.0
  */
 export const MAX_TEXT_FIELD_LENGTH = 2000;
 
-/** Cap on how many contributors we extract from a single record. */
+/**
+ * Cap on how many contributors we extract from a single record.
+ *
+ * @since 0.1.0
+ */
 export const MAX_AUTHORS = 100;
 
 /** The narrowest plausible publication year we accept. */
@@ -73,6 +80,9 @@ const MAX_PUBLICATION_YEAR = 2200;
 // depending on any website-internal package, so each self-contained package
 // must carry its own untrusted-text sanitiser. Consolidating would break the
 // extraction property the whole package is built around.
+/**
+ * @since 0.1.0
+ */
 export function sanitiseText(value: unknown): Option.Option<string> {
   if (!Predicate.isString(value)) return Option.none();
   const collapsed = value.replace(/\s+/g, " ").trim();
@@ -85,6 +95,8 @@ export function sanitiseText(value: unknown): Option.Option<string> {
  * `Option.none()`. Accepts a number or a numeric string; rejects
  * non-integers and years outside {@link MIN_PUBLICATION_YEAR} …
  * {@link MAX_PUBLICATION_YEAR}.
+ *
+ * @since 0.1.0
  */
 export function sanitiseYear(value: unknown): Option.Option<number> {
   const n = Predicate.isNumber(value) ? value : Predicate.isString(value) ? Number(value) : NaN;
@@ -106,6 +118,8 @@ function sanitiseCslString(value: unknown): Option.Option<string> {
  * subset as first-class; the rest are carried so a round-trip never loses
  * an external tool's type. `document` is the neutral fallback
  * {@link fromCslJson} assigns to an unknown or missing type.
+ *
+ * @since 0.1.0
  */
 export const CslItemType = Schema.Literals([
   "article",
@@ -154,11 +168,18 @@ export const CslItemType = Schema.Literals([
   "treaty",
   "webpage",
 ]);
+/**
+ * @since 0.1.0
+ */
 export type CslItemType = typeof CslItemType.Type;
 
 const CSL_ITEM_TYPES: HashSet.HashSet<string> = HashSet.fromIterable(CslItemType.literals);
 
-/** Narrows an arbitrary string to a known CSL item type. */
+/**
+ * Narrows an arbitrary string to a known CSL item type.
+ *
+ * @since 0.1.0
+ */
 export function isCslItemType(value: string): value is CslItemType {
   return HashSet.has(CSL_ITEM_TYPES, value);
 }
@@ -168,6 +189,8 @@ export function isCslItemType(value: string): value is CslItemType {
  * name is a structure, and rendering, dedup, and the WEMI lift all need
  * its parts. The `orcid` field is the superset addition (a first-class
  * contributor identity, checksum-validated).
+ *
+ * @since 0.1.0
  */
 export const CslName = Schema.Struct({
   family: Schema.optional(Schema.String),
@@ -178,12 +201,17 @@ export const CslName = Schema.Struct({
   literal: Schema.optional(Schema.String),
   orcid: Schema.optional(Orcid),
 });
+/**
+ * @since 0.1.0
+ */
 export type CslName = typeof CslName.Type;
 
 /**
  * A CSL structured date. Replaces the pre-B2 lone `publicationYear` — the
  * year is `issued["date-parts"][0][0]`, but month / day / range / `raw`
  * are no longer discarded.
+ *
+ * @since 0.1.0
  */
 export const CslDate = Schema.Struct({
   "date-parts": Schema.optional(Schema.Array(Schema.Array(Schema.Finite))),
@@ -192,6 +220,9 @@ export const CslDate = Schema.Struct({
   literal: Schema.optional(Schema.String),
   raw: Schema.optional(Schema.String),
 });
+/**
+ * @since 0.1.0
+ */
 export type CslDate = typeof CslDate.Type;
 
 /**
@@ -199,15 +230,24 @@ export type CslDate = typeof CslDate.Type;
  * CSL-JSON carries these as free strings; the superset lifts them into
  * branded values so "a string that looks like an ISBN" and "a proven
  * ISBN" are different types at every call site.
+ *
+ * @since 0.1.0
  */
 export const RecordIdentifiers = Schema.Struct({
   isbn: Schema.optional(Isbn),
   doi: Schema.optional(Doi),
   issn: Schema.optional(Issn),
 });
+/**
+ * @since 0.1.0
+ */
 export type RecordIdentifiers = typeof RecordIdentifiers.Type;
 
-/** The external authority (or channel) a record came from. */
+/**
+ * The external authority (or channel) a record came from.
+ *
+ * @since 0.1.0
+ */
 export const ProvenanceSource = Schema.Literals([
   "openlibrary",
   "crossref",
@@ -218,6 +258,9 @@ export const ProvenanceSource = Schema.Literals([
   "csv",
   "manual",
 ]);
+/**
+ * @since 0.1.0
+ */
 export type ProvenanceSource = typeof ProvenanceSource.Type;
 
 /**
@@ -226,6 +269,8 @@ export type ProvenanceSource = typeof ProvenanceSource.Type;
  * API" with "the dedup key"). This envelope is dropped by {@link toCslJson}
  * — it is not part of CSL — and is what lets dedup weigh cross-source
  * agreement and the B4 lift stamp created-Entity provenance.
+ *
+ * @since 0.1.0
  */
 export const Provenance = Schema.Struct({
   source: ProvenanceSource,
@@ -238,6 +283,9 @@ export const Provenance = Schema.Struct({
   ),
   retrievedAt: Schema.optional(Schema.String),
 });
+/**
+ * @since 0.1.0
+ */
 export type Provenance = typeof Provenance.Type;
 
 /**
@@ -246,6 +294,8 @@ export type Provenance = typeof Provenance.Type;
  * losslessly to CSL-JSON; `identifiers`, `provenance`, and `extra` are the
  * strictly-additive superset. Every string field is sanitised before it
  * lands here — consumers treat these as trusted application values.
+ *
+ * @since 0.1.0
  */
 export const BiblioRecord = Schema.Struct({
   type: CslItemType,
@@ -280,6 +330,9 @@ export const BiblioRecord = Schema.Struct({
   provenance: Provenance,
   extra: Schema.optional(Schema.Record(Schema.String, Schema.Unknown)),
 });
+/**
+ * @since 0.1.0
+ */
 export type BiblioRecord = typeof BiblioRecord.Type;
 
 // The CSL-key groupings that drive the interop loops. Typed as keys of the
@@ -359,6 +412,8 @@ function isEmptyName(name: CslName): boolean {
  * Builds a sanitised {@link CslName} from loose parts, dropping empty
  * fields and validating an ORCID where present. Returns `null` when the
  * result carries nothing usable.
+ *
+ * @since 0.1.0
  */
 export function makeCslName(parts: {
   readonly family?: unknown;
@@ -402,6 +457,8 @@ export function makeCslName(parts: {
  * Handles both orderings: `"Family, Given"` (the text before the first
  * comma is the family name) and `"Given Family"` (the family name is the
  * last token). Returns `null` for an empty name.
+ *
+ * @since 0.1.0
  */
 export function parsePersonName(raw: string): CslName | null {
   const sanitised = sanitiseText(raw);
@@ -419,6 +476,8 @@ export function parsePersonName(raw: string): CslName | null {
 /**
  * The display form of a {@link CslName}: the CSL `literal` verbatim, else
  * `"Given Family"`, else the family name alone. `null` when empty.
+ *
+ * @since 0.1.0
  */
 export function cslNameDisplay(name: CslName): string | null {
   if (name.literal !== undefined) return name.literal;
@@ -428,12 +487,20 @@ export function cslNameDisplay(name: CslName): string | null {
   return name.given ?? null;
 }
 
-/** A structured {@link CslDate} carrying just a year in `date-parts`. */
+/**
+ * A structured {@link CslDate} carrying just a year in `date-parts`.
+ *
+ * @since 0.1.0
+ */
 export function dateFromYear(year: number): CslDate {
   return { "date-parts": [[year]] };
 }
 
-/** The year of a {@link CslDate} — `date-parts[0][0]`, sanitised — or `null`. */
+/**
+ * The year of a {@link CslDate} — `date-parts[0][0]`, sanitised — or `null`.
+ *
+ * @since 0.1.0
+ */
 export function yearOf(date: CslDate | undefined): number | null {
   const first = date?.["date-parts"]?.[0]?.[0];
   return first === undefined ? null : Option.getOrNull(sanitiseYear(first));
@@ -442,7 +509,11 @@ export function yearOf(date: CslDate | undefined): number | null {
 
 // ── CSL-JSON interop ──────────────────────────────────────────────────
 
-/** A plain CSL-JSON item object (the interchange shape). */
+/**
+ * A plain CSL-JSON item object (the interchange shape).
+ *
+ * @since 0.1.0
+ */
 export type CslJsonItem = Record<string, unknown>;
 
 /** Serialises a {@link CslName} to a plain CSL name object, dropping empty keys. */
@@ -466,6 +537,20 @@ function dateToCsl(date: CslDate): Record<string, unknown> {
  * string in the standard CSL variable (`isbn → ISBN`, `doi → DOI`,
  * `issn → ISSN`), and re-merges the passthrough map. Any CSL consumer
  * (Zotero, citeproc) reads the result directly.
+ *
+ * @example
+ * ```ts
+ * import { fromCslJson, toCslJson } from "@thomasfosterau/biblio"
+ *
+ * const record = fromCslJson({ type: "book", title: "Sapiens", ISBN: "9780062316097", "custom-key": "kept" })
+ *
+ * // Provenance is dropped, the identifier lands back in `ISBN`, the
+ * // passthrough is re-merged: plain CSL-JSON any citation tool reads.
+ * console.log(toCslJson(record))
+ * // → { "custom-key": "kept", type: "book", title: "Sapiens", ISBN: "9780062316097" }
+ * ```
+ *
+ * @since 0.1.0
  */
 export function toCslJson(record: BiblioRecord): CslJsonItem {
   const { isbn, doi, issn } = record.identifiers;
@@ -503,6 +588,8 @@ function definedFields<K extends string>(
  * `Option.none()`. Tolerates the Zotero single-field `name` as a `literal`
  * fallback. Shared by the CSL-JSON parser so name structuring lives in one
  * place.
+ *
+ * @since 0.1.0
  */
 export function readCslName(entry: unknown): Option.Option<CslName> {
   if (!Predicate.isObjectOrArray(entry)) return Option.none();
@@ -523,6 +610,8 @@ export function readCslName(entry: unknown): Option.Option<CslName> {
 /**
  * Reads a bounded list of CSL names, dropping non-object / empty entries.
  * Shared by the CSL-JSON parser so the name-list bound lives in one place.
+ *
+ * @since 0.1.0
  */
 export function readCslNameArray(value: unknown): CslName[] {
   if (!Array.isArray(value)) return [];
@@ -599,6 +688,31 @@ function fromCslDateValue(value: unknown): Option.Option<CslDate> {
  * Identifiers are validated where present — a checksum failure drops the
  * identifier rather than the record. Unknown CSL keys survive in `extra`.
  * The record is stamped `provenance.source: "csl-json"`.
+ *
+ * @example
+ * ```ts
+ * import { fromCslJson } from "@thomasfosterau/biblio"
+ *
+ * const record = fromCslJson({
+ *   type: "book",
+ *   title: "Sapiens",
+ *   ISBN: "0-06-231609-5",
+ *   author: [{ family: "Harari", given: "Yuval Noah" }],
+ *   issued: { "date-parts": [[2015]] },
+ *   "custom-key": "kept",
+ * })
+ *
+ * // The ISBN was checksummed and canonicalised into its branded slot; the
+ * // unknown key survived in `extra`; the record knows where it came from.
+ * console.log(record.identifiers.isbn)
+ * // → "9780062316097"
+ * console.log(record.extra)
+ * // → { "custom-key": "kept" }
+ * console.log(record.provenance)
+ * // → { source: "csl-json" }
+ * ```
+ *
+ * @since 0.1.0
  */
 export function fromCslJson(item: unknown): BiblioRecord {
   const provenance: Provenance = { source: "csl-json" };

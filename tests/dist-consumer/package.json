@@ -4,6 +4,9 @@
   "private": true,
   "description": "Type-checks a consumer fixture against the EMITTED declarations of @thomasfosterau/biblio, asserting the identifier brands and the record shape survive declaration emit.",
   "type": "module",
+  "dependencies": {
+    "effect": "catalog:"
+  },
   "devDependencies": {
     "@types/node": "catalog:"
   }

@@ -1,0 +1,17 @@
+{
+  "$schema": "../../node_modules/@effect/docgen/schema.json",
+  "exclude": ["src/index.ts", "src/sources/index.ts", "src/render/index.ts"],
+  "parseCompilerOptions": "./tsconfig.build.json",
+  "examplesCompilerOptions": {
+    "noEmit": true,
+    "strict": true,
+    "exactOptionalPropertyTypes": true,
+    "skipLibCheck": true,
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "target": "esnext",
+    "lib": ["esnext", "dom", "dom.iterable"],
+    "types": ["node"],
+    "allowImportingTsExtensions": true
+  }
+}

@@ -17,10 +17,13 @@
  * (author-date) and {@link module:biblio/render/styles/vancouver} (numeric).
  *
  * @module biblio/render
+ * @since 0.1.0
  */
 
 export * from "./types.ts";
 export * from "./locale.ts";
 export * from "./format.ts";
 export * from "./styles.ts";
+export * from "./styles/apa.ts";
+export * from "./styles/vancouver.ts";
 export * from "./render.ts";
