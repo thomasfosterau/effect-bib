@@ -47,7 +47,7 @@ catalog:
   "@mpsuesser/oxlint-plugin-effect": ^0.5.0
   "@types/node": ^26.4.1
   "@vitest/coverage-istanbul": 5.0.0
-  effect: 4.0.0-rc.115
+  effect: 4.0.0-rc.117
   effect-solutions: ^0.5.3
   fallow: 3.25.0
   # `@effect/docgen` runs each example under tsx.
