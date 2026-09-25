@@ -1,0 +1,73 @@
+{
+  "name": "@thomasfosterau/biblio",
+  "version": "0.0.0",
+  "description": "Bibliographic toolkit on Effect: CSL-JSON records as Effect Schema, checksummed ISBN / DOI / ISSN / ORCID identifiers, BibTeX / RIS / CSV / CSL-JSON parsing, same-work dedup scoring, APA / Vancouver rendering, and Crossref / OpenAlex / OpenLibrary lookup over Effect's HttpClient.",
+  "keywords": [
+    "bibliography",
+    "bibtex",
+    "citation",
+    "crossref",
+    "csl",
+    "csl-json",
+    "doi",
+    "effect",
+    "isbn",
+    "openalex",
+    "openlibrary",
+    "ris",
+    "typescript"
+  ],
+  "homepage": "https://github.com/thomasfosterau/reference-manager#readme",
+  "bugs": {
+    "url": "https://github.com/thomasfosterau/reference-manager/issues"
+  },
+  "license": "MIT",
+  "author": "Thomas Foster <me@thomasfoster.au>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thomasfosterau/reference-manager.git",
+    "directory": "packages/biblio"
+  },
+  "files": [
+    "dist",
+    "src",
+    "!src/**/*.test.ts",
+    "README.md",
+    "CLAUDE.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts",
+    "./sources": "./src/sources/index.ts"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "./sources": {
+        "types": "./dist/sources/index.d.ts",
+        "default": "./dist/sources/index.js"
+      }
+    },
+    "access": "public"
+  },
+  "devDependencies": {
+    "@effect/docgen": "catalog:",
+    "@effect/language-service": "catalog:",
+    "@types/node": "catalog:",
+    "@vitest/coverage-istanbul": "catalog:",
+    "effect": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:"
+  },
+  "peerDependencies": {
+    "effect": "catalog:peers"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

@@ -1,0 +1,76 @@
+name: Release
+
+# Changesets release flow, copied from the effect-jsonapi library: on every
+# push to `main`, changesets/action either opens/updates the "Version
+# Packages" PR (when unreleased changesets exist) or, when that PR has merged
+# and no changesets remain, publishes every package under packages/* to npm
+# via OIDC trusted publishing and tags the release. There is no NPM_TOKEN —
+# see PUBLISHING.md for the one-time setup and SECURITY.md for the rationale.
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: release-${{ github.ref }}
+
+# No permissions by default; the release job opts into exactly what it needs.
+permissions: {}
+
+jobs:
+  release:
+    name: Version or publish
+    # Never run on forks (they have neither the environment nor the trusted
+    # publisher binding, so a fork cannot publish on your behalf).
+    if: github.repository == 'thomasfosterau/reference-manager'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Requires manual approval via a protected GitHub Environment named
+    # "release". See PUBLISHING.md for the one-time setup.
+    environment: release
+    permissions:
+      contents: write # push the version commit/tag and the "Version Packages" PR branch
+      pull-requests: write # open/update the "Version Packages" PR
+      id-token: write # OIDC: prove this workflow's identity to npm (no token needed)
+    steps:
+      - name: Checkout
+        # The Changesets action pushes the version branch, so it needs the
+        # checkout's git credentials (the ephemeral, job-scoped GITHUB_TOKEN).
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - uses: ./.github/actions/setup
+
+      # The publish step uses the npm CLI (not pnpm) so it can use npm OIDC
+      # Trusted Publishing, which requires npm >= 11.5.1. pnpm does not yet
+      # support OIDC trusted publishing (https://github.com/pnpm/pnpm/issues/9812).
+      # `scripts/release.sh` still packs with pnpm (which resolves the
+      # workspace's `catalog:` / `workspace:` specifiers) and only hands the
+      # tarball to `npm publish`.
+      - name: Upgrade npm (OIDC trusted publishing)
+        run: npm install -g npm@latest
+
+      - name: Build
+        run: vp run -r build
+
+      # When changesets are pending, this opens/updates a "Version Packages" PR
+      # (via `pnpm run version`). Once that PR is merged (no changesets remain),
+      # it runs `pnpm run release`, which publishes with `npm publish` (OIDC
+      # trusted publishing — there is no NPM_TOKEN to steal; provenance is
+      # attached automatically) and then `changeset tag`. The action parses the
+      # "New tag:" output, pushes the tags and creates the GitHub releases.
+      #
+      # v2 of the action pairs with Changesets CLI v3 (`@changesets/cli` in
+      # devDependencies) and renamed its inputs from v1's `version` / `publish`
+      # / `commit` / `title`.
+      - name: Create release PR or publish to npm
+        uses: changesets/action@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
+        with:
+          version-script: pnpm run version
+          publish-script: pnpm run release
+          commit-message: "chore: version packages"
+          pr-title: "chore: version packages"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_CONFIG_PROVENANCE: "true"

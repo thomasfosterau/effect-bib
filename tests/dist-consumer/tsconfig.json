@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node"],
+    // Resolve the package names to the EMITTED declarations rather than the
+    // workspace `exports` (which point at `src/` for the in-repo dev loop) —
+    // which is also why this package declares no dependency on the library:
+    // the mapping below is the whole resolution. Relative to this file;
+    // TypeScript 7 removed `baseUrl`. `skipLibCheck` stays ON (inherited): an
+    // unbound type name in an emitted `.d.ts` resolves to the error type,
+    // i.e. `any`, and every `Equals<…>` assertion in src/consumer.ts is false
+    // against `any`.
+    "paths": {
+      "@thomasfosterau/biblio": ["../../packages/biblio/dist/index.d.ts"],
+      "@thomasfosterau/biblio/sources": ["../../packages/biblio/dist/sources/index.d.ts"]
+    }
+  },
+  "include": ["src"]
+}
