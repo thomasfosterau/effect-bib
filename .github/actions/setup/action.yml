@@ -11,6 +11,15 @@
 # needs the repo on disk first).
 name: Setup toolchain
 description: Set up Node.js and pnpm, restore the package cache, and install dependencies.
+inputs:
+  ignore-scripts:
+    description: >-
+      "true" installs with `--ignore-scripts`: no dependency lifecycle script
+      and not the workspace's own `prepare`. Only the Release job sets it,
+      because it holds `id-token: write`; CI and the canary keep scripts on
+      (the type gate needs the Effect-patched `tsc` that `prepare` produces).
+    required: false
+    default: "false"
 runs:
   using: composite
   steps:
@@ -75,11 +84,19 @@ runs:
     # All three still run on every attempt. A genuinely deterministic failure
     # (lockfile drift, a policy violation) simply fails all three attempts and
     # still turns the job red — it costs seconds, since those checks fail fast.
+    # (The Release job's `ignore-scripts: "true"` is a separate, security
+    # decision — see the input's description — not a flakiness workaround.)
     - name: Install dependencies
       shell: bash
+      env:
+        IGNORE_SCRIPTS: ${{ inputs.ignore-scripts }}
       run: |
+        flags=(--frozen-lockfile)
+        if [ "$IGNORE_SCRIPTS" = "true" ]; then
+          flags+=(--ignore-scripts)
+        fi
         for attempt in 1 2 3; do
-          if pnpm install --frozen-lockfile; then
+          if pnpm install "${flags[@]}"; then
             break
           fi
           if [ "$attempt" -eq 3 ]; then

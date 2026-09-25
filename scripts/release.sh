@@ -7,10 +7,15 @@
 # Two tools, deliberately: `pnpm pack` is what understands this workspace
 # (it resolves the `catalog:` / `catalog:peers` / `workspace:` specifiers and
 # applies each package's `publishConfig`), and `npm publish` of the resulting
-# tarball is what carries npm OIDC trusted publishing + provenance — pnpm does
-# not support OIDC trusted publishing yet (pnpm/pnpm#9812). `changeset tag`
-# then emits the `New tag:` lines the action turns into pushed tags and
-# GitHub releases.
+# tarball is what carries npm OIDC trusted publishing (npm >= 11.5.1; the
+# Release job pins one). pnpm 11's own `pnpm publish` could do the OIDC
+# exchange too (pnpm/pnpm#9812 was pnpm-10-era); the npm CLI path is kept for
+# now. `changeset tag` then emits the `New tag:` lines the action turns into
+# pushed tags and GitHub releases.
+#
+# No `--provenance`: npm attaches provenance by itself under trusted publishing
+# once the repository and the package are both public, and an explicit
+# provenance request from a private repository makes the publish fail.
 set -euo pipefail
 
 out="$PWD/.release"
@@ -22,7 +27,7 @@ for dir in packages/*/; do
 done
 
 for tarball in "$out"/*.tgz; do
-  npm publish "$tarball" --access public --provenance
+  npm publish "$tarball" --access public
 done
 
 changeset tag
