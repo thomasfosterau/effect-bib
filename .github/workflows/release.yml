@@ -87,7 +87,9 @@ jobs:
 
       # When changesets are pending, this opens/updates a "Version Packages" PR
       # (via `pnpm run version`). Once that PR is merged (no changesets remain),
-      # it runs `pnpm run release`, which publishes with `npm publish` (OIDC
+      # it runs `pnpm run release` (scripts/release.sh: skips versions already
+      # on npm, packs the rest with scripts off), which publishes with
+      # `npm publish` (OIDC
       # trusted publishing — there is no NPM_TOKEN to steal) and then
       # `changeset tag`. The action parses the "New tag:" output, pushes the
       # tags and creates the GitHub releases.
