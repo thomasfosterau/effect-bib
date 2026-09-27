@@ -31,8 +31,8 @@ catalogs:
       specifier: npm:typescript@7.0.2
       version: 7.0.2
     '@vitest/coverage-istanbul':
-      specifier: 5.0.0
-      version: 5.0.0
+      specifier: 5.0.1
+      version: 5.0.1
     effect-solutions:
       specifier: ^0.5.3
       version: 0.5.3
@@ -108,7 +108,7 @@ importers:
         version: 0.3.1(@types/node@26.6.1)(@typescript/typescript6@6.0.2)(esbuild@0.28.2)(tsx@4.23.13)(yaml@2.9.1)
       vitest:
         specifier: 4.1.11
-        version: 4.1.11(@types/node@26.6.1)(@vitest/browser-preview@4.1.11)(@vitest/coverage-istanbul@5.0.0)(@voidzero-dev/vite-plus-core@0.3.1(@types/node@26.6.1)(@typescript/typescript6@6.0.2)(esbuild@0.28.2)(tsx@4.23.13)(yaml@2.9.1))
+        version: 4.1.11(@types/node@26.6.1)(@vitest/browser-preview@4.1.11)(@vitest/coverage-istanbul@5.0.1)(@voidzero-dev/vite-plus-core@0.3.1(@types/node@26.6.1)(@typescript/typescript6@6.0.2)(esbuild@0.28.2)(tsx@4.23.13)(yaml@2.9.1))
 
   packages/biblio:
     devDependencies:
@@ -123,7 +123,7 @@ importers:
         version: 26.6.1
       '@vitest/coverage-istanbul':
         specifier: 'catalog:'
-        version: 5.0.0(vitest@4.1.11)
+        version: 5.0.1(vitest@4.1.11)
       effect:
         specifier: 4.0.0-rc.117
         version: 4.0.0-rc.117
@@ -1081,8 +1081,8 @@ packages:
     peerDependencies:
       vitest: 4.1.11
 
-  '@vitest/coverage-istanbul@5.0.0':
-    resolution: {integrity: sha512-L0Rh+O61F2FV3+Xc3iGqeW5Tp0fs41VXy0hth84UCcMZGqlTjM1n5PUDqdaJD2xmQ/jZY3SJ9k7A2IKpKZRT8A==}
+  '@vitest/coverage-istanbul@5.0.1':
+    resolution: {integrity: sha512-JROeZ7Yy4xOMXQALW6CHT3O165LlUCB55F0aQ1LBRuFOCPCnSM1vDx8YxZTs8uPIBW9lcEftfNfOvIj4IJ1i9g==}
     peerDependencies:
       vitest: 4.1.11
 
@@ -2925,7 +2925,7 @@ snapshots:
       '@testing-library/dom': 10.4.2
       '@testing-library/user-event': 14.6.7(@testing-library/dom@10.4.2)
       '@vitest/browser': 4.1.11(@voidzero-dev/vite-plus-core@0.3.1(@types/node@26.6.1)(@typescript/typescript6@6.0.2)(esbuild@0.28.2)(tsx@4.23.13)(yaml@2.9.1))(vitest@4.1.11)
-      vitest: 4.1.11(@types/node@26.6.1)(@vitest/browser-preview@4.1.11)(@vitest/coverage-istanbul@5.0.0)(@voidzero-dev/vite-plus-core@0.3.1(@types/node@26.6.1)(@typescript/typescript6@6.0.2)(esbuild@0.28.2)(tsx@4.23.13)(yaml@2.9.1))
+      vitest: 4.1.11(@types/node@26.6.1)(@vitest/browser-preview@4.1.11)(@vitest/coverage-istanbul@5.0.1)(@voidzero-dev/vite-plus-core@0.3.1(@types/node@26.6.1)(@typescript/typescript6@6.0.2)(esbuild@0.28.2)(tsx@4.23.13)(yaml@2.9.1))
     transitivePeerDependencies:
       - bufferutil
       - msw
@@ -2941,7 +2941,7 @@ snapshots:
       pngjs: 7.0.0
       sirv: 3.0.2
       tinyrainbow: 3.1.1
-      vitest: 4.1.11(@types/node@26.6.1)(@vitest/browser-preview@4.1.11)(@vitest/coverage-istanbul@5.0.0)(@voidzero-dev/vite-plus-core@0.3.1(@types/node@26.6.1)(@typescript/typescript6@6.0.2)(esbuild@0.28.2)(tsx@4.23.13)(yaml@2.9.1))
+      vitest: 4.1.11(@types/node@26.6.1)(@vitest/browser-preview@4.1.11)(@vitest/coverage-istanbul@5.0.1)(@voidzero-dev/vite-plus-core@0.3.1(@types/node@26.6.1)(@typescript/typescript6@6.0.2)(esbuild@0.28.2)(tsx@4.23.13)(yaml@2.9.1))
       ws: 8.21.3
     transitivePeerDependencies:
       - bufferutil
@@ -2949,7 +2949,7 @@ snapshots:
       - utf-8-validate
       - vite
 
-  '@vitest/coverage-istanbul@5.0.0(vitest@4.1.11)':
+  '@vitest/coverage-istanbul@5.0.1(vitest@4.1.11)':
     dependencies:
       '@jridgewell/gen-mapping': 0.3.13
       '@jridgewell/trace-mapping': 0.3.31
@@ -2960,7 +2960,7 @@ snapshots:
       magicast: 0.5.5
       obug: 2.2.1
       tinyrainbow: 3.1.1
-      vitest: 4.1.11(@types/node@26.6.1)(@vitest/browser-preview@4.1.11)(@vitest/coverage-istanbul@5.0.0)(@voidzero-dev/vite-plus-core@0.3.1(@types/node@26.6.1)(@typescript/typescript6@6.0.2)(esbuild@0.28.2)(tsx@4.23.13)(yaml@2.9.1))
+      vitest: 4.1.11(@types/node@26.6.1)(@vitest/browser-preview@4.1.11)(@vitest/coverage-istanbul@5.0.1)(@voidzero-dev/vite-plus-core@0.3.1(@types/node@26.6.1)(@typescript/typescript6@6.0.2)(esbuild@0.28.2)(tsx@4.23.13)(yaml@2.9.1))
 
   '@vitest/expect@4.1.11':
     dependencies:
@@ -3861,7 +3861,7 @@ snapshots:
       oxlint: 1.81.0(oxlint-tsgolint@7.0.2001)(vite-plus@0.3.1(@types/node@26.6.1)(@typescript/typescript6@6.0.2)(esbuild@0.28.2)(tsx@4.23.13)(yaml@2.9.1))
       oxlint-tsgolint: 7.0.2001
       vite: '@voidzero-dev/vite-plus-core@0.3.1(@types/node@26.6.1)(@typescript/typescript6@6.0.2)(esbuild@0.28.2)(tsx@4.23.13)(yaml@2.9.1)'
-      vitest: 4.1.11(@types/node@26.6.1)(@vitest/browser-preview@4.1.11)(@vitest/coverage-istanbul@5.0.0)(@voidzero-dev/vite-plus-core@0.3.1(@types/node@26.6.1)(@typescript/typescript6@6.0.2)(esbuild@0.28.2)(tsx@4.23.13)(yaml@2.9.1))
+      vitest: 4.1.11(@types/node@26.6.1)(@vitest/browser-preview@4.1.11)(@vitest/coverage-istanbul@5.0.1)(@voidzero-dev/vite-plus-core@0.3.1(@types/node@26.6.1)(@typescript/typescript6@6.0.2)(esbuild@0.28.2)(tsx@4.23.13)(yaml@2.9.1))
     optionalDependencies:
       '@voidzero-dev/vite-plus-darwin-arm64': 0.3.1
       '@voidzero-dev/vite-plus-darwin-x64': 0.3.1
@@ -3901,7 +3901,7 @@ snapshots:
       - utf-8-validate
       - yaml
 
-  vitest@4.1.11(@types/node@26.6.1)(@vitest/browser-preview@4.1.11)(@vitest/coverage-istanbul@5.0.0)(@voidzero-dev/vite-plus-core@0.3.1(@types/node@26.6.1)(@typescript/typescript6@6.0.2)(esbuild@0.28.2)(tsx@4.23.13)(yaml@2.9.1)):
+  vitest@4.1.11(@types/node@26.6.1)(@vitest/browser-preview@4.1.11)(@vitest/coverage-istanbul@5.0.1)(@voidzero-dev/vite-plus-core@0.3.1(@types/node@26.6.1)(@typescript/typescript6@6.0.2)(esbuild@0.28.2)(tsx@4.23.13)(yaml@2.9.1)):
     dependencies:
       '@vitest/expect': 4.1.11
       '@vitest/mocker': 4.1.11(@voidzero-dev/vite-plus-core@0.3.1(@types/node@26.6.1)(@typescript/typescript6@6.0.2)(esbuild@0.28.2)(tsx@4.23.13)(yaml@2.9.1))
@@ -3926,7 +3926,7 @@ snapshots:
     optionalDependencies:
       '@types/node': 26.6.1
       '@vitest/browser-preview': 4.1.11(@voidzero-dev/vite-plus-core@0.3.1(@types/node@26.6.1)(@typescript/typescript6@6.0.2)(esbuild@0.28.2)(tsx@4.23.13)(yaml@2.9.1))(vitest@4.1.11)
-      '@vitest/coverage-istanbul': 5.0.0(vitest@4.1.11)
+      '@vitest/coverage-istanbul': 5.0.1(vitest@4.1.11)
     transitivePeerDependencies:
       - msw
 
