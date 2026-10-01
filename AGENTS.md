@@ -7,7 +7,7 @@ Project conventions live here; personal style preferences live in user memory. `
 ## Common pitfalls
 
 - **`BiblioRecord` is wire-identical to what website persists.** Any change to a field name, a key's optionality, an identifier slot's brand or the `provenance` / `extra` shape is a **major**. `fromCslJson` must keep decoding every row website ever wrote.
-- **The root entry never imports `effect/unstable/*`.** `.` is the browser-safe half; the HttpClient-backed lookups live behind `./sources` only. `packages/biblio/tests/entry-points.test.ts` walks the real import graph and loads the built root entry with `effect/unstable/*` unresolvable; a type-only import breaks it too.
+- **The root entry never imports an `effect/http`-style module (the former `effect/unstable/*`).** `.` is the browser-safe half; the HttpClient-backed lookups live behind `./sources` only. `packages/biblio/tests/entry-points.test.ts` walks the real import graph and loads the built root entry with those modules unresolvable; a type-only import breaks it too.
 - **This package emits declarations; the application never did.** `tests/dist-consumer` type-checks a consumer fixture against the emitted `dist/` declarations with `Equals<…>` assertions on the brands and the service shape (a brand that emits as `string`, or a service that emits as `any`, fails there rather than in an application); `vp run check` includes it.
 - **Every export carries `@since`, and `vp run docgen` executes every `@example`.** A wrong expected value in an example is a red gate, not a stale comment.
 - **No application vocabulary.** No WEMI / spine mapping, no `owner_id`, no database rows, no ingest operations. Those stay in the apps; the package stops at the CSL record.

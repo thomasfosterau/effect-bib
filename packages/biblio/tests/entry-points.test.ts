@@ -1,9 +1,9 @@
 /**
  * Mechanical proof that the entry-point split keeps its promise: the root
- * entry (`.`) resolves `effect` and nothing else — never `effect/unstable/*`
+ * entry (`.`) resolves `effect` and nothing else — never an `effect/http`-style module (the former `effect/unstable/*`)
  * and never a `sources/` module — so a browser bundle that imports it never
  * loads the lookup clients. The `./sources` entry is where
- * `effect/unstable/http` is allowed to appear.
+ * `effect/http` is allowed to appear.
  *
  * The property is a packaging commitment, and a comment asserting it would
  * rot within two releases — one `import type` from `./sources/errors.ts`
@@ -27,7 +27,7 @@ const DIST = path.join(ROOT, "dist");
 
 /**
  * Module specifiers of `file`, read off the AST. Type-only imports count: an
- * `import type … from "effect/unstable/http"` emits no runtime edge, but it
+ * `import type … from "effect/http"` emits no runtime edge, but it
  * still makes the published `.d.ts` unresolvable without that surface.
  */
 const specifiersOf = (file: string): ReadonlyArray<string> => {
@@ -97,11 +97,17 @@ const graphFrom = (entry: string, dir: string): Graph => {
   };
 };
 
+/**
+ * The modules that sat under `effect/unstable/*` before rc.118 (now
+ * `effect/http`, `effect/sql`, ...). `effect/encoding` and `effect/testing`
+ * are left out: they carry modules that were always stable.
+ */
+const UNSTABLE_SURFACE =
+  /^effect\/(?:ai|cli|cluster|devtools|eventlog|http|http-api|net|observability|persistence|process|reactivity|rpc|schema|socket|sql|workers|workflow)(?:\/|$)/;
+
 const unstable = (graph: Graph): ReadonlyArray<string> =>
   [...graph.externals.entries()]
-    .filter(
-      ([specifier]) => specifier === "effect/unstable" || specifier.startsWith("effect/unstable/"),
-    )
+    .filter(([specifier]) => UNSTABLE_SURFACE.test(specifier))
     .map(([specifier, trail]) => `${specifier} via ${trail.join(" -> ")}`)
     .sort();
 
@@ -109,7 +115,7 @@ describe("root entry point", () => {
   const root = graphFrom(path.join(SRC, "index.ts"), SRC);
   const sources = graphFrom(path.join(SRC, "sources", "index.ts"), SRC);
 
-  it("resolves no unstable effect surface at all", () => {
+  it("resolves no formerly-unstable effect surface at all", () => {
     expect(unstable(root)).toEqual([]);
   });
 
@@ -127,11 +133,11 @@ describe("root entry point", () => {
   /**
    * The control. Without it every assertion above could pass because the
    * walker stopped finding imports rather than because the property holds.
-   * The sources barrel genuinely does reach `effect/unstable/http`, so a
+   * The sources barrel genuinely does reach `effect/http`, so a
    * walker that cannot see it here cannot be trusted to see it above.
    */
   it("is checked by a walker that does detect the HTTP surface (control: `./sources`)", () => {
-    expect(unstable(sources).join("\n")).toContain("effect/unstable/http");
+    expect(unstable(sources).join("\n")).toContain("effect/http");
     expect(sources.modules.filter((module) => module.startsWith("sources/"))).not.toEqual([]);
   });
 
@@ -221,14 +227,14 @@ describe("built artifact", () => {
   /**
    * The end-to-end statement, and the one that does not depend on the walker
    * above being right: load the built entry in a process where
-   * `effect/unstable/*` cannot be resolved at all.
+   * the former `effect/unstable/*` modules (`effect/http`, ...) cannot be resolved at all.
    */
   const loadWithoutUnstable = (entry: string) =>
     spawnSync(
       process.execPath,
       [
         "--import",
-        fileURLToPath(new URL("./fixtures/forbid-unstable-peer.mjs", import.meta.url)),
+        fileURLToPath(new URL("./fixtures/forbid-http-peer.mjs", import.meta.url)),
         "--input-type=module",
         "-e",
         `await import(${JSON.stringify(entry)}); console.log("LOADED")`,
@@ -236,7 +242,7 @@ describe("built artifact", () => {
       { cwd: ROOT, encoding: "utf8" },
     );
 
-  it.skipIf(!hasDist)("loads the root entry with effect/unstable unresolvable", () => {
+  it.skipIf(!hasDist)("loads the root entry with effect/http and its siblings unresolvable", () => {
     const result = loadWithoutUnstable(built);
     expect(`${result.stdout}${result.stderr}`).toContain("LOADED");
     expect(result.status).toBe(0);
@@ -245,7 +251,7 @@ describe("built artifact", () => {
   it.skipIf(!hasDist)("is checked by hooks that do block the sources entry (control)", () => {
     const result = loadWithoutUnstable(path.join(DIST, "sources", "index.js"));
     const output = `${result.stdout}${result.stderr}`;
-    expect(output).toContain("FORBIDDEN_PEER:effect/unstable/");
+    expect(output).toContain("FORBIDDEN_PEER:effect/http");
     expect(output).not.toContain("LOADED");
     expect(result.status).not.toBe(0);
   });

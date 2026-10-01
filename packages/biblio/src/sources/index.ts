@@ -3,7 +3,7 @@
  * {@link BiblioLookup} service (ISBN via OpenLibrary, DOI via Crossref,
  * title search via OpenAlex), its layers, the per-source lookup functions
  * and response schemas, and the typed error channel. Imports
- * `effect/unstable/http`, which is why it is its own entry point — the root
+ * `effect/http`, which is why it is its own entry point — the root
  * entry stays free of it.
  *
  * @module biblio/sources
