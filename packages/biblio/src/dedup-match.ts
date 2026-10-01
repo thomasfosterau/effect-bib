@@ -1,32 +1,25 @@
 /**
- * @copyright Thomas Foster
+ * Fuzzy title/author matching for bibliographic dedup (KB-010, #610).
  *
- * Fuzzy title/author matching for bibliographic ingestion dedup (KB-010,
- * issue #610).
- *
- * The identifier-lookup slice (#600) dedups **only** on the exact
- * `entity_external_identifier` `(authority, external_id)` pair, so a record
- * that arrives without a usable identifier — or with a *different* identifier for the same work
- * (a reprint ISBN, a preprint vs published DOI) — slips past it and forks a
- * duplicate Book Entity. This module is the deterministic decision behind a
- * second, fuzzy dedup pass: given an incoming record's title + author names
- * and a candidate existing Book's title + author names, it scores their
+ * Exact-identifier dedup misses a record that arrives without a usable
+ * identifier, or with a *different* identifier for the same work (a reprint
+ * ISBN, a preprint vs published DOI). This module is the deterministic
+ * decision behind a second, fuzzy pass: given an incoming record's title +
+ * author names and a candidate's title + author names, it scores their
  * similarity and decides whether they are confidently the **same work**.
  *
  * The decision is intentionally **high-precision**: a true reprint (same
- * title, same authors) collapses onto the existing Book, but a merely
- * similar-looking different work must **not** be silently merged (corrupting
- * the version chain / overriding a local classification — KB-002/KB-008).
- * Below the threshold the caller falls through to creating a new Book; the
- * "surface near-misses for human review" affordance is deferred to the
- * API/UI follow-up (#611), so this module only answers the binary
- * auto-dedup question.
+ * title, same authors) matches, but a merely similar-looking different work
+ * must **not** be silently merged. Below the threshold the caller treats the
+ * incoming record as a distinct work; this module only answers the binary
+ * question, not near-miss review.
  *
- * Everything here is **pure and deterministic** — no DB, no network. The
- * caller (`ingest.ts`) owns the bounded SQL candidate pre-filter (a
- * `pg_trgm` similarity probe); this module owns the normalisation, scoring,
- * and threshold that turn a candidate into a yes/no.
+ * Everything here is **pure and deterministic**: no database, no network.
+ * The caller owns any candidate pre-filter (e.g. a trigram similarity
+ * probe); this module owns the normalisation, scoring and threshold that
+ * turn a candidate into a yes/no.
  *
+ * @copyright Thomas Foster
  * @module biblio/dedup-match
  * @since 0.1.0
  */
@@ -170,7 +163,7 @@ export interface MatchScore {
 /**
  * Minimum title overlap to dedup when author evidence agrees. High enough
  * that a dropped subtitle or an extra qualifier word does **not** clear it
- * — those become a new Book, not a silent merge.
+ * — those are treated as distinct works, not a silent merge.
  */
 const TITLE_MATCH_THRESHOLD = 0.9;
 
@@ -194,7 +187,7 @@ const AUTHOR_MATCH_THRESHOLD = 0.5;
 const MIN_TITLE_TOKENS_NO_AUTHOR = 2;
 
 /**
- * Scores an incoming record against a candidate existing Book on the axes
+ * Scores an incoming record against a candidate on the axes
  * {@link MatchScore} describes. Pure and symmetric.
  *
  * @example
@@ -242,7 +235,7 @@ export function scoreMatch(incoming: MatchInput, candidate: MatchInput): MatchSc
  * must clear the stricter {@link TITLE_STRICT_THRESHOLD} **and** share at
  * least {@link MIN_TITLE_TOKENS_NO_AUTHOR} significant tokens — so a bare,
  * uncorroborated one-word title never collapses two distinct works. Anything
- * below is *not* a confident match and falls through to creating a new Book.
+ * below is not a confident match; treat the incoming record as a distinct work.
  *
  * @since 0.1.0
  */
@@ -266,21 +259,18 @@ export function matchConfidence(score: MatchScore): number {
   return Option.isNone(score.author) ? score.title : score.title * 0.7 + score.author.value * 0.3;
 }
 
+/* oxlint-disable effect/prefer-option-over-null -- cross-slice: apps/api consumes the plain nullable */
 /**
  * Picks the single best **confident** same-work match for `incoming` from a
  * candidate set — the highest {@link matchConfidence} among those that pass
- * {@link isConfidentMatch} — or `null` when none is confident. The caller
- * supplies pre-filtered candidates (e.g. trigram-similar Books with their
- * authors); this resolves the auto-dedup target. Pure and deterministic.
- */
-/*
- * The `T | null` return is NOT migrated: `bestConfidentMatch` is imported by
- * `apps/api/src/biblio/ingest.ts`, which consumes the plain nullable — a
- * cross-package signature change a later wave owns. The fold's internal
- * accumulator below is an `Option`.
- */
-/* oxlint-disable effect/prefer-option-over-null -- cross-slice: apps/api consumes the plain nullable */
-/**
+ * {@link isConfidentMatch} — or `null` when none is confident. Pass
+ * pre-filtered candidates (e.g. by title similarity, with their authors).
+ * Pure and deterministic.
+ *
+ * Returns `null` rather than an `Option` by design: the plain-nullable
+ * shape is a stable contract with existing consumers, not a pending
+ * migration.
+ *
  * @example
  * ```ts
  * import { bestConfidentMatch } from "@thomasfosterau/biblio"

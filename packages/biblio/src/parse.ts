@@ -1,9 +1,7 @@
 /**
- * @copyright Thomas Foster
- *
  * File-format parsers for bibliographic import — **BibTeX**, **CSL-JSON**
  * (the Zotero export shape), reading-list **CSV**, and **RIS** — each
- * emitting the CSL-aligned {@link BiblioRecord} (biblio B2, issue #1069).
+ * emitting the CSL-aligned {@link BiblioRecord} (#1069).
  *
  * The parsers are the file-side analogue of the source-client normalisers:
  * where the lookup path resolves a single identifier against an upstream
@@ -17,20 +15,19 @@
  *   Each parser returns one {@link ParseOutcome} per source entry.
  * - **field-by-field validation** — titles / names run through
  *   `sanitiseText`, years through `sanitiseYear`, and identifiers through
- *   the checksum-validating decoders ({@link module:biblio/identifiers}),
- *   which are the SSRF / path-injection guards, before anything is
- *   trusted. B2 upgrade: an ISBN must now pass its checksum to parse (the
- *   pre-B2 scanner was syntax-only).
+ *   the checksum-validating decoders ({@link decodeIsbn},
+ *   {@link decodeDoi}), which are the SSRF / path-injection guards, before
+ *   anything is trusted. An ISBN must pass its checksum to parse.
  * - **resource bounds** — total input length ({@link MAX_INPUT_LENGTH}),
  *   per-field length (`sanitiseText`), author count (`MAX_AUTHORS`), and
  *   record count ({@link MAX_RECORDS}) are all capped.
  *
  * A record needs a title **and** at least one dedup identifier (ISBN or
- * DOI) to parse; otherwise it is skipped (`no-title` / `no-identifier`) —
- * the same gate as pre-B2, keeping the shared dedup namespace with the
- * identifier-lookup imports. `provenance.source` records which format the
- * record arrived through.
+ * DOI) to parse; otherwise it is skipped (`no-title` / `no-identifier`),
+ * so file imports share a dedup namespace with identifier lookups.
+ * `provenance.source` records which format the record arrived through.
  *
+ * @copyright Thomas Foster
  * @module biblio/parse
  * @since 0.1.0
  */
@@ -117,27 +114,26 @@ export interface ParsedEntry {
 export type ParseOutcome = ParsedEntry | SkippedEntry;
 
 /**
- * Hard cap on how many entries a single uploaded file may yield. A larger
- * file has its tail ignored — the parser stops emitting once the cap is
- * hit, so a hostile file can't make the importer allocate unbounded work.
+ * The most entries one input yields; parsing stops emitting at the cap and
+ * ignores the tail, so a hostile file cannot force unbounded work.
  *
  * @since 0.1.0
  */
 export const MAX_RECORDS = 5000;
 
 /**
- * Hard cap on the raw input length, in UTF-16 code units. A larger file is
- * rejected up front (the whole upload is dropped) before any per-entry
- * parsing runs. ~8 MB comfortably holds tens of thousands of entries.
+ * Hard cap on the raw input length, in UTF-16 code units. A longer input is
+ * rejected whole (returns `[]`) before any per-entry parsing runs. ~8 MB
+ * comfortably holds tens of thousands of entries.
  *
  * @since 0.1.0
  */
 export const MAX_INPUT_LENGTH = 8_000_000;
 
 /**
- * Parses raw uploaded file `content` of the given `format` into a list of
+ * Parses raw file `content` of the given `format` into a list of
  * per-entry {@link ParseOutcome}s. Pure: no network, no database. Over the
- * input-length cap the whole upload is dropped (returns `[]`); otherwise
+ * input-length cap the whole input is dropped (returns `[]`); otherwise
  * every recognised entry yields exactly one outcome, up to
  * {@link MAX_RECORDS}.
  *

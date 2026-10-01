@@ -1,13 +1,10 @@
 /**
- * @copyright Thomas Foster
- *
- * OpenAlex source client (biblio B3, issue #1070) — the modern
+ * OpenAlex source client (#1070) — the modern
  * scholarly-graph source added alongside the OpenLibrary/Crossref refit.
  * Two capabilities, both emitting the CSL-aligned {@link BiblioRecord}:
  * a works lookup by DOI ({@link lookupOpenAlexByDoi}), and a title search
- * returning ranked candidates ({@link searchOpenAlexByTitle}) — the
- * additive `BiblioLookup.byTitle` method the B1 design doc names as what
- * OpenAlex justifies.
+ * returning ranked candidates ({@link searchOpenAlexByTitle}), which backs
+ * `BiblioLookup.byTitle`.
  *
  * **Polite-pool etiquette.** OpenAlex asks callers to identify themselves
  * with a contact email — either a `mailto` query parameter or a `mailto:`
@@ -21,6 +18,7 @@
  * trusts what it extracts and sanitises — the same posture as the sibling
  * OpenLibrary / Crossref clients.
  *
+ * @copyright Thomas Foster
  * @module biblio/sources/openalex
  * @since 0.1.0
  */

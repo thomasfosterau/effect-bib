@@ -1,19 +1,18 @@
 /**
- * @copyright Thomas Foster
- *
  * OpenLibrary (ISBN) source client, refit onto the CSL-aligned
- * {@link BiblioRecord} (biblio B3, issue #1070; carries forward the KB-010
- * ingestion client, issue #574). Resolves an edition by ISBN, follows the
+ * {@link BiblioRecord} (#1070; carries forward the KB-010
+ * ingestion client, #574). Resolves an edition by ISBN, follows the
  * referenced `/authors/OL...A` records for display names, and normalises
- * the pair into a record — richer than the pre-B3 flat shape: publisher
+ * the pair into a record: publisher
  * place lands in the standard CSL `publisher-place` variable, and subjects
  * (which CSL has no standard slot for) are carried in the `extra`
  * passthrough as `extra.subject`.
  *
- * Untrusted-response discipline unchanged from pre-B3: the schema is
+ * Untrusted-response discipline: the schema is
  * deliberately lenient (every field optional), and the normaliser only
  * trusts what it extracts and sanitises.
  *
+ * @copyright Thomas Foster
  * @module biblio/sources/openlibrary
  * @since 0.1.0
  */

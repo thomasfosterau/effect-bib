@@ -1,18 +1,16 @@
 /**
- * @copyright Thomas Foster
- *
  * Crossref (DOI) source client, refit onto the CSL-aligned
- * {@link BiblioRecord} (biblio B3, issue #1070; carries forward the KB-010
- * ingestion client, issue #574). Crossref is natively CSL-adjacent — its
+ * {@link BiblioRecord} (#1070; carries forward the KB-010
+ * ingestion client, #574). Crossref is natively CSL-adjacent — its
  * `message.type` already maps closely onto the CSL item-type vocabulary,
  * and `container-title` / `volume` / `issue` / `page` / `ISSN` are direct
- * upstream fields — so this normaliser mostly *simplifies* relative to the
- * pre-B3 flat mapping rather than growing.
+ * upstream fields — so this normaliser is mostly a direct mapping.
  *
- * Untrusted-response discipline unchanged from pre-B3: the schema is
+ * Untrusted-response discipline: the schema is
  * deliberately lenient, and the normaliser only trusts what it extracts
  * and sanitises.
  *
+ * @copyright Thomas Foster
  * @module biblio/sources/crossref
  * @since 0.1.0
  */

@@ -1,12 +1,11 @@
 /**
- * @copyright Thomas Foster
- *
- * The built-in citation-style registry (biblio B5, issue #1072).
+ * The built-in citation-style registry (#1072).
  *
  * Styles are typed data inputs; this is the lookup a caller resolves a style
  * id against. Adding a style is adding an entry here — the engine is
  * unchanged.
  *
+ * @copyright Thomas Foster
  * @module biblio/render/styles
  * @since 0.1.0
  */
@@ -25,14 +24,10 @@ export const builtInStyles: Readonly<Record<string, CitationStyle>> = {
   vancouver: vancouverStyle,
 };
 
-/*
- * NOT migrated to `Option`: `getStyle` is imported by
- * `apps/api/src/biblio/reference-render.ts`, which tests the result against
- * `undefined`. Changing the signature is a cross-package edit a later wave
- * owns.
- */
 /**
- * Resolves a built-in style by id, or `undefined` when unknown.
+ * Resolves a built-in style by id, or `undefined` when unknown. Returns
+ * `undefined`, not an `Option`, by contract (a stable shape existing
+ * consumers rely on).
  *
  * @since 0.1.0
  */
