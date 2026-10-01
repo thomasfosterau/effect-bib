@@ -70,8 +70,8 @@ export default defineConfig({
       // The rules below sit at `warn` so the verbatim ports stay committable
       // while each site stays reported; a new site is a defect, not headroom.
       // `prefer-option-over-null` is NOT here: it stays at `error`, because
-      // every deliberate `null` on a cross-package contract (`isbnForms`,
-      // `parsePersonName`, `cslNameDisplay`, `yearOf`) carries a written
+      // every deliberate `null` on a cross-package contract (the plain-nullable
+      // seams listed in packages/biblio/CLAUDE.md) carries a written
       // justification in an `oxlint-disable` block, and that discipline is
       // the point.
       "effect/imperative-loops": "warn",

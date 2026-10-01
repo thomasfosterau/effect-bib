@@ -1,7 +1,5 @@
 /**
- * @copyright Thomas Foster
- *
- * The render engine (biblio B5, issue #1072).
+ * The render engine (#1072).
  *
  * Pure functions from `(records, style, locale)` to formatted strings. The
  * whole surface is deterministic and network-free: styles and locales are
@@ -13,6 +11,7 @@
  * style's {@link CitationStyle.sortKey}; `numeric` styles preserve citation
  * (input) order and carry a `"1."`-style label.
  *
+ * @copyright Thomas Foster
  * @module biblio/render/render
  * @since 0.1.0
  */

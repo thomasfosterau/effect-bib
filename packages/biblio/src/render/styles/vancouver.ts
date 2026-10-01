@@ -1,19 +1,18 @@
 /**
- * @copyright Thomas Foster
- *
- * The Vancouver style — a numeric reference format (biblio B5, issue #1072).
+ * The Vancouver style — a numeric reference format (#1072).
  *
  * A deliberate contrast to APA: numbered (citation-order) entries rather
  * than author-date, initials-without-periods names (`"Smith JR"`), and a
  * different punctuation and field order (`"Journal. Year;Vol(Issue):Pages."`).
  * Rendering the same records in two structurally different styles is what the
- * B5 acceptance criteria exercise.
+ * golden tests exercise.
  *
  * Like the APA style, this is a **scoped subset** of ICMJE/Vancouver — the
- * five reference shapes the site renders — not a full CSL implementation. The
+ * five reference shapes the engine classifies — not a full CSL implementation. The
  * editor-role terms (`"editor"` / `"editors"`) are the style's own English
  * labels rather than locale terms, since they differ from APA's `"Ed."`.
  *
+ * @copyright Thomas Foster
  * @module biblio/render/styles/vancouver
  * @since 0.1.0
  */

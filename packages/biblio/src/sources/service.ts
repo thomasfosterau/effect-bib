@@ -1,35 +1,26 @@
 /**
- * @copyright Thomas Foster
+ * The composed bibliographic identifier-lookup service (#1070, #574) — the
+ * single
+ * {@link BiblioLookup} `Context.Service` every consumer depends on, over
+ * Effect's `HttpClient`.
  *
- * The composed bibliographic identifier-lookup service (biblio B3, issue
- * #1070; carries forward the KB-010 ingestion client, issue #574) — the
- * single {@link BiblioLookup} `Context.Service` every consumer depends on,
- * over Effect's `HttpClient`.
- *
- * **Contract shape.** Per the B1 design doc
- * (), the surface is
- * CSL-native throughout: `byIsbnRecord` / `byDoiRecord` /
- * `byTitle` — `Option<BiblioRecord>` / `Option<BiblioRecord>` /
- * `readonly BiblioRecord[]`. `byTitle` is the OpenAlex-justified addition the
- * design doc names explicitly (ranked search candidates). The pre-B3 flat
- * `byIsbn` / `byDoi` compatibility methods (and the B2
- * `cslRecordToIngestedRecord` shim they were backed by) were removed once
- * B4 (#1071) migrated `apps/api`'s `ingest.ts` onto `byIsbnRecord`; the
- * canonical ISBN-13 form `decodeIsbn` produces is what the create-graph
- * stamps as the Book's `entity_external_identifier`.
+ * **Contract shape.** The surface is CSL-native throughout: `byIsbnRecord` /
+ * `byDoiRecord` / `byTitle` — `Option<BiblioRecord>` /
+ * `Option<BiblioRecord>` / `readonly BiblioRecord[]`. `byTitle` returns
+ * OpenAlex's ranked search candidates.
  *
  * **Sources.** `byIsbnRecord` resolves via OpenLibrary, `byDoiRecord` via
- * Crossref (the same per-identifier authority pre-B3 used), `byTitle` via
- * OpenAlex search. OpenAlex's DOI-lookup capability
+ * Crossref, `byTitle` via OpenAlex search. OpenAlex's DOI lookup
  * ({@link lookupOpenAlexByDoi}) is exposed as a standalone source function
  * rather than wired into `byDoiRecord` — Crossref stays the DOI authority
  * here — and is what the cross-source dedup coherence test exercises
  * directly against the same Crossref-resolved work.
  *
- * 404 → `Option.none()`, the typed {@link LookupError} channel, and the
- * injectable-client / `FetchHttpClient` layer split all carry forward
- * unchanged from pre-B3.
+ * A clean upstream 404 is `Option.none()`; every other failure is the typed
+ * {@link LookupError} channel. The client-injectable layer and the
+ * `FetchHttpClient` layer are split so tests can stub the client.
  *
+ * @copyright Thomas Foster
  * @module biblio/sources/service
  * @since 0.1.0
  */
@@ -112,13 +103,7 @@ export class BiblioLookup extends Context.Service<
  * and {@link biblioLookupLayer} (production, over the global fetch); not
  * exported because both layers live in this module.
  */
-// reason: this client-construction block (polite User-Agent + acceptJson +
-// filterStatusOk) is duplicated verbatim in the sibling extraction-trajectory
-// package `packages/wikidata/src/lookup.ts` by design — the `.fallowrc.json`
-// zone rules forbid `biblio` and `wikidata` depending on each other (or on
-// any third shared package), so each self-contained package must carry its
-// own HttpClient setup. Consolidating would break the extraction property
-// both packages are built around.
+// Kept local: the package depends on nothing but `effect`.
 // fallow-ignore-next-line code-duplication
 const makeBiblioLookup = Effect.fnUntraced(function* () {
   const baseClient = yield* HttpClient.HttpClient;
@@ -171,12 +156,9 @@ export const biblioLookupClientLayer: Layer.Layer<BiblioLookup, never, HttpClien
   Layer.effect(BiblioLookup)(makeBiblioLookup());
 
 /**
- * Production {@link BiblioLookup} layer, backed by the Worker global fetch
- * via `FetchHttpClient`. Provided on each app's own per-request runtime
- * (`apps/web/src/lib/server/effect/runtime.ts`, `apps/api/src/runtime.ts`)
- * so the ingestion HTTP endpoint and Remote Form (#611) reach the live
- * OpenLibrary / Crossref / OpenAlex lookups; tests inject a stub at the
- * boundary instead.
+ * Production {@link BiblioLookup} layer over `FetchHttpClient` (the global
+ * `fetch`). Use {@link biblioLookupClientLayer} to supply your own
+ * `HttpClient`, e.g. a stub in tests.
  *
  * @since 0.1.0
  */

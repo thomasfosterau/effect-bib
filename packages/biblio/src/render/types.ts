@@ -1,9 +1,7 @@
 /**
- * @copyright Thomas Foster
- *
  * The render module's public types — the typed **style** and **locale**
  * inputs, the render context, and the rendered-bibliography output shape
- * (biblio B5, issue #1072).
+ * (#1072).
  *
  * Styles and locales are **typed data inputs**, not fetched at render time
  * (the "no network at render time" acceptance criterion). A
@@ -12,6 +10,7 @@
  * is a bag of localisable terms. Both are plain data; the engine
  * (`render.ts`) is a pure function of `(records, style, locale)`.
  *
+ * @copyright Thomas Foster
  * @module biblio/render/types
  * @since 0.1.0
  */
@@ -93,7 +92,7 @@ export interface CitationStyle {
  */
 export interface RenderOptions {
   readonly style: CitationStyle;
-  /** Defaults to {@link module:biblio/render/locale.enLocale} when omitted. */
+  /** Defaults to `enLocale` when omitted. */
   readonly locale?: Locale;
 }
 

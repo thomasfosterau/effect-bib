@@ -1,8 +1,5 @@
 /**
- * @copyright Thomas Foster
- *
- * Shared formatting primitives for the render module (biblio B5, issue
- * #1072).
+ * Shared formatting primitives for the render module (#1072).
  *
  * These are the small, style-agnostic building blocks — name lists, given-
  * name initialisation, date-to-year, and punctuation joins — that the
@@ -14,6 +11,7 @@
  * `dedup-match.ts` posture — the renderer is a deterministic function of its
  * data inputs.
  *
+ * @copyright Thomas Foster
  * @module biblio/render/format
  * @since 0.1.0
  */

@@ -1,8 +1,6 @@
 /**
- * @copyright Thomas Foster
- *
  * First-class bibliographic identifiers — ISBN, DOI, ISSN, ORCID — as
- * branded, checksum-validated types (biblio B2, issue #1069).
+ * branded, checksum-validated types (#1069).
  *
  * This module is the identity boundary and the SSRF / path-injection
  * boundary for every path that interpolates an identifier into a URL or
@@ -13,20 +11,19 @@
  *   returns `Option.some(branded)` only when the value is syntactically
  *   well-formed **and** passes its checksum, else `Option.none()` — a
  *   partial or hostile input yields nothing, never a throw (the same
- *   untrusted-input posture as the `normalise.ts` schemas);
+ *   untrusted-input posture as the lookup sources' response schemas);
  * - a **real checksum** where the scheme has one (ISBN-10 mod-11,
  *   ISBN-13 mod-10 / EAN, ISSN mod-11, ORCID ISO 7064 mod-11-2); and
  * - a **converter** where meaningful (ISBN 10 ↔ 13).
  *
  * The branding is why a proven `Isbn` can't be confused with a raw
- * `string` at a call site (docs/decisions/branded-ids-with-hierarchical-
- * multibrands.md): the checksum has run, and the canonical form is
+ * `string` at a call site: the checksum has run, and the canonical form is
  * exclusively the digit class the upstream URL path admits.
  *
- * The package stays persistence-free and website-agnostic — turning these
- * into persisted `entity_external_identifier` rows is the site's job (B4);
- * this module only produces proven identifiers.
+ * The package stays persistence-free: storing these is the application's
+ * job; this module only produces proven identifiers.
  *
+ * @copyright Thomas Foster
  * @module biblio/identifiers
  * @since 0.1.0
  */
@@ -170,14 +167,10 @@ export function convertIsbn13To10(isbn13: string): Option.Option<string> {
   return Option.some(nine + isbn10CheckDigit(nine));
 }
 
-/*
- * `isbn10` is NOT migrated to `Option`: `isbnForms` is consumed outside this
- * package — `apps/api/src/biblio/csl-to-spine.ts` destructures `{ isbn13,
- * isbn10 }` and feeds `isbn10` straight into a nullable Drizzle column — so
- * the shape is a cross-package contract a later wave owns.
- */
 /**
- * Both canonical forms of a proven {@link Isbn}: the 13-form always, the 10-form when it exists.
+ * Both canonical forms of a proven {@link Isbn}: the 13-form always, the
+ * 10-form when it exists. `isbn10` is `null`, not an `Option`, by contract
+ * (a stable shape existing consumers rely on).
  *
  * @since 0.1.0
  */
@@ -228,8 +221,7 @@ export function decodeIsbn(raw: string): Option.Option<Isbn> {
  * rejected before the value could reach a URL builder. Returns the bare
  * lowercased DOI string, or `Option.none()`.
  *
- * Kept verbatim from the pre-B2 `record.ts` normaliser — it was already
- * correct; B2 only brands the result via {@link decodeDoi}.
+ * {@link decodeDoi} brands the result.
  *
  * @since 0.1.0
  */

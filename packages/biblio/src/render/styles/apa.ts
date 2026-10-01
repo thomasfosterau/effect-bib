@@ -1,8 +1,5 @@
 /**
- * @copyright Thomas Foster
- *
- * The APA 7th-edition style — an author-date reference format (biblio B5,
- * issue #1072).
+ * The APA 7th-edition style — an author-date reference format (#1072).
  *
  * A {@link CitationStyle} descriptor: it dispatches per {@link referenceClass}
  * through a lookup map of small, low-branch body renderers, each composing
@@ -10,12 +7,13 @@
  * deterministic, and network-free.
  *
  * This is a **scoped subset** of APA, not a full CSL implementation: it
- * covers the five reference shapes the site renders (book, chapter, journal
+ * covers the five reference shapes the engine classifies (book, chapter, journal
  * article, webpage, and a generic fallback). Known simplifications — no
  * author moves the title to the author slot only loosely; the >20-author
  * elision is "first 19 … et al." rather than APA's "first 19 … final" — are
  * documented at their call sites.
  *
+ * @copyright Thomas Foster
  * @module biblio/render/styles/apa
  * @since 0.1.0
  */

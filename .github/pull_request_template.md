@@ -2,17 +2,13 @@
 
 Describe what changed and why. If this closes an issue, add `Closes #N` so it auto-closes on merge to `main`.
 
-## Validation
+## Verification
 
-Tick what you ran. Pre-commit covers format + lint; there is no pre-push hook.
+Run the gates in [AGENTS.md#verification](https://github.com/thomasfosterau/reference-manager/blob/main/AGENTS.md#verification) in order and list each command with its final pass/fail. If a gate couldn't run, say which and why.
 
-- [ ] `vp fmt --check` / `vp lint`
-- [ ] `vp run check` (the package's type gate, including the type-level tests, plus the dist-consumer declaration check)
-- [ ] `vp run -r test:unit`
-- [ ] `vp run -r build`
-- [ ] `vp run -r docgen` (compiles and executes every JSDoc `@example`)
-- [ ] `fallow audit --base origin/main`
-- [ ] A changeset under `.changeset/` for every published-package change
+## Changeset
+
+Every change to a published package's behaviour carries a changeset under `.changeset/`. Changes to doc comments that reach the emitted `.d.ts` (TSDoc) take a `patch` changeset; other docs-only changes (READMEs, guidance), CI and tooling need none. Write "none" with the reason otherwise.
 
 ## Notes
 

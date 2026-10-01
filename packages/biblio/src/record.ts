@@ -1,29 +1,25 @@
 /**
- * @copyright Thomas Foster
- *
- * The CSL-aligned bibliographic record — the neutral centre of the
- * toolkit (biblio B2, issue #1069; design in
- * ).
+ * The CSL-aligned bibliographic record — the neutral centre of the toolkit
+ * (#1069).
  *
  * A {@link BiblioRecord} is a typed **superset of CSL-JSON**: its core is
  * the closed CSL 1.0.2 vocabulary (item types, standard/name/date
  * variables) modelled as Effect Schema, and its additions are strictly
- * additive — first-class **checksummed identifiers**
- * ({@link module:biblio/identifiers}), a **source provenance** envelope,
- * and a **passthrough** map that carries CSL variables we don't model
- * verbatim. Two total functions at the interop boundary make "typed
- * superset" precise: {@link toCslJson} projects a record to plain,
- * schema-valid CSL-JSON (dropping provenance, re-merging the passthrough),
- * and {@link fromCslJson} leniently decodes any CSL-JSON item into a record
- * (validating identifiers where present, capturing unknown keys), never
- * throwing on partial or hostile input.
+ * additive — first-class **checksummed identifiers** (the {@link Isbn} /
+ * {@link Doi} / {@link Issn} / {@link Orcid} brands), a **source
+ * provenance** envelope, and an `extra` map that passes through CSL
+ * variables the model does not consume. Two total functions at the interop
+ * boundary make "typed superset" precise: {@link toCslJson} projects a
+ * record to plain, schema-valid CSL-JSON (dropping provenance, re-merging
+ * `extra`), and {@link fromCslJson} leniently decodes any CSL-JSON item into
+ * a record (validating identifiers where present, capturing unknown keys),
+ * never throwing on partial or hostile input.
  *
- * The **CSL → WEMI lift is not this module's job** — mapping a record onto
- * the site's FRBR/LRM spine is apps/api business logic (B4, #1071, landed).
- * The package stops at the CSL record.
+ * The package stops at the CSL record: mapping it onto an application's own
+ * data model is the application's job. Everything here is pure and
+ * persistence-free.
  *
- * Everything here is pure and persistence-free.
- *
+ * @copyright Thomas Foster
  * @module biblio/record
  * @since 0.1.0
  */
@@ -47,12 +43,12 @@ import {
   Orcid,
 } from "./identifiers.ts";
 
-// ── Field bounds & untrusted-text sanitisers (survive from pre-B2) ────
+// ── Field bounds & untrusted-text sanitisers ────────────────────────
 
 /**
- * Upper bound on any single free-text field copied from an untrusted
- * source. Clamped before persistence so a hostile or malformed value
- * can't push an unbounded blob downstream (defence in depth).
+ * Upper bound, in UTF-16 code units, on any free-text field taken from
+ * untrusted input; longer values are truncated, so a hostile or malformed
+ * value can't push an unbounded blob downstream.
  *
  * @since 0.1.0
  */
@@ -71,16 +67,10 @@ const MIN_PUBLICATION_YEAR = 1;
 const MAX_PUBLICATION_YEAR = 2200;
 
 /**
- * Trims, collapses, and length-clamps an untrusted free-text value.
+ * Trims an untrusted free-text value, collapses its whitespace and clamps
+ * it to {@link MAX_TEXT_FIELD_LENGTH}.
  * `Option.none()` for empty / whitespace-only or non-string input.
- */
-// reason: this clamp is duplicated verbatim in the sibling extraction-
-// trajectory packages (e.g. wikidata's candidate.ts) by design — the
-// `.fallowrc.json` zone rule `{ from: "biblio", allow: [] }` forbids biblio
-// depending on any website-internal package, so each self-contained package
-// must carry its own untrusted-text sanitiser. Consolidating would break the
-// extraction property the whole package is built around.
-/**
+ *
  * @since 0.1.0
  */
 export function sanitiseText(value: unknown): Option.Option<string> {
@@ -114,9 +104,9 @@ function sanitiseCslString(value: unknown): Option.Option<string> {
 // ── CSL vocabulary (modelled from the spec, not invented) ─────────────
 
 /**
- * The CSL 1.0.2 item types, a closed enumeration. The site handles a
- * subset as first-class; the rest are carried so a round-trip never loses
- * an external tool's type. `document` is the neutral fallback
+ * The CSL 1.0.2 item types, a closed enumeration. Every type round-trips,
+ * even those the render styles treat generically, so an external tool's
+ * type is never lost. `document` is the fallback
  * {@link fromCslJson} assigns to an unknown or missing type.
  *
  * @since 0.1.0
@@ -185,10 +175,8 @@ export function isCslItemType(value: string): value is CslItemType {
 }
 
 /**
- * A CSL structured name. Replaces the pre-B2 bare `{ name: string }` — a
- * name is a structure, and rendering, dedup, and the WEMI lift all need
- * its parts. The `orcid` field is the superset addition (a first-class
- * contributor identity, checksum-validated).
+ * A CSL structured name, plus the superset `orcid` (a checksum-validated
+ * contributor identity).
  *
  * @since 0.1.0
  */
@@ -207,9 +195,8 @@ export const CslName = Schema.Struct({
 export type CslName = typeof CslName.Type;
 
 /**
- * A CSL structured date. Replaces the pre-B2 lone `publicationYear` — the
- * year is `issued["date-parts"][0][0]`, but month / day / range / `raw`
- * are no longer discarded.
+ * A CSL structured date: `date-parts` (the year is `[0][0]`; month, day
+ * and ranges are kept), season, circa, literal or raw.
  *
  * @since 0.1.0
  */
@@ -264,11 +251,9 @@ export const ProvenanceSource = Schema.Literals([
 export type ProvenanceSource = typeof ProvenanceSource.Type;
 
 /**
- * Where a record came from and by what retrieval identity. Replaces the
- * pre-B2 overloaded `source` + `authorityId` pair (which conflated "which
- * API" with "the dedup key"). This envelope is dropped by {@link toCslJson}
- * — it is not part of CSL — and is what lets dedup weigh cross-source
- * agreement and the B4 lift stamp created-Entity provenance.
+ * Where a record came from and by what retrieval identity. Not part of
+ * CSL: {@link toCslJson} drops it. It lets a consumer weigh cross-source
+ * agreement and stamp its own provenance.
  *
  * @since 0.1.0
  */
@@ -398,13 +383,11 @@ function isEmptyName(name: CslName): boolean {
 }
 
 /*
- * The four `null`-returning helpers below are NOT migrated to `Option`, and
- * must not be here: `makeCslName`, `parsePersonName`, `cslNameDisplay` and
- * `yearOf` are all imported by `apps/api/src/biblio/{spine-to-csl,
- * csl-to-spine}.ts`, which compare the results against `null` and feed
- * `yearOf` into a nullable Drizzle column. Changing the signatures is a
- * cross-package edit a later wave owns; the bodies below already use the
- * migrated `Option`-returning sanitisers and convert at the return.
+ * The four `null`-returning helpers below (`makeCslName`, `parsePersonName`,
+ * `cslNameDisplay`, `yearOf`) return `null`, not `Option`, by contract:
+ * website's `apps/api/src/biblio/*` consumes them as plain nullables. See
+ * "The plain-nullable seams stay" in packages/biblio/CLAUDE.md. The bodies
+ * use the `Option`-returning sanitisers and convert at the return.
  */
 /* oxlint-disable effect/prefer-option-over-null -- cross-slice: consumed as plain nullables by apps/api */
 

@@ -1,12 +1,11 @@
 /**
- * @copyright Thomas Foster
- *
  * The typed error channel shared by every {@link BiblioLookup} source
- * client (biblio B3, issue #1070). Kept in its own leaf module — no
+ * client (#1070). Kept in its own leaf module — no
  * dependency on the per-source clients or on `service.ts` — so
  * `openlibrary.ts` / `crossref.ts` / `openalex.ts` and the composed
  * service can both import it without a circular dependency.
  *
+ * @copyright Thomas Foster
  * @module biblio/sources/errors
  * @since 0.1.0
  */
