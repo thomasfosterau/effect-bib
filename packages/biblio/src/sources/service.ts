@@ -1,6 +1,6 @@
 /**
- * The composed bibliographic identifier-lookup service (#1070, carrying
- * forward the KB-010 ingestion client, #574) — the single
+ * The composed bibliographic identifier-lookup service (#1070, #574) — the
+ * single
  * {@link BiblioLookup} `Context.Service` every consumer depends on, over
  * Effect's `HttpClient`.
  *

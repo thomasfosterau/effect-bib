@@ -1,5 +1,5 @@
 /**
- * Fuzzy title/author matching for bibliographic dedup (KB-010, #610).
+ * Fuzzy title/author matching for bibliographic dedup (#610).
  *
  * Exact-identifier dedup misses a record that arrives without a usable
  * identifier, or with a *different* identifier for the same work (a reprint
@@ -122,9 +122,9 @@ export interface MatchInput {
  * Projects a CSL-aligned {@link BiblioRecord} onto the minimal
  * {@link MatchInput} the scorer needs — the title and the contributor
  * **display names** derived from the structured CSL names. The scorer
- * stays decoupled from the full record model (and from DB rows, which
- * `ingest.ts` projects the same shape from), so the fuzzy-match path is
- * untouched by record-shape changes beyond how names/titles are extracted.
+ * stays decoupled from the full record model, so a consumer can build a
+ * {@link MatchInput} from its own stored rows, and record-shape changes
+ * don't reach the fuzzy-match path.
  *
  * @since 0.1.0
  */

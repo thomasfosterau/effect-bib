@@ -67,8 +67,8 @@ const MIN_PUBLICATION_YEAR = 1;
 const MAX_PUBLICATION_YEAR = 2200;
 
 /**
- * Trims, collapses whitespace in, and clamps to
- * {@link MAX_TEXT_FIELD_LENGTH} an untrusted free-text value.
+ * Trims an untrusted free-text value, collapses its whitespace and clamps
+ * it to {@link MAX_TEXT_FIELD_LENGTH}.
  * `Option.none()` for empty / whitespace-only or non-string input.
  *
  * @since 0.1.0
@@ -105,8 +105,8 @@ function sanitiseCslString(value: unknown): Option.Option<string> {
 
 /**
  * The CSL 1.0.2 item types, a closed enumeration. Every type round-trips,
- * even those the render styles treat generically, so a round-trip never
- * loses an external tool's type. `document` is the fallback
+ * even those the render styles treat generically, so an external tool's
+ * type is never lost. `document` is the fallback
  * {@link fromCslJson} assigns to an unknown or missing type.
  *
  * @since 0.1.0

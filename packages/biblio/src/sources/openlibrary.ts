@@ -1,7 +1,6 @@
 /**
  * OpenLibrary (ISBN) source client, refit onto the CSL-aligned
- * {@link BiblioRecord} (#1070; carries forward the KB-010
- * ingestion client, #574). Resolves an edition by ISBN, follows the
+ * {@link BiblioRecord} (#1070, #574). Resolves an edition by ISBN, follows the
  * referenced `/authors/OL...A` records for display names, and normalises
  * the pair into a record: publisher
  * place lands in the standard CSL `publisher-place` variable, and subjects

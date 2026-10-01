@@ -1,7 +1,6 @@
 /**
  * Crossref (DOI) source client, refit onto the CSL-aligned
- * {@link BiblioRecord} (#1070; carries forward the KB-010
- * ingestion client, #574). Crossref is natively CSL-adjacent — its
+ * {@link BiblioRecord} (#1070, #574). Crossref is natively CSL-adjacent — its
  * `message.type` already maps closely onto the CSL item-type vocabulary,
  * and `container-title` / `volume` / `issue` / `page` / `ISSN` are direct
  * upstream fields — so this normaliser is mostly a direct mapping.

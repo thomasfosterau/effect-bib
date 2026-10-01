@@ -81,7 +81,7 @@ export type ImportFormat = "bibtex" | "zotero-json" | "csv" | "ris";
 export type SkipReason =
   /** The entry carried neither a usable ISBN nor a usable DOI to key on. */
   | "no-identifier"
-  /** The entry had no usable title — we never ingest a titleless work. */
+  /** The entry had no usable title; a titleless entry is never parsed into a record. */
   | "no-title"
   /** The entry was structurally unparseable (e.g. a truncated BibTeX body). */
   | "malformed";
