@@ -4,23 +4,12 @@
 # Release workflow hands to changesets/action once the "Version Packages" PR
 # has merged (see PUBLISHING.md).
 #
-# Two tools, deliberately: `pnpm pack` is what understands this workspace
-# (it resolves the `catalog:` / `catalog:peers` / `workspace:` specifiers and
-# applies each package's `publishConfig`), and `npm publish` of the resulting
-# tarball is what carries npm OIDC trusted publishing (npm >= 11.5.1; the
-# Release job pins one). pnpm 11's own `pnpm publish` could do the OIDC
-# exchange too (pnpm/pnpm#9812 was pnpm-10-era); the npm CLI path is kept for
-# now. `changeset tag` then emits the `New tag:` lines the action turns into
-# pushed tags and GitHub releases.
-#
-# No `--provenance`: npm attaches provenance by itself under trusted publishing
-# once the repository and the package are both public, and an explicit
-# provenance request from a private repository makes the publish fail.
-#
-# Idempotent: a package already published at its current version is skipped
-# (as in effect-email's release.sh), so a partial run can be re-run and a
-# version bootstrapped by hand does not fail the automated run. Every tarball
-# is packed before the first publish, so a pack failure publishes nothing.
+# `pnpm pack` resolves the workspace's `catalog:` / `workspace:` specifiers and
+# `publishConfig`; `npm publish` of the tarball performs the OIDC exchange (the
+# Release job pins npm). No `--provenance`: an explicit request fails the
+# publish from a private repository. Idempotent: a package already on npm at
+# its current version is skipped, and every tarball is packed before the first
+# publish, so a pack failure publishes nothing. See PUBLISHING.md.
 set -euo pipefail
 
 out="$PWD/.release"

@@ -1,77 +1,22 @@
 #!/usr/bin/env bash
 #
-# Provision a checkout for NON-INTERACTIVE use.
+# Provision a checkout for non-interactive use (the Claude Code SessionStart hook).
 #
-# One file, two callers — the Claude Code SessionStart hook and the
-# devcontainer's `postCreateCommand` (which invokes this file directly) — so a
-# container shell and an agent session are provisioned identically. The two
-# used to be separate pieces of code, and the drift between them stayed
-# invisible until a task failed halfway through. (This logic previously lived
-# in scripts/setup-dev-env.sh; it moved here when the local-PostgreSQL half of
-# that script was replaced by Testcontainers in the integration suite's global
-# setup — see the Website decision record `integration-tests-on-local-postgres`.)
+# `~/.bashrc` returns early for non-interactive shells, so the line that puts the
+# Vite+ toolchain on PATH never runs for an agent's tool calls or a git hook, and
+# `node_modules/.bin` (where `fallow` and `tsx` live) is on nobody's PATH. This
+# links them into `~/.local/bin` instead, since a symlink survives where an
+# `export` cannot.
 #
-# ## The problem it solves
+# Node: `~/.vite-plus/bin/node` is a shim that can fail with "Permission denied"
+# when its root-owned runtime cache is stale, which breaks the pre-commit hook
+# (`vp staged` shells out to bare `node`; gardeneria#1462). This repairs it only
+# when `node --version` already fails, so a working shim is left alone.
 #
-# `~/.bashrc` opens with Debian's standard guard:
-#
-#     case $- in
-#         *i*) ;;
-#           *) return;;
-#     esac
-#
-# and the line that puts the toolchain on PATH — `. "$HOME/.vite-plus/env"` —
-# sits *below* it. So the environment is correct for a human at a prompt and
-# broken for every non-interactive shell, which is what an agent's tool calls
-# and a git hook both are. `fallow` (which AGENTS.md requires before every
-# commit) and `tsx` (which every repo tooling script runs under) are in
-# `node_modules/.bin`, which is on nobody's PATH.
-#
-# Rather than fight PATH — which this script cannot export into its caller —
-# it links the tools into `~/.local/bin`, a directory already on PATH in this
-# image and writable by the session user. A symlink survives where an `export`
-# cannot.
-#
-# ## Node, and why this repairs rather than clobbers
-#
-# `~/.vite-plus/bin/node` is a shim pointing at the `vp` launcher, which
-# resolves a Node version and installs it under `~/.vite-plus/js_runtime`. That
-# directory is `root:root` from image build while the session user is `vp`, so
-# when the resolved version drifts past the cached one the shim fails:
-#
-#     vp: Failed to install Node 24.19.0: Permission denied (os error 13)
-#
-# Anything routed through `vp` still works; bare `node` does not — which breaks
-# the pre-commit hook repo-wide, because `vp staged` shells out to it (gardeneria #1462).
-# There is no root in a session, so the directory cannot be chowned here.
-#
-# This script therefore *tests* `node --version` and only replaces the shim
-# when it is already broken, pointing it at a real cached binary. A working
-# shim is left alone, so `vp env use` keeps functioning wherever it functions
-# today. The repair is deliberately conditional: unconditionally replacing a
-# working shim would trade one breakage for another.
-#
-# ## Secrets
-#
-# This hook hydrates NO secrets. Sessions get no vendor credentials, so
-# anything needing them (`vp run dev`, `vp run dev:e2e`, `alchemy` CLI calls)
-# will not run here — see the local-preview notes for how a human supplies them
-# from a shell, and the 1Password runbook for the store itself. CI and
-# deploys are unaffected: they inject credentials via `op run --environment`
-# in the workflows, not through this hook.
-#
-# ## Contract
-#
-# Idempotent, and never fatal. Every failure path logs and continues, because
-# the SessionStart hook must not block a session and a half-provisioned
-# container is more useful than a container that refused to start. Callers
-# that want hard failure should check the tools themselves afterwards.
-#
-# Untrusted-content note: this script reads only fixed, hardcoded paths. It
-# takes no input from repo content, issue or PR bodies, or anything an agent
-# could have been persuaded to write earlier in a session. Do not add such
-# input without revisiting this note — it runs on every session start and
-# container create.
+# No secrets are hydrated; none are needed. Idempotent and never fatal: every
+# failure logs and continues, because a SessionStart hook must not block a
+# session. Reads only fixed paths; do not add input from repo content or
+# issue/PR text.
 
 set -uo pipefail
 
@@ -102,7 +47,7 @@ link_tool() {
 # worktree's own copy. Two physical instances of the same vitest version
 # corrupt its module-level suite-collector state, and every describe() in the
 # worktree throws `Cannot read properties of undefined (reading 'config')`
-# (gardeneria #1663). The shim instead walks up from $PWD for the nearest project-local
+# (gardeneria#1663). The shim instead walks up from $PWD for the nearest project-local
 # vite-plus and re-execs that, falling back to the primary checkout's when
 # none is found above cwd.
 VP_SHIM_MARKER="# generated-by: .claude/hooks/session-start.sh (vp re-exec shim, gardeneria issue #1663)"
@@ -136,16 +81,15 @@ SHIM
 }
 
 # ── 1. Repo binaries the documented workflows invoke directly ─────────────────
-# AGENTS.md's fallow gate runs `fallow audit …` before every commit, and the
-# tooling scripts run as `tsx scripts/<name>.ts`. Both resolve only from
-# node_modules/.bin. `vp` is included for the remote/web runner, where the
+# AGENTS.md's fallow gate runs `fallow audit …` before every commit, and
+# docgen runs examples under `tsx`. Both resolve only from node_modules/.bin. `vp` is included for the remote/web runner, where the
 # global launcher does not exist.
 for tool in tsx fallow; do
   link_tool "$PROJECT_DIR/node_modules/.bin/$tool"
 done
 write_vp_shim
 
-# ── 2. Bare `node` (gardeneria #1462) ───────────────────────────────────────────────────
+# ── 2. Bare `node` (gardeneria#1462) ───────────────────────────────────────────────────
 # Only repair a shim that is already failing — see the header for why this is
 # conditional. `command -v node` is not enough: the shim exists and resolves,
 # then dies on use, so the version call is the real test.
@@ -170,7 +114,7 @@ fi
 # ── 3. Dependencies ──────────────────────────────────────────────────────────
 # Unconditional, not only when node_modules is absent: a prebaked container can
 # carry a tree built from an OLDER lockfile, and stale dependencies masquerade
-# as trunk breakage. `--frozen-lockfile` is a sub-second no-op when in sync.
+# as `main` breakage. `--frozen-lockfile` is a sub-second no-op when in sync.
 if [ -f "$PROJECT_DIR/pnpm-lock.yaml" ]; then
   log "syncing dependencies against the lockfile…"
   (cd "$PROJECT_DIR" && vp install --frozen-lockfile >/dev/null 2>&1) \
