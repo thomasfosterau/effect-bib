@@ -4,8 +4,8 @@
 
 ## Common pitfalls
 
-- **Package-local rules live in [`packages/biblio/CLAUDE.md`](packages/biblio/CLAUDE.md)**: the `BiblioRecord` wire contract, the browser-safe root entry and its forbidden-module list, total decoders, the plain-nullable seams, `@since` / `@example`. Read it before touching `packages/biblio`.
-- **This package emits declarations; the application never did.** `tests/dist-consumer` type-checks a consumer fixture against the emitted `dist/` declarations with `Equals<…>` assertions on the brands and the service shape (a brand that emits as `string`, or a service that emits as `any`, fails there rather than in an application); `vp run check` includes it.
+- **Package-local rules live in [`packages/biblio/CLAUDE.md`](packages/biblio/CLAUDE.md)**: the `BiblioRecord` wire contract, the browser-safe root entry and its forbidden-module list, total decoders, the plain-nullable seams (and why `effect/prefer-option-over-null` stays at `error`), the doc-comment rules (`@since`, `@example`, hover summaries). Read it before touching `packages/biblio`.
+- **This package emits declarations; the application never did.** `tests/dist-consumer` type-checks a consumer fixture against the emitted `dist/` declarations with `Equals<…>` assertions on the brands and the service shape (a brand that emits as `string`, or a service that emits as `any`, fails there rather than in an application). `vp run check` runs it, but only against a `dist/` you have already built: it doesn't build one and silently checks `src/` without it (#22); see Verification.
 - **No application vocabulary.** No WEMI / spine mapping, no `owner_id`, no database rows, no ingest operations, no app paths in doc comments. Those stay in the apps; the package stops at the CSL record.
 - **Every external version lives in `pnpm-workspace.yaml`'s catalog** (`catalogMode: strict`; manifests carry only `catalog:`, `catalog:peers` or `workspace:*`). After editing it, run `pnpm install` and commit `pnpm-lock.yaml`, or CI fails with `ERR_PNPM_LOCKFILE_CONFIG_MISMATCH`.
 - **`@effect/tsgo`, `@typescript/native` and `vite-plus` bump together.** `prepare` (`effect-tsgo patch`) overwrites the native `tsc` and `oxlint` and fails `pnpm install` with `UnsupportedTargetPackageVersionError` on an unsupported pairing; read the comment on `@effect/tsgo` in `pnpm-workspace.yaml` first.
@@ -16,13 +16,11 @@
 - Optional members are `?: T | undefined`, never bare `?: T` (`exactOptionalPropertyTypes`).
 - Relative imports carry their `.ts` extension (`rewriteRelativeImportExtensions`).
 - Tests import from `vite-plus/test`, never `vitest` (lint-enforced by `vite-plus/prefer-vite-plus-imports`).
-- `effect/prefer-option-over-null` stays at `error`; the only `null` / `undefined` returns are the plain-nullable seams listed in `packages/biblio/CLAUDE.md`, each with an `oxlint-disable` justification.
-- Every export has a doc comment that opens with a one-sentence summary a consumer can read in a hover, then `@since` (and `@example` on entry points); see `packages/biblio/CLAUDE.md`.
 
 ## Commands
 
 - `vp install` — dependencies plus the Vite+ git hooks (pre-commit runs `vp staged`: `vp check --fix` on staged files). No pre-push hook.
-- `vp check` — format + lint (Oxfmt + Oxlint). `vp run check` — the type gate: the package's `check` (sources, tests and the type-level `tests/**/*.types.ts`) plus the dist-consumer declaration check against `packages/biblio/dist`. They are different commands.
+- `vp check` — format + lint (Oxfmt + Oxlint). `vp run check` — the type gate: the package's `check` (sources, tests and the type-level `tests/**/*.types.ts`) plus the dist-consumer declaration check, which reads `packages/biblio/dist` only once it is built (#22; build first). They are different commands.
 - `vp run -r test:unit` — unit tests (the lookup sources run against a stubbed `FetchHttpClient`, never the network).
 - `vp run -r build` — emit `dist/`.
 - `vp run -r docgen` — compile and execute every JSDoc `@example` (output under `packages/*/docs/`, gitignored).
@@ -49,7 +47,7 @@ Before you report work as done, run the gates below in order (CI's order, `.gith
 
 - Branch off `main`; PR against `main`; squash-merge with a conventional prefix (`feat:`, `fix:`, `docs:`, `chore:`). Name branches `issue-<n>-<slug>`. Rebase onto `origin/main` before opening or updating a PR; never merge `main` into your branch (GitHub's Update-branch button merges).
 - Agent work uses git worktrees under `.claude/worktrees/`, one per branch; start every command that targets a worktree with an explicit `cd` and confirm with `git log -1` before committing.
-- Every change to a published package's behaviour carries a changeset (`pnpm changeset`); docs-, CI- and tooling-only changes need none, but a doc-comment change ships in the published `.d.ts`, so it gets a `patch`. Never publish or version by hand: the Release workflow opens the "Version Packages" PR (`chore: version packages`) and the owner merges it. See [PUBLISHING.md](PUBLISHING.md).
+- Every change to a published package's behaviour carries a changeset (`pnpm changeset`). Changes to doc comments that reach the emitted `.d.ts` (TSDoc) take a `patch` changeset; other docs-only changes (READMEs, guidance), CI and tooling need none. Never publish or version by hand: the Release workflow opens the version PR (`chore: version packages`) and the owner merges it. See [PUBLISHING.md](PUBLISHING.md).
 - These are standing approvals: **always open a PR** once a branch has a pushed commit; **watch it to merge or close** (investigate CI failures and review comments, rebase when it goes conflicting); **keep the PR body current** as the implementation diverges. Fill [`.github/pull_request_template.md`](.github/pull_request_template.md).
 - GitHub writes go to `thomasfosterau/reference-manager` only; pass `-R thomasfosterau/reference-manager` whenever the cwd might be another checkout. Never write to the consuming applications' repositories without the owner's explicit approval for that action in the current session. Use the `gh` CLI for GitHub operations, even when GitHub MCP tools are available.
 

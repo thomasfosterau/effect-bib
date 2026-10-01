@@ -82,7 +82,8 @@ SHIM
 
 # ── 1. Repo binaries the documented workflows invoke directly ─────────────────
 # AGENTS.md's fallow gate runs `fallow audit …` before every commit, and
-# docgen runs examples under `tsx`. Both resolve only from node_modules/.bin. `vp` is included for the remote/web runner, where the
+# docgen runs examples under `tsx`. Both resolve only from
+# node_modules/.bin. `vp` is included for the remote/web runner, where the
 # global launcher does not exist.
 for tool in tsx fallow; do
   link_tool "$PROJECT_DIR/node_modules/.bin/$tool"

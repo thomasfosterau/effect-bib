@@ -8,7 +8,7 @@ Run the gates in [AGENTS.md#verification](https://github.com/thomasfosterau/refe
 
 ## Changeset
 
-A changeset under `.changeset/` for every change to a published package's behaviour (doc-comment changes included: they ship in the `.d.ts`), or "none" with the reason.
+Every change to a published package's behaviour carries a changeset under `.changeset/`. Changes to doc comments that reach the emitted `.d.ts` (TSDoc) take a `patch` changeset; other docs-only changes (READMEs, guidance), CI and tooling need none. Write "none" with the reason otherwise.
 
 ## Notes
 
