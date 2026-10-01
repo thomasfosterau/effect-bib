@@ -2,28 +2,26 @@
 
 Bibliographic toolkit on Effect: CSL-JSON records as Effect Schema, checksummed ISBN / DOI / ISSN / ORCID identifiers, BibTeX / RIS / CSV / CSL-JSON parsing, same-work dedup scoring, APA / Vancouver rendering, and Crossref / OpenAlex / OpenLibrary lookup over Effect's `HttpClient`.
 
-[![CI](https://github.com/thomasfosterau/reference-manager/actions/workflows/ci.yml/badge.svg)](https://github.com/thomasfosterau/reference-manager/actions/workflows/ci.yml) [![npm version](https://img.shields.io/npm/v/@thomasfosterau/biblio.svg)](https://www.npmjs.com/package/@thomasfosterau/biblio) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
 **Disclaimer:** This repository and package have been created using Claude Code. The package's API and functionality is in flux, so expect churn and breaking changes.
 
-## Installation
+## Install
 
 ```bash
-npm install @thomasfosterau/biblio effect
+pnpm add @thomasfosterau/biblio effect
 ```
 
 `effect` (`>=4.0.0-rc.118`) is a peer dependency, built against `effect@4.0.0-rc.118`. Node.js 22 or newer is required.
 
-## Entry points
+### Entry points
 
 | Subpath | Imports | Contents |
 | --- | --- | --- |
 | `.` | `effect` only | `BiblioRecord` and the CSL-JSON interop, the identifier brands and decoders, the file parsers, dedup scoring, the render engine and the two built-in styles |
 | `./sources` | `effect/http` | The `BiblioLookup` service and its layers, the per-source lookup functions and response schemas, the typed error channel |
 
-The split is a packaging commitment, not a convention: the root entry resolves none of the modules that were under `effect/unstable/*` before rc.118 (`effect/http`, `effect/sql`, ... ; the full list is in `tests/fixtures/forbidden-effect-modules.mjs`) and no `sources/` module, so a browser bundle that imports it never loads the HTTP clients. `tests/entry-points.test.ts` walks the real import graph of both the sources and the built artifact.
+The split is a packaging commitment, not a convention: the root entry resolves none of the modules that were under `effect/unstable/*` before rc.118 (`effect/http`, `effect/sql`, …; see [the forbidden-module list](tests/fixtures/forbidden-effect-modules.mjs)) and no `sources/` module, so a browser bundle that imports it never loads the HTTP clients. [`tests/entry-points.test.ts`](tests/entry-points.test.ts) walks the real import graph of both the sources and the built artifact.
 
-## Overview
+## Usage
 
 A `BiblioRecord` is a typed superset of CSL-JSON: its core is the closed CSL 1.0.2 vocabulary modelled as Effect Schema, and its additions are strictly additive — first-class checksummed identifiers, a source provenance envelope, and a passthrough map that carries CSL variables the model does not consume. Everything that produces one (a file parser, a lookup source, `fromCslJson`) validates field by field and never throws on partial or hostile input; everything that consumes one (dedup, rendering, `toCslJson`) is pure.
 
@@ -34,7 +32,7 @@ import { apaStyle, decodeIsbn, fromCslJson, renderReference } from "@thomasfoste
 import { BiblioLookup, biblioLookupLayer } from "@thomasfosterau/biblio/sources";
 
 // A proven identifier is a distinct type from the string it came from.
-const isbn = decodeIsbn("0-06-231609-5"); // Option.some("9780062316097" as Isbn)
+Option.getOrNull(decodeIsbn("0-06-231609-5")); // "9780062316097" (an `Isbn`)
 
 // Any CSL-JSON item decodes; the ISBN is checksummed into its branded slot.
 const record = fromCslJson({ type: "book", title: "Sapiens", ISBN: "9780062316097" });
@@ -50,9 +48,9 @@ const program = Effect.gen(function* () {
 Effect.runPromise(program.pipe(Effect.provide(biblioLookupLayer)));
 ```
 
-## API reference
+## API
 
-Every example below is a JSDoc `@example` in the source, compiled and executed by `vp run docgen`.
+Each snippet below is an excerpt of a JSDoc `@example` in the source; the full examples are compiled and executed in CI.
 
 ### Records — `.`
 
@@ -153,11 +151,11 @@ program.pipe(Effect.provide(biblioLookupLayer)); // Effect<Option<BiblioRecord>,
 
 **Per-source functions** (take an already-composed `HttpClient` and a proven identifier): `lookupOpenLibraryByIsbn(client, isbn)`, `lookupCrossrefByDoi(client, doi)`, `lookupOpenAlexByDoi(client, doi)`, `searchOpenAlexByTitle(client, query)`. The lenient response schemas (`OpenLibraryEdition`, `OpenLibraryAuthor`, `CrossrefResponse`, `OpenAlexWork`, `OpenAlexSearchResponse`) and normalisers (`normaliseOpenLibraryRecord`, `normaliseCrossrefRecord`, `normaliseOpenAlexRecord`) are exported so a consumer can drive them against recorded fixtures.
 
-## Design notes
+## Compatibility
 
-- **Provenance of the code.** Extracted from `thomasfosterau/website`'s `packages/biblio` with its git history; `#NNN` citations in the source comments name website issues, the evidence behind a decision.
-- **What stays in the application.** The CSL ↔ WEMI spine mapping (`csl-to-spine`, `spine-to-csl`) and the ingest / import operations are website business logic and are not part of this package. The package stops at the CSL record.
-- **Wire compatibility.** `BiblioRecord` decodes every row website has persisted; any change to its shape is a major version.
+- **Wire compatibility.** `BiblioRecord` decodes every record the website application has persisted; any change to its shape (a field name, a key's optionality, an identifier brand, the `provenance` / `extra` shape) is a major version.
+- **Plain-nullable returns.** `isbnForms(isbn).isbn10`, `parsePersonName`, `cslNameDisplay`, `yearOf`, `makeCslName` and `bestConfidentMatch` return `null`, and `getStyle` returns `undefined`, rather than an `Option`. This is a stable contract, not a migration in progress.
+- **Scope.** The package stops at the CSL record: mapping records onto an application's own data model and persisting them stay in the application. Extracted from `thomasfosterau/website`'s `packages/biblio` with its git history; an unprefixed `#NNN` in a source comment is a website issue.
 
 ## License
 

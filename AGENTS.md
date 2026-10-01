@@ -1,70 +1,85 @@
 # AGENTS.md
 
-Project conventions live here; personal style preferences live in user memory. `CLAUDE.md` is a symlink to this file.
-
-`reference-manager` is the home of `@thomasfosterau/biblio`, the bibliographic toolkit extracted from the `thomasfosterau/website` application's `packages/biblio` with its git history, and of whatever reference-management packages follow it (the monorepo shape is there from day one). The website, gardeneria and preferenceflow applications are the consumers, and their toolchain — pnpm + Vite+ (`vp`), a strict catalog, the TypeScript 6/7 split, the Effect oxlint preset, fallow — is copied here so the library builds against exactly what they run. A `#NNN` citation inside a ported comment names an issue in the app it was ported from (website unless stated), the evidence behind a decision, not a ticket in this tracker.
+`CLAUDE.md` is a symlink to this file. This repo publishes `@thomasfosterau/biblio` (`packages/biblio`), extracted with its history from `thomasfosterau/website`. The website, gardeneria and preferenceflow apps consume it, and their toolchain (pnpm + Vite+ `vp`, strict catalog, TypeScript 6/7 split, Effect oxlint preset, fallow) is copied here so the library builds against what they run. An unprefixed `#NNN` in a ported comment is a website issue, the evidence behind a decision, not a ticket in this tracker.
 
 ## Common pitfalls
 
-- **`BiblioRecord` is wire-identical to what website persists.** Any change to a field name, a key's optionality, an identifier slot's brand or the `provenance` / `extra` shape is a **major**. `fromCslJson` must keep decoding every row website ever wrote.
-- **The root entry never imports the modules that were under `effect/unstable/*` before rc.118: `effect/{ai,cli,cluster,devtools,eventlog,http,http-api,net,observability,persistence,process,reactivity,rpc,schema,socket,sql,workers,workflow}` and `effect/encoding/{Ini,Ndjson,SchemaBinary,Sse,Toml,Yaml}` (the list lives in `packages/biblio/tests/fixtures/forbidden-effect-modules.mjs`, and a test checks it against the installed `effect`).** `.` is the browser-safe half; the HttpClient-backed lookups live behind `./sources` only. `packages/biblio/tests/entry-points.test.ts` walks the real import graph and loads the built root entry with those modules unresolvable; a type-only import breaks it too.
+- **Package-local rules live in [`packages/biblio/CLAUDE.md`](packages/biblio/CLAUDE.md)**: the `BiblioRecord` wire contract, the browser-safe root entry and its forbidden-module list, total decoders, the plain-nullable seams, `@since` / `@example`. Read it before touching `packages/biblio`.
 - **This package emits declarations; the application never did.** `tests/dist-consumer` type-checks a consumer fixture against the emitted `dist/` declarations with `Equals<…>` assertions on the brands and the service shape (a brand that emits as `string`, or a service that emits as `any`, fails there rather than in an application); `vp run check` includes it.
-- **Every export carries `@since`, and `vp run docgen` executes every `@example`.** A wrong expected value in an example is a red gate, not a stale comment.
-- **No application vocabulary.** No WEMI / spine mapping, no `owner_id`, no database rows, no ingest operations. Those stay in the apps; the package stops at the CSL record.
+- **No application vocabulary.** No WEMI / spine mapping, no `owner_id`, no database rows, no ingest operations, no app paths in doc comments. Those stay in the apps; the package stops at the CSL record.
+- **Every external version lives in `pnpm-workspace.yaml`'s catalog** (`catalogMode: strict`; manifests carry only `catalog:`, `catalog:peers` or `workspace:*`). After editing it, run `pnpm install` and commit `pnpm-lock.yaml`, or CI fails with `ERR_PNPM_LOCKFILE_CONFIG_MISMATCH`.
+- **`@effect/tsgo`, `@typescript/native` and `vite-plus` bump together.** `prepare` (`effect-tsgo patch`) overwrites the native `tsc` and `oxlint` and fails `pnpm install` with `UnsupportedTargetPackageVersionError` on an unsupported pairing; read the comment on `@effect/tsgo` in `pnpm-workspace.yaml` first.
+- **Declare peers explicitly.** A required peer of a dependency must be a declared dependency, or CI fails on a fresh runner while a warm local tree passes.
 
-Everything else that must be visible when touching the package is in `packages/biblio/CLAUDE.md`, which carries its terms, invariants and import boundary.
+## Conventions
 
-## Work tracker
-
-- **Active work** lives in GitHub Issues for `thomasfosterau/reference-manager`. Longer-running tech debt is an issue too; there is no in-repo backlog file and a code comment is not a tracker.
-- **Decisions and findings** are recorded as comments on the issue they were found working; later comments override the body.
-- **Adoption** by each application is tracked in that application's own tracker (website#2021 for biblio), blocked on a release of this package.
+- Optional members are `?: T | undefined`, never bare `?: T` (`exactOptionalPropertyTypes`).
+- Relative imports carry their `.ts` extension (`rewriteRelativeImportExtensions`).
+- Tests import from `vite-plus/test`, never `vitest` (lint-enforced by `vite-plus/prefer-vite-plus-imports`).
+- `effect/prefer-option-over-null` stays at `error`; the only `null` / `undefined` returns are the plain-nullable seams listed in `packages/biblio/CLAUDE.md`, each with an `oxlint-disable` justification.
+- Every export has a doc comment that opens with a one-sentence summary a consumer can read in a hover, then `@since` (and `@example` on entry points); see `packages/biblio/CLAUDE.md`.
 
 ## Commands
 
-- `vp install` — dependencies plus the Vite+ git hooks (pre-commit runs `vp staged`: format + lint on staged files). No pre-push hook: run the tests yourself.
-- `vp check` — the built-in format + lint pass (`vp fmt --check` + `vp lint`).
-- `vp run check` — the type gate: the package's `check` (sources, tests and the type-level `tests/**/*.types.ts`) plus the dist-consumer declaration check (which builds `dist/` and asserts the emitted types). Distinct from `vp check`.
-- `vp run -r test:unit` — unit tests (pure code; the lookup sources run against a stubbed `FetchHttpClient`, never the network).
+- `vp install` — dependencies plus the Vite+ git hooks (pre-commit runs `vp staged`: `vp check --fix` on staged files). No pre-push hook.
+- `vp check` — format + lint (Oxfmt + Oxlint). `vp run check` — the type gate: the package's `check` (sources, tests and the type-level `tests/**/*.types.ts`) plus the dist-consumer declaration check against `packages/biblio/dist`. They are different commands.
+- `vp run -r test:unit` — unit tests (the lookup sources run against a stubbed `FetchHttpClient`, never the network).
 - `vp run -r build` — emit `dist/`.
 - `vp run -r docgen` — compile and execute every JSDoc `@example` (output under `packages/*/docs/`, gitignored).
-- `pnpm changeset` — add a changeset; every change to a published package needs one. Releases are cut by the `Release` workflow (changesets/action, OIDC trusted publishing) on `main` — see PUBLISHING.md.
+- `pnpm changeset` — add a changeset.
 
-Invoke everything through `vp` (`vp exec` instead of `npx`; `vp run <task>` instead of bare `pnpm`). CI installs as `pnpm install --frozen-lockfile`.
-
-## Branch model
-
-`main` plus short-lived feature branches, PR against `main`, squash-merge. Rebase onto `origin/main` before opening a PR; never merge `main` into a feature branch. Agent work uses git worktrees under `.claude/worktrees/`, one per branch; start every command that targets a worktree with an explicit `cd` and confirm with `git log -1` before committing.
-
-## Working a dispatched issue
-
-- The issue is the spec: read all of it, including comments.
-- Re-verify the code claims against current `main` before editing.
-- Stop-and-report is a valid outcome: on a blocker outside the issue's scope, comment the evidence on the issue and stop.
-- No silent deferrals: scope cut mid-PR becomes a linked issue before merge.
-
-## PR management
-
-These are standing instructions and approvals; they override any default "don't open a PR unless asked" behaviour.
-
-- **Always open a PR** for branch work, against `main`, once a commit is pushed.
-- **Always watch the PR to merge or close**: investigate CI failures and review comments as they arrive; rebase promptly when the PR goes conflicting.
-- **Always keep the PR body current** as the implementation diverges from it.
-- **GitHub writes are scoped to `thomasfosterau/reference-manager` only.** Never write to the consuming applications' repositories or any other repository without the owner's explicit approval for that action in the current session. Pass `-R thomasfosterau/reference-manager` explicitly whenever the cwd might not be this checkout.
+Invoke everything else through `vp` (`vp exec` instead of `npx`; `vp run <task>` instead of bare `pnpm`). The sanctioned non-`vp` invocations are `pnpm install`, `pnpm changeset` and the release path (`pnpm run version` / `pnpm run release`, run by the Release workflow). Individual checks are listed in [CONTRIBUTING.md](CONTRIBUTING.md#running-individual-checks).
 
 ## Verification
 
-- Claims of verification name the command and its final status.
-- The pre-push parity run is: `rm -rf node_modules packages/*/node_modules tests/*/node_modules && pnpm install --frozen-lockfile`, then `vp check`, `vp run check`, `vp run -r test:unit`, `vp run -r build`, `vp run -r docgen`.
-- Peers are declared explicitly: a required peer of a dependency must be a declared dependency or CI fails on a fresh runner while a warm local tree passes.
+Before you report work as done, run the gates below in order (CI's order, `.github/workflows/ci.yml`) and quote each command with its final pass/fail. If a gate can't run here, say which and why in the PR body; never imply it ran.
 
-## Effect best practices
+1. `vp check`
+2. `vp run check`
+3. `vp run -r test:unit`
+4. `vp run -r build`
+5. `vp run -r docgen`
+6. `pnpm audit --audit-level high` (network)
+7. `fallow audit --format json --quiet --explain --gate-marker agent` (the fallow gate below; not a CI step)
 
-**IMPORTANT:** Always consult effect-solutions before writing Effect code: `vp exec effect-solutions list`, then `vp exec effect-solutions show <topic>...` (data-modeling, services-and-layers, error-handling, testing, basics). Never guess at Effect patterns.
+- **Build first when verifying locally.** Neither `vp run check` nor `vp run -r test:unit` builds `dist/` (#22): without it, the dist-consumer check silently resolves `src/`, and the built-artifact cases in `packages/biblio/tests/entry-points.test.ts` skip. Run `vp run -r build` before steps 2 and 3, and treat a skip there as not run.
+- **Before pushing, reinstall from clean** to catch a missing peer a warm tree hides: `rm -rf node_modules packages/*/node_modules tests/*/node_modules && pnpm install --frozen-lockfile`, then the gates.
+
+## Branches and pull requests
+
+- Branch off `main`; PR against `main`; squash-merge with a conventional prefix (`feat:`, `fix:`, `docs:`, `chore:`). Name branches `issue-<n>-<slug>`. Rebase onto `origin/main` before opening or updating a PR; never merge `main` into your branch (GitHub's Update-branch button merges).
+- Agent work uses git worktrees under `.claude/worktrees/`, one per branch; start every command that targets a worktree with an explicit `cd` and confirm with `git log -1` before committing.
+- Every change to a published package's behaviour carries a changeset (`pnpm changeset`); docs-, CI- and tooling-only changes need none, but a doc-comment change ships in the published `.d.ts`, so it gets a `patch`. Never publish or version by hand: the Release workflow opens the "Version Packages" PR (`chore: version packages`) and the owner merges it. See [PUBLISHING.md](PUBLISHING.md).
+- These are standing approvals: **always open a PR** once a branch has a pushed commit; **watch it to merge or close** (investigate CI failures and review comments, rebase when it goes conflicting); **keep the PR body current** as the implementation diverges. Fill [`.github/pull_request_template.md`](.github/pull_request_template.md).
+- GitHub writes go to `thomasfosterau/reference-manager` only; pass `-R thomasfosterau/reference-manager` whenever the cwd might be another checkout. Never write to the consuming applications' repositories without the owner's explicit approval for that action in the current session. Use the `gh` CLI for GitHub operations, even when GitHub MCP tools are available.
+
+## Work tracker
+
+- Issues are the backlog: when you find work you can't do now, file an issue rather than leaving a TODO. There is no in-repo backlog file.
+- The issue is the spec — read its comments; later comments override the body. Re-verify its code claims against current `main` before editing.
+- Record decisions and findings as issue comments.
+- Stop-and-report is a valid outcome: on a blocker outside the issue's scope, comment the evidence on the issue and stop.
+- Scope cut mid-PR becomes a linked issue before merge.
+- Adoption by each application is tracked in that application's own tracker (website#2021 for biblio), blocked on a release of this package.
+
+## Effect
+
+Consult effect-solutions before writing Effect code (`vp exec effect-solutions list`, then `vp exec effect-solutions show <topic>…`: data-modeling, services-and-layers, error-handling, testing, basics); never guess at an Effect pattern. The pinned version is the `effect` entry in `pnpm-workspace.yaml`'s catalog. On rc.118 the former `effect/unstable/*` modules are `effect/*` (`effect/http`, not `effect/unstable/http`), and a schema-backed error is `Schema.TaggedError<Self>()(tag, fields)` (older guides say `Schema.TaggedErrorClass`, which does not exist in rc.x). When the guides run out, read `node_modules/effect/dist/*.d.ts`.
+
+## Agent sessions
+
+- The SessionStart hook (`.claude/hooks/session-start.sh`) installs dependencies against the lockfile and links `vp` (a re-exec shim that prefers the nearest worktree's `node_modules`), `tsx` and `fallow` into `~/.local/bin` so they resolve from a non-interactive shell, and repairs a broken bare `node`. It hydrates no secrets; none are needed.
+- A PreToolUse hook (`.claude/hooks/fallow-gate.sh`) runs the fallow gate before `git commit` / `git push`; a PostToolUse hook runs `vp fmt --write` on every edited `.ts` / `.js` / `.json` / `.md` / `.css` file.
+- Every gate runs offline except `pnpm audit` (network). The Release workflow (OIDC, `release` environment) and the Effect canary run only in CI.
 
 ## Documentation surfaces
 
-`README.md` at the root is the landing page; each package `README.md` is the API reference consumers read on npm (its snippets are the executed `@example`s); each package `CLAUDE.md` carries its terms, invariants and boundary; `CONTRIBUTING.md` carries the pre-PR checklist; `PUBLISHING.md` and `SECURITY.md` carry the release pipeline and its rationale. No `docs/` tree (the generated docgen output is gitignored); decisions go in issue comments.
+- `README.md` (root) — landing page.
+- `packages/biblio/README.md` — the npm-facing API reference; its snippets are excerpts of the executed `@example`s, so update both together.
+- `packages/biblio/CLAUDE.md` — the package's boundary, invariants and terms.
+- `CONTRIBUTING.md` — human setup, CI expectations, individual checks.
+- `PUBLISHING.md` — the release pipeline and one-time owner setup; `SECURITY.md` — reporting and the security posture.
+- Decisions go in issue comments. No `docs/` tree (docgen output is gitignored).
 
 ---
 
