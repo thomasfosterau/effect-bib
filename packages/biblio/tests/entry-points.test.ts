@@ -1,6 +1,7 @@
 /**
  * Mechanical proof that the entry-point split keeps its promise: the root
- * entry (`.`) resolves `effect` and nothing else — never an `effect/http`-style module (the former `effect/unstable/*`)
+ * entry (`.`) resolves `effect` and nothing else — never one of the modules formerly under `effect/unstable/*`
+ * (`fixtures/forbidden-effect-modules.mjs`)
  * and never a `sources/` module — so a browser bundle that imports it never
  * loads the lookup clients. The `./sources` entry is where
  * `effect/http` is allowed to appear.
@@ -16,10 +17,16 @@
 
 import { spawnSync } from "node:child_process";
 import * as fs from "node:fs";
+import { createRequire } from "node:module";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import ts from "typescript";
 import { describe, expect, it } from "vite-plus/test";
+import {
+  FORBIDDEN_DIRECTORIES,
+  FORBIDDEN_ENCODING_MODULES,
+  FORBIDDEN_SPECIFIER,
+} from "./fixtures/forbidden-effect-modules.mjs";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const SRC = path.join(ROOT, "src");
@@ -97,17 +104,9 @@ const graphFrom = (entry: string, dir: string): Graph => {
   };
 };
 
-/**
- * The modules that sat under `effect/unstable/*` before rc.118 (now
- * `effect/http`, `effect/sql`, ...). `effect/encoding` and `effect/testing`
- * are left out: they carry modules that were always stable.
- */
-const UNSTABLE_SURFACE =
-  /^effect\/(?:ai|cli|cluster|devtools|eventlog|http|http-api|net|observability|persistence|process|reactivity|rpc|schema|socket|sql|workers|workflow)(?:\/|$)/;
-
 const unstable = (graph: Graph): ReadonlyArray<string> =>
   [...graph.externals.entries()]
-    .filter(([specifier]) => UNSTABLE_SURFACE.test(specifier))
+    .filter(([specifier]) => FORBIDDEN_SPECIFIER.test(specifier))
     .map(([specifier, trail]) => `${specifier} via ${trail.join(" -> ")}`)
     .sort();
 
@@ -254,5 +253,65 @@ describe("built artifact", () => {
     expect(output).toContain("FORBIDDEN_PEER:effect/http");
     expect(output).not.toContain("LOADED");
     expect(result.status).not.toBe(0);
+  });
+});
+
+/**
+ * The forbidden set is a hand-kept list, so check it against the installed
+ * `effect`: every directory of `effect/` except `encoding`, `testing` and
+ * `internal` must be on it, and so must every `effect/encoding` module other
+ * than the four that were always stable. A new directory in a later rc fails
+ * here rather than slipping past the guard.
+ */
+describe("forbidden effect module list", () => {
+  const dist = path.join(
+    path.dirname(createRequire(import.meta.url).resolve("effect/package.json")),
+    "dist",
+  );
+  const subdirectories = (dir: string): ReadonlyArray<string> =>
+    fs
+      .readdirSync(dir, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name)
+      .sort();
+  const STABLE_ENCODING = new Set(["Base64", "Base64Url", "Hex", "EncodingError", "index"]);
+
+  it("covers every effect directory except encoding, testing and internal", () => {
+    const expected = subdirectories(dist).filter(
+      (name) => !["encoding", "testing", "internal"].includes(name),
+    );
+    expect([...FORBIDDEN_DIRECTORIES].sort()).toEqual(expected);
+  });
+
+  it("covers every effect/encoding module that was unstable", () => {
+    const expected = fs
+      .readdirSync(path.join(dist, "encoding"))
+      .filter((name) => name.endsWith(".js") && !name.endsWith(".map"))
+      .map((name) => name.replace(/\.js$/, ""))
+      .filter((name) => !STABLE_ENCODING.has(name))
+      .sort();
+    expect([...FORBIDDEN_ENCODING_MODULES].sort()).toEqual(expected);
+  });
+
+  it("matches the forbidden modules and leaves the stable ones alone", () => {
+    for (const specifier of [
+      "effect/http",
+      "effect/http/HttpClient",
+      "effect/http-api/HttpApi",
+      "effect/encoding/Yaml",
+    ]) {
+      expect(FORBIDDEN_SPECIFIER.test(specifier), specifier).toBe(true);
+    }
+    for (const specifier of [
+      "effect",
+      "effect/Schema",
+      "effect/Option",
+      "effect/encoding/Base64",
+      "effect/encoding",
+      "effect/testing",
+      "effect/httpx",
+    ]) {
+      expect(FORBIDDEN_SPECIFIER.test(specifier), specifier).toBe(false);
+    }
   });
 });

@@ -1,6 +1,7 @@
 /**
  * Node module-resolution hooks that make the modules formerly under
- * `effect/unstable/*` (`effect/http`, `effect/sql`, ...) unresolvable.
+ * `effect/unstable/*` (`effect/http`, `effect/sql`, ...) unresolvable; the set
+ * is `forbidden-effect-modules.mjs`.
  *
  * Registered by `tests/entry-points.test.ts` in a child process so the built
  * entry points can be loaded against a dependency set where the HTTP surface
@@ -10,11 +11,12 @@
  * Copied from the effect-jsonapi library.
  */
 import { register } from "node:module";
+import { FORBIDDEN_SPECIFIER } from "./forbidden-effect-modules.mjs";
 
 register(
   `data:text/javascript,
     export async function resolve (specifier, context, next) {
-      if (/^effect\\/(?:ai|cli|cluster|devtools|eventlog|http|http-api|net|observability|persistence|process|reactivity|rpc|schema|socket|sql|workers|workflow)(?:\\/|$)/.test(specifier)) {
+      if (new RegExp(${JSON.stringify(FORBIDDEN_SPECIFIER.source)}).test(specifier)) {
         throw new Error("FORBIDDEN_PEER:" + specifier)
       }
       return next(specifier, context)

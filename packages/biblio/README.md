@@ -21,7 +21,7 @@ npm install @thomasfosterau/biblio effect
 | `.` | `effect` only | `BiblioRecord` and the CSL-JSON interop, the identifier brands and decoders, the file parsers, dedup scoring, the render engine and the two built-in styles |
 | `./sources` | `effect/http` | The `BiblioLookup` service and its layers, the per-source lookup functions and response schemas, the typed error channel |
 
-The split is a packaging commitment, not a convention: the root entry resolves no `effect/http`-style module (formerly `effect/unstable/*`) and no `sources/` module, so a browser bundle that imports it never loads the HTTP clients. `tests/entry-points.test.ts` walks the real import graph of both the sources and the built artifact.
+The split is a packaging commitment, not a convention: the root entry resolves none of the modules that were under `effect/unstable/*` before rc.118 (`effect/http`, `effect/sql`, ... ; the full list is in `tests/fixtures/forbidden-effect-modules.mjs`) and no `sources/` module, so a browser bundle that imports it never loads the HTTP clients. `tests/entry-points.test.ts` walks the real import graph of both the sources and the built artifact.
 
 ## Overview
 
