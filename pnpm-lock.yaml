@@ -19,8 +19,8 @@ catalogs:
       specifier: ^0.87.3
       version: 0.87.3
     '@effect/tsgo':
-      specifier: 0.45.0
-      version: 0.45.0
+      specifier: 0.47.0
+      version: 0.47.0
     '@mpsuesser/oxlint-plugin-effect':
       specifier: ^0.5.0
       version: 0.5.0
@@ -73,7 +73,7 @@ importers:
         version: 0.87.3
       '@effect/tsgo':
         specifier: 'catalog:'
-        version: 0.45.0
+        version: 0.47.0
       '@mpsuesser/oxlint-plugin-effect':
         specifier: 'catalog:'
         version: 0.5.0
@@ -337,43 +337,43 @@ packages:
     peerDependencies:
       effect: 4.0.0-rc.118
 
-  '@effect/tsgo-darwin-arm64@0.45.0':
-    resolution: {integrity: sha512-WUoiEVcm8E19QK6fl63lsssM4dkT9IFnULbmqQ6LBfv7H9uRkpE9S3thj8ZtZ+vl/QY8atwfuaTf+3A1m/kGtQ==}
+  '@effect/tsgo-darwin-arm64@0.47.0':
+    resolution: {integrity: sha512-X4MF7+GOiOk0EzcdY2bqSFl8yXYoD3VvzFcDE5ZyEO1oLGa4UGJjRmJBQt/LQFil8MW68uvAmE+Thh/Y2VTyuA==}
     cpu: [arm64]
     os: [darwin]
 
-  '@effect/tsgo-darwin-x64@0.45.0':
-    resolution: {integrity: sha512-s3yz7ZfIzvObXJ/r5xd9sEPxHKC3L+D+yedS1BV2Kpn47Je2svYCNYKxzXIpqFLkNjK+RcOQrcfYbYEpKZZa6g==}
+  '@effect/tsgo-darwin-x64@0.47.0':
+    resolution: {integrity: sha512-vANaJYOFsIpX5KiMI0p3Y1DeFIT6N1Y8uTeBo6WKOCfeI1r0vcMUX1gEiLDPJBdweH7bbvyzbiUFX0/fnWgKEg==}
     cpu: [x64]
     os: [darwin]
 
-  '@effect/tsgo-linux-arm64@0.45.0':
-    resolution: {integrity: sha512-N+lyzixtylOOn49demDaqg0kb/U8ISxM10Gphs1pIMSGlqlfqC4inYEoFpYej+f4T/cRlkA11Ue7wJzNz83ePA==}
+  '@effect/tsgo-linux-arm64@0.47.0':
+    resolution: {integrity: sha512-44tFG3S9MU6vQCsDIQlV/72NHrAmo4T9Q6adFJDNjaRzv4eIEu9TPHAflIVghCRFWkmvhElnKp6VSh4vJ5jwlw==}
     cpu: [arm64]
     os: [linux]
 
-  '@effect/tsgo-linux-arm@0.45.0':
-    resolution: {integrity: sha512-f6zL6YbWA9lXdfJ//KOjUz/U3CdGtajKi5NsR/lcQaKfZiJwHfeeLBB3yetF3qbPGSA149/kuMoDMWL13RUH3A==}
+  '@effect/tsgo-linux-arm@0.47.0':
+    resolution: {integrity: sha512-nmoRTsK8nfcPl2uhksmxpyXFoKcAHkZPrUiSheO8wEbdCo/aFTe2UKfAgrRtMZ8qr3gD1tpKxXWrRfvlZTwp0g==}
     cpu: [arm]
     os: [linux]
 
-  '@effect/tsgo-linux-x64@0.45.0':
-    resolution: {integrity: sha512-aWt0G8celAxJOis4+xiILkyMP/3J+vukimUhSoCmUAPt8zoT9qhZcN64XYZE7jfqp88ByRdgN9GK1/C7YfPtcQ==}
+  '@effect/tsgo-linux-x64@0.47.0':
+    resolution: {integrity: sha512-DL3DiNZNMKnEdVNHpQPtuDSV4DdAtY6owgfQYYgF1uExjqS/5ZWZICEm1ZpdeLMIaCFbRdeSv7uEu1RrTGCuyw==}
     cpu: [x64]
     os: [linux]
 
-  '@effect/tsgo-win32-arm64@0.45.0':
-    resolution: {integrity: sha512-EAdeV366ja+M4XCx6xjXMv4Xkc0Fgzy4bapa0saDWcGhllNLqJDfOk4lk0BgAEjBUI8+0xC+PXKVB5SMz4EpVA==}
+  '@effect/tsgo-win32-arm64@0.47.0':
+    resolution: {integrity: sha512-LctXaODCUDIjmxcSqqQ2OnLffQwLIct09YsAs9ZiTBPnxdRy4eQYPxe4ImfvTIEDkYDG/nfG3h7tL+EIvix45A==}
     cpu: [arm64]
     os: [win32]
 
-  '@effect/tsgo-win32-x64@0.45.0':
-    resolution: {integrity: sha512-1Hsr/sT5dmIafoY9L0ASJo4VqGyPNzM1nwTb4Wj1Lmjq6kGuwO/PVozFg3WZZ0piChFmgiU3nx1AKZfyqgjGUw==}
+  '@effect/tsgo-win32-x64@0.47.0':
+    resolution: {integrity: sha512-keYrly656yhEdB3pigkCJaT2oI7I7RcB1QcF4akTggBNuLsh1WT5Ksy2xuHD8QkUiNz6pRwFUSW9Qh83zJQX8g==}
     cpu: [x64]
     os: [win32]
 
-  '@effect/tsgo@0.45.0':
-    resolution: {integrity: sha512-gPG0ixVHgtYBUe5DbKX9vzHlhqd9+ZEfs4m/XWy0808av0A2XqMzaG3F5rnPBN7EUJRPlo9TluIi8WHx/pBV+A==}
+  '@effect/tsgo@0.47.0':
+    resolution: {integrity: sha512-70L1cp9Lj8rJeKmLseg2RLaQ95IM2CR3BFF6Ytq1fjio3V9cEwMuOzBYSRlIAK2x+dTyxvFdabvbMr+DF7XD7g==}
     hasBin: true
 
   '@esbuild/aix-ppc64@0.28.2':
@@ -2558,36 +2558,36 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@effect/tsgo-darwin-arm64@0.45.0':
+  '@effect/tsgo-darwin-arm64@0.47.0':
     optional: true
 
-  '@effect/tsgo-darwin-x64@0.45.0':
+  '@effect/tsgo-darwin-x64@0.47.0':
     optional: true
 
-  '@effect/tsgo-linux-arm64@0.45.0':
+  '@effect/tsgo-linux-arm64@0.47.0':
     optional: true
 
-  '@effect/tsgo-linux-arm@0.45.0':
+  '@effect/tsgo-linux-arm@0.47.0':
     optional: true
 
-  '@effect/tsgo-linux-x64@0.45.0':
+  '@effect/tsgo-linux-x64@0.47.0':
     optional: true
 
-  '@effect/tsgo-win32-arm64@0.45.0':
+  '@effect/tsgo-win32-arm64@0.47.0':
     optional: true
 
-  '@effect/tsgo-win32-x64@0.45.0':
+  '@effect/tsgo-win32-x64@0.47.0':
     optional: true
 
-  '@effect/tsgo@0.45.0':
+  '@effect/tsgo@0.47.0':
     optionalDependencies:
-      '@effect/tsgo-darwin-arm64': 0.45.0
-      '@effect/tsgo-darwin-x64': 0.45.0
-      '@effect/tsgo-linux-arm': 0.45.0
-      '@effect/tsgo-linux-arm64': 0.45.0
-      '@effect/tsgo-linux-x64': 0.45.0
-      '@effect/tsgo-win32-arm64': 0.45.0
-      '@effect/tsgo-win32-x64': 0.45.0
+      '@effect/tsgo-darwin-arm64': 0.47.0
+      '@effect/tsgo-darwin-x64': 0.47.0
+      '@effect/tsgo-linux-arm': 0.47.0
+      '@effect/tsgo-linux-arm64': 0.47.0
+      '@effect/tsgo-linux-x64': 0.47.0
+      '@effect/tsgo-win32-arm64': 0.47.0
+      '@effect/tsgo-win32-x64': 0.47.0
 
   '@esbuild/aix-ppc64@0.28.2':
     optional: true
