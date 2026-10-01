@@ -23,7 +23,7 @@ import * as Option from "effect/Option";
 import * as Predicate from "effect/Predicate";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
-import { HttpClient } from "effect/unstable/http";
+import { HttpClient } from "effect/http";
 import { decodeDoi, decodeIssn, type Doi, type Issn } from "../identifiers.ts";
 import {
   type BiblioRecord,

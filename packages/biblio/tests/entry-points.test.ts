@@ -1,9 +1,10 @@
 /**
  * Mechanical proof that the entry-point split keeps its promise: the root
- * entry (`.`) resolves `effect` and nothing else — never `effect/unstable/*`
+ * entry (`.`) resolves `effect` and nothing else — never one of the modules formerly under `effect/unstable/*`
+ * (`fixtures/forbidden-effect-modules.mjs`)
  * and never a `sources/` module — so a browser bundle that imports it never
  * loads the lookup clients. The `./sources` entry is where
- * `effect/unstable/http` is allowed to appear.
+ * `effect/http` is allowed to appear.
  *
  * The property is a packaging commitment, and a comment asserting it would
  * rot within two releases — one `import type` from `./sources/errors.ts`
@@ -16,10 +17,16 @@
 
 import { spawnSync } from "node:child_process";
 import * as fs from "node:fs";
+import { createRequire } from "node:module";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import ts from "typescript";
 import { describe, expect, it } from "vite-plus/test";
+import {
+  FORBIDDEN_DIRECTORIES,
+  FORBIDDEN_ENCODING_MODULES,
+  FORBIDDEN_SPECIFIER,
+} from "./fixtures/forbidden-effect-modules.mjs";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const SRC = path.join(ROOT, "src");
@@ -27,7 +34,7 @@ const DIST = path.join(ROOT, "dist");
 
 /**
  * Module specifiers of `file`, read off the AST. Type-only imports count: an
- * `import type … from "effect/unstable/http"` emits no runtime edge, but it
+ * `import type … from "effect/http"` emits no runtime edge, but it
  * still makes the published `.d.ts` unresolvable without that surface.
  */
 const specifiersOf = (file: string): ReadonlyArray<string> => {
@@ -99,9 +106,7 @@ const graphFrom = (entry: string, dir: string): Graph => {
 
 const unstable = (graph: Graph): ReadonlyArray<string> =>
   [...graph.externals.entries()]
-    .filter(
-      ([specifier]) => specifier === "effect/unstable" || specifier.startsWith("effect/unstable/"),
-    )
+    .filter(([specifier]) => FORBIDDEN_SPECIFIER.test(specifier))
     .map(([specifier, trail]) => `${specifier} via ${trail.join(" -> ")}`)
     .sort();
 
@@ -109,7 +114,7 @@ describe("root entry point", () => {
   const root = graphFrom(path.join(SRC, "index.ts"), SRC);
   const sources = graphFrom(path.join(SRC, "sources", "index.ts"), SRC);
 
-  it("resolves no unstable effect surface at all", () => {
+  it("resolves no formerly-unstable effect surface at all", () => {
     expect(unstable(root)).toEqual([]);
   });
 
@@ -127,11 +132,11 @@ describe("root entry point", () => {
   /**
    * The control. Without it every assertion above could pass because the
    * walker stopped finding imports rather than because the property holds.
-   * The sources barrel genuinely does reach `effect/unstable/http`, so a
+   * The sources barrel genuinely does reach `effect/http`, so a
    * walker that cannot see it here cannot be trusted to see it above.
    */
   it("is checked by a walker that does detect the HTTP surface (control: `./sources`)", () => {
-    expect(unstable(sources).join("\n")).toContain("effect/unstable/http");
+    expect(unstable(sources).join("\n")).toContain("effect/http");
     expect(sources.modules.filter((module) => module.startsWith("sources/"))).not.toEqual([]);
   });
 
@@ -221,14 +226,14 @@ describe("built artifact", () => {
   /**
    * The end-to-end statement, and the one that does not depend on the walker
    * above being right: load the built entry in a process where
-   * `effect/unstable/*` cannot be resolved at all.
+   * the former `effect/unstable/*` modules (`effect/http`, ...) cannot be resolved at all.
    */
   const loadWithoutUnstable = (entry: string) =>
     spawnSync(
       process.execPath,
       [
         "--import",
-        fileURLToPath(new URL("./fixtures/forbid-unstable-peer.mjs", import.meta.url)),
+        fileURLToPath(new URL("./fixtures/forbid-http-peer.mjs", import.meta.url)),
         "--input-type=module",
         "-e",
         `await import(${JSON.stringify(entry)}); console.log("LOADED")`,
@@ -236,7 +241,7 @@ describe("built artifact", () => {
       { cwd: ROOT, encoding: "utf8" },
     );
 
-  it.skipIf(!hasDist)("loads the root entry with effect/unstable unresolvable", () => {
+  it.skipIf(!hasDist)("loads the root entry with effect/http and its siblings unresolvable", () => {
     const result = loadWithoutUnstable(built);
     expect(`${result.stdout}${result.stderr}`).toContain("LOADED");
     expect(result.status).toBe(0);
@@ -245,8 +250,68 @@ describe("built artifact", () => {
   it.skipIf(!hasDist)("is checked by hooks that do block the sources entry (control)", () => {
     const result = loadWithoutUnstable(path.join(DIST, "sources", "index.js"));
     const output = `${result.stdout}${result.stderr}`;
-    expect(output).toContain("FORBIDDEN_PEER:effect/unstable/");
+    expect(output).toContain("FORBIDDEN_PEER:effect/http");
     expect(output).not.toContain("LOADED");
     expect(result.status).not.toBe(0);
+  });
+});
+
+/**
+ * The forbidden set is a hand-kept list, so check it against the installed
+ * `effect`: every directory of `effect/` except `encoding`, `testing` and
+ * `internal` must be on it, and so must every `effect/encoding` module other
+ * than the four that were always stable. A new directory in a later rc fails
+ * here rather than slipping past the guard.
+ */
+describe("forbidden effect module list", () => {
+  const dist = path.join(
+    path.dirname(createRequire(import.meta.url).resolve("effect/package.json")),
+    "dist",
+  );
+  const subdirectories = (dir: string): ReadonlyArray<string> =>
+    fs
+      .readdirSync(dir, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name)
+      .sort();
+  const STABLE_ENCODING = new Set(["Base64", "Base64Url", "Hex", "EncodingError", "index"]);
+
+  it("covers every effect directory except encoding, testing and internal", () => {
+    const expected = subdirectories(dist).filter(
+      (name) => !["encoding", "testing", "internal"].includes(name),
+    );
+    expect([...FORBIDDEN_DIRECTORIES].sort()).toEqual(expected);
+  });
+
+  it("covers every effect/encoding module that was unstable", () => {
+    const expected = fs
+      .readdirSync(path.join(dist, "encoding"))
+      .filter((name) => name.endsWith(".js") && !name.endsWith(".map"))
+      .map((name) => name.replace(/\.js$/, ""))
+      .filter((name) => !STABLE_ENCODING.has(name))
+      .sort();
+    expect([...FORBIDDEN_ENCODING_MODULES].sort()).toEqual(expected);
+  });
+
+  it("matches the forbidden modules and leaves the stable ones alone", () => {
+    for (const specifier of [
+      "effect/http",
+      "effect/http/HttpClient",
+      "effect/http-api/HttpApi",
+      "effect/encoding/Yaml",
+    ]) {
+      expect(FORBIDDEN_SPECIFIER.test(specifier), specifier).toBe(true);
+    }
+    for (const specifier of [
+      "effect",
+      "effect/Schema",
+      "effect/Option",
+      "effect/encoding/Base64",
+      "effect/encoding",
+      "effect/testing",
+      "effect/httpx",
+    ]) {
+      expect(FORBIDDEN_SPECIFIER.test(specifier), specifier).toBe(false);
+    }
   });
 });

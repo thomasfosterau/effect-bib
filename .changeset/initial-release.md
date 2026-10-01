@@ -2,7 +2,7 @@
 "@thomasfosterau/biblio": minor
 ---
 
-Initial release: the bibliographic toolkit extracted from the website application's `packages/biblio`, with its history.
+Initial release, on Effect `4.0.0-rc.118`: the bibliographic toolkit extracted from the website application's `packages/biblio`, with its history.
 
 `.` (peer: `effect`; no HTTP surface):
 
@@ -12,6 +12,6 @@ Initial release: the bibliographic toolkit extracted from the website applicatio
 - `scoreMatch` / `isConfidentMatch` / `bestConfidentMatch` — fuzzy same-work scoring over title tokens, author surnames, year and identifiers.
 - `renderReference` / `renderBibliography` — pure `(records, style, locale) → string` with the built-in APA and Vancouver styles.
 
-`./sources` (peer: `effect`; imports `effect/unstable/http`):
+`./sources` (peer: `effect`; imports `effect/http`):
 
 - `BiblioLookup` — the `Context.Service` over Effect's `HttpClient` (`byIsbnRecord` via OpenLibrary, `byDoiRecord` via Crossref, `byTitle` via OpenAlex), `biblioLookupClientLayer` / `biblioLookupLayer`, the per-source lookup functions and response schemas, and the typed `InvalidIdentifier` / `LookupFailed` error channel.

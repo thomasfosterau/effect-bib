@@ -20,7 +20,7 @@ import * as Array from "effect/Array";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
-import { HttpClient, HttpClientResponse, type HttpClientError } from "effect/unstable/http";
+import { HttpClient, HttpClientResponse, type HttpClientError } from "effect/http";
 import { sanitiseText } from "../record.ts";
 import { LookupFailed, type LookupSource } from "./errors.ts";
 

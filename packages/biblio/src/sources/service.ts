@@ -38,7 +38,7 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
-import { FetchHttpClient, HttpClient, HttpClientRequest } from "effect/unstable/http";
+import { FetchHttpClient, HttpClient, HttpClientRequest } from "effect/http";
 import { decodeDoi, decodeIsbn } from "../identifiers.ts";
 import { type BiblioRecord } from "../record.ts";
 import { InvalidIdentifier, type LookupError } from "./errors.ts";

@@ -1,6 +1,6 @@
 # packages/biblio — `@thomasfosterau/biblio`
 
-The bibliographic toolkit extracted from the website application's `packages/biblio`, with its history. Peer: `effect` only. Two entry points, split so a browser bundle never loads the lookup clients: `.` (pure, `effect` alone) and `./sources` (`effect/unstable/http`).
+The bibliographic toolkit extracted from the website application's `packages/biblio`, with its history. Peer: `effect` only. Two entry points, split so a browser bundle never loads the lookup clients: `.` (pure, `effect` alone) and `./sources` (`effect/http`).
 
 ## Terms
 
@@ -15,7 +15,7 @@ The bibliographic toolkit extracted from the website application's `packages/bib
 ## Local invariants
 
 - **`BiblioRecord` is wire-identical to what website persists.** The website application stores records decoded by this schema; any change to a field name, a key's optionality, the brand of an identifier slot or the `provenance` / `extra` shape is a **major**. `fromCslJson` must keep decoding every row it ever produced.
-- **The root entry never imports `effect/unstable/*` and never reaches `src/sources/`.** `tests/entry-points.test.ts` walks the real import graph (source and built) and loads `dist/index.js` in a process where `effect/unstable/*` is unresolvable. A type-only import counts.
+- **The root entry never imports the modules that were under `effect/unstable/*` before rc.118: `effect/{ai,cli,cluster,devtools,eventlog,http,http-api,net,observability,persistence,process,reactivity,rpc,schema,socket,sql,workers,workflow}` and `effect/encoding/{Ini,Ndjson,SchemaBinary,Sse,Toml,Yaml}` (the list lives in `packages/biblio/tests/fixtures/forbidden-effect-modules.mjs`, and a test checks it against the installed `effect`), and never reaches `src/sources/`.** `tests/entry-points.test.ts` walks the real import graph (source and built) and loads `dist/index.js` in a process where those modules are unresolvable. A type-only import counts.
 - **Untrusted input never throws.** Every decoder, parser and normaliser is total: `Option.none()`, a `skipped` outcome or a thinner record — never an exception. Free text is clamped (`MAX_TEXT_FIELD_LENGTH`), author lists (`MAX_AUTHORS`), record counts (`MAX_RECORDS`) and input length (`MAX_INPUT_LENGTH`) are bounded.
 - **Identifiers reach a URL only as brands.** A `decode*` call is the one way in; a source client takes the brand, never the raw string. The service's `byIsbnRecord` / `byDoiRecord` decode first and fail with `InvalidIdentifier` before any request.
 - **Rendering is deterministic.** Sorting uses code-unit comparison, never `localeCompare`; styles and locales are data; no network at render time. The golden strings in `tests/render.test.ts` pin the output.

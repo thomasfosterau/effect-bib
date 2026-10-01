@@ -31,7 +31,7 @@ catalog:
   # below, which pnpm tolerates via `peerDependencyRules`; the JS API it uses
   # is unchanged in 6.
   "@effect/docgen": ^0.5.2
-  "@effect/language-service": ^0.87.2
+  "@effect/language-service": ^0.87.3
   # Effect Language Service as a native (TypeScript-Go) binary — the TS7 side
   # of the 6/7 split. `effect-tsgo patch` overwrites the native `tsc` binary
   # with an Effect-patched build matched by gitHead, so this pins in lockstep
@@ -47,7 +47,7 @@ catalog:
   "@mpsuesser/oxlint-plugin-effect": ^0.5.0
   "@types/node": ^26.6.3
   "@vitest/coverage-istanbul": 5.0.2
-  effect: 4.0.0-rc.117
+  effect: 4.0.0-rc.118
   effect-solutions: ^0.5.3
   fallow: 3.30.0
   # `@effect/docgen` runs each example under tsx.
@@ -73,11 +73,11 @@ catalog:
 
 # Peer ranges the PUBLISHED package declares. Kept as a named catalog so the
 # strict catalog mode still governs them while they stay ranges (an exact
-# `4.0.0-rc.115` peer would reject a consumer on rc.116). `pnpm pack`
+# `4.0.0-rc.118` peer would reject a consumer on rc.119). `pnpm pack`
 # replaces `catalog:peers` with these ranges in the published manifest.
 catalogs:
   peers:
-    effect: ">=4.0.0-rc.115"
+    effect: ">=4.0.0-rc.118"
 
 overrides:
   vite: "catalog:"
@@ -85,10 +85,23 @@ overrides:
   # `effect` MUST be a singleton (see the header): force every resolution to
   # the catalog version so a hoisting reshuffle cannot introduce a second copy.
   effect: "catalog:"
+  # TEMPORARY (owner decision, website#2015): @mpsuesser/oxlint-plugin-effect
+  # 0.5.0 is built on effect 4.0.0-beta.100 and calls `Schema.isIncludes`,
+  # which rc.118 renamed to `isIncluding`, so the `effect` override above would
+  # break vite.config.ts at load. This scoped override keeps the plugin (a lint
+  # tool only; nothing it loads reaches the published package) on its own
+  # Effect. Remove it once the plugin ships an rc.118 build.
+  "@mpsuesser/oxlint-plugin-effect>effect": 4.0.0-beta.100
 nodeLinker: hoisted
 allowBuilds:
   esbuild: true
   fallow: true
+  # The plugin override's private effect@4.0.0-beta.100 pulls in
+  # `msgpackr-extract`, a native build. Declared explicitly (and not built) so
+  # `pnpm install --frozen-lockfile` does not exit 1 on an unreviewed build
+  # script; it is an optional msgpack accelerator nothing here uses. Remove
+  # with the plugin override above.
+  msgpackr-extract: false
 peerDependencyRules:
   allowAny:
     - vite

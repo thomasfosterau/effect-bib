@@ -3,7 +3,7 @@
  * {@link BiblioRecord} and its interop boundary, the branded checksummed
  * identifiers, the bibliographic-file parsers, same-work dedup scoring and
  * citation rendering. Depends on `effect` alone — never on
- * `effect/unstable/http` — so a browser bundle that imports it never loads
+ * `effect/http` — so a browser bundle that imports it never loads
  * the lookup sources (those are the `./sources` entry point).
  *
  * @module biblio
