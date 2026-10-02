@@ -68,7 +68,7 @@ Consult effect-solutions before writing Effect code (`vp exec effect-solutions l
 
 - The SessionStart hook (`.claude/hooks/session-start.sh`) installs dependencies against the lockfile and links `vp` (a re-exec shim that prefers the nearest worktree's `node_modules`), `tsx` and `fallow` into `~/.local/bin` so they resolve from a non-interactive shell, and repairs a broken bare `node`. It hydrates no secrets; none are needed.
 - A PreToolUse hook (`.claude/hooks/fallow-gate.sh`) runs the fallow gate before `git commit` / `git push`; a PostToolUse hook runs `vp fmt --write` on every edited `.ts` / `.js` / `.json` / `.md` / `.css` file.
-- Every gate runs offline except `pnpm audit` (network). The Release workflow (OIDC, `release` environment) and the Effect canary run only in CI.
+- Every gate runs offline except `pnpm audit` (network). The Release workflow (OIDC, `release` environment) runs only in CI.
 
 ## Documentation surfaces
 
