@@ -8,6 +8,16 @@
 # updates stay enabled: the ignore is scoped to the `version-update:semver-*`
 # update types).
 #
+# `@effect/tsgo`, `typescript` (the TS6 alias) and `@typescript/native` are a
+# set too: `effect-tsgo patch` matches the native `tsc` and `oxlint` by gitHead
+# / version and hard-errors (UnsupportedTargetPackageVersionError) on any
+# pairing it ships no artifact for, so a Dependabot PR that moves one of them
+# alone goes red. They move by hand, as a set with `vite-plus`, after reading
+# the `components` table in node_modules/@effect/tsgo/dist/effect-tsgo.cjs (see
+# the `@effect/tsgo` note in pnpm-workspace.yaml). Their version updates are
+# ignored below and `@effect/tsgo` is excluded from the `effect` group; security
+# updates stay enabled (same `version-update:semver-*` scoping).
+#
 # `cooldown` mirrors pnpm-workspace.yaml's `minimumReleaseAge`.
 version: 2
 updates:
@@ -31,12 +41,35 @@ updates:
         patterns:
           - "effect"
           - "@effect/*"
+        exclude-patterns:
+          - "@effect/tsgo"
       vitest-toolchain:
         patterns:
           - "vitest"
           - "@vitest/coverage-istanbul"
           - "vite-plus"
     ignore:
+      - dependency-name: "@effect/tsgo"
+        update-types:
+          [
+            "version-update:semver-major",
+            "version-update:semver-minor",
+            "version-update:semver-patch",
+          ]
+      - dependency-name: "typescript"
+        update-types:
+          [
+            "version-update:semver-major",
+            "version-update:semver-minor",
+            "version-update:semver-patch",
+          ]
+      - dependency-name: "@typescript/native"
+        update-types:
+          [
+            "version-update:semver-major",
+            "version-update:semver-minor",
+            "version-update:semver-patch",
+          ]
       - dependency-name: "vite"
         update-types:
           [
