@@ -8,7 +8,7 @@ Maintained by Thomas Foster, with a workflow meant to be approachable for both h
 
 ## CI expectations
 
-[ci.yml](.github/workflows/ci.yml) runs one job, the gates in [AGENTS.md#verification](AGENTS.md#verification) minus the local fallow audit. [release.yml](.github/workflows/release.yml) runs changesets/action on `main`: it opens the "Version Packages" PR while unreleased changesets exist and publishes once it merges, via npm trusted publishing (OIDC) from the protected `release` environment — see [PUBLISHING.md](PUBLISHING.md). [effect-canary.yml](.github/workflows/effect-canary.yml) floats the catalog's `effect` pin onto the newest `rc` weekly and files an issue when the gate goes red.
+[ci.yml](.github/workflows/ci.yml) runs one job, the gates in [AGENTS.md#verification](AGENTS.md#verification) minus the local fallow audit. [release.yml](.github/workflows/release.yml) runs changesets/action on `main`: it opens the "Version Packages" PR while unreleased changesets exist and publishes once it merges, via npm trusted publishing (OIDC) from the protected `release` environment — see [PUBLISHING.md](PUBLISHING.md).
 
 ## Pre-PR checklist
 

@@ -14,7 +14,7 @@ inputs:
     description: >-
       "true" installs with `--ignore-scripts`: no dependency lifecycle script
       and not the workspace's own `prepare`. Only the Release job sets it,
-      because it holds `id-token: write`; CI and the canary keep scripts on
+      because it holds `id-token: write`; CI keeps scripts on
       (the type gate needs the Effect-patched `tsc` that `prepare` produces).
     required: false
     default: "false"
