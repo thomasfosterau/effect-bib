@@ -23,7 +23,7 @@
 - `vp check` — format + lint (Oxfmt + Oxlint). `vp run check` — the type gate: the package's `check` (sources, tests and the type-level `tests/**/*.types.ts`) plus the dist-consumer declaration check, which reads `packages/biblio/dist` only once it is built (#22; build first). They are different commands.
 - `vp run -r test:unit` — unit tests (the lookup sources run against a stubbed `FetchHttpClient`, never the network).
 - `vp run -r build` — emit `dist/`.
-- `vp run -r docgen` — compile and execute every JSDoc `@example` (output under `packages/*/docs/`, gitignored).
+- `vp run -r docgen` — compile and execute every JSDoc `@example` (output under `packages/*/docs/`, gitignored). Execution needs `"runExamples": true` in `packages/biblio/docgen.json`: `@effect/docgen` 4 defaults it off and only type-checks, logging "Skipping running examples" (#34).
 - `pnpm changeset` — add a changeset.
 
 Invoke everything else through `vp` (`vp exec` instead of `npx`; `vp run <task>` instead of bare `pnpm`). The sanctioned non-`vp` invocations are `pnpm install`, `pnpm changeset` and the release path (`pnpm run version` / `pnpm run release`, run by the Release workflow). Individual checks are listed in [CONTRIBUTING.md](CONTRIBUTING.md#running-individual-checks).
