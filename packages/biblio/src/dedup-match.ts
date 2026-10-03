@@ -192,6 +192,7 @@ const MIN_TITLE_TOKENS_NO_AUTHOR = 2;
  *
  * @example
  * ```ts
+ * import * as assert from "node:assert"
  * import { isConfidentMatch, scoreMatch } from "@thomasfosterau/biblio"
  *
  * // Leading articles, punctuation and initials fold away before scoring.
@@ -199,10 +200,9 @@ const MIN_TITLE_TOKENS_NO_AUTHOR = 2;
  *   { title: "The Hobbit", authors: ["J. R. R. Tolkien"] },
  *   { title: "Hobbit", authors: ["Tolkien, J.R.R."] },
  * )
- * console.log(score.title, score.sharedTitleTokens)
- * // → 1 1
- * console.log(isConfidentMatch(score))
- * // → true
+ * assert.strictEqual(score.title, 1)
+ * assert.strictEqual(score.sharedTitleTokens, 1)
+ * assert.strictEqual(isConfidentMatch(score), true)
  * ```
  *
  * @since 0.1.0
@@ -273,6 +273,7 @@ export function matchConfidence(score: MatchScore): number {
  *
  * @example
  * ```ts
+ * import * as assert from "node:assert"
  * import { bestConfidentMatch } from "@thomasfosterau/biblio"
  *
  * const incoming = { title: "The Hobbit", authors: ["J. R. R. Tolkien"] }
@@ -280,8 +281,7 @@ export function matchConfidence(score: MatchScore): number {
  *   { id: 1, title: "The Silmarillion", authors: ["Tolkien"] },
  *   { id: 2, title: "Hobbit", authors: ["Tolkien, J.R.R."] },
  * ])
- * console.log(best?.id)
- * // → 2
+ * assert.strictEqual(best?.id, 2)
  * ```
  *
  * @since 0.1.0

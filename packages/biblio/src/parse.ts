@@ -139,6 +139,7 @@ export const MAX_INPUT_LENGTH = 8_000_000;
  *
  * @example
  * ```ts
+ * import * as assert from "node:assert"
  * import { parseBibliographicFile } from "@thomasfosterau/biblio"
  *
  * // (Each entry on one line here only because a line-leading `@` would read
@@ -154,12 +155,9 @@ export const MAX_INPUT_LENGTH = 8_000_000;
  *
  * // One outcome per entry: the book parsed, the titleless article was
  * // skipped with a reason rather than failing the batch.
- * console.log(outcomes.map((outcome) => outcome.outcome))
- * // → ["parsed", "skipped"]
- * console.log(outcomes[0].outcome === "parsed" ? outcomes[0].record.identifiers.isbn : undefined)
- * // → "9780062316097"
- * console.log(outcomes[1].outcome === "skipped" ? outcomes[1].reason : undefined)
- * // → "no-title"
+ * assert.deepStrictEqual(outcomes.map((outcome) => outcome.outcome), ["parsed", "skipped"])
+ * assert.strictEqual(outcomes[0].outcome === "parsed" ? outcomes[0].record.identifiers.isbn : undefined, "9780062316097")
+ * assert.strictEqual(outcomes[1].outcome === "skipped" ? outcomes[1].reason : undefined, "no-title")
  * ```
  *
  * @since 0.1.0

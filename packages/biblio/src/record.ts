@@ -523,14 +523,14 @@ function dateToCsl(date: CslDate): Record<string, unknown> {
  *
  * @example
  * ```ts
+ * import * as assert from "node:assert"
  * import { fromCslJson, toCslJson } from "@thomasfosterau/biblio"
  *
  * const record = fromCslJson({ type: "book", title: "Sapiens", ISBN: "9780062316097", "custom-key": "kept" })
  *
  * // Provenance is dropped, the identifier lands back in `ISBN`, the
  * // passthrough is re-merged: plain CSL-JSON any citation tool reads.
- * console.log(toCslJson(record))
- * // → { "custom-key": "kept", type: "book", title: "Sapiens", ISBN: "9780062316097" }
+ * assert.deepStrictEqual(toCslJson(record), { "custom-key": "kept", type: "book", title: "Sapiens", ISBN: "9780062316097" })
  * ```
  *
  * @since 0.1.0
@@ -674,6 +674,7 @@ function fromCslDateValue(value: unknown): Option.Option<CslDate> {
  *
  * @example
  * ```ts
+ * import * as assert from "node:assert"
  * import { fromCslJson } from "@thomasfosterau/biblio"
  *
  * const record = fromCslJson({
@@ -687,12 +688,9 @@ function fromCslDateValue(value: unknown): Option.Option<CslDate> {
  *
  * // The ISBN was checksummed and canonicalised into its branded slot; the
  * // unknown key survived in `extra`; the record knows where it came from.
- * console.log(record.identifiers.isbn)
- * // → "9780062316097"
- * console.log(record.extra)
- * // → { "custom-key": "kept" }
- * console.log(record.provenance)
- * // → { source: "csl-json" }
+ * assert.strictEqual(record.identifiers.isbn, "9780062316097")
+ * assert.deepStrictEqual(record.extra, { "custom-key": "kept" })
+ * assert.deepStrictEqual(record.provenance, { source: "csl-json" })
  * ```
  *
  * @since 0.1.0
