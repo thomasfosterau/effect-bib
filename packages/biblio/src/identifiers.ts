@@ -186,21 +186,19 @@ export function isbnForms(isbn: Isbn): { readonly isbn13: string; readonly isbn1
  *
  * @example
  * ```ts
+ * import * as assert from "node:assert"
  * import * as Option from "effect/Option"
  * import { decodeIsbn, isbnForms } from "@thomasfosterau/biblio"
  *
  * // Hyphens and spaces are ignored; an ISBN-10 canonicalises to its 13-form.
  * const isbn = decodeIsbn("0-06-231609-5")
- * console.log(Option.getOrNull(isbn))
- * // → "9780062316097"
+ * assert.strictEqual(Option.getOrNull(isbn), "9780062316097")
  *
  * // Both forms are recoverable from the proven value.
- * console.log(Option.map(isbn, isbnForms))
- * // → Option.some({ isbn13: "9780062316097", isbn10: "0062316095" })
+ * assert.deepStrictEqual(Option.map(isbn, isbnForms), Option.some({ isbn13: "9780062316097", isbn10: "0062316095" }))
  *
  * // A checksum failure is `Option.none()`, never a throw.
- * console.log(Option.isNone(decodeIsbn("978-0-06-231609-8")))
- * // → true
+ * assert.strictEqual(Option.isNone(decodeIsbn("978-0-06-231609-8")), true)
  * ```
  *
  * @since 0.1.0
@@ -257,15 +255,14 @@ export function normaliseDoi(raw: string): Option.Option<string> {
  *
  * @example
  * ```ts
+ * import * as assert from "node:assert"
  * import * as Option from "effect/Option"
  * import { decodeDoi } from "@thomasfosterau/biblio"
  *
  * // A pasted resolver URL is stripped and the DOI lower-cased.
- * console.log(Option.getOrNull(decodeDoi("https://doi.org/10.1038/NPHYS1170")))
- * // → "10.1038/nphys1170"
+ * assert.strictEqual(Option.getOrNull(decodeDoi("https://doi.org/10.1038/NPHYS1170")), "10.1038/nphys1170")
  *
- * console.log(Option.isNone(decodeDoi("not a doi")))
- * // → true
+ * assert.strictEqual(Option.isNone(decodeDoi("not a doi")), true)
  * ```
  *
  * @since 0.1.0
@@ -293,11 +290,11 @@ function isValidIssn(cleaned: string): boolean {
  *
  * @example
  * ```ts
+ * import * as assert from "node:assert"
  * import * as Option from "effect/Option"
  * import { decodeIssn } from "@thomasfosterau/biblio"
  *
- * console.log(Option.getOrNull(decodeIssn("00280836")))
- * // → "0028-0836"
+ * assert.strictEqual(Option.getOrNull(decodeIssn("00280836")), "0028-0836")
  * ```
  *
  * @since 0.1.0
@@ -334,11 +331,11 @@ function isValidOrcid(cleaned: string): boolean {
  *
  * @example
  * ```ts
+ * import * as assert from "node:assert"
  * import * as Option from "effect/Option"
  * import { decodeOrcid } from "@thomasfosterau/biblio"
  *
- * console.log(Option.getOrNull(decodeOrcid("https://orcid.org/0000-0002-1825-0097")))
- * // → "0000-0002-1825-0097"
+ * assert.strictEqual(Option.getOrNull(decodeOrcid("https://orcid.org/0000-0002-1825-0097")), "0000-0002-1825-0097")
  * ```
  *
  * @since 0.1.0

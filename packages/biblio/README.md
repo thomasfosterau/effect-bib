@@ -50,7 +50,7 @@ Effect.runPromise(program.pipe(Effect.provide(biblioLookupLayer)));
 
 ## API
 
-Each snippet below is an excerpt of a JSDoc `@example` in the source; the full examples are compiled and executed in CI.
+Each snippet below is an excerpt of a JSDoc `@example` in the source. CI compiles and executes the full examples (`vp run -r docgen`), and each `assert` from `node:assert` throws on a wrong value, so an expected value that drifts from the code fails the build.
 
 ### Records — `.`
 
@@ -71,8 +71,8 @@ const record = fromCslJson({
   issued: { "date-parts": [[2015]] },
   "custom-key": "kept",
 });
-record.identifiers.isbn; // "9780062316097"
-record.extra; // { "custom-key": "kept" }
+assert.strictEqual(record.identifiers.isbn, "9780062316097");
+assert.deepStrictEqual(record.extra, { "custom-key": "kept" });
 ```
 
 **`toCslJson(record): CslJsonItem`** — the inverse projection: drops `provenance`, writes the brands back into `ISBN` / `DOI` / `ISSN`, re-merges `extra` (modelled fields win over a stale carried key).
@@ -86,17 +86,28 @@ Name and date helpers: `makeCslName(parts)`, `parsePersonName(raw)` (`"Family, G
 **`decodeIsbn(raw): Option<Isbn>`** — accepts a hyphenated / spaced ISBN-10 or ISBN-13, validates the checksum (mod-11 / EAN mod-10), returns the canonical 13-digit form. **`isbnForms(isbn)`** gives `{ isbn13, isbn10 | null }`; `convertIsbn10To13` / `convertIsbn13To10` are the raw converters.
 
 ```ts
-Option.getOrNull(decodeIsbn("0-06-231609-5")); // "9780062316097"
-Option.map(decodeIsbn("9780062316097"), isbnForms); // some({ isbn13: "9780062316097", isbn10: "0062316095" })
-Option.isNone(decodeIsbn("978-0-06-231609-8")); // true — checksum failure, never a throw
+const isbn = decodeIsbn("0-06-231609-5");
+assert.strictEqual(Option.getOrNull(isbn), "9780062316097");
+assert.deepStrictEqual(
+  Option.map(isbn, isbnForms),
+  Option.some({ isbn13: "9780062316097", isbn10: "0062316095" }),
+);
+// A checksum failure is `Option.none()`, never a throw.
+assert.strictEqual(Option.isNone(decodeIsbn("978-0-06-231609-8")), true);
 ```
 
 **`decodeDoi(raw): Option<Doi>`** — strips a resolver URL or `doi:` scheme, lower-cases, rejects control characters, whitespace, over-length values and `..` segments (`normaliseDoi` is the un-branded step). **`decodeIssn(raw): Option<Issn>`** — mod-11, canonical `NNNN-NNNN`. **`decodeOrcid(raw): Option<Orcid>`** — ISO 7064 mod-11-2, canonical `0000-0002-1825-0097`.
 
 ```ts
-Option.getOrNull(decodeDoi("https://doi.org/10.1038/NPHYS1170")); // "10.1038/nphys1170"
-Option.getOrNull(decodeIssn("00280836")); // "0028-0836"
-Option.getOrNull(decodeOrcid("https://orcid.org/0000-0002-1825-0097")); // "0000-0002-1825-0097"
+assert.strictEqual(
+  Option.getOrNull(decodeDoi("https://doi.org/10.1038/NPHYS1170")),
+  "10.1038/nphys1170",
+);
+assert.strictEqual(Option.getOrNull(decodeIssn("00280836")), "0028-0836");
+assert.strictEqual(
+  Option.getOrNull(decodeOrcid("https://orcid.org/0000-0002-1825-0097")),
+  "0000-0002-1825-0097",
+);
 ```
 
 ### Parsing — `.`
@@ -105,7 +116,10 @@ Option.getOrNull(decodeOrcid("https://orcid.org/0000-0002-1825-0097")); // "0000
 
 ```ts
 const outcomes = parseBibliographicFile(bibtex, "bibtex");
-outcomes.map((outcome) => outcome.outcome); // ["parsed", "skipped"]
+assert.deepStrictEqual(
+  outcomes.map((outcome) => outcome.outcome),
+  ["parsed", "skipped"],
+);
 ```
 
 ### Dedup — `.`
@@ -117,7 +131,7 @@ const score = scoreMatch(
   { title: "The Hobbit", authors: ["J. R. R. Tolkien"] },
   { title: "Hobbit", authors: ["Tolkien, J.R.R."] },
 );
-isConfidentMatch(score); // true
+assert.strictEqual(isConfidentMatch(score), true);
 ```
 
 ### Rendering — `.`
@@ -127,10 +141,14 @@ isConfidentMatch(score); // true
 **`apaStyle`** (APA 7th, author-date) and **`vancouverStyle`** (numeric) are the built-ins; `builtInStyles` is the registry and `getStyle(id)` the lookup. A `CitationStyle` is data — `{ id, title, category, renderReference, sortKey }` — so a consumer can supply its own without touching the engine, composing the `format.ts` primitives (`formatNameList`, `givenInitials`, `issuedYearText`, `pagesLabel`, `preferredUrl`, `dispatchReference`, …).
 
 ```ts
-renderReference(article, { style: apaStyle });
-// "Ray, O. (2004). Can loneliness be lethal? Nature, 431, 231-232. https://doi.org/10.1038/431231a"
-renderReference(article, { style: vancouverStyle });
-// "Ray O. Can loneliness be lethal? Nature. 2004;431:231-232."
+assert.strictEqual(
+  renderReference(article, { style: apaStyle }),
+  "Ray, O. (2004). Can loneliness be lethal? Nature, 431, 231-232. https://doi.org/10.1038/431231a",
+);
+assert.strictEqual(
+  renderReference(article, { style: vancouverStyle }),
+  "Ray O. Can loneliness be lethal? Nature. 2004;431:231-232.",
+);
 ```
 
 ### Lookup — `./sources`

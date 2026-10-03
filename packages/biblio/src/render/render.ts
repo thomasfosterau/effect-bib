@@ -52,6 +52,7 @@ function orderRecords(
  *
  * @example
  * ```ts
+ * import * as assert from "node:assert"
  * import { apaStyle, fromCslJson, renderReference, vancouverStyle } from "@thomasfosterau/biblio"
  *
  * const article = fromCslJson({
@@ -65,10 +66,14 @@ function orderRecords(
  *   DOI: "10.1038/431231a",
  * })
  *
- * console.log(renderReference(article, { style: apaStyle }))
- * // → "Ray, O. (2004). Can loneliness be lethal? Nature, 431, 231-232. https://doi.org/10.1038/431231a"
- * console.log(renderReference(article, { style: vancouverStyle }))
- * // → "Ray O. Can loneliness be lethal? Nature. 2004;431:231-232."
+ * assert.strictEqual(
+ *   renderReference(article, { style: apaStyle }),
+ *   "Ray, O. (2004). Can loneliness be lethal? Nature, 431, 231-232. https://doi.org/10.1038/431231a",
+ * )
+ * assert.strictEqual(
+ *   renderReference(article, { style: vancouverStyle }),
+ *   "Ray O. Can loneliness be lethal? Nature. 2004;431:231-232.",
+ * )
  * ```
  *
  * @since 0.1.0
@@ -83,18 +88,23 @@ export function renderReference(record: BiblioRecord, options: RenderOptions): s
  *
  * @example
  * ```ts
+ * import * as assert from "node:assert"
  * import { apaStyle, bibliographyToText, fromCslJson, renderBibliography, vancouverStyle } from "@thomasfosterau/biblio"
  *
  * const book = fromCslJson({ type: "book", title: "Sapiens", publisher: "Harper", author: [{ family: "Harari", given: "Yuval Noah" }], issued: { "date-parts": [[2015]] } })
  * const article = fromCslJson({ type: "article-journal", title: "Can loneliness be lethal?", author: [{ family: "Ray", given: "Oakley" }], "container-title": "Nature", volume: "431", page: "231-232", issued: { "date-parts": [[2004]] } })
  *
  * // Author-date styles sort by author / year / title and carry no label.
- * console.log(bibliographyToText(renderBibliography([article, book], { style: apaStyle })))
- * // → "Harari, Y. N. (2015). Sapiens. Harper.\nRay, O. (2004). Can loneliness be lethal? Nature, 431, 231-232."
+ * assert.strictEqual(
+ *   bibliographyToText(renderBibliography([article, book], { style: apaStyle })),
+ *   "Harari, Y. N. (2015). Sapiens. Harper.\nRay, O. (2004). Can loneliness be lethal? Nature, 431, 231-232.",
+ * )
  *
  * // Numeric styles keep citation order and number each entry.
- * console.log(bibliographyToText(renderBibliography([article, book], { style: vancouverStyle })))
- * // → "1. Ray O. Can loneliness be lethal? Nature. 2004;431:231-232.\n2. Harari YN. Sapiens. Harper; 2015."
+ * assert.strictEqual(
+ *   bibliographyToText(renderBibliography([article, book], { style: vancouverStyle })),
+ *   "1. Ray O. Can loneliness be lethal? Nature. 2004;431:231-232.\n2. Harari YN. Sapiens. Harper; 2015.",
+ * )
  * ```
  *
  * @since 0.1.0

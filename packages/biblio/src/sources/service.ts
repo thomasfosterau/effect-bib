@@ -56,6 +56,7 @@ const USER_AGENT = "thomasfoster.au-biblio/1.0 (mailto:me@thomasfoster.au)";
  *
  * @example
  * ```ts
+ * import * as assert from "node:assert"
  * import * as Effect from "effect/Effect"
  * import * as Layer from "effect/Layer"
  * import * as Option from "effect/Option"
@@ -75,10 +76,8 @@ const USER_AGENT = "thomasfoster.au-biblio/1.0 (mailto:me@thomasfoster.au)";
  *   byDoiRecord: () => Effect.succeed(Option.none()),
  *   byTitle: () => Effect.succeed([]),
  * })
- * Effect.runPromise(program.pipe(Effect.provide(stub))).then((found) => {
- *   console.log(Option.isNone(found))
- *   // → true
- * })
+ * const found = await Effect.runPromise(program.pipe(Effect.provide(stub)))
+ * assert.strictEqual(Option.isNone(found), true)
  * ```
  *
  * @since 0.1.0
