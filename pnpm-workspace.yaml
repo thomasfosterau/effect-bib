@@ -51,7 +51,7 @@ catalog:
   # three.
   "@effect/tsgo": 0.47.2
   "@mpsuesser/oxlint-plugin-effect": ^0.5.0
-  "@types/node": ^26.6.3
+  "@types/node": ^26.6.4
   "@vitest/coverage-istanbul": 5.0.3
   effect: 4.0.0
   effect-solutions: ^0.5.3
