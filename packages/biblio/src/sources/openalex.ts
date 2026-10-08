@@ -1,6 +1,6 @@
 /**
- * OpenAlex (DOI lookup and title search) source client, emitting the
- * CSL-aligned {@link BiblioRecord}. Two capabilities:
+ * OpenAlex source client, emitting the CSL-aligned {@link BiblioRecord}.
+ * Two capabilities:
  * a works lookup by DOI ({@link lookupOpenAlexByDoi}), and a title search
  * returning ranked candidates ({@link searchOpenAlexByTitle}), which backs
  * `BiblioLookup.byTitle`.

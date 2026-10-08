@@ -1,6 +1,6 @@
 # AGENTS.md
 
-`CLAUDE.md` is a symlink to this file. This repo publishes `@thomasfosterau/biblio` (`packages/biblio`), extracted with its history from `thomasfosterau/website`. The website, gardeneria and preferenceflow apps consume it, and their toolchain (pnpm + Vite+ `vp`, strict catalog, TypeScript 6/7 split, Effect oxlint preset, fallow) is copied here so the library builds against what they run. A `website#NNN` cite in a comment is a website issue, the evidence behind a decision, not a ticket in this tracker; a bare `#NNN` is an issue or PR in this repository.
+`CLAUDE.md` is a symlink to this file. This repo publishes `@thomasfosterau/biblio` (`packages/biblio`), extracted with its history from `thomasfosterau/website`. The website, gardeneria and preferenceflow apps consume it, and their toolchain (pnpm + Vite+ `vp`, strict catalog, TypeScript 6/7 split, Effect oxlint preset, fallow) is copied here so the library builds against what they run. A `<repo>#NNN` cite in a comment (`website#NNN`, `gardeneria#NNN`) is an issue in that repository, the evidence behind a decision, not a ticket in this tracker; a bare `#NNN` is an issue or PR in this repository.
 
 ## Common pitfalls
 

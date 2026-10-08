@@ -52,7 +52,7 @@ catalog:
   "@effect/tsgo": 0.47.2
   # Depends on `effect` exactly (0.6.0 → 4.0.0), which the `effect` override
   # forces onto the catalog singleton; a plugin release targeting a different
-  # `effect` fails `vite.config.ts` loading (#39).
+  # `effect` can fail `vite.config.ts` loading (#39, #63).
   "@mpsuesser/oxlint-plugin-effect": ^0.6.0
   "@types/node": ^26.6.4
   # The coverage provider must equal the `vitest` that vite-plus bundles (see
@@ -123,7 +123,7 @@ peerDependencyRules:
     vitest: "*"
     typescript: "*"
 
-# Supply-chain delay (owner's policy, gardeneria #1149): hold newly published
+# Supply-chain delay (owner's policy, gardeneria#1149): hold newly published
 # versions for 1 day (unit: MINUTES) before pnpm will install them.
 minimumReleaseAge: 1440
 minimumReleaseAgeExclude:
