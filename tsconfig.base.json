@@ -37,6 +37,12 @@
         // but a "warning" still fails the patched tsc by default — this flag
         // is what actually makes warnings non-blocking in the check tasks.
         "ignoreEffectWarningsInTscExitCode": true,
+        // Suggestions are editor-only: the patched tsc leaves suggestion- (and
+        // message-) level Effect diagnostics out of its CLI output, so the
+        // check tasks print only warnings and errors. The language server is
+        // never in CLI mode, so the editor still shows them. They never set
+        // the exit code (`ignoreEffectSuggestionsInTscExitCode` defaults on).
+        "includeSuggestionsInTsc": false,
         "diagnosticSeverity": {
           "abortControllerInEffect": "warning",
           "asyncFunction": "warning",
@@ -62,8 +68,9 @@
           "unsafeEffectTypeAssertion": "warning",
           // Effect 4 marks most of `effect/http` `@stability unstable`, so at
           // "warning" every HttpClient use warned and buried the rest. As a
-          // suggestion it stays visible (editor and tsc output) but no longer
-          // counts as a warning.
+          // suggestion it stays visible in the editor but no longer counts as
+          // a warning (and, per `includeSuggestionsInTsc`, no longer prints in
+          // the tsc output).
           "unstableApiUsage": "suggestion"
         }
       }
