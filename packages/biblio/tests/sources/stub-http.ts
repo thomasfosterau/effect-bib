@@ -36,11 +36,15 @@ export const filteredClient: Effect.Effect<HttpClient.HttpClient, never, HttpCli
  * URL. Unmapped URLs answer 404 (the natural "not found" a real upstream
  * would give for e.g. a follow-up author key we didn't stub). Every
  * requested URL is captured for path assertions, and every request's
- * `User-Agent` header (`""` when absent) for identity assertions.
+ * `User-Agent` header (`""` when absent) for identity assertions. `fetch`
+ * is the routing function itself, for a test that overrides
+ * `FetchHttpClient.Fetch` under a layer that supplies its own
+ * `FetchHttpClient`.
  */
 export function stubRouter(routes: Record<string, StubRoute>): {
   readonly urls: string[];
   readonly userAgents: string[];
+  readonly fetch: typeof globalThis.fetch;
   readonly layer: Layer.Layer<HttpClient.HttpClient>;
 } {
   const urls: string[] = [];
@@ -65,5 +69,5 @@ export function stubRouter(routes: Record<string, StubRoute>): {
   const layer = FetchHttpClient.layer.pipe(
     Layer.provide(Layer.succeed(FetchHttpClient.Fetch, fetch)),
   );
-  return { urls, userAgents, layer };
+  return { urls, userAgents, fetch, layer };
 }
