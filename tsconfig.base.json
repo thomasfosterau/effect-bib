@@ -59,7 +59,12 @@
           "preferSchemaOverJson": "warning",
           "processEnv": "warning",
           "processEnvInEffect": "warning",
-          "unsafeEffectTypeAssertion": "warning"
+          "unsafeEffectTypeAssertion": "warning",
+          // Effect 4 marks most of `effect/http` `@stability unstable`, so at
+          // "warning" every HttpClient use warned and buried the rest. As a
+          // suggestion it stays visible (editor and tsc output) but no longer
+          // counts as a warning.
+          "unstableApiUsage": "suggestion"
         }
       }
     ]
