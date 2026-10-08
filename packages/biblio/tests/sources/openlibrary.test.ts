@@ -1,6 +1,6 @@
 /**
  * Unit tests for the OpenLibrary CSL-native source client
- * (`src/sources/openlibrary.ts`, biblio B3, issue #1070).
+ * (`src/sources/openlibrary.ts`, biblio B3, website#1070).
  *
  * `openlibrary-ulysses-edition.json` / `openlibrary-ulysses-author.json`
  * are **live-recorded fixtures** (captured 2026-07-23 from

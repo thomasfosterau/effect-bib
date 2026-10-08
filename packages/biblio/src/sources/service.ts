@@ -17,8 +17,9 @@
  * A clean upstream 404 is `Option.none()`; every other failure is the typed
  * {@link LookupError} channel. Both layers take the caller's
  * {@link LookupContact}, which identifies every request to the upstream
- * sources. The client-injectable layer and the `FetchHttpClient` layer are
- * split so tests can stub the client.
+ * sources. {@link biblioLookupLayer} runs over the global `fetch`;
+ * {@link biblioLookupClientLayer} takes any `HttpClient` from context, such
+ * as your own client or a stub in tests.
  *
  * @copyright Thomas Foster
  * @module biblio/sources/service
