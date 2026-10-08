@@ -1,17 +1,18 @@
 /**
- * Shared HTTP plumbing for the {@link BiblioLookup} source clients
- * (#1070) — a JSON GET helper bound to a base URL and a
- * source name, decoding through a caller-supplied lenient schema and
- * mapping the 404 → `Option.none()` / typed-{@link LookupFailed} discipline
- * every source shares. Also carries {@link firstString},
- * the "first plausible sanitised string from an upstream array" helper
- * OpenLibrary and Crossref both need for their `publishers` /
+ * Shared HTTP plumbing for the {@link BiblioLookup} source clients — a JSON
+ * GET helper bound to a base URL and a source name, decoding through a
+ * caller-supplied lenient schema and mapping the 404 → `Option.none()` /
+ * typed-{@link LookupFailed} discipline every source shares. Also carries
+ * {@link firstString}, the "first plausible sanitised string from an upstream
+ * array" helper OpenLibrary and Crossref both need for their `publishers` /
  * `container-title` style fields.
  *
  * @copyright Thomas Foster
  * @module biblio/sources/http
  * @since 0.1.0
  */
+
+// See website#1070.
 
 import * as Array from "effect/Array";
 import * as Effect from "effect/Effect";

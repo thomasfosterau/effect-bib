@@ -1,5 +1,5 @@
 /**
- * Built-in locales for the render module (#1072).
+ * Built-in locales for the render module.
  *
  * A {@link Locale} is a typed **data input** — the render engine never
  * fetches one. `en-US` is the default the built-in styles are authored
@@ -10,6 +10,8 @@
  * @module biblio/render/locale
  * @since 0.1.0
  */
+
+// See website#1072.
 
 import type { Locale } from "./types.ts";
 

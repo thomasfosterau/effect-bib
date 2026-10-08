@@ -1,6 +1,5 @@
 /**
- * The CSL-aligned bibliographic record — the neutral centre of the toolkit
- * (#1069).
+ * The CSL-aligned bibliographic record — the neutral centre of the toolkit.
  *
  * A {@link BiblioRecord} is a typed **superset of CSL-JSON**: its core is
  * the closed CSL 1.0.2 vocabulary (item types, standard/name/date
@@ -23,6 +22,8 @@
  * @module biblio/record
  * @since 0.1.0
  */
+
+// See website#1069.
 
 import * as Array from "effect/Array";
 import * as HashSet from "effect/HashSet";

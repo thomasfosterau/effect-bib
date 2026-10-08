@@ -1,6 +1,6 @@
 /**
- * OpenLibrary (ISBN) source client, refit onto the CSL-aligned
- * {@link BiblioRecord} (#1070, #574). Resolves an edition by ISBN, follows the
+ * OpenLibrary (ISBN) source client, emitting the CSL-aligned
+ * {@link BiblioRecord}. Resolves an edition by ISBN, follows the
  * referenced `/authors/OL...A` records for display names, and normalises
  * the pair into a record: publisher
  * place lands in the standard CSL `publisher-place` variable, and subjects
@@ -15,6 +15,8 @@
  * @module biblio/sources/openlibrary
  * @since 0.1.0
  */
+
+// Refit onto the CSL-aligned `BiblioRecord` (website#1070, website#574).
 
 import * as Array from "effect/Array";
 import * as Effect from "effect/Effect";

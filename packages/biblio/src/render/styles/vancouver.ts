@@ -1,11 +1,9 @@
 /**
- * The Vancouver style — a numeric reference format (#1072).
+ * The Vancouver style — a numeric reference format.
  *
  * A deliberate contrast to APA: numbered (citation-order) entries rather
  * than author-date, initials-without-periods names (`"Smith JR"`), and a
  * different punctuation and field order (`"Journal. Year;Vol(Issue):Pages."`).
- * Rendering the same records in two structurally different styles is what the
- * golden tests exercise.
  *
  * Like the APA style, this is a **scoped subset** of ICMJE/Vancouver — the
  * five reference shapes the engine classifies — not a full CSL implementation. The
@@ -16,6 +14,9 @@
  * @module biblio/render/styles/vancouver
  * @since 0.1.0
  */
+
+// website#1072. Rendering the same records in two structurally different styles
+// is what the golden tests exercise.
 
 import * as Option from "effect/Option";
 import * as String from "effect/String";

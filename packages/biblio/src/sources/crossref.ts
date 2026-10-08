@@ -1,6 +1,6 @@
 /**
- * Crossref (DOI) source client, refit onto the CSL-aligned
- * {@link BiblioRecord} (#1070, #574). Crossref is natively CSL-adjacent — its
+ * Crossref (DOI) source client, emitting the CSL-aligned
+ * {@link BiblioRecord}. Crossref is natively CSL-adjacent — its
  * `message.type` already maps closely onto the CSL item-type vocabulary,
  * and `container-title` / `volume` / `issue` / `page` / `ISSN` are direct
  * upstream fields — so this normaliser is mostly a direct mapping.
@@ -13,6 +13,8 @@
  * @module biblio/sources/crossref
  * @since 0.1.0
  */
+
+// Refit onto the CSL-aligned `BiblioRecord` (website#1070, website#574).
 
 import * as Array from "effect/Array";
 import * as Effect from "effect/Effect";

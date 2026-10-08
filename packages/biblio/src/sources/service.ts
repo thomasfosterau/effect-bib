@@ -1,6 +1,5 @@
 /**
- * The composed bibliographic identifier-lookup service (#1070, #574) — the
- * single
+ * The composed bibliographic identifier-lookup service — the single
  * {@link BiblioLookup} `Context.Service` every consumer depends on, over
  * Effect's `HttpClient`.
  *
@@ -12,9 +11,8 @@
  * **Sources.** `byIsbnRecord` resolves via OpenLibrary, `byDoiRecord` via
  * Crossref, `byTitle` via OpenAlex search. OpenAlex's DOI lookup
  * ({@link lookupOpenAlexByDoi}) is exposed as a standalone source function
- * rather than wired into `byDoiRecord` — Crossref stays the DOI authority
- * here — and is what the cross-source dedup coherence test exercises
- * directly against the same Crossref-resolved work.
+ * rather than wired into `byDoiRecord`: Crossref stays the DOI authority
+ * here.
  *
  * A clean upstream 404 is `Option.none()`; every other failure is the typed
  * {@link LookupError} channel. Both layers take the caller's
@@ -26,6 +24,10 @@
  * @module biblio/sources/service
  * @since 0.1.0
  */
+
+// website#1070, website#574. `lookupOpenAlexByDoi` is what the cross-source
+// dedup coherence test exercises directly against the same Crossref-resolved
+// work.
 
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";

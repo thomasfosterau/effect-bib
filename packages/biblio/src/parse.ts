@@ -1,12 +1,12 @@
 /**
  * File-format parsers for bibliographic import — **BibTeX**, **CSL-JSON**
  * (the Zotero export shape), reading-list **CSV**, and **RIS** — each
- * emitting the CSL-aligned {@link BiblioRecord} (#1069).
+ * emitting the CSL-aligned {@link BiblioRecord}.
  *
  * The parsers are the file-side analogue of the source-client normalisers:
  * where the lookup path resolves a single identifier against an upstream
- * API, this path lifts a whole exported library off disk. The hand-rolled,
- * dependency-free scanner posture is deliberate and preserved:
+ * API, this path lifts a whole exported library off disk. Each parser is a
+ * dependency-free scanner with these properties:
  *
  * - **pure, no network, no DB** — every function is unit-testable without
  *   a database or a fetch.
@@ -31,6 +31,9 @@
  * @module biblio/parse
  * @since 0.1.0
  */
+
+// The hand-rolled, dependency-free scanner posture is deliberate and
+// preserved (website#1069).
 
 import * as Array from "effect/Array";
 import * as Match from "effect/Match";

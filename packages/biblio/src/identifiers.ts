@@ -1,6 +1,6 @@
 /**
  * First-class bibliographic identifiers — ISBN, DOI, ISSN, ORCID — as
- * branded, checksum-validated types (#1069).
+ * branded, checksum-validated types.
  *
  * This module is the identity boundary and the SSRF / path-injection
  * boundary for every path that interpolates an identifier into a URL or
@@ -27,6 +27,8 @@
  * @module biblio/identifiers
  * @since 0.1.0
  */
+
+// See website#1069.
 
 import * as Array from "effect/Array";
 import * as Option from "effect/Option";
