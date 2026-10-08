@@ -38,7 +38,9 @@ const asWork = Schema.decodeUnknownSync(OpenAlexWork);
 
 const rayWork = asWork(rayWorkBody);
 const REQUESTED_DOI = expectSome(decodeDoi("10.1037/0003-066x.59.1.29"), "a DOI");
-const MAILTO = "mailto=me%40thomasfoster.au";
+/** A contact whose address needs percent-encoding (`+` and `@`). */
+const CONTACT = { product: "biblio-tests/0.0", email: "biblio+tests@example.org" } as const;
+const MAILTO = "mailto=biblio%2Btests%40example.org";
 
 describe("normaliseOpenAlexRecord", () => {
   it("normalises a real work into a CSL record: container, biblio, structured author", () => {
@@ -104,14 +106,14 @@ describe("normaliseOpenAlexRecord", () => {
 });
 
 describe("lookupOpenAlexByDoi", () => {
-  it("resolves via the polite mailto-qualified doi: path", async () => {
+  it("resolves via the doi: path qualified with the caller's encoded mailto", async () => {
     const path = `https://api.openalex.org/works/doi:${encodeURIComponent(REQUESTED_DOI)}?${MAILTO}`;
     const { urls, layer } = stubRouter({ [path]: { status: 200, body: rayWork } });
     const result = await runTest(
       Effect.provide(
         Effect.gen(function* () {
           const client = yield* filteredClient;
-          return yield* lookupOpenAlexByDoi(client, REQUESTED_DOI);
+          return yield* lookupOpenAlexByDoi(client, REQUESTED_DOI, CONTACT);
         }),
         layer,
       ),
@@ -127,7 +129,7 @@ describe("lookupOpenAlexByDoi", () => {
       Effect.provide(
         Effect.gen(function* () {
           const client = yield* filteredClient;
-          return yield* lookupOpenAlexByDoi(client, REQUESTED_DOI);
+          return yield* lookupOpenAlexByDoi(client, REQUESTED_DOI, CONTACT);
         }),
         layer,
       ),
@@ -142,7 +144,7 @@ describe("lookupOpenAlexByDoi", () => {
       Effect.provide(
         Effect.gen(function* () {
           const client = yield* filteredClient;
-          return yield* lookupOpenAlexByDoi(client, REQUESTED_DOI);
+          return yield* lookupOpenAlexByDoi(client, REQUESTED_DOI, CONTACT);
         }),
         layer,
       ),
@@ -153,14 +155,13 @@ describe("lookupOpenAlexByDoi", () => {
 
 describe("searchOpenAlexByTitle", () => {
   it("returns ranked candidates from a real search envelope, skipping types outside the vocabulary gracefully", async () => {
-    const path =
-      "https://api.openalex.org/works?search=Sapiens&per-page=10&mailto=me%40thomasfoster.au";
+    const path = `https://api.openalex.org/works?search=Sapiens&per-page=10&${MAILTO}`;
     const { urls, layer } = stubRouter({ [path]: { status: 200, body: searchResponse } });
     const results = await runTest(
       Effect.provide(
         Effect.gen(function* () {
           const client = yield* filteredClient;
-          return yield* searchOpenAlexByTitle(client, "Sapiens");
+          return yield* searchOpenAlexByTitle(client, "Sapiens", CONTACT);
         }),
         layer,
       ),
@@ -176,7 +177,7 @@ describe("searchOpenAlexByTitle", () => {
       Effect.provide(
         Effect.gen(function* () {
           const client = yield* filteredClient;
-          return yield* searchOpenAlexByTitle(client, "nothing");
+          return yield* searchOpenAlexByTitle(client, "nothing", CONTACT);
         }),
         layer,
       ),
@@ -185,13 +186,13 @@ describe("searchOpenAlexByTitle", () => {
   });
 
   it("returns [] when results is absent", async () => {
-    const path = "https://api.openalex.org/works?search=x&per-page=10&mailto=me%40thomasfoster.au";
+    const path = `https://api.openalex.org/works?search=x&per-page=10&${MAILTO}`;
     const { layer } = stubRouter({ [path]: { status: 200, body: {} } });
     const results = await runTest(
       Effect.provide(
         Effect.gen(function* () {
           const client = yield* filteredClient;
-          return yield* searchOpenAlexByTitle(client, "x");
+          return yield* searchOpenAlexByTitle(client, "x", CONTACT);
         }),
         layer,
       ),
@@ -200,7 +201,7 @@ describe("searchOpenAlexByTitle", () => {
   });
 
   it("skips a malformed result entry rather than failing the whole search", async () => {
-    const path = "https://api.openalex.org/works?search=x&per-page=10&mailto=me%40thomasfoster.au";
+    const path = `https://api.openalex.org/works?search=x&per-page=10&${MAILTO}`;
     const { layer } = stubRouter({
       [path]: { status: 200, body: { results: [null, "not an object", { title: "Real Work" }] } },
     });
@@ -208,7 +209,7 @@ describe("searchOpenAlexByTitle", () => {
       Effect.provide(
         Effect.gen(function* () {
           const client = yield* filteredClient;
-          return yield* searchOpenAlexByTitle(client, "x");
+          return yield* searchOpenAlexByTitle(client, "x", CONTACT);
         }),
         layer,
       ),
@@ -223,12 +224,27 @@ describe("searchOpenAlexByTitle", () => {
       Effect.provide(
         Effect.gen(function* () {
           const client = yield* filteredClient;
-          return yield* searchOpenAlexByTitle(client, longQuery);
+          return yield* searchOpenAlexByTitle(client, longQuery, CONTACT);
         }),
         layer,
       ),
     );
     const requested = expectPresent(new URL(expectPresent(urls[0])).searchParams.get("search"));
     expect(requested.length).toBe(500);
+  });
+
+  it("sends the caller's contact address as the mailto parameter", async () => {
+    const { urls, layer } = stubRouter({});
+    await runTest(
+      Effect.provide(
+        Effect.gen(function* () {
+          const client = yield* filteredClient;
+          return yield* searchOpenAlexByTitle(client, "x", CONTACT);
+        }),
+        layer,
+      ),
+    );
+    const mailto = new URL(expectPresent(urls[0])).searchParams.get("mailto");
+    expect(mailto).toBe(CONTACT.email);
   });
 });

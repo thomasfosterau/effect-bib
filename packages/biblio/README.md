@@ -40,12 +40,16 @@ const record = fromCslJson({ type: "book", title: "Sapiens", ISBN: "978006231609
 // Rendering is a pure function of (record, style, locale).
 renderReference(record, { style: apaStyle }); // "(n.d.). Sapiens."
 
-// Lookup is an Effect service over HttpClient; the production layer uses the global fetch.
+// Lookup is an Effect service over HttpClient; the production layer uses the global fetch
+// and identifies every request with your contact.
 const program = Effect.gen(function* () {
   const lookup = yield* BiblioLookup;
   return yield* lookup.byIsbnRecord("9780062316097"); // Option<BiblioRecord>
 });
-Effect.runPromise(program.pipe(Effect.provide(biblioLookupLayer)));
+const lookupLayer = biblioLookupLayer({
+  contact: { product: "my-app/1.0", email: "ops@example.org" },
+});
+Effect.runPromise(program.pipe(Effect.provide(lookupLayer)));
 ```
 
 ## API
@@ -155,19 +159,24 @@ assert.strictEqual(
 
 **`BiblioLookup`** — `Context.Service` with `byIsbnRecord(isbn: string)`, `byDoiRecord(doi: string)` → `Effect<Option<BiblioRecord>, LookupError>` and `byTitle(query: string)` → `Effect<readonly BiblioRecord[], LookupError>`. Each method decodes the raw identifier first and fails with `InvalidIdentifier` before any request; a clean upstream 404 is `Option.none()`; `byTitle` never fails on an empty result.
 
-**`biblioLookupLayer: Layer<BiblioLookup>`** — production, over `FetchHttpClient` (the global fetch). **`biblioLookupClientLayer: Layer<BiblioLookup, never, HttpClient>`** — over whatever `HttpClient` is in context, which is how a test injects a stubbed fetch. Both attach a polite `User-Agent`, `acceptJson` and `filterStatusOk`.
+**`biblioLookupLayer(options): Layer<BiblioLookup>`** — production, over `FetchHttpClient` (the global fetch). **`biblioLookupClientLayer(options): Layer<BiblioLookup, never, HttpClient>`** — over whatever `HttpClient` is in context, which is how a test injects a stubbed fetch. Both attach `acceptJson`, `filterStatusOk` and a polite `User-Agent` built from the required `options.contact`. Each call builds a new layer, so build it once and share it.
+
+**`LookupContact`** — `{ product, email }`, who is making the lookups. Every request sends `User-Agent: <product> (mailto:<email>)`, and OpenAlex requests also send `mailto=<email>`, so Crossref and OpenAlex route you to their polite pool and can reach you about your traffic. Use your own application's name and address; the package ships no default.
 
 ```ts
 const program = Effect.gen(function* () {
   const lookup = yield* BiblioLookup;
   return yield* lookup.byIsbnRecord("978-0-06-231609-7");
 });
-program.pipe(Effect.provide(biblioLookupLayer)); // Effect<Option<BiblioRecord>, LookupError>
+const lookupLayer = biblioLookupLayer({
+  contact: { product: "my-app/1.0", email: "ops@example.org" },
+});
+program.pipe(Effect.provide(lookupLayer)); // Effect<Option<BiblioRecord>, LookupError>
 ```
 
 **Errors** — `InvalidIdentifier { kind: "isbn" | "doi", value }` (fix the input, don't retry) and `LookupFailed { source: LookupSource, description }` (transport, non-404 status or decode failure); `LookupError` is their union and `LookupSource` is `"openlibrary" | "crossref" | "openalex"`.
 
-**Per-source functions** (take an already-composed `HttpClient` and a proven identifier): `lookupOpenLibraryByIsbn(client, isbn)`, `lookupCrossrefByDoi(client, doi)`, `lookupOpenAlexByDoi(client, doi)`, `searchOpenAlexByTitle(client, query)`. The lenient response schemas (`OpenLibraryEdition`, `OpenLibraryAuthor`, `CrossrefResponse`, `OpenAlexWork`, `OpenAlexSearchResponse`) and normalisers (`normaliseOpenLibraryRecord`, `normaliseCrossrefRecord`, `normaliseOpenAlexRecord`) are exported so a consumer can drive them against recorded fixtures.
+**Per-source functions** (take an already-composed `HttpClient` and a proven identifier): `lookupOpenLibraryByIsbn(client, isbn)`, `lookupCrossrefByDoi(client, doi)`, `lookupOpenAlexByDoi(client, doi, contact)`, `searchOpenAlexByTitle(client, query, contact)` (the OpenAlex pair sends `contact.email` as `mailto`; the User-Agent is whatever your client sets). The lenient response schemas (`OpenLibraryEdition`, `OpenLibraryAuthor`, `CrossrefResponse`, `OpenAlexWork`, `OpenAlexSearchResponse`) and normalisers (`normaliseOpenLibraryRecord`, `normaliseCrossrefRecord`, `normaliseOpenAlexRecord`) are exported so a consumer can drive them against recorded fixtures.
 
 ## Compatibility
 

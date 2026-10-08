@@ -25,11 +25,15 @@ import {
 } from "@thomasfosterau/biblio/sources";
 import { expectFailureInstanceOf, runTest } from "../effect.ts";
 import { stubRouter } from "./stub-http.ts";
-import { expectSome } from "../assert.ts";
+import { expectPresent, expectSome } from "../assert.ts";
 import rayResponse from "../fixtures/crossref-ray-2004.json" with { type: "json" };
 import searchResponse from "../fixtures/openalex-search-sapiens.json" with { type: "json" };
 import ulyssesAuthor from "../fixtures/openlibrary-ulysses-author.json" with { type: "json" };
 import ulyssesEdition from "../fixtures/openlibrary-ulysses-edition.json" with { type: "json" };
+
+/** The contact every test layer is built with. */
+const CONTACT = { product: "biblio-tests/0.0", email: "biblio+tests@example.org" } as const;
+const lookupLayer = biblioLookupClientLayer({ contact: CONTACT });
 
 /**
  * Builds the `BiblioLookup` program over a stub layer, **without running
@@ -49,11 +53,7 @@ const withLookup = <A, E>(
   Effect.gen(function* () {
     const lookup = yield* BiblioLookup;
     return yield* use(lookup);
-  }).pipe(Effect.provide(biblioLookupClientLayer.pipe(Layer.provide(layer)))) as Effect.Effect<
-    A,
-    E,
-    never
-  >;
+  }).pipe(Effect.provide(lookupLayer.pipe(Layer.provide(layer)))) as Effect.Effect<A, E, never>;
 
 // ── CSL-native surface ──────────────────────────────────────────────────
 
@@ -136,7 +136,7 @@ describe("BiblioLookup.byDoiRecord", () => {
 describe("BiblioLookup.byTitle", () => {
   it("returns ranked OpenAlex candidates for a title search", async () => {
     const path =
-      "https://api.openalex.org/works?search=Sapiens&per-page=10&mailto=me%40thomasfoster.au";
+      "https://api.openalex.org/works?search=Sapiens&per-page=10&mailto=biblio%2Btests%40example.org";
     const { layer } = stubRouter({ [path]: { status: 200, body: searchResponse } });
     const results = await runTest(withLookup(layer, (lookup) => lookup.byTitle("Sapiens")));
     expect(results.length).toBeGreaterThan(0);
@@ -148,5 +148,47 @@ describe("BiblioLookup.byTitle", () => {
       withLookup(layer, (lookup) => lookup.byTitle("nothing matches this")),
     );
     expect(results).toEqual([]);
+  });
+});
+
+describe("BiblioLookup contact", () => {
+  const userAgent = "biblio-tests/0.0 (mailto:biblio+tests@example.org)";
+
+  it("sends the configured User-Agent to every source", async () => {
+    const { userAgents, layer } = stubRouter({});
+    await runTest(
+      withLookup(layer, (lookup) =>
+        Effect.all(
+          [
+            lookup.byIsbnRecord("9780199535675"),
+            lookup.byDoiRecord("10.9999/missing"),
+            lookup.byTitle("Sapiens"),
+          ],
+          { concurrency: 1 },
+        ),
+      ),
+    );
+    expect(userAgents).toEqual([userAgent, userAgent, userAgent]);
+  });
+
+  it("sends the configured address as OpenAlex's mailto", async () => {
+    const { urls, layer } = stubRouter({});
+    await runTest(withLookup(layer, (lookup) => lookup.byTitle("Sapiens")));
+    const mailto = new URL(expectPresent(urls[0])).searchParams.get("mailto");
+    expect(mailto).toBe(CONTACT.email);
+  });
+
+  it("identifies each layer by its own contact", async () => {
+    const { userAgents, layer } = stubRouter({});
+    const other = biblioLookupClientLayer({
+      contact: { product: "other-app/2.1", email: "someone@example.net" },
+    });
+    await runTest(
+      Effect.gen(function* () {
+        const lookup = yield* BiblioLookup;
+        return yield* lookup.byIsbnRecord("9780199535675");
+      }).pipe(Effect.provide(other.pipe(Layer.provide(layer)))),
+    );
+    expect(userAgents).toEqual(["other-app/2.1 (mailto:someone@example.net)"]);
   });
 });

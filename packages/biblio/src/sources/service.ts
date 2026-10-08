@@ -17,8 +17,10 @@
  * directly against the same Crossref-resolved work.
  *
  * A clean upstream 404 is `Option.none()`; every other failure is the typed
- * {@link LookupError} channel. The client-injectable layer and the
- * `FetchHttpClient` layer are split so tests can stub the client.
+ * {@link LookupError} channel. Both layers take the caller's
+ * {@link LookupContact}, which identifies every request to the upstream
+ * sources. The client-injectable layer and the `FetchHttpClient` layer are
+ * split so tests can stub the client.
  *
  * @copyright Thomas Foster
  * @module biblio/sources/service
@@ -32,18 +34,31 @@ import * as Option from "effect/Option";
 import { FetchHttpClient, HttpClient, HttpClientRequest } from "effect/http";
 import { decodeDoi, decodeIsbn } from "../identifiers.ts";
 import { type BiblioRecord } from "../record.ts";
+import { type LookupContact } from "./contact.ts";
 import { InvalidIdentifier, type LookupError } from "./errors.ts";
 import { lookupCrossrefByDoi } from "./crossref.ts";
 import { lookupOpenLibraryByIsbn } from "./openlibrary.ts";
 import { searchOpenAlexByTitle } from "./openalex.ts";
 
 /**
- * A polite User-Agent. Crossref's etiquette asks callers to identify
- * themselves; OpenLibrary tolerates anonymous requests and OpenAlex reads
- * its own `mailto` query parameter (added per-request in `openalex.ts`),
- * but we send the same header everywhere for consistency.
+ * The polite User-Agent for a contact: `product (mailto:email)`. Crossref's
+ * etiquette asks callers to identify themselves this way; OpenLibrary
+ * tolerates anonymous requests and OpenAlex also reads its own `mailto`
+ * query parameter (added per-request in `openalex.ts`), but the same header
+ * goes everywhere for consistency.
  */
-const USER_AGENT = "thomasfoster.au-biblio/1.0 (mailto:me@thomasfoster.au)";
+const userAgent = (contact: LookupContact): string =>
+  `${contact.product} (mailto:${contact.email})`;
+
+/**
+ * Options for {@link biblioLookupLayer} and {@link biblioLookupClientLayer}.
+ *
+ * @since 0.1.0
+ */
+export interface BiblioLookupOptions {
+  /** Who is making the lookups; sent with every upstream request. */
+  readonly contact: LookupContact;
+}
 
 /**
  * Identifier / title-lookup contract. Every `Option`-returning method
@@ -67,8 +82,12 @@ const USER_AGENT = "thomasfoster.au-biblio/1.0 (mailto:me@thomasfoster.au)";
  *   return yield* lookup.byIsbnRecord("978-0-06-231609-7")
  * })
  *
- * // Production: over the global fetch. (Not run here — no network in docs.)
- * export const live = program.pipe(Effect.provide(biblioLookupLayer))
+ * // Production: over the global fetch, identified as your application.
+ * // (Not run here — no network in docs.)
+ * const lookupLayer = biblioLookupLayer({
+ *   contact: { product: "my-app/1.0", email: "ops@example.org" },
+ * })
+ * export const live = program.pipe(Effect.provide(lookupLayer))
  *
  * // A test stub is just another implementation of the same service.
  * const stub = Layer.succeed(BiblioLookup, {
@@ -94,7 +113,7 @@ export class BiblioLookup extends Context.Service<
     /** CSL-native title search via OpenAlex, ranked by upstream relevance. */
     readonly byTitle: (query: string) => Effect.Effect<readonly BiblioRecord[], LookupError>;
   }
->()("@app/BiblioLookup") {}
+>()("@thomasfosterau/biblio/BiblioLookup") {}
 
 /**
  * Builds the {@link BiblioLookup} service over an `HttpClient`. Wrapped by
@@ -104,12 +123,12 @@ export class BiblioLookup extends Context.Service<
  */
 // Kept local: the package depends on nothing but `effect`.
 // fallow-ignore-next-line code-duplication
-const makeBiblioLookup = Effect.fnUntraced(function* () {
+const makeBiblioLookup = Effect.fnUntraced(function* ({ contact }: BiblioLookupOptions) {
   const baseClient = yield* HttpClient.HttpClient;
   const client = baseClient.pipe(
     HttpClient.mapRequest((request) =>
       request.pipe(
-        HttpClientRequest.setHeader("user-agent", USER_AGENT),
+        HttpClientRequest.setHeader("user-agent", userAgent(contact)),
         HttpClientRequest.acceptJson,
       ),
     ),
@@ -136,31 +155,36 @@ const makeBiblioLookup = Effect.fnUntraced(function* () {
   });
 
   const byTitle = Effect.fn("BiblioLookup.byTitle")(function* (query: string) {
-    return yield* searchOpenAlexByTitle(client, query);
+    return yield* searchOpenAlexByTitle(client, query, contact);
   });
 
   return { byIsbnRecord, byDoiRecord, byTitle } as const;
 });
 
 /**
- * {@link BiblioLookup} layer over whatever `HttpClient` is in context. The
- * production graph supplies `FetchHttpClient` (see {@link biblioLookupLayer});
- * a test supplies a stubbed fetch under the same `FetchHttpClient` slot.
- * Kept separate from {@link biblioLookupLayer} so tests can inject their own
- * client without bundling the global fetch.
+ * {@link BiblioLookup} layer over whatever `HttpClient` is in context,
+ * identified by `options.contact`. The production graph supplies
+ * `FetchHttpClient` (see {@link biblioLookupLayer}); a test supplies a
+ * stubbed fetch under the same `FetchHttpClient` slot. Kept separate from
+ * {@link biblioLookupLayer} so tests can inject their own client without
+ * bundling the global fetch. Each call builds a new layer, so build it once
+ * and share the value (layers memoize by reference).
  *
  * @since 0.1.0
  */
-export const biblioLookupClientLayer: Layer.Layer<BiblioLookup, never, HttpClient.HttpClient> =
-  Layer.effect(BiblioLookup)(makeBiblioLookup());
+export const biblioLookupClientLayer = (
+  options: BiblioLookupOptions,
+): Layer.Layer<BiblioLookup, never, HttpClient.HttpClient> =>
+  Layer.effect(BiblioLookup)(makeBiblioLookup(options));
 
 /**
  * Production {@link BiblioLookup} layer over `FetchHttpClient` (the global
- * `fetch`). Use {@link biblioLookupClientLayer} to supply your own
- * `HttpClient`, e.g. a stub in tests.
+ * `fetch`), identified by `options.contact`. Use
+ * {@link biblioLookupClientLayer} to supply your own `HttpClient`, e.g. a
+ * stub in tests. Each call builds a new layer, so build it once and share
+ * the value (layers memoize by reference).
  *
  * @since 0.1.0
  */
-export const biblioLookupLayer: Layer.Layer<BiblioLookup> = biblioLookupClientLayer.pipe(
-  Layer.provide(FetchHttpClient.layer),
-);
+export const biblioLookupLayer = (options: BiblioLookupOptions): Layer.Layer<BiblioLookup> =>
+  biblioLookupClientLayer(options).pipe(Layer.provide(FetchHttpClient.layer));
