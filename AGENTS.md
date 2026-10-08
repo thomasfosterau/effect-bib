@@ -1,6 +1,6 @@
 # AGENTS.md
 
-`CLAUDE.md` is a symlink to this file. This repo publishes `@thomasfosterau/biblio` (`packages/biblio`), extracted with its history from `thomasfosterau/website`. The website, gardeneria and preferenceflow apps consume it, and their toolchain (pnpm + Vite+ `vp`, strict catalog, TypeScript 6/7 split, Effect oxlint preset, fallow) is copied here so the library builds against what they run. An unprefixed `#NNN` in a ported comment is a website issue, the evidence behind a decision, not a ticket in this tracker.
+`CLAUDE.md` is a symlink to this file. This repo publishes `@thomasfosterau/biblio` (`packages/biblio`), extracted with its history from `thomasfosterau/website`. The website, gardeneria and preferenceflow apps consume it, and their toolchain (pnpm + Vite+ `vp`, strict catalog, TypeScript 6/7 split, Effect oxlint preset, fallow) is copied here so the library builds against what they run. A `<repo>#NNN` cite in a comment (`website#NNN`, `gardeneria#NNN`) is an issue in that repository, the evidence behind a decision, not a ticket in this tracker; a bare `#NNN` is an issue or PR in this repository.
 
 ## Common pitfalls
 
@@ -21,7 +21,7 @@
 
 - `vp install` — dependencies plus the Vite+ git hooks (pre-commit runs `vp staged`: `vp check --fix` on staged files). No pre-push hook.
 - `vp check` — format + lint (Oxfmt + Oxlint). `vp run check` — the type gate: the package's `check` (sources, tests and the type-level `tests/**/*.types.ts`) plus the dist-consumer declaration check against `packages/biblio/dist`, which it builds first. They are different commands.
-- `vp run -r test:unit` — builds `dist/`, then the unit tests (the lookup sources run against a stubbed `FetchHttpClient`, never the network). `vp run -r test:coverage` runs the same tests under istanbul and fails on the coverage thresholds or a provider/`vitest` mismatch (#47); it is the gate CI runs.
+- `vp run -r test:unit` — builds `dist/`, then the unit tests (the lookup sources run against a stubbed `FetchHttpClient`, never the network). `vp run -r test:coverage` runs the same tests under istanbul and fails on the coverage thresholds or on a coverage provider that differs from vite-plus's bundled `vitest` version (#47); it is the gate CI runs.
 - `vp run -r build` — emit `dist/`.
 - `vp run -r docgen` — compile and execute every JSDoc `@example` (output under `packages/*/docs/`, gitignored). Execution needs `"runExamples": true` in `packages/biblio/docgen.json`: `@effect/docgen` 4 defaults it off and only type-checks, logging "Skipping running examples" (#34).
 - `pnpm changeset` — add a changeset.

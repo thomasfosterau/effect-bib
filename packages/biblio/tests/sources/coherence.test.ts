@@ -1,5 +1,5 @@
 /**
- * Cross-source dedup coherence proof (biblio B3, issue #1070 "done when").
+ * Cross-source dedup coherence proof (biblio B3, website#1070 "done when").
  *
  * The same work — Ray (2004), "How the Mind Hurts and Heals the Body.",
  * DOI `10.1037/0003-066x.59.1.29` — normalised independently from its

@@ -5,8 +5,8 @@
  *
  * The parsers are the file-side analogue of the source-client normalisers:
  * where the lookup path resolves a single identifier against an upstream
- * API, this path lifts a whole exported library off disk. Each parser is a
- * dependency-free scanner with these properties:
+ * API, this path lifts a whole exported library off disk. Every parser is
+ * dependency-free (nothing beyond `effect`) and shares these properties:
  *
  * - **pure, no network, no DB** — every function is unit-testable without
  *   a database or a fetch.

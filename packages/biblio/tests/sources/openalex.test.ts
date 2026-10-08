@@ -1,6 +1,6 @@
 /**
  * Unit tests for the OpenAlex source client (`src/sources/openalex.ts`,
- * biblio B3, issue #1070) — the new modern scholarly-graph source.
+ * biblio B3, website#1070) — the new modern scholarly-graph source.
  *
  * `openalex-ray-2004.json` is a **live-recorded fixture** (captured
  * 2026-07-23 from `https://api.openalex.org/works/doi:10.1037/0003-066x.59.1.29`)

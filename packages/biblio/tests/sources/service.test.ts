@@ -1,10 +1,10 @@
 /**
  * Unit tests for the composed {@link BiblioLookup} service
- * (`src/sources/service.ts`, biblio B3, issue #1070).
+ * (`src/sources/service.ts`, biblio B3, website#1070).
  *
  * Covers the CSL-native surface `byIsbnRecord` / `byDoiRecord` / `byTitle`
  * (the pre-B3 flat `byIsbn` / `byDoi` compatibility methods were removed once
- * B4 (#1071) migrated `apps/api`'s `ingest.ts` onto `byIsbnRecord`).
+ * B4 (website#1071) migrated `apps/api`'s `ingest.ts` onto `byIsbnRecord`).
  *
  * Reuses the live-recorded OpenLibrary/Crossref/OpenAlex fixtures from the
  * sibling per-source test files. The network is stubbed at
