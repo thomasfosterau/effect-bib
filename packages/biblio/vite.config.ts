@@ -44,8 +44,18 @@ export default defineConfig({
       },
       // Emits `dist/` (JavaScript + declarations) with the native, Effect-
       // patched `tsc`. `rm -rf` first so a renamed module leaves no stale file.
+      //
+      // Cacheable only as ONE task (#44). Vite+ splits a top-level `&&` into
+      // sub-tasks cached apart, and the two halves each fingerprinted the
+      // `dist/` the other then changed, so neither ever hit; `sh -c` keeps
+      // the clean and the compile together. `dist/` stays an auto-tracked
+      // input on purpose (never `!dist/**`, which let a stray file survive a
+      // hit): the trailing `find` lists the whole emitted tree after the
+      // compile, so a hit needs `dist/` to hold exactly the files this build
+      // wrote (whose contents a hit restores), and anything else there, from
+      // a hand edit or a pre-#44 build, is a miss that re-runs the clean.
       build: {
-        command: "rm -rf dist && tsc -p tsconfig.build.json",
+        command: "sh -c 'rm -rf dist && tsc -p tsconfig.build.json && find dist > /dev/null'",
         input: cacheInputs,
         output: ["dist/**"],
       },
