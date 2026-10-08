@@ -56,8 +56,10 @@ catalog:
   # the vite-plus note below), so it moves with vite-plus, by hand: vite-plus
   # ships no provider, and its `test --coverage` startup guard throws on any
   # version other than its bundled vitest's (0.3.3 → 4.1.11). Its own peer
-  # (`vitest: <same version>`) cannot catch a skew here, because the
-  # `vitest: "catalog:"` override rewrites that peer to the catalog version.
+  # (`vitest: <same version>`) cannot catch a skew here, for two reasons: the
+  # `vitest: "catalog:"` override rewrites that peer to the catalog version,
+  # and `peerDependencyRules` (`allowAny: vitest`, below) accepts any `vitest`
+  # version whatever range the peer declares.
   "@vitest/coverage-istanbul": 4.1.11
   effect: 4.0.0
   effect-solutions: ^0.5.3
