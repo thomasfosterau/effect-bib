@@ -151,6 +151,12 @@ describe("BiblioLookup.byTitle", () => {
   });
 });
 
+describe("BiblioLookup key", () => {
+  it("is namespaced to the package", () => {
+    expect(BiblioLookup.key).toBe("@thomasfosterau/biblio/BiblioLookup");
+  });
+});
+
 describe("BiblioLookup contact", () => {
   const userAgent = "biblio-tests/0.0 (mailto:biblio+tests@example.org)";
 

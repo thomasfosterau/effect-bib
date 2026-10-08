@@ -124,6 +124,9 @@ export type Checks = [
   /** _contactIsRequired */ Assert<
     Equals<Parameters<typeof biblioLookupLayer>, [options: BiblioLookupOptions]>
   >,
+  /** _clientContactIsRequired */ Assert<
+    Equals<Parameters<typeof biblioLookupClientLayer>, [options: BiblioLookupOptions]>
+  >,
   /** _contactShape */ Assert<Equals<BiblioLookupOptions["contact"], LookupContact>>,
   /** _contactFields */ Assert<
     Equals<LookupContact, { readonly product: string; readonly email: string }>

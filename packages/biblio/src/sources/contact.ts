@@ -3,14 +3,15 @@
  * carries to the upstream sources. Crossref and OpenAlex route identified
  * callers to their "polite pool" (a faster, more reliable tier) and use the
  * address to reach whoever runs a misbehaving client, so the identity is
- * the consumer's own, never the package's. Kept in its own leaf module so
- * `openalex.ts` and the composed service can both import it without a
- * circular dependency.
+ * the consumer's own, never the package's.
  *
  * @copyright Thomas Foster
  * @module biblio/sources/contact
  * @since 0.1.0
  */
+
+// A leaf module, so `openalex.ts` and the composed service can both import it
+// without a circular dependency.
 
 /**
  * Who is making the lookups: a User-Agent product token and a contact

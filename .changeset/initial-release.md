@@ -14,4 +14,4 @@ Initial release, on Effect `4.0.0-rc.118`: the bibliographic toolkit extracted f
 
 `./sources` (peer: `effect`; imports `effect/http`):
 
-- `BiblioLookup` — the `Context.Service` over Effect's `HttpClient` (`byIsbnRecord` via OpenLibrary, `byDoiRecord` via Crossref, `byTitle` via OpenAlex), `biblioLookupClientLayer` / `biblioLookupLayer` (each built from the caller's `LookupContact`, which every request sends as its User-Agent and OpenAlex `mailto`), the per-source lookup functions and response schemas, and the typed `InvalidIdentifier` / `LookupFailed` error channel.
+- `BiblioLookup` — the `Context.Service` over Effect's `HttpClient` (`byIsbnRecord` via OpenLibrary, `byDoiRecord` via Crossref, `byTitle` via OpenAlex), `biblioLookupClientLayer` / `biblioLookupLayer` (each built from the caller's `LookupContact`: every request sends `User-Agent: <product> (mailto:<email>)`, and OpenAlex requests also send `mailto=<email>`), the per-source lookup functions and response schemas, and the typed `InvalidIdentifier` / `LookupFailed` error channel.
