@@ -50,12 +50,14 @@ export default defineConfig({
       // `dist/` the other then changed, so neither ever hit; `sh -c` keeps
       // the clean and the compile together. `dist/` stays an auto-tracked
       // input on purpose (never `!dist/**`, which let a stray file survive a
-      // hit): the trailing `find` lists the whole emitted tree after the
+      // hit): the trailing `ls -R` lists the whole emitted tree after the
       // compile, so a hit needs `dist/` to hold exactly the files this build
       // wrote (whose contents a hit restores), and anything else there, from
-      // a hand edit or a pre-#44 build, is a miss that re-runs the clean.
+      // a hand edit or a failed compile, is a miss that re-runs the clean.
+      // `ls`, not `find`: on macOS Vite+ swaps in tracked copies of a fixed
+      // list of system tools, and `ls` is on it but `find` is not.
       build: {
-        command: "sh -c 'rm -rf dist && tsc -p tsconfig.build.json && find dist > /dev/null'",
+        command: "sh -c 'rm -rf dist && tsc -p tsconfig.build.json && ls -R dist > /dev/null'",
         input: cacheInputs,
         output: ["dist/**"],
       },
