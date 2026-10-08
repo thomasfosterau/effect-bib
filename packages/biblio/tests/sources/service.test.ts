@@ -13,13 +13,15 @@
  * @module tests/unit/biblio-sources-service
  */
 
-import { describe, expect, it } from "vite-plus/test";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
+import { FetchHttpClient } from "effect/http";
 import {
   BiblioLookup,
   biblioLookupClientLayer,
+  biblioLookupLayer,
   InvalidIdentifier,
   LookupFailed,
 } from "@thomasfosterau/biblio/sources";
@@ -196,5 +198,44 @@ describe("BiblioLookup contact", () => {
       }).pipe(Effect.provide(other.pipe(Layer.provide(layer)))),
     );
     expect(userAgents).toEqual(["other-app/2.1 (mailto:someone@example.net)"]);
+  });
+});
+
+describe("biblioLookupLayer", () => {
+  // The production layer brings its own `FetchHttpClient`, so the stub goes
+  // in at `FetchHttpClient.Fetch`, which that client reads on every request.
+  // The global `fetch` is swapped for one that answers a network error, so a
+  // request that bypassed the stub fails the lookup rather than reaching the
+  // network.
+  const unreachable = vi.fn<typeof globalThis.fetch>(() => Promise.resolve(Response.error()));
+  beforeEach(() => {
+    vi.stubGlobal("fetch", unreachable);
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    unreachable.mockClear();
+  });
+
+  it("serves BiblioLookup over FetchHttpClient, identified by its contact", async () => {
+    const editionUrl = "https://openlibrary.org/isbn/9780199535675.json";
+    const authorUrl = "https://openlibrary.org/authors/OL31827A.json";
+    const { urls, userAgents, fetch } = stubRouter({
+      [editionUrl]: { status: 200, body: ulyssesEdition },
+      [authorUrl]: { status: 200, body: ulyssesAuthor },
+    });
+    const result = await runTest(
+      Effect.gen(function* () {
+        const lookup = yield* BiblioLookup;
+        return yield* lookup.byIsbnRecord("978-0-19-953567-5");
+      }).pipe(
+        Effect.provide(biblioLookupLayer({ contact: CONTACT })),
+        Effect.provideService(FetchHttpClient.Fetch, fetch),
+      ),
+    );
+    expect(expectSome(result, "a record").title).toBe("Ulysses");
+    expect(urls).toEqual([editionUrl, authorUrl]);
+    const userAgent = "biblio-tests/0.0 (mailto:biblio+tests@example.org)";
+    expect(userAgents).toEqual([userAgent, userAgent]);
+    expect(unreachable).not.toHaveBeenCalled();
   });
 });
