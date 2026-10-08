@@ -21,7 +21,7 @@
 
 - `vp install` — dependencies plus the Vite+ git hooks (pre-commit runs `vp staged`: `vp check --fix` on staged files). No pre-push hook.
 - `vp check` — format + lint (Oxfmt + Oxlint). `vp run check` — the type gate: the package's `check` (sources, tests and the type-level `tests/**/*.types.ts`) plus the dist-consumer declaration check against `packages/biblio/dist`, which it builds first. They are different commands.
-- `vp run -r test:unit` — builds `dist/`, then the unit tests (the lookup sources run against a stubbed `FetchHttpClient`, never the network).
+- `vp run -r test:unit` — builds `dist/`, then the unit tests (the lookup sources run against a stubbed `FetchHttpClient`, never the network). `vp run -r test:coverage` runs the same tests under istanbul and fails on the coverage thresholds or a provider/`vitest` mismatch (#47); it is the gate CI runs.
 - `vp run -r build` — emit `dist/`.
 - `vp run -r docgen` — compile and execute every JSDoc `@example` (output under `packages/*/docs/`, gitignored). Execution needs `"runExamples": true` in `packages/biblio/docgen.json`: `@effect/docgen` 4 defaults it off and only type-checks, logging "Skipping running examples" (#34).
 - `pnpm changeset` — add a changeset.
@@ -35,12 +35,12 @@ Before you report work as done, run the gates below in order (CI's order, `.gith
 1. `vp check`
 2. `vp run -r build`
 3. `vp run check`
-4. `vp run -r test:unit`
+4. `vp run -r test:coverage`
 5. `vp run -r docgen`
 6. `pnpm audit --audit-level high` (network)
 7. `fallow audit --format json --quiet --explain --gate-marker agent` (the fallow gate below; not a CI step)
 
-- **`dist/` is built by the gates that read it.** `vp run check` and `vp run -r test:unit` each depend on `build` (#22), so on a clean tree they emit `dist/` before the dist-consumer check and the built-artifact cases in `packages/biblio/tests/entry-points.test.ts` run. Those cases still skip under a bare `vp test` without `dist/`, except under `CI`, where they fail instead; a skip there is not a run.
+- **`dist/` is built by the gates that read it.** `vp run check` and `vp run -r test:coverage` (like `test:unit`) each depend on `build` (#22), so on a clean tree they emit `dist/` before the dist-consumer check and the built-artifact cases in `packages/biblio/tests/entry-points.test.ts` run. Those cases still skip under a bare `vp test` without `dist/`, except under `CI`, where they fail instead; a skip there is not a run.
 - **Before pushing, reinstall from clean** to catch a missing peer a warm tree hides: `rm -rf node_modules packages/*/node_modules tests/*/node_modules && pnpm install --frozen-lockfile`, then the gates.
 
 ## Branches and pull requests
