@@ -50,7 +50,7 @@ catalog:
   # node_modules/@effect/tsgo/dist/effect-tsgo.cjs before bumping any of the
   # three.
   "@effect/tsgo": 0.47.2
-  "@mpsuesser/oxlint-plugin-effect": ^0.5.0
+  "@mpsuesser/oxlint-plugin-effect": ^0.6.0
   "@types/node": ^26.6.4
   # The coverage provider must equal the `vitest` that vite-plus bundles (see
   # the vite-plus note below), so it moves with vite-plus, by hand: vite-plus
@@ -104,23 +104,10 @@ overrides:
   # `effect` MUST be a singleton (see the header): force every resolution to
   # the catalog version so a hoisting reshuffle cannot introduce a second copy.
   effect: "catalog:"
-  # TEMPORARY (owner decision, website#2015): @mpsuesser/oxlint-plugin-effect
-  # 0.5.0 is built on effect 4.0.0-beta.100 and calls `Schema.isIncludes`,
-  # which rc.118 renamed to `isIncluding`, so the `effect` override above would
-  # break vite.config.ts at load. This scoped override keeps the plugin (a lint
-  # tool only; nothing it loads reaches the published package) on its own
-  # Effect. Remove it once the plugin ships an rc.118 build.
-  "@mpsuesser/oxlint-plugin-effect>effect": 4.0.0-beta.100
 nodeLinker: hoisted
 allowBuilds:
   esbuild: true
   fallow: true
-  # The plugin override's private effect@4.0.0-beta.100 pulls in
-  # `msgpackr-extract`, a native build. Declared explicitly (and not built) so
-  # `pnpm install --frozen-lockfile` does not exit 1 on an unreviewed build
-  # script; it is an optional msgpack accelerator nothing here uses. Remove
-  # with the plugin override above.
-  msgpackr-extract: false
 peerDependencyRules:
   allowAny:
     - vite
