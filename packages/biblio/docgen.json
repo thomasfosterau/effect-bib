@@ -1,5 +1,6 @@
 {
   "$schema": "../../node_modules/@effect/docgen/schema.json",
+  "srcLink": "https://github.com/thomasfosterau/reference-manager/blob/main/packages/biblio/src/",
   "runExamples": true,
   "exclude": ["src/index.ts", "src/sources/index.ts", "src/render/index.ts"],
   "parseCompilerOptions": "./tsconfig.build.json",
