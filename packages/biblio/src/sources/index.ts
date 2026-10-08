@@ -10,6 +10,7 @@
  * @since 0.1.0
  */
 
+export * from "./contact.ts";
 export * from "./crossref.ts";
 export * from "./errors.ts";
 export * from "./openalex.ts";

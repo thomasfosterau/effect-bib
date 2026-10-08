@@ -35,17 +35,21 @@ export const filteredClient: Effect.Effect<HttpClient.HttpClient, never, HttpCli
  * Builds a Layer providing a `FetchHttpClient` whose fetch routes by exact
  * URL. Unmapped URLs answer 404 (the natural "not found" a real upstream
  * would give for e.g. a follow-up author key we didn't stub). Every
- * requested URL is captured for path assertions.
+ * requested URL is captured for path assertions, and every request's
+ * `User-Agent` header (`""` when absent) for identity assertions.
  */
 export function stubRouter(routes: Record<string, StubRoute>): {
   readonly urls: string[];
+  readonly userAgents: string[];
   readonly layer: Layer.Layer<HttpClient.HttpClient>;
 } {
   const urls: string[] = [];
+  const userAgents: string[] = [];
   const toJsonText = Schema.encodeSync(Schema.fromJsonString(Schema.Unknown));
   const fetch: typeof globalThis.fetch = async (input, init) => {
     const request = new Request(input, init);
     urls.push(request.url);
+    userAgents.push(request.headers.get("user-agent") ?? "");
     const route = routes[request.url];
     if (!route) {
       return new Response(toJsonText({ error: "not found" }), {
@@ -61,5 +65,5 @@ export function stubRouter(routes: Record<string, StubRoute>): {
   const layer = FetchHttpClient.layer.pipe(
     Layer.provide(Layer.succeed(FetchHttpClient.Fetch, fetch)),
   );
-  return { urls, layer };
+  return { urls, userAgents, layer };
 }

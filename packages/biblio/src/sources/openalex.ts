@@ -9,9 +9,10 @@
  * **Polite-pool etiquette.** OpenAlex asks callers to identify themselves
  * with a contact email — either a `mailto` query parameter or a `mailto:`
  * User-Agent — in exchange for a faster, more reliable service tier. We do
- * both: the shared User-Agent (`service.ts`) already carries `mailto:`,
- * and every request here additionally appends `?mailto=` so the polite
- * pool applies even if a future caller swaps the User-Agent.
+ * both: the composed service's User-Agent already carries the caller's
+ * {@link LookupContact} address, and every request here additionally
+ * appends `?mailto=` with the same address so the polite pool applies to a
+ * caller that composes its own client with a different User-Agent.
  *
  * Untrusted-response discipline: the {@link OpenAlexWork} schema is
  * deliberately lenient (every field optional), and the normaliser only
@@ -40,13 +41,11 @@ import {
   parsePersonName,
   sanitiseText,
 } from "../record.ts";
+import { type LookupContact } from "./contact.ts";
 import { LookupFailed } from "./errors.ts";
 import { makeGet } from "./http.ts";
 
 const OPENALEX_BASE = "https://api.openalex.org";
-
-/** The contact address sent for OpenAlex's polite-pool etiquette. */
-const CONTACT_EMAIL = "me@thomasfoster.au";
 
 /** How many search results {@link searchOpenAlexByTitle} returns at most. */
 const MAX_SEARCH_RESULTS = 10;
@@ -240,16 +239,18 @@ export function normaliseOpenAlexRecord(work: OpenAlexWork): Option.Option<Bibli
  * the composed {@link BiblioLookup} keeps Crossref as the primary DOI
  * authority and wires this source in for `byTitle` search; this function
  * is what the cross-source dedup coherence proof exercises directly.
+ * `contact.email` is sent as OpenAlex's `mailto` parameter.
  *
  * @since 0.1.0
  */
 export const lookupOpenAlexByDoi: (
   client: HttpClient.HttpClient,
   doi: Doi,
+  contact: LookupContact,
 ) => Effect.Effect<Option.Option<BiblioRecord>, LookupFailed> = Effect.fn("lookupOpenAlexByDoi")(
-  function* (client: HttpClient.HttpClient, doi: Doi) {
+  function* (client: HttpClient.HttpClient, doi: Doi, contact: LookupContact) {
     const get = makeGet(client, OPENALEX_BASE, "openalex");
-    const mailto = encodeURIComponent(CONTACT_EMAIL);
+    const mailto = encodeURIComponent(contact.email);
     // The `doi:` id form is OpenAlex's documented DOI-lookup shorthand;
     // percent-encoding the DOI (which may itself contain `/`) matches the
     // Crossref client's path-injection guard.
@@ -267,20 +268,21 @@ export const lookupOpenAlexByDoi: (
  * rather than failing the whole search (fail-soft, matching the package's
  * untrusted-input posture); an empty result set is not an error. Only a
  * transport/decode fault on the search request itself fails on the typed
- * channel.
+ * channel. `contact.email` is sent as OpenAlex's `mailto` parameter.
  *
  * @since 0.1.0
  */
 export const searchOpenAlexByTitle: (
   client: HttpClient.HttpClient,
   query: string,
+  contact: LookupContact,
 ) => Effect.Effect<readonly BiblioRecord[], LookupFailed> = Effect.fn("searchOpenAlexByTitle")(
-  function* (client: HttpClient.HttpClient, query: string) {
+  function* (client: HttpClient.HttpClient, query: string, contact: LookupContact) {
     const safeQuery = query.slice(0, MAX_QUERY_LENGTH);
     const params = new URLSearchParams({
       search: safeQuery,
       "per-page": String(MAX_SEARCH_RESULTS),
-      mailto: CONTACT_EMAIL,
+      mailto: contact.email,
     });
     const get = makeGet(client, OPENALEX_BASE, "openalex");
     const response = yield* get(`/works?${params.toString()}`, OpenAlexSearchResponse);

@@ -36,7 +36,9 @@ import {
   BiblioLookup,
   biblioLookupClientLayer,
   biblioLookupLayer,
+  type BiblioLookupOptions,
   InvalidIdentifier,
+  type LookupContact,
   type LookupError,
   LookupFailed,
   lookupCrossrefByDoi,
@@ -84,9 +86,10 @@ export const program = Effect.gen(function* () {
   const lookup = yield* BiblioLookup;
   return yield* lookup.byIsbnRecord(raw);
 });
-export const provided = program.pipe(Effect.provide(biblioLookupLayer));
+export const contact: LookupContact = { product: "consumer/1.0", email: "ops@example.org" };
+export const provided = program.pipe(Effect.provide(biblioLookupLayer({ contact })));
 export const clientLayer: Layer.Layer<BiblioLookup, never, HttpClient.HttpClient> =
-  biblioLookupClientLayer;
+  biblioLookupClientLayer({ contact });
 export const direct = Option.map(doi, (proven) => lookupCrossrefByDoi(client, proven));
 export const recovered = provided.pipe(
   Effect.catchTags({
@@ -118,6 +121,16 @@ export type Checks = [
     Equals<Effect.Success<typeof program>, Option.Option<BiblioRecord>>
   >,
   /** _productionLayerIsSelfContained */ Assert<Equals<Effect.Services<typeof provided>, never>>,
+  /** _contactIsRequired */ Assert<
+    Equals<Parameters<typeof biblioLookupLayer>, [options: BiblioLookupOptions]>
+  >,
+  /** _clientContactIsRequired */ Assert<
+    Equals<Parameters<typeof biblioLookupClientLayer>, [options: BiblioLookupOptions]>
+  >,
+  /** _contactShape */ Assert<Equals<BiblioLookupOptions["contact"], LookupContact>>,
+  /** _contactFields */ Assert<
+    Equals<LookupContact, { readonly product: string; readonly email: string }>
+  >,
   /** _errorTags */ Assert<Equals<LookupError["_tag"], "InvalidIdentifier" | "LookupFailed">>,
   /** _recoveredNeverFails */ Assert<Equals<Effect.Error<typeof recovered>, never>>,
 ];
