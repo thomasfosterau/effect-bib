@@ -1,6 +1,5 @@
 /**
- * The typed error channel shared by every {@link BiblioLookup} source
- * client.
+ * The typed error channel shared by every {@link BiblioLookup} source client.
  *
  * @copyright Thomas Foster
  * @module biblio/sources/errors
