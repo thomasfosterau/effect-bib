@@ -5,7 +5,7 @@
 ## Common pitfalls
 
 - **Package-local rules live in [`packages/biblio/CLAUDE.md`](packages/biblio/CLAUDE.md)**: the `BiblioRecord` wire contract, the browser-safe root entry and its forbidden-module list, total decoders, the plain-nullable seams (and why `effect/prefer-option-over-null` stays at `error`), the doc-comment rules (`@since`, `@example`, hover summaries). Read it before touching `packages/biblio`.
-- **This package emits declarations; the application never did.** `tests/dist-consumer` type-checks a consumer fixture against the emitted `dist/` declarations with `Equals<…>` assertions on the brands and the service shape (a brand that emits as `string`, or a service that emits as `any`, fails there rather than in an application). `vp run check` runs it, but only against a `dist/` you have already built: it doesn't build one and silently checks `src/` without it (#22); see Verification.
+- **This package emits declarations; the application never did.** `tests/dist-consumer` type-checks a consumer fixture against the emitted `dist/` declarations with `Equals<…>` assertions on the brands and the service shape (a brand that emits as `string`, or a service that emits as `any`, fails there rather than in an application). `vp run check` builds `dist/` first (the check depends on `@thomasfosterau/biblio#build`) and fails outright if the entry declarations are missing, rather than falling back to `src/` (#22).
 - **No application vocabulary.** No WEMI / spine mapping, no `owner_id`, no database rows, no ingest operations, no app paths in doc comments. Those stay in the apps; the package stops at the CSL record.
 - **Every external version lives in `pnpm-workspace.yaml`'s catalog** (`catalogMode: strict`; manifests carry only `catalog:`, `catalog:peers` or `workspace:*`). After editing it, run `pnpm install` and commit `pnpm-lock.yaml`, or CI fails with `ERR_PNPM_LOCKFILE_CONFIG_MISMATCH`.
 - **`@effect/tsgo`, `@typescript/native` and `vite-plus` bump together.** `prepare` (`effect-tsgo patch`) overwrites the native `tsc` and `oxlint` and fails `pnpm install` with `UnsupportedTargetPackageVersionError` on an unsupported pairing; read the comment on `@effect/tsgo` in `pnpm-workspace.yaml` first.
@@ -20,8 +20,8 @@
 ## Commands
 
 - `vp install` — dependencies plus the Vite+ git hooks (pre-commit runs `vp staged`: `vp check --fix` on staged files). No pre-push hook.
-- `vp check` — format + lint (Oxfmt + Oxlint). `vp run check` — the type gate: the package's `check` (sources, tests and the type-level `tests/**/*.types.ts`) plus the dist-consumer declaration check, which reads `packages/biblio/dist` only once it is built (#22; build first). They are different commands.
-- `vp run -r test:unit` — unit tests (the lookup sources run against a stubbed `FetchHttpClient`, never the network).
+- `vp check` — format + lint (Oxfmt + Oxlint). `vp run check` — the type gate: the package's `check` (sources, tests and the type-level `tests/**/*.types.ts`) plus the dist-consumer declaration check against `packages/biblio/dist`, which it builds first. They are different commands.
+- `vp run -r test:unit` — builds `dist/`, then the unit tests (the lookup sources run against a stubbed `FetchHttpClient`, never the network).
 - `vp run -r build` — emit `dist/`.
 - `vp run -r docgen` — compile and execute every JSDoc `@example` (output under `packages/*/docs/`, gitignored). Execution needs `"runExamples": true` in `packages/biblio/docgen.json`: `@effect/docgen` 4 defaults it off and only type-checks, logging "Skipping running examples" (#34).
 - `pnpm changeset` — add a changeset.
@@ -33,14 +33,14 @@ Invoke everything else through `vp` (`vp exec` instead of `npx`; `vp run <task>`
 Before you report work as done, run the gates below in order (CI's order, `.github/workflows/ci.yml`) and quote each command with its final pass/fail. If a gate can't run here, say which and why in the PR body; never imply it ran.
 
 1. `vp check`
-2. `vp run check`
-3. `vp run -r test:unit`
-4. `vp run -r build`
+2. `vp run -r build`
+3. `vp run check`
+4. `vp run -r test:unit`
 5. `vp run -r docgen`
 6. `pnpm audit --audit-level high` (network)
 7. `fallow audit --format json --quiet --explain --gate-marker agent` (the fallow gate below; not a CI step)
 
-- **Build first when verifying locally.** Neither `vp run check` nor `vp run -r test:unit` builds `dist/` (#22): without it, the dist-consumer check silently resolves `src/`, and the built-artifact cases in `packages/biblio/tests/entry-points.test.ts` skip. Run `vp run -r build` before steps 2 and 3, and treat a skip there as not run.
+- **`dist/` is built by the gates that read it.** `vp run check` and `vp run -r test:unit` each depend on `build` (#22), so on a clean tree they emit `dist/` before the dist-consumer check and the built-artifact cases in `packages/biblio/tests/entry-points.test.ts` run. Those cases still skip under a bare `vp test` without `dist/`, except under `CI`, where they fail instead; a skip there is not a run.
 - **Before pushing, reinstall from clean** to catch a missing peer a warm tree hides: `rm -rf node_modules packages/*/node_modules tests/*/node_modules && pnpm install --frozen-lockfile`, then the gates.
 
 ## Branches and pull requests

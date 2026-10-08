@@ -23,9 +23,9 @@ Maintained by Thomas Foster, with a workflow meant to be approachable for both h
 vp lint                                    # oxlint
 vp fmt                                     # oxfmt (writes)
 vp check --fix                             # format + lint, autofix
-vp run check                               # the whole type gate (build dist/ first; see AGENTS.md#verification)
+vp run check                               # the whole type gate (builds dist/ for the declaration check)
 vp run --filter ./packages/biblio check    # one package's type check
-vp run -r test:unit                        # unit tests
+vp run -r test:unit                        # unit tests (builds dist/ first)
 vp test run tests/some.test.ts             # single file (from inside the package)
 vp run -r build                            # emit dist/
 vp run -r docgen                           # compile + execute the JSDoc examples

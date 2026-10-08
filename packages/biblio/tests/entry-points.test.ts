@@ -205,19 +205,21 @@ describe("package exports map", () => {
 /**
  * `tsc` emits one file per module and only rewrites the `.ts` extensions, so
  * the source graph above is the built graph. This re-checks it on the
- * artifact anyway, because that is what actually ships. CI builds before it
- * tests; a bare `vp run test:unit` may not have, so the assertions are
- * reported as skipped rather than silently passing when `dist/` is absent.
+ * artifact anyway, because that is what actually ships. The `test:unit` and
+ * `test:coverage` tasks depend on `build`, so `vp run` always has `dist/`
+ * here. A bare `vp test` may not, and there the cases are reported as
+ * skipped rather than silently passing; under `CI` they run regardless, so a
+ * missing `dist/` fails instead of skipping (#22).
  */
 describe("built artifact", () => {
   const built = path.join(DIST, "index.js");
-  const hasDist = fs.existsSync(built);
+  const unbuilt = !fs.existsSync(built) && process.env["CI"] === undefined;
 
-  it.skipIf(!hasDist)("ships a root entry that resolves no unstable effect surface", () => {
+  it.skipIf(unbuilt)("ships a root entry that resolves no unstable effect surface", () => {
     expect(unstable(graphFrom(built, DIST))).toEqual([]);
   });
 
-  it.skipIf(!hasDist)("ships declarations for both entry points", () => {
+  it.skipIf(unbuilt)("ships declarations for both entry points", () => {
     for (const file of ["index.js", "index.d.ts", "sources/index.js", "sources/index.d.ts"]) {
       expect(fs.existsSync(path.join(DIST, file)), `dist/${file} missing`).toBe(true);
     }
@@ -241,13 +243,13 @@ describe("built artifact", () => {
       { cwd: ROOT, encoding: "utf8" },
     );
 
-  it.skipIf(!hasDist)("loads the root entry with effect/http and its siblings unresolvable", () => {
+  it.skipIf(unbuilt)("loads the root entry with effect/http and its siblings unresolvable", () => {
     const result = loadWithoutUnstable(built);
     expect(`${result.stdout}${result.stderr}`).toContain("LOADED");
     expect(result.status).toBe(0);
   });
 
-  it.skipIf(!hasDist)("is checked by hooks that do block the sources entry (control)", () => {
+  it.skipIf(unbuilt)("is checked by hooks that do block the sources entry (control)", () => {
     const result = loadWithoutUnstable(path.join(DIST, "sources", "index.js"));
     const output = `${result.stdout}${result.stderr}`;
     expect(output).toContain("FORBIDDEN_PEER:effect/http");

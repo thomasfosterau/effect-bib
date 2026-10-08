@@ -57,14 +57,18 @@ export default defineConfig({
         input: cacheInputs,
         output: ["docs/**"],
       },
+      // Both test tasks build first: `tests/entry-points.test.ts` re-walks
+      // and loads the built `dist/`, and skips those cases without it (#22).
       "test:unit": {
         command: "vp test run tests",
+        dependsOn: ["build"],
         env: ["VITEST_MAX_WORKERS", "NODE_OPTIONS"],
         input: cacheInputs,
         output: [],
       },
       "test:coverage": {
         command: "vp test run tests --coverage",
+        dependsOn: ["build"],
         env: ["VITEST_MAX_WORKERS", "NODE_OPTIONS"],
         input: cacheInputs,
         output: ["coverage/**"],

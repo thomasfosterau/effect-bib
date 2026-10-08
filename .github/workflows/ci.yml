@@ -46,12 +46,15 @@ jobs:
             vp-task-v1-${{ runner.os }}-
       - name: Format and lint
         run: vp check
+      # Build first, as its own step. `check` (through the dist-consumer
+      # check) and `test:unit` each depend on `build` as well, so neither can
+      # run against a missing dist/ (#22).
+      - name: Build
+        run: vp run -r build
       - name: Type gates (package, type-level tests, emitted declarations)
         run: vp run --concurrency-limit 2 check
       - name: Unit tests
         run: vp run -r test:unit
-      - name: Build
-        run: vp run -r build
       # Type-checks AND runs every JSDoc @example.
       - name: Verify documentation examples (docgen)
         run: vp run -r docgen
