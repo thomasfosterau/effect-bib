@@ -6,21 +6,21 @@
 #
 # The vitest toolchain (`vite` / `vitest` / `vite-plus` /
 # `@vitest/coverage-istanbul`) is a set too, but it has no group, because
-# Dependabot never moves it: it is pinned to vite-plus's exact versions, so it
-# moves only by hand, with a vite-plus release (see the `vite-plus` note in
-# pnpm-workspace.yaml), and its version updates are ignored below. The
-# coverage provider is in that set because vite-plus ships none and its `test
-# --coverage` guard throws unless the provider equals its bundled `vitest`
-# exactly (#47); a Dependabot bump of the provider alone breaks
+# Dependabot's version updates never move it: it is pinned to vite-plus's exact
+# versions, so it moves only by hand, with a vite-plus release (see the
+# `vite-plus` note in pnpm-workspace.yaml), and its version updates are ignored
+# below. The coverage provider is in that set because vite-plus ships none and
+# its `test --coverage` guard throws unless the provider equals its bundled
+# `vitest` exactly (#47); a Dependabot bump of the provider alone breaks
 # `test:coverage` while CI, which does not run it, stays green. Security
 # updates stay enabled (the ignore is scoped to the `version-update:semver-*`
-# update types), so a security PR touching `vitest`,
+# update types), so a security PR touching `vite`, `vitest`,
 # `@vitest/coverage-istanbul` or `vite-plus` can still open: do NOT merge it
 # alone. Moving one member skews the set off vite-plus's exact pins while CI
 # stays green; take the fix by moving the whole set with a vite-plus release
-# instead. A group with `applies-to: security-updates` would not help: it
-# only combines members that are themselves vulnerable, so it never moves the
-# rest of the set along.
+# instead. A group with `applies-to: security-updates` would not help: it only
+# combines members that are themselves vulnerable, so it never moves the rest
+# of the set along.
 #
 # `@effect/tsgo`, `typescript` (the TS6 alias) and `@typescript/native` are a
 # set too: `effect-tsgo patch` matches the native `tsc` and `oxlint` by gitHead
