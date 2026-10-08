@@ -50,7 +50,7 @@ catalog:
   # node_modules/@effect/tsgo/dist/effect-tsgo.cjs before bumping any of the
   # three.
   "@effect/tsgo": 0.47.2
-  "@mpsuesser/oxlint-plugin-effect": ^0.5.0
+  "@mpsuesser/oxlint-plugin-effect": ^0.6.0
   "@types/node": ^26.6.4
   # The coverage provider must equal the `vitest` that vite-plus bundles (see
   # the vite-plus note below), so it moves with vite-plus, by hand: vite-plus
