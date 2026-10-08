@@ -1,5 +1,5 @@
 /**
- * The built-in citation-style registry (#1072).
+ * The built-in citation-style registry.
  *
  * Styles are typed data inputs; this is the lookup a caller resolves a style
  * id against. Adding a style is adding an entry here — the engine is
@@ -9,6 +9,8 @@
  * @module biblio/render/styles
  * @since 0.1.0
  */
+
+// See website#1072.
 
 import { apaStyle } from "./styles/apa.ts";
 import { vancouverStyle } from "./styles/vancouver.ts";

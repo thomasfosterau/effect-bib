@@ -1,11 +1,9 @@
 /**
  * The render module's public types — the typed **style** and **locale**
- * inputs, the render context, and the rendered-bibliography output shape
- * (#1072).
+ * inputs, the render context, and the rendered-bibliography output shape.
  *
- * Styles and locales are **typed data inputs**, not fetched at render time
- * (the "no network at render time" acceptance criterion). A
- * {@link CitationStyle} is a small typed descriptor — an id, a category, a
+ * Styles and locales are **typed data inputs**, not fetched at render time.
+ * A {@link CitationStyle} is a small typed descriptor — an id, a category, a
  * deterministic reference renderer, and a sort key — and a {@link Locale}
  * is a bag of localisable terms. Both are plain data; the engine
  * (`render.ts`) is a pure function of `(records, style, locale)`.
@@ -14,6 +12,9 @@
  * @module biblio/render/types
  * @since 0.1.0
  */
+
+// Typed data inputs are website#1072's "no network at render time" acceptance
+// criterion.
 
 import type * as Option from "effect/Option";
 import type { BiblioRecord } from "../record.ts";

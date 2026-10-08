@@ -1,5 +1,5 @@
 /**
- * Fuzzy title/author matching for bibliographic dedup (#610).
+ * Fuzzy title/author matching for bibliographic dedup.
  *
  * Exact-identifier dedup misses a record that arrives without a usable
  * identifier, or with a *different* identifier for the same work (a reprint
@@ -23,6 +23,8 @@
  * @module biblio/dedup-match
  * @since 0.1.0
  */
+
+// See website#610.
 
 import * as Array from "effect/Array";
 import * as HashSet from "effect/HashSet";

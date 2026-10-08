@@ -1,5 +1,5 @@
 /**
- * Shared formatting primitives for the render module (#1072).
+ * Shared formatting primitives for the render module.
  *
  * These are the small, style-agnostic building blocks — name lists, given-
  * name initialisation, date-to-year, and punctuation joins — that the
@@ -7,14 +7,15 @@
  * objects) is what lets each style be a thin, low-branch descriptor rather
  * than a bespoke renderer: one name engine, many option sets.
  *
- * Everything is pure plain TypeScript (no Effect runtime), matching the
- * `dedup-match.ts` posture — the renderer is a deterministic function of its
- * data inputs.
+ * Everything is pure plain TypeScript (no Effect runtime): the renderer is a
+ * deterministic function of its data inputs.
  *
  * @copyright Thomas Foster
  * @module biblio/render/format
  * @since 0.1.0
  */
+
+// website#1072. The pure, plain-TypeScript posture matches `dedup-match.ts`.
 
 import * as Array from "effect/Array";
 import * as Option from "effect/Option";

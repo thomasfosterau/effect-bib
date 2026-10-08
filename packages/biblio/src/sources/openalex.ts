@@ -1,6 +1,5 @@
 /**
- * OpenAlex source client (#1070) — the modern
- * scholarly-graph source added alongside the OpenLibrary/Crossref refit.
+ * OpenAlex (scholarly graph) source client.
  * Two capabilities, both emitting the CSL-aligned {@link BiblioRecord}:
  * a works lookup by DOI ({@link lookupOpenAlexByDoi}), and a title search
  * returning ranked candidates ({@link searchOpenAlexByTitle}), which backs
@@ -23,6 +22,9 @@
  * @module biblio/sources/openalex
  * @since 0.1.0
  */
+
+// website#1070: the modern scholarly-graph source, added alongside the
+// OpenLibrary/Crossref refit.
 
 import * as Array from "effect/Array";
 import * as Effect from "effect/Effect";

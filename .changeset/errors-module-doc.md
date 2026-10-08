@@ -2,4 +2,4 @@
 "@thomasfosterau/biblio": patch
 ---
 
-The `sources/errors` module's doc comment is a one-sentence summary in consumer vocabulary: the typed error channel shared by every `BiblioLookup` source client.
+Each module's doc comment (its hover and its docgen page) describes the module in consumer vocabulary. The `sources/errors` module's is a one-sentence summary: the typed error channel shared by every `BiblioLookup` source client.

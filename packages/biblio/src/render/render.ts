@@ -1,11 +1,11 @@
 /**
- * The render engine (#1072).
+ * The render engine.
  *
  * Pure functions from `(records, style, locale)` to formatted strings. The
  * whole surface is deterministic and network-free: styles and locales are
  * typed **data inputs**, sorting uses a stable code-unit comparison (not the
  * environment-dependent `localeCompare`), so the same records + style always
- * yield the same output — the property the snapshot fixtures pin.
+ * yield the same output.
  *
  * Ordering follows the style category: `author-date` styles sort by the
  * style's {@link CitationStyle.sortKey}; `numeric` styles preserve citation
@@ -15,6 +15,8 @@
  * @module biblio/render/render
  * @since 0.1.0
  */
+
+// website#1072. That determinism is the property the snapshot fixtures pin.
 
 import * as Array from "effect/Array";
 import * as Option from "effect/Option";
