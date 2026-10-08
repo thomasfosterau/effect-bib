@@ -3,10 +3,14 @@
 #
 # `groups` collect dependencies that MUST move together: the Effect 4 release
 # line is a lockstep-versioned singleton set; the vitest toolchain is pinned to
-# vite-plus's exact versions, so `vite` / `vitest` / `vite-plus` only ever move
-# by hand, together, and their version updates are ignored here (security
-# updates stay enabled: the ignore is scoped to the `version-update:semver-*`
-# update types).
+# vite-plus's exact versions, so `vite` / `vitest` / `vite-plus` /
+# `@vitest/coverage-istanbul` only ever move by hand, together, and their
+# version updates are ignored here (security updates stay enabled: the ignore
+# is scoped to the `version-update:semver-*` update types). The coverage
+# provider is in that set because vite-plus ships none and its `test
+# --coverage` guard throws unless the provider equals its bundled `vitest`
+# exactly (#47); a Dependabot bump of the provider alone breaks
+# `test:coverage` while CI, which does not run it, stays green.
 #
 # `@effect/tsgo`, `typescript` (the TS6 alias) and `@typescript/native` are a
 # set too: `effect-tsgo patch` matches the native `tsc` and `oxlint` by gitHead
@@ -78,6 +82,13 @@ updates:
             "version-update:semver-patch",
           ]
       - dependency-name: "vitest"
+        update-types:
+          [
+            "version-update:semver-major",
+            "version-update:semver-minor",
+            "version-update:semver-patch",
+          ]
+      - dependency-name: "@vitest/coverage-istanbul"
         update-types:
           [
             "version-update:semver-major",
