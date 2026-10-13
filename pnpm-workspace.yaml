@@ -31,8 +31,8 @@ catalog:
   # `docgen` task). Its `typescript` peer (`^5`) resolves to the TS6 alias
   # below, which pnpm tolerates via `peerDependencyRules`; the JS API it uses
   # is unchanged in 6.
-  "@effect/docgen": ^4.0.0
-  "@effect/language-service": ^0.87.3
+  "@effect/docgen": ^4.0.3
+  "@effect/language-service": ^0.87.4
   # Effect Language Service as a native (TypeScript-Go) binary — the TS7 side
   # of the 6/7 split. `effect-tsgo patch` overwrites the native `tsc` binary
   # with an Effect-patched build matched by gitHead, so this pins in lockstep
@@ -64,7 +64,7 @@ catalog:
   # and `peerDependencyRules` (`allowAny: vitest`, below) accepts any `vitest`
   # version whatever range the peer declares.
   "@vitest/coverage-istanbul": 4.1.11
-  effect: 4.0.0
+  effect: 4.0.3
   effect-solutions: ^0.5.3
   fallow: 3.31.0
   # `@effect/docgen` runs each example under tsx.
