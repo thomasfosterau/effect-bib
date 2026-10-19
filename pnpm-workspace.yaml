@@ -56,7 +56,7 @@ catalog:
   "@mpsuesser/oxlint-plugin-effect": ^0.6.0
   # The BibTeX scanner's parser combinators (#72). Peers `effect ^4.0.0`.
   "@thomasfosterau/effect-parse": 0.1.0
-  "@types/node": ^26.6.4
+  "@types/node": ^26.6.5
   # The coverage provider must equal the `vitest` that vite-plus bundles (see
   # the vite-plus note below), so it moves with vite-plus, by hand: vite-plus
   # ships no provider, and its `test --coverage` startup guard throws on any
