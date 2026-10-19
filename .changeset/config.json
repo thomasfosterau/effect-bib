@@ -1,6 +1,6 @@
 {
   "$schema": "https://unpkg.com/@changesets/config@4.0.0/schema.json",
-  "changelog": ["@changesets/changelog-github", { "repo": "thomasfosterau/reference-manager" }],
+  "changelog": ["@changesets/changelog-github", { "repo": "thomasfosterau/effect-bib" }],
   "commit": false,
   "format": false,
   "fixed": [],

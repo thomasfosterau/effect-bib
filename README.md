@@ -1,4 +1,4 @@
-# reference-manager
+# effect-bib
 
 Reference-management packages for Effect, published under the `@thomasfosterau` scope.
 
