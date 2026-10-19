@@ -8,13 +8,13 @@ Maintained by Thomas Foster, with a workflow meant to be approachable for both h
 
 ## CI expectations
 
-[ci.yml](.github/workflows/ci.yml) runs one job, the gates in [AGENTS.md#verification](AGENTS.md#verification) minus the local fallow audit. [release.yml](.github/workflows/release.yml) runs changesets/action on `main`: it opens the "Version Packages" PR while unreleased changesets exist and publishes once it merges, via npm trusted publishing (OIDC) from the protected `release` environment — see [PUBLISHING.md](PUBLISHING.md).
+[ci.yml](.github/workflows/ci.yml) runs one job, the gates in [AGENTS.md#verification](AGENTS.md#verification) minus the local fallow audit. [release.yml](.github/workflows/release.yml) runs changesets/action on `trunk`: it opens the "Version Packages" PR while unreleased changesets exist and publishes once it merges, via npm trusted publishing (OIDC) from the protected `release` environment — see [PUBLISHING.md](PUBLISHING.md).
 
 ## Pre-PR checklist
 
 1. The gates in [AGENTS.md#verification](AGENTS.md#verification), in order, each passing.
 2. A changeset (`pnpm changeset`) for every change to a published package's behaviour.
-3. `git fetch origin main && git rebase origin/main`.
+3. `git fetch origin trunk && git rebase origin/trunk`.
 4. Docs: the package `README.md` for any exported change (and an `@example` on a new entry point); the package `CLAUDE.md` for a new term or invariant; `@since` on every new export.
 
 ## Running individual checks

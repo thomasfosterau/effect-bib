@@ -1,7 +1,7 @@
 name: Release
 
 # Changesets release flow, copied from the effect-jsonapi library: on every
-# push to `main`, changesets/action either opens/updates the "Version
+# push to `trunk`, changesets/action either opens/updates the "Version
 # Packages" PR (when unreleased changesets exist) or, when that PR has merged
 # and no changesets remain, publishes every package under packages/* to npm
 # via OIDC trusted publishing and tags the release. There is no NPM_TOKEN —
@@ -9,7 +9,7 @@ name: Release
 
 on:
   push:
-    branches: [main]
+    branches: [trunk]
 
 concurrency:
   group: release-${{ github.ref }}

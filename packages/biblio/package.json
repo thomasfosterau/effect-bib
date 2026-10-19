@@ -54,6 +54,9 @@
     },
     "access": "public"
   },
+  "dependencies": {
+    "@thomasfosterau/effect-parse": "catalog:"
+  },
   "devDependencies": {
     "@effect/docgen": "catalog:",
     "@effect/language-service": "catalog:",

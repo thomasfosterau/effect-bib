@@ -10,7 +10,7 @@ Bibliographic toolkit on Effect: CSL-JSON records as Effect Schema, checksummed 
 pnpm add @thomasfosterau/biblio effect
 ```
 
-`effect` (`>=4.0.0-rc.118`) is a peer dependency, built against `effect@4.0.0-rc.118`. Node.js 22 or newer is required.
+`effect` (`>=4.0.0-rc.118`) is a peer dependency, built against `effect@4.0.0-rc.118`. Node.js 22 or newer is required. The one runtime dependency, [`@thomasfosterau/effect-parse`](https://github.com/thomasfosterau/effect-parse) (the BibTeX scanner), peers `effect ^4.0.0`, so an `effect` 4.0 pre-release draws a peer warning from it.
 
 ### Entry points
 
@@ -116,7 +116,7 @@ assert.strictEqual(
 
 ### Parsing — `.`
 
-**`parseBibliographicFile(content, format): ParseOutcome[]`** — `format` is `ImportFormat` (`"bibtex" | "zotero-json" | "csv" | "ris"`); the per-format parsers `parseBibtex`, `parseZoteroJson`, `parseCsv`, `parseRis` are exported too. Pure and dependency-free. One `ParseOutcome` per source entry: `{ outcome: "parsed", record }` or `{ outcome: "skipped", reason: SkipReason }` (`"no-title" | "no-identifier" | "malformed"`). A record needs a title and at least one dedup identifier (ISBN or DOI). Input over `MAX_INPUT_LENGTH` (8,000,000 code units) is dropped whole; at most `MAX_RECORDS` (5000) entries are emitted.
+**`parseBibliographicFile(content, format): ParseOutcome[]`** — `format` is `ImportFormat` (`"bibtex" | "zotero-json" | "csv" | "ris"`); the per-format parsers `parseBibtex`, `parseZoteroJson`, `parseCsv`, `parseRis` are exported too. Pure and network-free; the BibTeX scanner is a grammar in [`@thomasfosterau/effect-parse`](https://github.com/thomasfosterau/effect-parse) combinators, with brace nesting capped at 32 levels (deeper nesting stops the scan like an unbalanced tail). One `ParseOutcome` per source entry: `{ outcome: "parsed", record }` or `{ outcome: "skipped", reason: SkipReason }` (`"no-title" | "no-identifier" | "malformed"`). A record needs a title and at least one dedup identifier (ISBN or DOI). Input over `MAX_INPUT_LENGTH` (8,000,000 code units) is dropped whole; at most `MAX_RECORDS` (5000) entries are emitted.
 
 ```ts
 const outcomes = parseBibliographicFile(bibtex, "bibtex");
