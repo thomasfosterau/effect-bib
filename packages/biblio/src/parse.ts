@@ -6,7 +6,8 @@
  * The parsers are the file-side analogue of the source-client normalisers:
  * where the lookup path resolves a single identifier against an upstream
  * API, this path lifts a whole exported library off disk. Every parser is
- * dependency-free (nothing beyond `effect`) and shares these properties:
+ * built on `effect` alone, except the BibTeX scanner, a grammar in
+ * `@thomasfosterau/effect-parse` combinators, and they share these properties:
  *
  * - **pure, no network, no DB** — every function is unit-testable without
  *   a database or a fetch.
@@ -32,9 +33,7 @@
  * @since 0.1.0
  */
 
-// The hand-rolled, dependency-free scanner posture is deliberate and
-// preserved (website#1069).
-
+import { Parser, Token } from "@thomasfosterau/effect-parse";
 import * as Array from "effect/Array";
 import * as Match from "effect/Match";
 import * as MutableHashMap from "effect/MutableHashMap";
@@ -319,51 +318,83 @@ interface BibtexEntry {
 }
 
 /**
- * Splits a BibTeX document into raw `@type{ ... }` entries. Hand rolled
- * over the common subset (no dependency): finds each `@` entry head, then
- * balances braces to the matching close so a `title = {a {nested} brace}`
- * field doesn't terminate the entry early. A truncated / unbalanced tail
- * stops the scan — it never throws.
+ * The deepest `{…}` nesting the BibTeX grammar accepts. The grammar is
+ * unrolled to this depth rather than recursive: effect-parse's interpreter
+ * recurses once per nesting level, and an unbounded `Parser.suspend` grammar
+ * overflows the stack (`RangeError`) at a few thousand levels, so a hostile
+ * 5 KB `{{{…` would throw (effect-parse#14). Deeper nesting is treated like
+ * an unbalanced tail.
  */
-// reason: an irreducible single-pass brace-balancing scanner; its branches
-// ARE the parse grammar (entry head / skip directive / depth tracking) and
-// splitting them would scatter the shared cursor + depth state.
-// fallow-ignore-next-line complexity
+const MAX_BRACE_DEPTH = 32;
+
+/**
+ * Consumes a parser's repetitions. The output is discarded, so compiled code
+ * collects no array of matches.
+ */
+const skipMany = <A>(self: Parser.Parser<A>): Parser.Parser<void> =>
+  Parser.asVoid(Parser.repeat(self));
+
+/** A run of characters that are not braces. */
+const unbracedRun = Token.takeTill("{}", { min: 1 });
+
+/** A balanced `{…}` group, nested at most `depth` levels. */
+function bracedTo(depth: number): Parser.Parser<void> {
+  const inner = depth <= 1 ? unbracedRun : Parser.alt(unbracedRun, bracedTo(depth - 1));
+  return Parser.asVoid(Parser.delimited(Token.literal("{"), skipMany(inner), Token.literal("}")));
+}
+
+const braced = bracedTo(MAX_BRACE_DEPTH);
+
+/** `@comment`, `@string` and `@preamble` heads, which are not reference entries. */
+const isNonEntryKind = (kind: string): boolean =>
+  kind === "comment" || kind === "string" || kind === "preamble" || kind === "";
+
+/** An entry head: skips to the next `@` and reads its type up to the `{`. */
+const entryHead = Parser.preceded(
+  Parser.seq(Token.takeUntil("@"), Token.literal("@")),
+  Parser.map(Token.takeUntil("{"), (kind) => kind.trim().toLowerCase()),
+);
+
+/** A non-entry head steps past its `{` only: its body is scanned as text. */
+const nonEntryStep = Parser.as(
+  Parser.zipLeft(Parser.filter(entryHead, isNonEntryKind), Token.literal("{")),
+  Option.none<BibtexEntry>(),
+);
+
+/** A reference entry: its head and its brace-balanced `{ ... }` body. */
+const entryStep = Parser.map(
+  Parser.seq(entryHead, Parser.taken(braced)),
+  ([kind, body]): Option.Option<BibtexEntry> => Option.some({ kind, body: body.slice(1, -1) }),
+);
+
+/**
+ * The whole entry scan: stops at the first unbalanced entry or the end, and
+ * keeps the first {@link MAX_RECORDS} entries (it scans past them: a `fold`
+ * cannot stop on its accumulator, effect-parse#16). Compiled with the `closure`
+ * backend, which never calls `new Function`, so a page's Content Security
+ * Policy never sees it.
+ */
+const bibtexEntries = Parser.compile(
+  Parser.fold(Parser.alt(nonEntryStep, entryStep), {
+    init: (): BibtexEntry[] => [],
+    f: (entries, step) => {
+      if (Option.isSome(step) && entries.length < MAX_RECORDS) entries.push(step.value);
+      return entries;
+    },
+  }),
+  { backend: "closure" },
+);
+
+/**
+ * Splits a BibTeX document into raw `@type{ ... }` entries: finds each `@`
+ * entry head, then balances braces to the matching close so a
+ * `title = {a {nested} brace}` field doesn't terminate the entry early. A
+ * truncated / unbalanced tail stops the scan — it never throws.
+ */
 function splitBibtexEntries(content: string): BibtexEntry[] {
-  const entries: BibtexEntry[] = [];
-  let i = 0;
-  const n = content.length;
-  // oxlint-disable-next-line effect/imperative-loops -- character-position scanner: an `Arr.*` form needs `content.split("")`, one array element per UTF-16 unit of an input bounded only by MAX_INPUT_LENGTH (8 MB), so the rewrite is a memory-DoS regression on the exact hostile input this scanner is bounded against.
-  while (i < n && entries.length < MAX_RECORDS) {
-    const at = content.indexOf("@", i);
-    if (at === -1) break;
-    const open = content.indexOf("{", at);
-    if (open === -1) break;
-    const kind = content
-      .slice(at + 1, open)
-      .trim()
-      .toLowerCase();
-    // A `@comment`, `@string`, or `@preamble` is not a reference entry.
-    if (kind === "comment" || kind === "string" || kind === "preamble" || kind === "") {
-      i = open + 1;
-      continue;
-    }
-    let depth = 0;
-    let j = open;
-    // oxlint-disable-next-line effect/imperative-loops -- brace-depth balancer over character positions; materialising the (MAX_INPUT_LENGTH = 8 MB) body as a character array to fold over is a memory-DoS regression, and the loop must stop at the matching `}` rather than traverse to the end.
-    for (; j < n; j++) {
-      const c = content[j];
-      if (c === "{") depth++;
-      else if (c === "}") {
-        depth--;
-        if (depth === 0) break;
-      }
-    }
-    if (depth !== 0) break; // unbalanced tail — stop, don't throw
-    entries.push({ kind, body: content.slice(open + 1, j) });
-    i = j + 1;
-  }
-  return entries;
+  // A `fold` with no minimum always succeeds, so this never fails.
+  const scanned = Parser.parsePeek(bibtexEntries, content);
+  return Result.isSuccess(scanned) ? scanned.success[1] : [];
 }
 
 /** Strips one layer of wrapping `{…}` or `"…"` from a BibTeX field value. */
@@ -375,41 +406,67 @@ function unwrapBibtexValue(value: string): string {
 }
 
 /**
+ * A `}` with no open `{` in this value (the field key swallowed its `{`):
+ * kept as text rather than ending the value, so the field still parses.
+ */
+const strayClose = Token.literal("}");
+
+/** A `"…"` value; braces inside it still balance. */
+const quoted = Parser.delimited(
+  Token.literal('"'),
+  skipMany(Parser.alt(Token.takeTill('{}"', { min: 1 }), braced, Parser.asVoid(strayClose))),
+  Token.literal('"'),
+);
+
+/** An unterminated `"`: the value runs to the end of the body. */
+const unterminatedQuote = Parser.preceded(Token.literal('"'), Token.rest);
+
+/** A field value, up to the next top-level, unquoted `,` or the end. */
+const fieldValue = Parser.taken(
+  skipMany(
+    Parser.alt(
+      Token.takeTill('{}",', { min: 1 }),
+      braced,
+      Parser.asVoid(strayClose),
+      Parser.asVoid(quoted),
+      Parser.asVoid(unterminatedQuote),
+    ),
+  ),
+);
+
+/** One `key = value` field and its terminating `,` (or the end). */
+const bibtexField = Parser.seq(
+  Token.takeUntil("="),
+  Token.literal("="),
+  fieldValue,
+  Parser.alt(Token.literal(","), Parser.eof),
+);
+
+/** An entry body: the citation key, then the fields (compiled as above). */
+const bibtexFields = Parser.compile(
+  Parser.preceded(
+    Parser.seq(Token.takeUntil(","), Token.literal(",")),
+    Parser.fold(bibtexField, {
+      init: () => MutableHashMap.empty<string, string>(),
+      f: (fields, [rawKey, , value]) => {
+        const key = rawKey.trim().toLowerCase();
+        if (String.isNonEmpty(key)) MutableHashMap.set(fields, key, unwrapBibtexValue(value));
+        return fields;
+      },
+    }),
+  ),
+  { backend: "closure" },
+);
+
+/**
  * Pulls the `key = value` fields out of one BibTeX entry body into a map.
  * Brace-balances each value so a `,` inside `{…}` doesn't split a field.
  * Unknown / duplicate keys are last-wins.
  */
-// reason: an irreducible single-pass field scanner; the depth / quote / comma
-// branches are the BibTeX value grammar and share a running cursor.
-// fallow-ignore-next-line complexity
 function parseBibtexFields(body: string): MutableHashMap.MutableHashMap<string, string> {
-  const fields = MutableHashMap.empty<string, string>();
-  const firstComma = body.indexOf(",");
-  if (firstComma === -1) return fields;
-  let i = firstComma + 1;
-  const n = body.length;
-  // oxlint-disable-next-line effect/imperative-loops -- field scanner driven by a character cursor; an `Arr.*` form needs `body.split("")`, one array element per UTF-16 unit of an entry body bounded only by MAX_INPUT_LENGTH (8 MB), so the rewrite is a memory-DoS regression.
-  while (i < n) {
-    const eq = body.indexOf("=", i);
-    if (eq === -1) break;
-    const key = body.slice(i, eq).trim().toLowerCase();
-    let j = eq + 1;
-    let depth = 0;
-    let inQuote = false;
-    // oxlint-disable-next-line effect/imperative-loops -- brace/quote-depth scan over character positions; folding needs the whole (MAX_INPUT_LENGTH = 8 MB) body as a character array, and the scan must stop at the field-terminating comma rather than traverse to the end.
-    while (j < n) {
-      const c = body[j];
-      if (c === "{") depth++;
-      else if (c === "}") depth = Math.max(0, depth - 1);
-      else if (c === '"' && depth === 0) inQuote = !inQuote;
-      else if (c === "," && depth === 0 && !inQuote) break;
-      j++;
-    }
-    const value = body.slice(eq + 1, j);
-    if (String.isNonEmpty(key)) MutableHashMap.set(fields, key, unwrapBibtexValue(value));
-    i = j + 1;
-  }
-  return fields;
+  // Fails only on a body with no `,` after the citation key: no fields.
+  const scanned = Parser.parsePeek(bibtexFields, body);
+  return Result.isSuccess(scanned) ? scanned.success[1] : MutableHashMap.empty<string, string>();
 }
 
 /** Splits a BibTeX name field on the ` and ` separator into display names. */

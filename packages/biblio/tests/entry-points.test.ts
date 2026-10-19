@@ -1,6 +1,7 @@
 /**
  * Mechanical proof that the entry-point split keeps its promise: the root
- * entry (`.`) resolves `effect` and nothing else — never one of the modules formerly under `effect/unstable/*`
+ * entry (`.`) resolves `effect` and `@thomasfosterau/effect-parse` (whose
+ * own built graph is walked too) and nothing else — never one of the modules formerly under `effect/unstable/*`
  * (`fixtures/forbidden-effect-modules.mjs`)
  * and never a `sources/` module — so a browser bundle that imports it never
  * loads the lookup clients. The `./sources` entry is where
@@ -104,6 +105,15 @@ const graphFrom = (entry: string, dir: string): Graph => {
   };
 };
 
+/** The root entry's one dependency besides `effect`: the BibTeX scanner's combinators (#72). */
+const EFFECT_PARSE = "@thomasfosterau/effect-parse";
+
+/** Bare specifiers in `graph` other than `effect` and its modules. */
+const nonEffect = (graph: Graph): ReadonlyArray<string> =>
+  [...graph.externals.keys()].filter(
+    (specifier) => specifier !== "effect" && !specifier.startsWith("effect/"),
+  );
+
 const unstable = (graph: Graph): ReadonlyArray<string> =>
   [...graph.externals.entries()]
     .filter(([specifier]) => FORBIDDEN_SPECIFIER.test(specifier))
@@ -118,11 +128,16 @@ describe("root entry point", () => {
     expect(unstable(root)).toEqual([]);
   });
 
-  it("resolves only `effect` modules", () => {
-    const foreign = [...root.externals.keys()].filter(
-      (specifier) => specifier !== "effect" && !specifier.startsWith("effect/"),
-    );
-    expect(foreign).toEqual([]);
+  it("resolves only `effect` modules and effect-parse", () => {
+    expect(nonEffect(root).filter((specifier) => specifier !== EFFECT_PARSE)).toEqual([]);
+  });
+
+  it("reaches nothing but stable `effect` modules through effect-parse", () => {
+    const entry = createRequire(import.meta.url).resolve(EFFECT_PARSE);
+    const graph = graphFrom(entry, path.dirname(entry));
+    expect(graph.modules.length).toBeGreaterThan(1);
+    expect(unstable(graph)).toEqual([]);
+    expect(nonEffect(graph)).toEqual([]);
   });
 
   it("reaches no `sources/` module", () => {

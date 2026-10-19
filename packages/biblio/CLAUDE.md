@@ -1,6 +1,6 @@
 # `@thomasfosterau/biblio`
 
-The bibliographic toolkit (`packages/biblio`), extracted from the website application's `packages/biblio` with its history. Peer: `effect` only. Two entry points, split so a browser bundle never loads the lookup clients: `.` (pure, `effect` alone) and `./sources` (`effect/http`).
+The bibliographic toolkit (`packages/biblio`), extracted from the website application's `packages/biblio` with its history. Peer: `effect` only; one dependency, `@thomasfosterau/effect-parse`, whose combinators implement the BibTeX scanner (#72). Two entry points, split so a browser bundle never loads the lookup clients: `.` (pure: `effect` and effect-parse) and `./sources` (`effect/http`).
 
 ## Boundary
 

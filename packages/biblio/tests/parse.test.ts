@@ -148,6 +148,34 @@ describe("parseBibtex", () => {
     expect(parseBibtex(`@book{x, title={Truncated`)).toEqual([]);
   });
 
+  it("keeps a `}` the citation key left without an opener as text", () => {
+    // The key swallows the `{`, so the title's `}` has no opener.
+    const record = expectParsed(parseBibtex(`@book{{x, title=Stray}, isbn={9780062316097}}`)[0]);
+    expect(record.title).toBe("Stray}");
+  });
+
+  it("scans a non-entry block's body as text, so an entry inside it is found", () => {
+    const outcomes = parseBibtex(`@comment{ @book{x, title={Inner}, isbn={9780062316097}} }`);
+    expect(outcomes).toHaveLength(1);
+    expect(expectParsed(outcomes[0]).title).toBe("Inner");
+  });
+
+  it("treats nesting deeper than the grammar's cap like an unbalanced tail", () => {
+    const nested = (depth: number) =>
+      `@book{x, title={${"{".repeat(depth - 2)}T${"}".repeat(depth - 2)}}, isbn={9780062316097}}`;
+    expect(expectParsed(parseBibtex(nested(32))[0]).title).toBe(
+      `${"{".repeat(30)}T${"}".repeat(30)}`,
+    );
+    expect(parseBibtex(nested(33))).toEqual([]);
+  });
+
+  it("never throws on hostile nesting, however deep", () => {
+    // A recursive brace grammar overflows the stack at a few thousand levels.
+    const deep = `@book{x, title=${"{".repeat(100_000)}${"}".repeat(100_000)}}`;
+    expect(() => parseBibtex(deep)).not.toThrow();
+    expect(parseBibtex(deep)).toEqual([]);
+  });
+
   it("clamps the author list to MAX_AUTHORS", () => {
     const many = Array.makeBy(MAX_AUTHORS + 10, (i) => `Given${i} Family${i}`).join(" and ");
     const record = expectParsed(
@@ -398,6 +426,25 @@ describe("parseBibliographicFile resource bounds", () => {
   it("drops the whole upload over the input-length cap", () => {
     const huge = `@book{x, title={t}, isbn={9780062316097}}`.padEnd(MAX_INPUT_LENGTH + 1, " ");
     expect(parseBibliographicFile(huge, "bibtex")).toEqual([]);
+  });
+
+  it("parses hostile BibTeX at the input-length cap without throwing or unbounded memory", () => {
+    const n = MAX_INPUT_LENGTH;
+    const hostile = [
+      `@x${"{".repeat(n - 2)}`,
+      "@x{".repeat(Math.floor(n / 3)),
+      "@comment{".repeat(Math.floor(n / 9)),
+      `@x{k,${"a=b,".repeat(Math.floor((n - 6) / 4))}}`,
+      `@x{k,t=${"{}".repeat(Math.floor((n - 8) / 2))}}`,
+      `@x{k,t="${"a".repeat(n - 9)}}`,
+    ];
+    Array.forEach(hostile, (content) => {
+      expect(content.length).toBeLessThanOrEqual(n);
+      const before = process.memoryUsage().heapUsed;
+      expect(() => parseBibliographicFile(content, "bibtex")).not.toThrow();
+      // A per-character array of an 8 MB input alone is over 64 MB.
+      expect(process.memoryUsage().heapUsed - before).toBeLessThan(48_000_000);
+    });
   });
 
   it("caps the number of emitted records at MAX_RECORDS", () => {
