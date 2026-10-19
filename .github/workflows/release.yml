@@ -22,7 +22,7 @@ jobs:
     name: Version or publish
     # Never run on forks (they have neither the environment nor the trusted
     # publisher binding, so a fork cannot publish on your behalf).
-    if: github.repository == 'thomasfosterau/reference-manager'
+    if: github.repository == 'thomasfosterau/effect-bib'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     # Requires manual approval via a protected GitHub Environment named

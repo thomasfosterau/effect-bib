@@ -49,7 +49,7 @@ Before you report work as done, run the gates below in order (CI's order, `.gith
 - Agent work uses git worktrees under `.claude/worktrees/`, one per branch; start every command that targets a worktree with an explicit `cd` and confirm with `git log -1` before committing.
 - Every change to a published package's behaviour carries a changeset (`pnpm changeset`). Changes to doc comments that reach the emitted `.d.ts` (TSDoc) take a `patch` changeset; other docs-only changes (READMEs, guidance), CI and tooling need none. Never publish or version by hand: the Release workflow opens the version PR (`chore: version packages`) and the owner merges it. See [PUBLISHING.md](PUBLISHING.md).
 - These are standing approvals: **always open a PR** once a branch has a pushed commit; **watch it to merge or close** (investigate CI failures and review comments, rebase when it goes conflicting); **keep the PR body current** as the implementation diverges. Fill [`.github/pull_request_template.md`](.github/pull_request_template.md).
-- GitHub writes go to `thomasfosterau/reference-manager` only; pass `-R thomasfosterau/reference-manager` whenever the cwd might be another checkout. Never write to the consuming applications' repositories without the owner's explicit approval for that action in the current session. Use the `gh` CLI for GitHub operations, even when GitHub MCP tools are available.
+- GitHub writes go to `thomasfosterau/effect-bib` only; pass `-R thomasfosterau/effect-bib` whenever the cwd might be another checkout. Never write to the consuming applications' repositories without the owner's explicit approval for that action in the current session. Use the `gh` CLI for GitHub operations, even when GitHub MCP tools are available.
 
 ## Work tracker
 

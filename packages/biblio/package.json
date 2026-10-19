@@ -17,15 +17,15 @@
     "ris",
     "typescript"
   ],
-  "homepage": "https://github.com/thomasfosterau/reference-manager#readme",
+  "homepage": "https://github.com/thomasfosterau/effect-bib#readme",
   "bugs": {
-    "url": "https://github.com/thomasfosterau/reference-manager/issues"
+    "url": "https://github.com/thomasfosterau/effect-bib/issues"
   },
   "license": "MIT",
   "author": "Thomas Foster <me@thomasfoster.au>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/thomasfosterau/reference-manager.git",
+    "url": "https://github.com/thomasfosterau/effect-bib.git",
     "directory": "packages/biblio"
   },
   "files": [

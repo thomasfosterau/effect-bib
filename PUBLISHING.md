@@ -23,7 +23,7 @@ The following steps make the automated flow work end-to-end. The first publish o
 1. **Allow Actions to open the Version Packages PR.** In the repo: **Settings → Actions → General → Workflow permissions** → enable **"Allow GitHub Actions to create and approve pull requests"**. Without this the built-in `GITHUB_TOKEN` is forbidden from opening pull requests and the workflow fails at the PR-creation step — even though the job already grants `pull-requests: write`.
 2. **Configure the trusted publisher.** On npmjs.com, open the package → **Settings → Trusted Publisher** and add:
    - Provider: **GitHub Actions**
-   - Repository: `thomasfosterau/reference-manager`
+   - Repository: `thomasfosterau/effect-bib`
    - Workflow: `release.yml`
    - Environment: `release`
 

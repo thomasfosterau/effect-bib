@@ -2,7 +2,7 @@
 
 ## Reporting a vulnerability
 
-Please report security vulnerabilities privately via GitHub's [**Report a vulnerability**](https://github.com/thomasfosterau/reference-manager/security/advisories/new) button (Security → Advisories), **not** through public issues.
+Please report security vulnerabilities privately via GitHub's [**Report a vulnerability**](https://github.com/thomasfosterau/effect-bib/security/advisories/new) button (Security → Advisories), **not** through public issues.
 
 You can expect an initial response within a few days. Please include a description, reproduction steps, and the affected version.
 
