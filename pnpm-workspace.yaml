@@ -91,7 +91,7 @@ catalog:
   # version: bumping vite-plus means reading its new `vitest` pin from
   # node_modules/vite-plus/package.json and setting `vite`, `vitest` and the
   # coverage provider with it.
-  vite-plus: 0.3.3
+  vite-plus: 1.1.0
   vite: npm:@voidzero-dev/vite-plus-core@0.3.3
   vitest: 4.1.11
 
