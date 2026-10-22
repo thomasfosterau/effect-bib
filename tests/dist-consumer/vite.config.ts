@@ -22,12 +22,14 @@ export default defineConfig({
       check: {
         command: `${assertEmitted}; tsc -p tsconfig.json`,
         dependsOn: ["@thomasfosterau/biblio#build"],
-        input: [
-          { auto: true },
-          "!node_modules/**",
-          { pattern: "packages/*/dist/**", base: "workspace" as const },
-        ],
-        output: [],
+        cache: {
+          input: [
+            { auto: true },
+            "!node_modules/**",
+            { pattern: "packages/*/dist/**", base: "workspace" as const },
+          ],
+          output: [],
+        },
       },
     },
   },
