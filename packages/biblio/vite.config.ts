@@ -23,7 +23,10 @@ const testConfig = {
   testTimeout: 30_000,
   coverage: {
     provider: "istanbul" as const,
-    reporter: ["text-summary", "json-summary"],
+    // `json` writes coverage-final.json, the Istanbul map `fallow audit`
+    // reads for exact per-function CRAP scores (`health.coverage` in
+    // .fallowrc.json); without it every function scores as uncovered.
+    reporter: ["text-summary", "json-summary", "json"],
     reportsDirectory: "./coverage",
     include: ["src/**/*.ts"],
     exclude: ["**/*.d.ts"],
