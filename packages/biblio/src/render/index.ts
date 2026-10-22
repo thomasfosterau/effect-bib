@@ -7,8 +7,8 @@
  * determinism and no network at render time.
  *
  * Styles and locales are typed data inputs; rendering is pure and network-
- * free. Two built-in styles ship: `apaStyle` (author-date) and
- * `vancouverStyle` (numeric).
+ * free. Three built-in styles ship: `apaStyle` (author-date),
+ * `vancouverStyle` (numeric) and `chicagoNotesStyle` (note).
  *
  * @copyright Thomas Foster
  * @module biblio/render
@@ -26,4 +26,5 @@ export * from "./styles/vancouver.ts";
 export * from "./styles/chicago.ts";
 export * from "./render.ts";
 export * from "./rich.ts";
+export * from "./markup.ts";
 export * from "./citations.ts";

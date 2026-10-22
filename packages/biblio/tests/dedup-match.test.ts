@@ -210,6 +210,16 @@ describe("recordMatchInput", () => {
     });
   });
 
+  it("matches on a title's plain text, its CSL markup dropped", () => {
+    const record: BiblioRecord = {
+      type: "book",
+      title: "On <i>Homo sapiens</i>",
+      identifiers: {},
+      provenance: { source: "bibtex" },
+    };
+    expect(recordMatchInput(record).title).toBe("On Homo sapiens");
+  });
+
   it("tolerates a record with no title or authors", () => {
     expect(
       recordMatchInput({ type: "document", identifiers: {}, provenance: { source: "manual" } }),

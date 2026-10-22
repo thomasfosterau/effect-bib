@@ -140,13 +140,17 @@ function parseName(nameTokens: readonly string[], usePrefix: boolean): Option.Op
 }
 
 /**
- * Parses a BibTeX name list into structured names, bounded to
- * `MAX_AUTHORS`; a name that is `others` (any case) sets the et al. flag
- * instead of becoming a name.
+ * Parses a BibTeX name list into structured names, bounded to `maxNames`
+ * (default `MAX_AUTHORS`); a name that is `others` (any case) sets the et
+ * al. flag instead of becoming a name.
  *
  * @since 0.1.0
  */
-export function parseBibtexNames(source: string, usePrefix: boolean): BibtexNameList {
+export function parseBibtexNames(
+  source: string,
+  usePrefix: boolean,
+  maxNames: number = MAX_AUTHORS,
+): BibtexNameList {
   const scanned = Parser.parsePeek(tokens, source);
   const all = Result.isSuccess(scanned) ? scanned.success[1] : [];
   const groups = splitOn(all, (token) => token.toLowerCase() === "and").filter(
@@ -156,6 +160,6 @@ export function parseBibtexNames(source: string, usePrefix: boolean): BibtexName
   const names = Array.filterMap(groups, (group): Result.Result<CslName, void> => {
     if (group.length === 1 && group[0].toLowerCase() === "others") return Result.failVoid;
     return Result.fromOption(parseName(group, usePrefix), () => undefined);
-  }).slice(0, MAX_AUTHORS);
+  }).slice(0, maxNames);
   return { names, others };
 }

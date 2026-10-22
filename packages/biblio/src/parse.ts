@@ -23,13 +23,24 @@
  *   `crossref` / `xdata` inheritance and the BibLaTeX field set (see
  *   {@link parseBibtex}); a field with no typed slot is kept in `extra`.
  * - **resource bounds** — total input length ({@link MAX_INPUT_LENGTH}),
- *   per-field length (`sanitiseText`), author count (`MAX_AUTHORS`), and
- *   record count ({@link MAX_RECORDS}) are all capped.
+ *   per-field length (`MAX_TEXT_FIELD_LENGTH`), author count
+ *   (`MAX_AUTHORS`), and record count ({@link MAX_RECORDS}) are all capped,
+ *   each by default; {@link ParseOptions} sets them per call. Input over the
+ *   cap is one `too-large` outcome, and entries past the record cap one
+ *   trailing `truncated` outcome, never a silent empty result.
+ * - **source positions** — a BibTeX, RIS or CSV outcome carries the
+ *   {@link SourcePosition} of its entry, for a toolchain to report.
  *
- * A record needs a title **and** at least one dedup identifier (ISBN or
- * DOI) to parse; otherwise it is skipped (`no-title` / `no-identifier`),
- * so file imports share a dedup namespace with identifier lookups.
- * `provenance.source` records which format the record arrived through.
+ * Two modes. **`import`** (the default) is the library-import policy: a
+ * record needs a title **and** at least one dedup identifier (ISBN or DOI)
+ * to parse; otherwise it is skipped (`no-title` / `no-identifier`), so file
+ * imports share a dedup namespace with identifier lookups. **`lenient`**
+ * reads every entry the format admits, as a document's bibliography needs:
+ * no title or identifier is required, and CSL-JSON items are read with
+ * {@link fromCslJson} in full. Either way an entry's key (BibTeX's citation
+ * key, RIS `ID`, CSL-JSON `id` / `citation-key`) is the record's `id` and
+ * `citation-key`. `provenance.source` records which format the record
+ * arrived through.
  *
  * @copyright Thomas Foster
  * @module biblio/parse
@@ -41,30 +52,35 @@ import * as HashMap from "effect/HashMap";
 import * as Match from "effect/Match";
 import * as MutableHashMap from "effect/MutableHashMap";
 import * as Option from "effect/Option";
+import * as Predicate from "effect/Predicate";
 import * as Record from "effect/Record";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 import * as String from "effect/String";
 import type * as Types from "effect/Types";
 import {
+  decodeArxiv,
   decodeDoi,
   decodeIsbn,
   decodeIssn,
-  type Doi,
-  type Isbn,
-  type Issn,
+  decodePmcid,
+  decodePmid,
 } from "./identifiers.ts";
+import { limitOr } from "./limits.ts";
 import {
   type BiblioRecord,
   type CslItemType,
   type CslName,
   dateFromYear,
+  fromCslJson,
   isCslItemType,
   MAX_AUTHORS,
+  MAX_TEXT_FIELD_LENGTH,
   parsePersonName,
   type ProvenanceSource,
   readCslNameArray,
   type RecordIdentifiers,
+  type RecordLimits,
   sanitiseText,
   sanitiseYear,
 } from "./record.ts";
@@ -83,36 +99,58 @@ import { scanBibtex } from "./bibtex/scan.ts";
 export type ImportFormat = "bibtex" | "zotero-json" | "csv" | "ris";
 
 /**
- * Why a source entry produced no importable record.
+ * Why a source entry produced no importable record. `too-large` and
+ * `truncated` were added in 1.0.0.
  *
  * @since 0.1.0
  */
 export type SkipReason =
-  /** The entry carried neither a usable ISBN nor a usable DOI to key on. */
+  /** The entry carried neither a usable ISBN nor a usable DOI to key on (`import` mode). */
   | "no-identifier"
-  /** The entry had no usable title; a titleless entry is never parsed into a record. */
+  /** The entry had no usable title (`import` mode). */
   | "no-title"
   /** The entry was structurally unparseable (e.g. a truncated BibTeX body). */
-  | "malformed";
+  | "malformed"
+  /** The whole input was longer than the input cap and was not read: the one outcome. */
+  | "too-large"
+  /** Entries past the record cap were left out: the last outcome, after the first `maxRecords`. */
+  | "truncated";
 
 /**
- * A source entry that did not yield a record, with the reason it was dropped.
+ * Where an entry starts in its source: the offset (UTF-16 code units, from
+ * 0) and the line and column (from 1) of its first character — a BibTeX
+ * entry's `@`, an RIS record's `TY` tag, a CSV row's first cell.
+ *
+ * @since 1.0.0
+ */
+export interface SourcePosition {
+  readonly offset: number;
+  readonly line: number;
+  readonly column: number;
+}
+
+/**
+ * A source entry that did not yield a record, with the reason it was
+ * dropped, and where the entry starts when the format has positions.
  *
  * @since 0.1.0
  */
 export interface SkippedEntry {
   readonly outcome: "skipped";
   readonly reason: SkipReason;
+  readonly position?: SourcePosition;
 }
 
 /**
- * A source entry that parsed into an importable {@link BiblioRecord}.
+ * A source entry that parsed into a {@link BiblioRecord}, and where the
+ * entry starts when the format has positions.
  *
  * @since 0.1.0
  */
 export interface ParsedEntry {
   readonly outcome: "parsed";
   readonly record: BiblioRecord;
+  readonly position?: SourcePosition;
 }
 
 /**
@@ -123,28 +161,136 @@ export interface ParsedEntry {
 export type ParseOutcome = ParsedEntry | SkippedEntry;
 
 /**
- * The most entries one input yields; parsing stops emitting at the cap and
- * ignores the tail, so a hostile file cannot force unbounded work.
+ * The default cap on the entries one input yields; parsing stops at the cap
+ * and reports the tail as one `truncated` outcome, so a hostile file cannot
+ * force unbounded work. {@link ParseOptions} sets it per call.
  *
  * @since 0.1.0
  */
 export const MAX_RECORDS = 5000;
 
 /**
- * Hard cap on the raw input length, in UTF-16 code units. A longer input is
- * rejected whole (returns `[]`) before any per-entry parsing runs. ~8 MB
- * comfortably holds tens of thousands of entries.
+ * The default cap on the raw input length, in UTF-16 code units. A longer
+ * input is not read: it yields one `too-large` outcome. ~8 MB comfortably
+ * holds tens of thousands of entries. {@link ParseOptions} sets it per call.
  *
  * @since 0.1.0
  */
 export const MAX_INPUT_LENGTH = 8_000_000;
 
 /**
+ * What a parser keeps: `import` applies the library-import policy (a title
+ * and an ISBN or DOI, else a `no-title` / `no-identifier` skip); `lenient`
+ * keeps every entry the format admits.
+ *
+ * @since 1.0.0
+ */
+export type ParseMode = "import" | "lenient";
+
+/**
+ * How a parser reads one input: the {@link ParseMode} (default `import`),
+ * and its bounds, each defaulting to today's constant — `maxRecords`
+ * ({@link MAX_RECORDS}), `maxInputLength` ({@link MAX_INPUT_LENGTH}) and,
+ * per record, `maxFieldLength` and `maxAuthors` ({@link RecordLimits}). A
+ * non-positive or non-integer bound falls back to its default.
+ *
+ * @since 1.0.0
+ */
+export interface ParseOptions extends RecordLimits {
+  readonly mode?: ParseMode;
+  readonly maxRecords?: number;
+  readonly maxInputLength?: number;
+}
+
+/** {@link ParseOptions} with every default applied. */
+interface Settings {
+  readonly lenient: boolean;
+  readonly maxRecords: number;
+  readonly maxInputLength: number;
+  readonly maxFieldLength: number;
+  readonly maxAuthors: number;
+}
+
+/** Applies the defaults to a caller's options. */
+function settings(options: ParseOptions): Settings {
+  return {
+    lenient: options.mode === "lenient",
+    maxRecords: limitOr(Option.fromUndefinedOr(options.maxRecords), MAX_RECORDS),
+    maxInputLength: limitOr(Option.fromUndefinedOr(options.maxInputLength), MAX_INPUT_LENGTH),
+    maxFieldLength: limitOr(Option.fromUndefinedOr(options.maxFieldLength), MAX_TEXT_FIELD_LENGTH),
+    maxAuthors: limitOr(Option.fromUndefinedOr(options.maxAuthors), MAX_AUTHORS),
+  };
+}
+
+/** The one outcome for an input over the cap. */
+const TOO_LARGE: readonly ParseOutcome[] = [{ outcome: "skipped", reason: "too-large" }];
+
+/** The trailing outcome after the record cap. */
+const TRUNCATED: ParseOutcome = { outcome: "skipped", reason: "truncated" };
+
+/**
+ * Runs a parser over an input within its cap: `too-large` over it, else
+ * the parser's outcomes.
+ */
+function withinInputCap(
+  content: string,
+  config: Settings,
+  parse: (content: string, config: Settings) => ParseOutcome[],
+): ParseOutcome[] {
+  return content.length > config.maxInputLength ? [...TOO_LARGE] : parse(content, config);
+}
+
+/** The first `maxRecords` of `items`, and whether any were left out. */
+function capped<A>(items: readonly A[], config: Settings): readonly [A[], boolean] {
+  return [items.slice(0, config.maxRecords), items.length > config.maxRecords];
+}
+
+/** Appends the `truncated` outcome when entries were left out. */
+const endOutcomes = (outcomes: ParseOutcome[], truncated: boolean): ParseOutcome[] =>
+  truncated ? [...outcomes, TRUNCATED] : outcomes;
+
+/** The offsets at which each line of `content` starts. */
+function lineStarts(content: string): readonly number[] {
+  return [
+    0,
+    ...Array.map(
+      Array.fromIterable(content.matchAll(/\r\n?|\n/g)),
+      (match) => match.index + match[0].length,
+    ),
+  ];
+}
+
+/** The index of the last line start at or before `offset` (a binary search over `[low, high]`). */
+function lineIndex(starts: readonly number[], offset: number, low: number, high: number): number {
+  if (low >= high) return low;
+  const mid = Math.ceil((low + high) / 2);
+  return starts[mid] <= offset
+    ? lineIndex(starts, offset, mid, high)
+    : lineIndex(starts, offset, low, mid - 1);
+}
+
+/** Line and column lookup for offsets into one input: the line starts are found once. */
+function locator(content: string): (offset: number) => SourcePosition {
+  const starts = lineStarts(content);
+  return (offset) => {
+    const line = lineIndex(starts, offset, 0, starts.length - 1);
+    return { offset, line: line + 1, column: offset - starts[line] + 1 };
+  };
+}
+
+/** An outcome with its entry's position. */
+const at = (outcome: ParseOutcome, position: SourcePosition): ParseOutcome => ({
+  ...outcome,
+  position,
+});
+
+/**
  * Parses raw file `content` of the given `format` into a list of
  * per-entry {@link ParseOutcome}s. Pure: no network, no database. Over the
- * input-length cap the whole input is dropped (returns `[]`); otherwise
- * every recognised entry yields exactly one outcome, up to
- * {@link MAX_RECORDS}.
+ * input-length cap the input yields one `too-large` outcome; otherwise
+ * every recognised entry yields exactly one outcome, up to the record cap,
+ * then one `truncated` outcome if more entries followed. `options` sets the
+ * {@link ParseMode} and the bounds.
  *
  * @example
  * ```ts
@@ -171,13 +317,16 @@ export const MAX_INPUT_LENGTH = 8_000_000;
  *
  * @since 0.1.0
  */
-export function parseBibliographicFile(content: string, format: ImportFormat): ParseOutcome[] {
-  if (content.length > MAX_INPUT_LENGTH) return [];
+export function parseBibliographicFile(
+  content: string,
+  format: ImportFormat,
+  options: ParseOptions = {},
+): ParseOutcome[] {
   return Match.value(format).pipe(
-    Match.when("bibtex", () => parseBibtex(content)),
-    Match.when("zotero-json", () => parseZoteroJson(content)),
-    Match.when("csv", () => parseCsv(content)),
-    Match.when("ris", () => parseRis(content)),
+    Match.when("bibtex", () => parseBibtex(content, options)),
+    Match.when("zotero-json", () => parseZoteroJson(content, options)),
+    Match.when("csv", () => parseCsv(content, options)),
+    Match.when("ris", () => parseRis(content, options)),
     Match.exhaustive,
   );
 }
@@ -185,90 +334,106 @@ export function parseBibliographicFile(content: string, format: ImportFormat): P
 // ── Shared record assembly ────────────────────────────────────────────
 
 /** The subset of CSL string variables the parsers populate. */
-type ParserStringVar = "publisher" | "container-title" | "volume" | "issue" | "page";
+type ParserStringVar =
+  | "citation-key"
+  | "publisher"
+  | "container-title"
+  | "volume"
+  | "issue"
+  | "page";
 
 /**
  * Lifts a raw field bag into a single {@link ParseOutcome}, applying the
- * full untrusted-data discipline: sanitise the title (skip on `no-title`),
- * validate the identifiers by checksum, require a dedup key (ISBN or DOI,
- * else skip on `no-identifier`), and bound the optional fields. The item
- * type is taken verbatim when the format supplies one, else inferred from
- * the identifier (ISBN → book, DOI → article-journal).
+ * full untrusted-data discipline: sanitise the title, validate the
+ * identifiers by checksum, and bound the optional fields. In `import` mode
+ * a missing title skips as `no-title` and a missing dedup key (ISBN or DOI)
+ * as `no-identifier`. The item type is taken verbatim when the format
+ * supplies one, else inferred from the identifier (ISBN → book, DOI →
+ * article-journal, neither → document).
  */
-function toOutcome(fields: RawFields, source: ProvenanceSource): ParseOutcome {
-  const title = sanitiseTitle(fields.title, fields.subtitle);
-  if (Option.isNone(title)) return { outcome: "skipped", reason: "no-title" };
+function toOutcome(fields: RawFields, source: ProvenanceSource, config: Settings): ParseOutcome {
+  const title = sanitiseTitle(fields.title, fields.subtitle, config.maxFieldLength);
+  if (Option.isNone(title) && !config.lenient) return { outcome: "skipped", reason: "no-title" };
   const year = Option.flatMap(fields.year, sanitiseYear);
-
-  const isbn = Option.flatMap(fields.isbn, decodeIsbn);
-  const doi = Option.flatMap(fields.doi, decodeDoi);
-  const issn = Option.flatMap(fields.issn, decodeIssn);
-  if (Option.isNone(isbn) && Option.isNone(doi)) {
+  const identifiers = assembleIdentifiers(fields);
+  if (identifiers.isbn === undefined && identifiers.doi === undefined && !config.lenient) {
     return { outcome: "skipped", reason: "no-identifier" };
   }
 
-  const issued: Types.Mutable<Pick<BiblioRecord, "issued">> = {};
-  if (Option.isSome(year)) issued.issued = dateFromYear(year.value);
+  const optional: Types.Mutable<Pick<BiblioRecord, "id" | "title" | "issued">> = {};
+  const id = Option.flatMap(fields.id, (value): Option.Option<string | number> =>
+    Predicate.isNumber(value) ? Option.some(value) : sanitiseText(value, config.maxFieldLength),
+  );
+  if (Option.isSome(id)) optional.id = id.value;
+  if (Option.isSome(title)) optional.title = title.value;
+  if (Option.isSome(year)) optional.issued = dateFromYear(year.value);
   const record: BiblioRecord = {
-    type: Option.isSome(fields.type)
-      ? fields.type.value
-      : Option.isSome(isbn)
+    type: Option.getOrElse(fields.type, (): CslItemType =>
+      identifiers.isbn !== undefined
         ? "book"
-        : "article-journal",
-    title: title.value,
-    ...collectStringVars(fields),
-    ...collectContributors(fields),
-    ...issued,
-    identifiers: assembleIdentifiers(isbn, doi, issn),
+        : identifiers.doi !== undefined
+          ? "article-journal"
+          : "document",
+    ),
+    ...optional,
+    ...collectStringVars(fields, config.maxFieldLength),
+    ...collectContributors(fields, config.maxAuthors),
+    identifiers,
     provenance: { source },
   };
   return { outcome: "parsed", record };
 }
 
-/** Assembles the validated identifier sub-record from the decoded values. */
-function assembleIdentifiers(
-  isbn: Option.Option<Isbn>,
-  doi: Option.Option<Doi>,
-  issn: Option.Option<Issn>,
-): RecordIdentifiers {
+/** Validates the raw identifiers into the branded sub-record, dropping what fails. */
+function assembleIdentifiers(fields: RawFields): RecordIdentifiers {
   const identifiers: Types.Mutable<RecordIdentifiers> = {};
+  const isbn = Option.flatMap(fields.isbn, decodeIsbn);
   if (Option.isSome(isbn)) identifiers.isbn = isbn.value;
+  const doi = Option.flatMap(fields.doi, decodeDoi);
   if (Option.isSome(doi)) identifiers.doi = doi.value;
+  const issn = Option.flatMap(fields.issn, decodeIssn);
   if (Option.isSome(issn)) identifiers.issn = issn.value;
+  const pmid = Option.flatMap(fields.pmid, decodePmid);
+  if (Option.isSome(pmid)) identifiers.pmid = pmid.value;
+  const pmcid = Option.flatMap(fields.pmcid, decodePmcid);
+  if (Option.isSome(pmcid)) identifiers.pmcid = pmcid.value;
+  const arxiv = Option.flatMap(fields.arxiv, decodeArxiv);
+  if (Option.isSome(arxiv)) identifiers.arxiv = arxiv.value;
   return identifiers;
 }
 
 /** Collects the sanitised CSL string variables a parser populated. */
-function collectStringVars(fields: RawFields): Partial<Record<ParserStringVar, string>> {
+function collectStringVars(
+  fields: RawFields,
+  maxFieldLength: number,
+): Partial<Record<ParserStringVar, string>> {
   const strings: Partial<Record<ParserStringVar, string>> = {};
-  assignString(strings, "publisher", fields.publisher);
-  assignString(strings, "container-title", fields.containerTitle);
-  assignString(strings, "volume", fields.volume);
-  assignString(strings, "issue", fields.issue);
-  assignString(strings, "page", fields.page);
+  const assign = (key: ParserStringVar, value: Option.Option<string>): void => {
+    const clean = Option.flatMap(value, (text) => sanitiseText(text, maxFieldLength));
+    if (Option.isSome(clean)) strings[key] = clean.value;
+  };
+  assign("citation-key", fields.citationKey);
+  assign("publisher", fields.publisher);
+  assign("container-title", fields.containerTitle);
+  assign("volume", fields.volume);
+  assign("issue", fields.issue);
+  assign("page", fields.page);
   return strings;
 }
 
 /** Collects the bounded author / editor name lists. */
-function collectContributors(fields: RawFields): Partial<Pick<BiblioRecord, "author" | "editor">> {
+function collectContributors(
+  fields: RawFields,
+  maxAuthors: number,
+): Partial<Pick<BiblioRecord, "author" | "editor">> {
   const contributors: Types.Mutable<Partial<Pick<BiblioRecord, "author" | "editor">>> = {};
   if (Array.isReadonlyArrayNonEmpty(fields.names)) {
-    contributors.author = fields.names.slice(0, MAX_AUTHORS);
+    contributors.author = fields.names.slice(0, maxAuthors);
   }
   if (Array.isReadonlyArrayNonEmpty(fields.editors)) {
-    contributors.editor = fields.editors.slice(0, MAX_AUTHORS);
+    contributors.editor = fields.editors.slice(0, maxAuthors);
   }
   return contributors;
-}
-
-/** Sets a sanitised CSL string variable on the accumulator when non-empty. */
-function assignString(
-  target: Partial<Record<ParserStringVar, string>>,
-  key: ParserStringVar,
-  value: Option.Option<string>,
-): void {
-  const clean = Option.flatMap(value, sanitiseText);
-  if (Option.isSome(clean)) target[key] = clean.value;
 }
 
 /**
@@ -279,19 +444,21 @@ function assignString(
 function sanitiseTitle(
   rawTitle: Option.Option<string>,
   rawSubtitle: Option.Option<string>,
+  maxFieldLength: number,
 ): Option.Option<string> {
-  const base = Option.flatMap(rawTitle, sanitiseText);
+  const clean = (value: string): Option.Option<string> => sanitiseText(value, maxFieldLength);
+  const base = Option.flatMap(rawTitle, clean);
   if (Option.isNone(base)) return Option.none();
-  const subtitle = Option.flatMap(rawSubtitle, sanitiseText);
-  return Option.isNone(subtitle) ? base : sanitiseText(`${base.value}: ${subtitle.value}`);
+  const subtitle = Option.flatMap(rawSubtitle, clean);
+  return Option.isNone(subtitle) ? base : clean(`${base.value}: ${subtitle.value}`);
 }
 
 /** Structures a list of display-form names, bounded and empties dropped. */
-function structuredNames(raw: readonly string[]): CslName[] {
+function structuredNames(raw: readonly string[], maxAuthors: number): CslName[] {
   return Array.filterMap(raw, (value): Result.Result<CslName, void> => {
     const name = parsePersonName(value);
     return name === null ? Result.failVoid : Result.succeed(name);
-  }).slice(0, MAX_AUTHORS);
+  }).slice(0, maxAuthors);
 }
 
 // ── BibTeX ────────────────────────────────────────────────────────────
@@ -311,8 +478,10 @@ function structuredNames(raw: readonly string[]): CslName[] {
  * variable the record does not type (`shorttitle`, `keywords`, `type`, …)
  * land in `extra` under that CSL name, the rest under `tex.<field>`, and a
  * name list ending `and others` is recorded as `extra["tex.others"]`; only
- * `file` is dropped. The import policy is unchanged: an entry still needs a
- * title and an ISBN or DOI.
+ * `file` is dropped. The entry's key is the record's `id` and
+ * `citation-key`, and each outcome carries the position of its entry's `@`.
+ * In the default `import` mode an entry still needs a title and an ISBN or
+ * DOI; in `lenient` mode every entry is a record.
  *
  * @example
  * ```ts
@@ -336,20 +505,36 @@ function structuredNames(raw: readonly string[]): CslName[] {
  * assert.deepStrictEqual(chapter?.author, [{ family: "Berg", given: "Anna", "dropping-particle": "van der" }])
  * assert.deepStrictEqual(chapter?.extra, { "tex.others": ["author"] })
  * assert.strictEqual(chapter?.page, "1-20")
+ * assert.strictEqual(chapter?.["citation-key"], "chapter")
+ * assert.deepStrictEqual(outcomes[1].position, { offset: 168, line: 3, column: 1 })
+ *
+ * // A document's bibliography: no identifier needed.
+ * const [thesis] = parseBibtex("@phdthesis{doe2020, title = {On Things}, author = {Doe, Jane}, school = {MIT}, year = 2020}", { mode: "lenient" })
+ * assert.strictEqual(thesis.outcome === "parsed" ? thesis.record.genre : undefined, "PhD thesis")
  * ```
  *
  * @since 0.1.0
  */
-export function parseBibtex(content: string): ParseOutcome[] {
-  return Array.map(
-    mapBibtexEntries(resolveInheritance(scanBibtex(content))),
-    ({ fields, additions }): ParseOutcome => {
-      const outcome = toOutcome(fields, "bibtex");
-      return outcome.outcome === "parsed"
-        ? { outcome: "parsed", record: { ...outcome.record, ...additions } }
-        : outcome;
-    },
-  );
+export function parseBibtex(content: string, options: ParseOptions = {}): ParseOutcome[] {
+  return withinInputCap(content, settings(options), (input, config) => {
+    const scan = scanBibtex(input, config.maxRecords, config.maxInputLength);
+    const entries = resolveInheritance(scan.entries);
+    const position = locator(input);
+    const mapped = mapBibtexEntries(entries, config);
+    const outcomes = Array.map(
+      Array.zip(entries, mapped),
+      ([entry, { fields, additions }]): ParseOutcome => {
+        const outcome = toOutcome(fields, "bibtex", config);
+        return at(
+          outcome.outcome === "parsed"
+            ? { outcome: "parsed", record: { ...outcome.record, ...additions } }
+            : outcome,
+          position(entry.offset),
+        );
+      },
+    );
+    return endOutcomes(outcomes, scan.truncated);
+  });
 }
 
 // ── Zotero / CSL-JSON ─────────────────────────────────────────────────
@@ -401,30 +586,38 @@ function cslFirstIsbn(value: string): Option.Option<string> {
  * Parses a Zotero / CSL-JSON export into per-entry {@link ParseOutcome}s.
  * Accepts a top-level array of item objects or a `{ items: [...] }`
  * envelope. Invalid JSON yields a single `malformed` outcome; a non-object
- * item is skipped as `malformed`.
+ * item is skipped as `malformed`. In `import` mode an item is read as far
+ * as the import needs (title, container, numbering, date, identifiers,
+ * authors, editors, `id`, `citation-key`); in `lenient` mode each item is
+ * read in full with {@link fromCslJson}. JSON carries no positions, so
+ * these outcomes have none.
  *
  * @since 0.1.0
  */
-export function parseZoteroJson(content: string): ParseOutcome[] {
-  const data = decodeJsonBody(content);
-  if (Option.isNone(data)) return [{ outcome: "skipped", reason: "malformed" }];
-  const items = Option.getOrElse(
-    Option.orElse(decodeCslItemArray(data.value), () =>
-      Option.map(decodeCslEnvelope(data.value), (envelope) => envelope.items),
-    ),
-    (): readonly unknown[] => [],
-  );
-  return Array.map(items.slice(0, MAX_RECORDS), (item) =>
-    // An array item reads as an item with no fields (→ `no-title`); only a
-    // non-object is `malformed`.
-    Option.match(
-      Option.orElse(decodeCslItem(item), () => Option.as(decodeCslItemArray(item), CSL_EMPTY_ITEM)),
-      {
-        onNone: (): ParseOutcome => ({ outcome: "skipped", reason: "malformed" }),
-        onSome: cslItemOutcome,
-      },
-    ),
-  );
+export function parseZoteroJson(content: string, options: ParseOptions = {}): ParseOutcome[] {
+  return withinInputCap(content, settings(options), (input, config) => {
+    const data = decodeJsonBody(input);
+    if (Option.isNone(data)) return [{ outcome: "skipped", reason: "malformed" }];
+    const [items, truncated] = capped(
+      Option.getOrElse(
+        Option.orElse(decodeCslItemArray(data.value), () =>
+          Option.map(decodeCslEnvelope(data.value), (envelope) => envelope.items),
+        ),
+        (): readonly unknown[] => [],
+      ),
+      config,
+    );
+    const outcomes = Array.map(items, (item): ParseOutcome => {
+      if (!Predicate.isObjectOrArray(item)) return { outcome: "skipped", reason: "malformed" };
+      if (config.lenient) return { outcome: "parsed", record: fromCslJson(item, config) };
+      // An array item reads as an item with no fields (→ `no-title`).
+      return cslItemOutcome(
+        Option.getOrElse(decodeCslItem(item), () => CSL_EMPTY_ITEM),
+        config,
+      );
+    });
+    return endOutcomes(outcomes, truncated);
+  });
 }
 
 /** Decodes an untrusted JSON document body; `None` when the text is not JSON. */
@@ -451,14 +644,23 @@ const CslItem = Schema.Struct({
   ISBN: Schema.optional(Schema.Unknown),
   ISSN: Schema.optional(Schema.Unknown),
   DOI: Schema.optional(Schema.Unknown),
+  PMID: Schema.optional(Schema.Unknown),
+  PMCID: Schema.optional(Schema.Unknown),
+  id: Schema.optional(Schema.Unknown),
+  "citation-key": Schema.optional(Schema.Unknown),
   author: Schema.optional(Schema.Unknown),
   editor: Schema.optional(Schema.Unknown),
 });
 const decodeCslItem = Schema.decodeUnknownOption(CslItem);
 const CSL_EMPTY_ITEM: typeof CslItem.Type = {};
 
+/** A CSL value that may be text or a number (`id`, `PMID`). */
+const decodeStringOrNumber = Schema.decodeUnknownOption(
+  Schema.Union([Schema.String, Schema.Finite]),
+);
+
 /** Maps one CSL item object to a {@link ParseOutcome}. */
-function cslItemOutcome(item: typeof CslItem.Type): ParseOutcome {
+function cslItemOutcome(item: typeof CslItem.Type, config: Settings): ParseOutcome {
   return toOutcome(
     {
       type: Option.filter(decodeString(item.type), isCslItemType),
@@ -473,10 +675,16 @@ function cslItemOutcome(item: typeof CslItem.Type): ParseOutcome {
       isbn: Option.flatMap(decodeString(item.ISBN), cslFirstIsbn),
       issn: decodeString(item.ISSN),
       doi: decodeString(item.DOI),
-      names: readCslNameArray(item.author),
-      editors: readCslNameArray(item.editor),
+      pmid: Option.map(decodeStringOrNumber(item.PMID), (value) => value.toString()),
+      pmcid: decodeString(item.PMCID),
+      arxiv: Option.none(),
+      id: decodeStringOrNumber(item.id),
+      citationKey: decodeString(item["citation-key"]),
+      names: readCslNameArray(item.author, config.maxAuthors),
+      editors: readCslNameArray(item.editor, config.maxAuthors),
     },
     "csl-json",
+    config,
   );
 }
 
@@ -511,30 +719,38 @@ function parseCsvLine(line: string): string[] {
   return cells;
 }
 
+/** One logical CSV row: its text and the offset of its first character. */
+interface CsvRow {
+  readonly text: string;
+  readonly offset: number;
+}
+
 /**
  * Splits CSV content into logical rows. A quoted cell may span physical
  * lines (an embedded newline), so we track quote state across the join.
- * Bounded by {@link MAX_RECORDS}.
+ * Stops past `maxRows` rows.
  */
 // reason: an irreducible single-pass row scanner — the quote-state + CRLF +
 // cap branches are RFC-4180 row splitting and share a running buffer.
 // fallow-ignore-next-line complexity
-function splitCsvRows(content: string): string[] {
-  const rows: string[] = [];
+function splitCsvRows(content: string, maxRows: number): CsvRow[] {
+  const rows: CsvRow[] = [];
   let cur = "";
+  let start = 0;
   let inQuote = false;
-  // oxlint-disable-next-line effect/imperative-loops -- RFC-4180 row scanner: it needs to skip the `\n` of a CRLF pair (`i++`), which a fold cannot express, and `content.split("")` would allocate one array element per UTF-16 unit of an input bounded only by MAX_INPUT_LENGTH (8 MB) — a memory-DoS regression.
+  // oxlint-disable-next-line effect/imperative-loops -- RFC-4180 row scanner: it needs to skip the `\n` of a CRLF pair (`i++`), which a fold cannot express, and `content.split("")` would allocate one array element per UTF-16 unit of an input bounded only by the input cap — a memory-DoS regression.
   for (let i = 0; i < content.length; i++) {
     const c = content[i];
     if (c === '"') inQuote = !inQuote;
     if ((c === "\n" || c === "\r") && !inQuote) {
       if (c === "\r" && content[i + 1] === "\n") i++; // CRLF
-      if (String.isNonEmpty(cur)) rows.push(cur);
+      if (String.isNonEmpty(cur)) rows.push({ text: cur, offset: start });
       cur = "";
-      if (rows.length > MAX_RECORDS) break;
+      start = i + 1;
+      if (rows.length > maxRows) break;
     } else cur += c;
   }
-  if (String.isNonEmpty(cur)) rows.push(cur);
+  if (String.isNonEmpty(cur)) rows.push({ text: cur, offset: start });
   return rows;
 }
 
@@ -547,6 +763,7 @@ const CSV_COLUMNS = {
   isbn: ["isbn", "isbn13", "isbn-13", "isbn10", "isbn-10"],
   issn: ["issn"],
   doi: ["doi"],
+  key: ["key", "citation key", "citation-key", "citationkey", "id"],
 } as const;
 
 /** A logical CSV column name. */
@@ -570,30 +787,41 @@ function csvHeaderIndex(header: readonly string[]): Partial<Record<CsvColumn, nu
 /**
  * Parses a reading-list CSV into per-entry {@link ParseOutcome}s. The first
  * row is a header; logical columns are matched by alias so column order is
- * irrelevant. Authors in a single cell may be separated by `;` or ` and `.
- * A file with no header, or a header lacking a `title` column, yields a
- * single `malformed` outcome. The item type is inferred from the identifier.
+ * irrelevant (a `key` / `citation key` / `id` column is the record's `id`
+ * and `citation-key`). Authors in a single cell may be separated by `;` or
+ * ` and `. A file with no header, or a header lacking a `title` column,
+ * yields a single `malformed` outcome. The item type is inferred from the
+ * identifier.
  *
  * @since 0.1.0
  */
-export function parseCsv(content: string): ParseOutcome[] {
-  const rows = splitCsvRows(content);
+export function parseCsv(content: string, options: ParseOptions = {}): ParseOutcome[] {
+  return withinInputCap(content, settings(options), csvOutcomes);
+}
+
+/** The CSV outcomes of an input within the cap. */
+function csvOutcomes(content: string, config: Settings): ParseOutcome[] {
+  // The header, the cap, and one row more to tell a truncated file.
+  const rows = splitCsvRows(content, config.maxRecords + 1);
   if (Array.isArrayEmpty(rows)) return [];
-  const header = parseCsvLine(rows[0]);
+  const header = parseCsvLine(rows[0].text);
   const index = csvHeaderIndex(header);
   if (index.title === undefined) return [{ outcome: "skipped", reason: "malformed" }];
 
   const cell = (cells: readonly string[], key: CsvColumn): Option.Option<string> =>
-    Option.flatMap(Option.fromUndefinedOr(index[key]), (at) => Array.get(cells, at));
+    Option.flatMap(Option.fromUndefinedOr(index[key]), (column) => Array.get(cells, column));
+  const position = locator(content);
+  const [body, truncated] = capped(rows.slice(1), config);
 
-  return Array.map(rows.slice(1, MAX_RECORDS + 1), (row) => {
-    const cells = parseCsvLine(row);
+  const outcomes = Array.map(body, (row) => {
+    const cells = parseCsvLine(row.text);
     const authorNames = Option.match(cell(cells, "author"), {
       onNone: (): string[] => [],
       onSome: (authorCell) =>
         authorCell.split(/\s*(?:;|\sand\s)\s*/i).filter((s) => String.isNonEmpty(s.trim())),
     });
-    return toOutcome(
+    const key = cell(cells, "key");
+    const outcome = toOutcome(
       {
         type: Option.none(),
         title: cell(cells, "title"),
@@ -607,12 +835,20 @@ export function parseCsv(content: string): ParseOutcome[] {
         isbn: cell(cells, "isbn"),
         issn: cell(cells, "issn"),
         doi: cell(cells, "doi"),
-        names: structuredNames(authorNames),
+        pmid: Option.none(),
+        pmcid: Option.none(),
+        arxiv: Option.none(),
+        id: key,
+        citationKey: key,
+        names: structuredNames(authorNames, config.maxAuthors),
         editors: [],
       },
       "csv",
+      config,
     );
+    return at(outcome, position(row.offset));
   });
+  return endOutcomes(outcomes, truncated);
 }
 
 // ── RIS ───────────────────────────────────────────────────────────────
@@ -627,60 +863,67 @@ export function parseCsv(content: string): ParseOutcome[] {
 // reason: an irreducible single-pass record scanner; the TY/ER/other-tag
 // branches are the RIS record grammar and share the running record buffer.
 // fallow-ignore-next-line complexity
-function splitRisRecords(content: string): RisRecord[] {
+function splitRisRecords(content: string, maxRecords: number): RisRecord[] {
   const records: RisRecord[] = [];
-  /** Appends a finished record; `false` once the record cap is reached. */
+  /** Appends a finished record; `false` once one past the record cap is reached. */
   const push = (record: RisRecord): boolean => {
     records.push(record);
-    return records.length < MAX_RECORDS;
+    return records.length <= maxRecords;
   };
-  const initial: RisScan = { current: Option.none(), done: false };
-  const trailing = Array.reduce(content.split(/\r?\n/), initial, (state, line): RisScan => {
-    if (state.done) return state;
+  const initial: RisScan = { current: Option.none(), done: false, offset: 0 };
+  const lines = content.split(/(\r?\n)/);
+  const trailing = Array.reduce(lines, initial, (state, line, index): RisScan => {
+    const next = state.offset + line.length;
+    // The split keeps each line break as its own element, at the odd indices.
+    if (state.done || index % 2 === 1) return { ...state, offset: next };
     const match = /^([A-Z][A-Z0-9])\s{2}-\s?(.*)$/.exec(line);
-    if (match === null) return state;
+    if (match === null) return { ...state, offset: next };
     const tag = match[1];
     const value = match[2].trim();
     if (tag === "TY") {
       if (Option.isSome(state.current) && !push(state.current.value)) {
-        return { current: Option.none(), done: true };
+        return { current: Option.none(), done: true, offset: next };
       }
-      const started: RisRecord = MutableHashMap.empty();
+      const started: RisRecord = { tags: MutableHashMap.empty(), offset: state.offset };
       addRisTag(started, tag, value);
-      return { current: Option.some(started), done: false };
+      return { current: Option.some(started), done: false, offset: next };
     }
     if (tag === "ER") {
-      if (Option.isNone(state.current)) return state;
-      return { current: Option.none(), done: !push(state.current.value) };
+      if (Option.isNone(state.current)) return { ...state, offset: next };
+      return { current: Option.none(), done: !push(state.current.value), offset: next };
     }
     if (Option.isSome(state.current)) addRisTag(state.current.value, tag, value);
-    return state;
+    return { ...state, offset: next };
   });
-  if (Option.isSome(trailing.current) && records.length < MAX_RECORDS) {
+  if (Option.isSome(trailing.current) && records.length <= maxRecords) {
     records.push(trailing.current.value);
   }
   return records;
 }
 
-/** The RIS scanner's running state: the record being read, and whether the record cap was hit. */
+/** The RIS scanner's running state: the record being read, whether the record cap was hit, and the offset of the next line. */
 interface RisScan {
   readonly current: Option.Option<RisRecord>;
   readonly done: boolean;
+  readonly offset: number;
 }
 
-/** One RIS record: each two-character tag mapped to its values, in order. */
-type RisRecord = MutableHashMap.MutableHashMap<string, string[]>;
+/** One RIS record: each two-character tag mapped to its values, in order, and the offset of its `TY` line. */
+interface RisRecord {
+  readonly tags: MutableHashMap.MutableHashMap<string, string[]>;
+  readonly offset: number;
+}
 
 /** Appends a tag value to an RIS record's multimap. */
 function addRisTag(record: RisRecord, tag: string, value: string): void {
-  const existing = MutableHashMap.get(record, tag);
-  if (Option.isNone(existing)) MutableHashMap.set(record, tag, [value]);
+  const existing = MutableHashMap.get(record.tags, tag);
+  if (Option.isNone(existing)) MutableHashMap.set(record.tags, tag, [value]);
   else existing.value.push(value);
 }
 
 /** The first value of an RIS tag, or `None`. */
 function risFirst(record: RisRecord, tag: string): Option.Option<string> {
-  return Option.flatMap(MutableHashMap.get(record, tag), Array.head);
+  return Option.flatMap(MutableHashMap.get(record.tags, tag), Array.head);
 }
 
 /** All values across a set of RIS tags, in order. */
@@ -690,7 +933,7 @@ function risAll(record: RisRecord, tags: readonly string[]): string[] {
 
 /** All values recorded for one RIS tag, in order. */
 function risValues(record: RisRecord, tag: string): readonly string[] {
-  return Option.getOrElse(MutableHashMap.get(record, tag), (): string[] => []);
+  return Option.getOrElse(MutableHashMap.get(record.tags, tag), (): string[] => []);
 }
 
 /** RIS `TY` → CSL item type; unlisted types fall back to `document`. */
@@ -749,8 +992,9 @@ function risSerials(record: RisRecord): RisSerials {
 }
 
 /** Maps one RIS record multimap to a {@link ParseOutcome}. */
-function risRecordOutcome(record: RisRecord): ParseOutcome {
+function risRecordOutcome(record: RisRecord, config: Settings): ParseOutcome {
   const serials = risSerials(record);
+  const key = risFirst(record, "ID");
   return toOutcome(
     {
       type: Option.some(risType(risFirst(record, "TY"))),
@@ -780,18 +1024,33 @@ function risRecordOutcome(record: RisRecord): ParseOutcome {
       isbn: serials.isbn,
       issn: serials.issn,
       doi: Option.firstSomeOf([risFirst(record, "DO"), risFirst(record, "DOI")]),
-      names: structuredNames(risAll(record, ["AU", "A1"])),
-      editors: structuredNames(risAll(record, ["ED", "A2"])),
+      pmid: Option.none(),
+      pmcid: Option.none(),
+      arxiv: Option.none(),
+      id: key,
+      citationKey: key,
+      names: structuredNames(risAll(record, ["AU", "A1"]), config.maxAuthors),
+      editors: structuredNames(risAll(record, ["ED", "A2"]), config.maxAuthors),
     },
     "ris",
+    config,
   );
 }
 
 /**
- * Parses an RIS document into per-entry {@link ParseOutcome}s.
+ * Parses an RIS document into per-entry {@link ParseOutcome}s. A record's
+ * `ID` tag is its `id` and `citation-key`; each outcome carries the position
+ * of its `TY` line.
  *
  * @since 0.1.0
  */
-export function parseRis(content: string): ParseOutcome[] {
-  return Array.map(splitRisRecords(content).slice(0, MAX_RECORDS), risRecordOutcome);
+export function parseRis(content: string, options: ParseOptions = {}): ParseOutcome[] {
+  return withinInputCap(content, settings(options), (input, config) => {
+    const position = locator(input);
+    const [records, truncated] = capped(splitRisRecords(input, config.maxRecords), config);
+    return endOutcomes(
+      Array.map(records, (record) => at(risRecordOutcome(record, config), position(record.offset))),
+      truncated,
+    );
+  });
 }

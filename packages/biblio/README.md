@@ -58,34 +58,38 @@ Each snippet below is an excerpt of a JSDoc `@example` in the source. CI compile
 
 ### Records — `.`
 
-**`BiblioRecord`** (`Schema.Struct`) — `type: CslItemType` (required), the CSL standard variables as optional strings (`title`, `container-title`, `collection-title`, `publisher`, `publisher-place`, `page`, `volume`, `issue`, `number`, `edition`, `abstract`, `language`, `URL`, `note`), the name variables as optional `CslName` arrays (`author`, `editor`, `translator`, `container-author`), the date variables as optional `CslDate`s (`issued`, `accessed`, `original-date`, `event-date`, `submitted`), then the superset: `identifiers: RecordIdentifiers` (required; `isbn?: Isbn`, `doi?: Doi`, `issn?: Issn`), `provenance: Provenance` (required; `source: ProvenanceSource`, `retrievedBy?`, `retrievedAt?`) and `extra?: Record<string, unknown>`.
+**`BiblioRecord`** (`Schema.Struct`) — `type: CslItemType` (required), the CSL-JSON item `id?: string | number` and `categories?: readonly string[]`, then every CSL 1.0.2 variable under its CSL-JSON name: the standard variables as optional strings (`citation-key`, `title`, `title-short`, `container-title`, `collection-title`, `collection-number`, `publisher`, `publisher-place`, `page`, `volume`, `issue`, `number`, `edition`, `genre`, `medium`, `status`, `event-title`, `event-place`, `archive`, `archive_location`, `call-number`, `keyword`, `abstract`, `note`, `URL`, … — numeric variables as their text), the 26 name variables as optional `CslName` arrays (`author`, `editor`, `translator`, `container-author`, `collection-editor`, `director`, `interviewer`, `illustrator`, `recipient`, `reviewed-author`, `original-author`, `contributor`, `curator`, `executive-producer`, `guest`, `host`, `narrator`, `organizer`, `performer`, `producer`, `script-writer`, `series-creator`, …) and the six date variables as optional `CslDate`s (`issued`, `accessed`, `available-date`, `event-date`, `original-date`, `submitted`). Then the superset: `identifiers: RecordIdentifiers` (required; `isbn?: Isbn`, `doi?: Doi`, `issn?: Issn`, `pmid?: Pmid`, `pmcid?: Pmcid`, `arxiv?: Arxiv`), `provenance: Provenance` (required; `source: ProvenanceSource`, `retrievedBy?`, `retrievedAt?`) and `extra?: Record<string, unknown>`. The CSL identifier variables (`DOI`, `ISBN`, `ISSN`, `PMID`, `PMCID`) live, validated, in `identifiers`; the citation-time variables (`citation-number`, `first-reference-note-number`, `locator`, `year-suffix`) and CSL's `custom` object stay in `extra`. A text variable may carry CSL's rich-text markup (see [Rich text](#rendering--)).
 
 **`CslItemType`** — the closed CSL 1.0.2 item-type enumeration (`article-journal`, `book`, `chapter`, `webpage`, … `document` is the neutral fallback). `isCslItemType(value)` narrows a string.
 
 **`CslName`** — `family` / `given` / `dropping-particle` / `non-dropping-particle` / `suffix` / `literal`, all optional, plus the superset `orcid?: Orcid`. **`CslDate`** — `date-parts` / `season` / `circa` / `literal` / `raw`.
 
-**`fromCslJson(item: unknown): BiblioRecord`** — lenient, total decode of any CSL-JSON item. Identifiers are validated where present (a checksum failure drops the identifier, not the record); unknown keys survive in `extra`; the record is stamped `provenance.source: "csl-json"`.
+**`fromCslJson(item: unknown, limits?: RecordLimits): BiblioRecord`** — lenient, total decode of any CSL-JSON item. Identifiers are validated where present (a checksum failure drops the identifier, not the record; an arXiv id is read from a `number: "arXiv:…"` or an arxiv.org `URL`); every CSL variable lands in its typed slot, the legacy aliases `event`, `journalAbbreviation` and `shortTitle` filling `event-title`, `container-title-short` and `title-short` when those are absent; unknown keys survive in `extra`; the record is stamped `provenance.source: "csl-json"`. `limits` (`{ maxFieldLength?, maxAuthors? }`) raises the text and name-list bounds.
 
 ```ts
 const record = fromCslJson({
+  id: "harari2015",
+  "citation-key": "harari2015",
   type: "book",
   title: "Sapiens",
+  "title-short": "Sapiens",
   ISBN: "0-06-231609-5",
   author: [{ family: "Harari", given: "Yuval Noah" }],
   issued: { "date-parts": [[2015]] },
   "custom-key": "kept",
 });
 assert.strictEqual(record.identifiers.isbn, "9780062316097");
+assert.strictEqual(record["citation-key"], "harari2015");
 assert.deepStrictEqual(record.extra, { "custom-key": "kept" });
 ```
 
-**`toCslJson(record): CslJsonItem`** — the inverse projection: drops `provenance`, writes the brands back into `ISBN` / `DOI` / `ISSN`, re-merges `extra` (modelled fields win over a stale carried key).
+**`toCslJson(record): CslJsonItem`** — the inverse projection: drops `provenance`, writes the brands back into `ISBN` / `DOI` / `ISSN` / `PMID` / `PMCID` (an arXiv id as `number: "arXiv:<id>"` when the record has no `number`), re-merges `extra` (modelled fields win over a stale carried key). `fromCslJson(toCslJson(record))` also lifts a record that kept CSL variables in `extra` (as 0.x did) into their typed slots.
 
-Name and date helpers: `makeCslName(parts)`, `parsePersonName(raw)` (`"Family, Given"` or `"Given Family"`), `cslNameDisplay(name)`, `readCslName(entry)`, `readCslNameArray(value)`, `dateFromYear(year)`, `yearOf(date)`. Sanitisers: `sanitiseText(value)` (trim, collapse whitespace, clamp to `MAX_TEXT_FIELD_LENGTH`), `sanitiseYear(value)`. Bounds: `MAX_TEXT_FIELD_LENGTH` (2000), `MAX_AUTHORS` (100).
+Name and date helpers: `makeCslName(parts)`, `parsePersonName(raw)` (`"Family, Given"` or `"Given Family"`), `cslNameDisplay(name)`, `readCslName(entry)`, `readCslNameArray(value, maxNames?)`, `dateFromYear(year)`, `yearOf(date)` (a range's start year, else the year of a `raw` date; `null` when there is none) and `endYearOf(date)` (`Option` of a range's last year, when it differs). Sanitisers: `sanitiseText(value, maxLength?)` (trim, collapse whitespace, clamp to `maxLength`, default `MAX_TEXT_FIELD_LENGTH`), `sanitiseYear(value)`. Default bounds: `MAX_TEXT_FIELD_LENGTH` (2000), `MAX_AUTHORS` (100).
 
 ### Identifiers — `.`
 
-**`Isbn`, `Doi`, `Issn`, `Orcid`** — `Schema.String.pipe(Schema.brand(…))`. The `Type` is the brand, the `Encoded` is `string`: the brand is a proof, not a representation. A raw string is never assignable to a brand and the four brands are distinct from each other (`tests/identifiers.types.ts` pins this at the type level).
+**`Isbn`, `Doi`, `Issn`, `Orcid`, `Pmid`, `Pmcid`, `Arxiv`** — `Schema.String.pipe(Schema.brand(…))`. The `Type` is the brand, the `Encoded` is `string`: the brand is a proof, not a representation. A raw string is never assignable to a brand and the brands are distinct from each other (`tests/identifiers.types.ts` pins this at the type level).
 
 **`decodeIsbn(raw): Option<Isbn>`** — accepts a hyphenated / spaced ISBN-10 or ISBN-13, validates the checksum (mod-11 / EAN mod-10), returns the canonical 13-digit form. **`isbnForms(isbn)`** gives an `IsbnForms`, `{ isbn13, isbn10 | null }`; `convertIsbn10To13` / `convertIsbn13To10` are the raw converters.
 
@@ -114,9 +118,19 @@ assert.strictEqual(
 );
 ```
 
+**`decodePmid(raw): Option<Pmid>`** — a PubMed id's digits (a `PMID:` prefix stripped; no leading zero). **`decodePmcid(raw): Option<Pmcid>`** — canonical `PMC1234567`. **`decodeArxiv(raw): Option<Arxiv>`** — a current-scheme (`2101.01234v2`) or old-scheme (`hep-th/9901001`) arXiv id, bare, with an `arXiv:` prefix or an arxiv.org `abs` / `pdf` URL stripped. None of the three schemes has a check digit, so the syntax is the whole test.
+
+```ts
+assert.strictEqual(Option.getOrNull(decodePmid("PMID: 15371539")), "15371539");
+assert.strictEqual(Option.getOrNull(decodePmcid("pmc3159421")), "PMC3159421");
+assert.strictEqual(Option.getOrNull(decodeArxiv("arXiv:2101.01234v2")), "2101.01234v2");
+```
+
 ### Parsing — `.`
 
-**`parseBibliographicFile(content, format): ParseOutcome[]`** — `format` is `ImportFormat` (`"bibtex" | "zotero-json" | "csv" | "ris"`); the per-format parsers `parseBibtex`, `parseZoteroJson`, `parseCsv`, `parseRis` are exported too. Pure and network-free; the BibTeX scanner is a grammar in [`@thomasfosterau/effect-parse`](https://github.com/thomasfosterau/effect-parse) combinators, with brace nesting capped at 32 levels (deeper nesting stops the scan like an unbalanced tail). One `ParseOutcome` per source entry: `{ outcome: "parsed", record }` or `{ outcome: "skipped", reason: SkipReason }` (`"no-title" | "no-identifier" | "malformed"`). A record needs a title and at least one dedup identifier (ISBN or DOI). Input over `MAX_INPUT_LENGTH` (8,000,000 code units) is dropped whole; at most `MAX_RECORDS` (5000) entries are emitted.
+**`parseBibliographicFile(content, format, options?): ParseOutcome[]`** — `format` is `ImportFormat` (`"bibtex" | "zotero-json" | "csv" | "ris"`); the per-format parsers `parseBibtex`, `parseZoteroJson`, `parseCsv`, `parseRis` (each `(content, options?)`) are exported too. Pure and network-free; the BibTeX scanner is a grammar in [`@thomasfosterau/effect-parse`](https://github.com/thomasfosterau/effect-parse) combinators, with brace nesting capped at 32 levels (deeper nesting stops the scan like an unbalanced tail). One `ParseOutcome` per source entry: `{ outcome: "parsed", record, position? }` or `{ outcome: "skipped", reason: SkipReason, position? }`, where `position` is the entry's `SourcePosition` (`{ offset, line, column }` of a BibTeX entry's `@`, an RIS `TY` line or a CSV row; CSL-JSON has none). An entry's key (BibTeX's citation key, RIS `ID`, a CSV `key` / `citation key` / `id` column, CSL-JSON `id` / `citation-key`) is the record's `id` and `citation-key`.
+
+`options` is a `ParseOptions`: `mode` (`ParseMode`) and the bounds. In the default `"import"` mode a record needs a title and at least one dedup identifier (ISBN or DOI), else it is skipped (`"no-title"` / `"no-identifier"`); in `"lenient"` mode every entry the format admits is a record, as a document's bibliography needs, and CSL-JSON items are read in full with `fromCslJson`. `maxRecords` (default `MAX_RECORDS`, 5000), `maxInputLength` (default `MAX_INPUT_LENGTH`, 8,000,000 code units), `maxFieldLength` and `maxAuthors` set the bounds; input over the input cap is one `"too-large"` outcome, and entries past the record cap one trailing `"truncated"` outcome. `"malformed"` marks an entry (or a whole JSON or CSV file) that could not be read.
 
 ```ts
 const outcomes = parseBibliographicFile(bibtex, "bibtex");
@@ -124,9 +138,10 @@ assert.deepStrictEqual(
   outcomes.map((outcome) => outcome.outcome),
   ["parsed", "skipped"],
 );
+assert.strictEqual(outcomes[1].outcome === "skipped" ? outcomes[1].reason : undefined, "no-title");
 ```
 
-**`parseBibtex(content)`** reads BibTeX and BibLaTeX in full: `@string` macros (and the predefined `jan` … `dec`) with `#` concatenation; LaTeX decoded to Unicode (`{\"o}` → `ö`, `--` → `–`, `\emph{…}` → its text; grouping braces are removed, so `{DNA}`'s case protection is not kept yet); BibTeX name rules (`von Last, Jr, First`, a braced corporate name as a `literal`, `and others` as `extra["tex.others"]`); `crossref` and `xdata` inheritance with BibLaTeX's rules (an `@inbook` takes its parent book's `title` as its container title); BibLaTeX's fields and dates (`journaltitle`, `location`, `urldate`, EDTF ranges as full `date-parts`, arXiv `eprint`s); and the BibTeX / BibLaTeX → CSL entry-type mapping Pandoc and citeproc-js use. A field with a CSL variable the record does not type (`shorttitle`, `keywords`, `type`, …) lands in `extra` under the CSL name (`title-short`, `keyword`, `genre`), and any other field under `tex.<field>`; only `file` is dropped.
+**`parseBibtex(content)`** reads BibTeX and BibLaTeX in full: `@string` macros (and the predefined `jan` … `dec`) with `#` concatenation; LaTeX decoded to Unicode (`{\"o}` → `ö`, `--` → `–`, `\emph{…}` → its text; grouping braces are removed, so `{DNA}`'s case protection is not kept yet); BibTeX name rules (`von Last, Jr, First`, a braced corporate name as a `literal`, `and others` as `extra["tex.others"]`); `crossref` and `xdata` inheritance with BibLaTeX's rules (an `@inbook` takes its parent book's `title` as its container title); BibLaTeX's fields and dates (`journaltitle`, `location`, `urldate`, EDTF ranges as full `date-parts`, arXiv `eprint`s); and the BibTeX / BibLaTeX → CSL entry-type mapping Pandoc and citeproc-js use. Fields with a CSL variable fill it (`shorttitle` → `title-short`, `keywords` → `keyword`, `type` → `genre`, `eventtitle` → `event-title`, …), an `eprint` of type `arxiv` / `pubmed` and the `pmid` / `pmcid` fields fill `identifiers` when they validate, and any other field lands in `extra` as `tex.<field>`; only `file` is dropped.
 
 ```ts
 const chapter = outcomes[1].outcome === "parsed" ? outcomes[1].record : undefined;
@@ -136,6 +151,15 @@ assert.deepStrictEqual(chapter?.author, [
   { family: "Berg", given: "Anna", "dropping-particle": "van der" },
 ]);
 assert.deepStrictEqual(chapter?.extra, { "tex.others": ["author"] });
+assert.strictEqual(chapter?.["citation-key"], "chapter");
+assert.deepStrictEqual(outcomes[1].position, { offset: 168, line: 3, column: 1 });
+
+// A document's bibliography: no identifier needed.
+const [thesis] = parseBibtex(
+  "@phdthesis{doe2020, title = {On Things}, author = {Doe, Jane}, school = {MIT}, year = 2020}",
+  { mode: "lenient" },
+);
+assert.strictEqual(thesis.outcome === "parsed" ? thesis.record.genre : undefined, "PhD thesis");
 ```
 
 ### Dedup — `.`
@@ -156,7 +180,17 @@ assert.strictEqual(isConfidentMatch(score), true);
 
 **`apaStyle`** (APA 7th, author-date), **`vancouverStyle`** (numeric) and **`chicagoNotesStyle`** (Chicago 17th notes and bibliography, a note style) are the built-ins; `builtInStyles` holds the three (`{ apa, vancouver, "chicago-notes" }`) and `getStyle(id)` looks a style up by any id (`undefined` when unknown). A `CitationStyle` is data — `{ id, title, category, renderReference, sortKey }`, optionally `reference` (rich output) and `citation` (in-text settings: et-al thresholds, affixes, delimiters, a note style's first and short forms) — so a consumer can supply its own without touching the engine, composing the `format.ts` primitives (`formatNameList`, `givenInitials`, `issuedYearText`, `pagesLabel`, `preferredUrl`, `dispatchRich`, …).
 
-**Rich text.** `renderReferenceRich(record, options): RichText` is the same reference with its formatting kept (APA's italic titles, journals and volumes; a linked DOI), and every `RenderedEntry` carries `rich` beside `text`. `RichText` is a small format-neutral inline AST (`Text`, `Italic`, `Bold`, `SmallCaps`, `Superscript`, `Subscript`, `Link`, `Display`) with `toPlainText`, `toHtml` (citeproc-js's markup; a link renders only for an `http(s)` or `mailto` URL) and `toMarkdown` adapters. The string functions are `toPlainText` over the same tree.
+**Rich text.** `renderReferenceRich(record, options): RichText` is the same reference with its formatting kept (APA's italic titles, journals and volumes; a linked DOI), and every `RenderedEntry` carries `rich` beside `text`. `RichText` is a small format-neutral inline AST (`Text`, `Italic`, `Bold`, `SmallCaps`, `Superscript`, `Subscript`, `NoCase`, `Link`, `Display`) with `toPlainText`, `toHtml` (citeproc-js's markup; a link renders only for an `http(s)` or `mailto` URL) and `toMarkdown` adapters. The string functions are `toPlainText` over the same tree.
+
+**CSL markup in fields.** A record's text variables may carry CSL-JSON's rich-text markup (`<i>`, `<b>`, `<sup>`, `<sub>`, `<span style="font-variant:small-caps;">`, `<span class="nocase">`), kept as text on the record as CSL-JSON keeps it. **`parseCslMarkup(value): RichText`** reads it (anything else that looks like a tag is literal text), **`toCslMarkup(rich)`** writes it back, and **`stripCslMarkup(value)`** is its plain text. The styles render it (`richField`), and sorting, plain-string output (`plainField`) and dedup read the plain text. Dates render a range's years (`2001–2003`) and a `literal` date as written.
+
+```ts
+const title = parseCslMarkup(
+  'The <i>Escherichia coli</i> genome and <span class="nocase">DNA</span>',
+);
+assert.strictEqual(toPlainText(title), "The Escherichia coli genome and DNA");
+assert.strictEqual(toHtml(title), "The <i>Escherichia coli</i> genome and DNA");
+```
 
 **`renderCitations(clusters, records, { style, locale?, nocite? }): RenderedCitations`** renders a whole document's in-text citations and its bibliography in one pass. `records` is any iterable of `[id, record]` pairs (a `Map`); a cluster is `{ cites: [{ id, locator?, label?, prefix?, suffix?, mode? }] }`, with `mode` one of `normal`, `suppress-author`, `author-only` and `author-in-text` (narrative: `Ray (2004)`). Author-date styles sort and group a cluster's cites (`Smith, 2001, 2004`) and disambiguate across the document (more names, then initials, then a year suffix `2004a` the bibliography repeats); numeric styles number sources in order of first citation and compress runs (`[1–3, 5]`); note styles give a source's first note in full, later ones short, and a repeat "ibid.", with each cite's position reported. `nocite` (ids, or `"*"`) adds uncited records to the bibliography, and `missing` lists cited ids with no record.
 
@@ -205,7 +239,7 @@ program.pipe(Effect.provide(lookupLayer)); // Effect<Option<BiblioRecord>, Looku
 
 ## Compatibility
 
-- **Wire compatibility.** `BiblioRecord` decodes every record the website application has persisted; any change to its shape (a field name, a key's optionality, an identifier brand, the `provenance` / `extra` shape) is a major version.
+- **Wire compatibility.** `BiblioRecord` decodes every record the website application has persisted; any change to its shape (a field name, a key's optionality, an identifier brand, the `provenance` / `extra` shape) is a major version. 1.0.0 added the item `id`, `categories`, the rest of the CSL 1.0.2 variables and the `pmid` / `pmcid` / `arxiv` identifier slots, all optional, so every 0.x record still decodes; `fromCslJson(toCslJson(record))` moves a 0.x record's CSL variables out of `extra`.
 - **Plain-nullable returns.** `isbnForms(isbn).isbn10`, `parsePersonName`, `cslNameDisplay`, `yearOf`, `makeCslName` and `bestConfidentMatch` return `null`, and `getStyle` returns `undefined`, rather than an `Option`. This is a stable contract, not a migration in progress.
 - **Scope.** The package stops at the CSL record: mapping records onto an application's own data model and persisting them stay in the application. Extracted from `thomasfosterau/website`'s `packages/biblio` with its git history; a `website#NNN` cite in a source comment is an issue in `thomasfosterau/website`.
 

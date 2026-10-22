@@ -20,10 +20,11 @@
 import * as Array from "effect/Array";
 import * as Option from "effect/Option";
 import * as String from "effect/String";
-import type { BiblioRecord, CslName } from "../../record.ts";
+import { type BiblioRecord, type CslName, yearOf } from "../../record.ts";
 import {
   citationName,
   issuedYearWithSuffix,
+  plainField,
   preferredUrl,
   type ReferenceClass,
   referenceClass,
@@ -106,8 +107,9 @@ function noteNames(
  * as US style puts it (`“Title,”`); a title already ending in `?` or `!`
  * takes none.
  */
-function quoted(title: string, punctuation: string): RichText {
-  return text(/[?!]$/.test(title) ? `“${title}”` : `“${title}${punctuation}”`);
+function quoted(title: RichText, punctuation: string): RichText {
+  const mark = /[?!]$/.test(toPlainText(title)) ? "" : punctuation;
+  return concat(text("“"), title, text(`${mark}”`));
 }
 
 /** An italic title, when present. */
@@ -146,7 +148,7 @@ const segment = (value: string): Option.Option<RichText> =>
 
 /** The title of a part in its bibliography form: `“Title.”`. */
 const partTitle = (record: BiblioRecord): Option.Option<RichText> =>
-  Option.map(Option.fromNullishOr(record.title), (title) => quoted(title, "."));
+  Option.map(richField(record, "title"), (title) => quoted(title, "."));
 
 /** The editors after a container: `edited by Jane Doe`. */
 function editedBy(record: BiblioRecord, ctx: RenderContext, lead: string): Option.Option<string> {
@@ -228,7 +230,7 @@ function parentheticalImprint(record: BiblioRecord, ctx: RenderContext): RichTex
 
 /** A part's title in a note: `“Title,”`. */
 const notePartTitle = (record: BiblioRecord): Option.Option<RichText> =>
-  Option.map(Option.fromNullishOr(record.title), (title) => quoted(title, ","));
+  Option.map(richField(record, "title"), (title) => quoted(title, ","));
 
 /** A whole work in a note: `Sapiens (New York: Harper, 2015)`. */
 const noteWork = (record: BiblioRecord, ctx: RenderContext): RichText =>
@@ -282,9 +284,7 @@ function noteFull(record: BiblioRecord, ctx: RenderContext): RichText {
 /** A later note: `Harari, Sapiens`, the title cut at its colon. */
 function noteShort(record: BiblioRecord, ctx: RenderContext): RichText {
   const names = noteNames(contributors(record), ctx, citationName);
-  const short = Option.map(Option.fromNullishOr(record.title), (title) =>
-    title.split(":")[0].trim(),
-  );
+  const short = Option.map(plainField(record, "title"), (title) => title.split(":")[0].trim());
   const kind = referenceClass(record.type);
   const title = Option.map(short, (value) =>
     kind === "book" || kind === "generic" ? italic(text(value)) : text(`“${value}”`),
@@ -295,9 +295,10 @@ function noteShort(record: BiblioRecord, ctx: RenderContext): RichText {
 /** Sort key: the first contributor's family name, then title, then year. */
 function sortKey(record: BiblioRecord): string {
   const first = Array.head(contributors(record));
-  const lead = Option.match(first, { onNone: () => record.title ?? "", onSome: invertedName });
-  const year = `${record.issued?.["date-parts"]?.[0]?.[0] ?? 0}`.padStart(6, "0");
-  return `${lead.toLowerCase()} ${(record.title ?? "").toLowerCase()} ${year}`;
+  const title = Option.getOrElse(plainField(record, "title"), () => "");
+  const lead = Option.match(first, { onNone: () => title, onSome: invertedName });
+  const year = `${yearOf(record.issued) ?? 0}`.padStart(6, "0");
+  return `${lead.toLowerCase()} ${title.toLowerCase()} ${year}`;
 }
 
 /**

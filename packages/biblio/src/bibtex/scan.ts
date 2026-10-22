@@ -25,23 +25,30 @@ import { type Budget, spend } from "./budget.ts";
 
 /**
  * One reference entry after macro expansion: its lower-cased `@type`, its
- * citation key, its fields (lower-cased names → LaTeX source values), and
- * which of them it inherited through `crossref` / `xdata`.
+ * citation key, the offset of its `@` in the document, its fields
+ * (lower-cased names → LaTeX source values), and which of them it inherited
+ * through `crossref` / `xdata`.
  *
  * @since 0.1.0
  */
 export interface BibtexEntry {
   readonly kind: string;
   readonly key: string;
+  readonly offset: number;
   readonly fields: HashMap.HashMap<string, string>;
   readonly inherited: HashSet.HashSet<string>;
 }
 
 /**
- * The most reference entries one document yields; the scan keeps the first
- * this many and ignores the rest.
+ * The scanned entries of a document, and whether entries past the caller's
+ * cap were left out.
+ *
+ * @since 1.0.0
  */
-const MAX_ENTRIES = 5000;
+export interface BibtexScan {
+  readonly entries: BibtexEntry[];
+  readonly truncated: boolean;
+}
 
 /**
  * The longest value a macro expansion produces, in UTF-16 code units. Each
@@ -51,11 +58,12 @@ const MAX_ENTRIES = 5000;
 const MAX_VALUE_LENGTH = 64_000;
 
 /**
- * The most characters macro expansion adds across one document (the input
- * cap, `MAX_INPUT_LENGTH`). Past it a macro expands to nothing, so many
- * fields that each name one large macro cannot multiply the work.
+ * The fewest characters macro expansion may add across one document; the
+ * budget is the larger of this and the input cap. Past it a macro expands to
+ * nothing, so many fields that each name one large macro cannot multiply
+ * the work.
  */
-const MAX_MACRO_EXPANSION = 8_000_000;
+const MIN_MACRO_EXPANSION = 8_000_000;
 
 /** The macro table and the expansion budget a document's values are evaluated against. */
 interface Macros {
@@ -106,10 +114,11 @@ const entryHead = Parser.preceded(
   Parser.map(Token.takeUntil("{"), (kind) => kind.trim().toLowerCase()),
 );
 
-/** One scanned block: its `@type` and its `{ ... }` body. */
+/** One scanned block: its `@type`, its `{ ... }` body, and the offset of its `@`. */
 interface RawBlock {
   readonly kind: string;
   readonly body: string;
+  readonly offset: number;
 }
 
 /** A text block's head steps past its `{` only: its body is scanned as text. */
@@ -118,10 +127,22 @@ const textBlockStep = Parser.as(
   Option.none<RawBlock>(),
 );
 
-/** An entry or `@string` block: its head and its brace-balanced `{ ... }` body. */
+/** An entry or `@string` block: its head, its brace-balanced `{ ... }` body, and where its `@` is. */
 const blockStep = Parser.map(
-  Parser.seq(entryHead, Parser.taken(braced)),
-  ([kind, body]): Option.Option<RawBlock> => Option.some({ kind, body: body.slice(1, -1) }),
+  Parser.preceded(
+    Token.takeUntil("@"),
+    Parser.withSpan(
+      Parser.seq(
+        Parser.preceded(
+          Token.literal("@"),
+          Parser.map(Token.takeUntil("{"), (kind) => kind.trim().toLowerCase()),
+        ),
+        Parser.taken(braced),
+      ),
+    ),
+  ),
+  ([[kind, body], span]): Option.Option<RawBlock> =>
+    Option.some({ kind, body: body.slice(1, -1), offset: span.start }),
 );
 
 /** The running scan: the blocks so far and how many of them are reference entries. */
@@ -132,26 +153,28 @@ interface BlockScan {
 
 /**
  * The whole block scan: stops at the first unbalanced block or the end, and
- * keeps the first {@link MAX_ENTRIES} reference entries plus every `@string`
- * (it scans past the cap: a `fold` cannot stop on its accumulator,
- * effect-parse#16). The `closure` backend never calls `new Function`, so a
- * page's Content Security Policy never sees it.
+ * keeps every `@string` and the first `keep` reference entries (it scans
+ * past the cap: a `fold` cannot stop on its accumulator, effect-parse#16).
+ * Compiled per scan, for the caller's cap (compiling costs microseconds).
+ * The `closure` backend never calls `new Function`, so a page's Content
+ * Security Policy never sees it.
  */
-const bibtexBlocks = Parser.compile(
-  Parser.fold(Parser.alt(textBlockStep, blockStep), {
-    init: (): BlockScan => ({ blocks: [], entries: 0 }),
-    f: (scan, step) => {
-      if (Option.isNone(step)) return scan;
-      if (step.value.kind === "string") scan.blocks.push(step.value);
-      else if (scan.entries < MAX_ENTRIES) {
-        scan.blocks.push(step.value);
-        scan.entries += 1;
-      }
-      return scan;
-    },
-  }),
-  { backend: "closure" },
-);
+const bibtexBlocks = (keep: number) =>
+  Parser.compile(
+    Parser.fold(Parser.alt(textBlockStep, blockStep), {
+      init: (): BlockScan => ({ blocks: [], entries: 0 }),
+      f: (scan, step) => {
+        if (Option.isNone(step)) return scan;
+        if (step.value.kind === "string") scan.blocks.push(step.value);
+        else if (scan.entries < keep) {
+          scan.blocks.push(step.value);
+          scan.entries += 1;
+        }
+        return scan;
+      },
+    }),
+    { backend: "closure" },
+  );
 
 /**
  * A `}` with no open `{` in this value (the field key swallowed its `{`):
@@ -321,10 +344,10 @@ function evaluateSinglePart(raw: string, macros: Macros): string {
     : unwrapRawValue(trimmed);
 }
 
-/** Splits a document into its entry and `@string` blocks, in order. */
-function scanBlocks(content: string): readonly RawBlock[] {
+/** Splits a document into its `@string` blocks and its first `keep` entry blocks, in order. */
+function scanBlocks(content: string, keep: number): readonly RawBlock[] {
   // A `fold` with no minimum always succeeds, so this never fails.
-  const scanned = Parser.parsePeek(bibtexBlocks, content);
+  const scanned = Parser.parsePeek(bibtexBlocks(keep), content);
   return Result.isSuccess(scanned) ? scanned.success[1].blocks : [];
 }
 
@@ -345,6 +368,7 @@ function readEntry(block: RawBlock, macros: Macros): BibtexEntry {
     return {
       kind: block.kind,
       key: block.body.trim(),
+      offset: block.offset,
       fields: HashMap.empty(),
       inherited: HashSet.empty(),
     };
@@ -356,25 +380,36 @@ function readEntry(block: RawBlock, macros: Macros): BibtexEntry {
       ([name, value]) => [name, evaluateValue(value, macros)] as const,
     ),
   );
-  return { kind: block.kind, key: key.trim(), fields, inherited: HashSet.empty() };
+  return {
+    kind: block.kind,
+    key: key.trim(),
+    offset: block.offset,
+    fields,
+    inherited: HashSet.empty(),
+  };
 }
 
 /**
- * Scans a BibTeX document into its reference entries, in order, with every
- * field value macro-expanded against the `@string` definitions above it.
- * `@comment` and `@preamble` bodies are scanned as text; `@string` blocks
- * define macros and yield no entry.
+ * Scans a BibTeX document into its first `maxEntries` reference entries, in
+ * order, with every field value macro-expanded against the `@string`
+ * definitions above it. `@comment` and `@preamble` bodies are scanned as
+ * text; `@string` blocks define macros and yield no entry. The macro
+ * expansion budget is the larger of 8,000,000 characters and `maxInput`.
  *
  * @since 0.1.0
  */
-export function scanBibtex(content: string): BibtexEntry[] {
+export function scanBibtex(content: string, maxEntries: number, maxInput: number): BibtexScan {
   const macros: Macros = {
     table: MutableHashMap.fromIterable(MONTH_MACROS),
-    budget: { remaining: MAX_MACRO_EXPANSION },
+    budget: { remaining: Math.max(MIN_MACRO_EXPANSION, maxInput) },
   };
-  return Array.filterMap(scanBlocks(content), (block): Result.Result<BibtexEntry, void> => {
-    if (block.kind !== "string") return Result.succeed(readEntry(block, macros));
-    defineMacros(block.body, macros);
-    return Result.failVoid;
+  const entries: BibtexEntry[] = [];
+  // One entry past the cap tells a truncated document.
+  const truncated = Array.some(scanBlocks(content, maxEntries + 1), (block) => {
+    if (block.kind === "string") defineMacros(block.body, macros);
+    else if (entries.length < maxEntries) entries.push(readEntry(block, macros));
+    else return true;
+    return false;
   });
+  return { entries, truncated };
 }

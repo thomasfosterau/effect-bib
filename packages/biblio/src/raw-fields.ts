@@ -32,6 +32,13 @@ export interface RawFields {
   readonly isbn: Option.Option<string>;
   readonly issn: Option.Option<string>;
   readonly doi: Option.Option<string>;
+  readonly pmid: Option.Option<string>;
+  readonly pmcid: Option.Option<string>;
+  readonly arxiv: Option.Option<string>;
+  /** The CSL-JSON item `id`: the entry's key in a BibTeX or RIS file. */
+  readonly id: Option.Option<string | number>;
+  /** The citation key a document cites the entry by. */
+  readonly citationKey: Option.Option<string>;
   readonly names: readonly CslName[];
   readonly editors: readonly CslName[];
 }

@@ -1,7 +1,8 @@
 /**
  * The render engine's format-neutral rich-text output: a small inline AST
- * (text, italic, bold, small caps, superscript, subscript, link, and CSL's
- * `display` blocks) with plain-text, HTML and Markdown adapters.
+ * (text, italic, bold, small caps, superscript, subscript, CSL's `nocase`
+ * span, link, and CSL's `display` blocks) with plain-text, HTML and Markdown
+ * adapters.
  *
  * Styles build references and citations as {@link RichText}, so formatting
  * (an APA container title in italics, a linked DOI) survives to whatever the
@@ -30,12 +31,15 @@ export interface Text {
 }
 
 /**
- * A styled span: italic, bold, small caps, superscript or subscript.
+ * A styled span: italic, bold, small caps, superscript, subscript, or
+ * `NoCase` — text a style's case transform must leave alone (a proper noun
+ * in a title, BibTeX's `{DNA}`), which renders as its children. `NoCase`
+ * was added in 1.0.0.
  *
  * @since 0.1.0
  */
 export interface Styled {
-  readonly _tag: "Italic" | "Bold" | "SmallCaps" | "Superscript" | "Subscript";
+  readonly _tag: "Italic" | "Bold" | "SmallCaps" | "Superscript" | "Subscript" | "NoCase";
   readonly children: RichText;
 }
 
@@ -125,6 +129,13 @@ export const superscript: (children: RichText) => RichText = styled("Superscript
 export const subscript: (children: RichText) => RichText = styled("Subscript");
 
 /**
+ * Rich text a case transform leaves alone (CSL's `<span class="nocase">`).
+ *
+ * @since 1.0.0
+ */
+export const noCase: (children: RichText) => RichText = styled("NoCase");
+
+/**
  * A link to `url` around `children` (the URL itself when `children` is
  * empty).
  *
@@ -200,13 +211,14 @@ const escapeHtml = (value: string): string =>
  */
 const isSafeUrl = (url: string): boolean => /^(?:https?:\/\/|mailto:)/i.test(url.trim());
 
-/** The HTML element each styled span renders as. */
+/** The HTML element each styled span renders as; `NoCase` has none. */
 const HTML_TAGS: Readonly<Record<Styled["_tag"], readonly [string, string]>> = {
   Italic: ["<i>", "</i>"],
   Bold: ["<b>", "</b>"],
   SmallCaps: ['<span style="font-variant:small-caps;">', "</span>"],
   Superscript: ["<sup>", "</sup>"],
   Subscript: ["<sub>", "</sub>"],
+  NoCase: ["", ""],
 };
 
 /**

@@ -20,6 +20,7 @@ import {
   apaStyle,
   bibliographyToText,
   type BiblioRecord,
+  chicagoNotesStyle,
   builtInStyles,
   compact,
   type CslName,
@@ -43,8 +44,10 @@ import {
   referenceClass,
   renderBibliography,
   renderReference,
+  renderReferenceRich,
   sortFamily,
   terminate,
+  toHtml,
   vancouverStyle,
 } from "@thomasfosterau/biblio";
 import { expectPresent, expectSome } from "./assert.ts";
@@ -532,6 +535,73 @@ describe("issuedYearText", () => {
 
   it("returns the no-date term when the date is absent", () => {
     expect(issuedYearText(Option.none(), enLocale)).toBe("n.d.");
+  });
+  it("joins a range's years with an en dash and falls back to a literal date", () => {
+    expect(issuedYearText(Option.some({ "date-parts": [[2001], [2003]] }), enLocale)).toBe(
+      "2001–2003",
+    );
+    expect(
+      issuedYearText(
+        Option.some({
+          "date-parts": [
+            [2001, 3],
+            [2001, 9],
+          ],
+        }),
+        enLocale,
+      ),
+    ).toBe("2001");
+    expect(issuedYearText(Option.some({ literal: "circa 1900" }), enLocale)).toBe("circa 1900");
+    expect(issuedYearText(Option.some({ raw: "Spring 2004" }), enLocale)).toBe("2004");
+  });
+});
+
+describe("CSL markup in text variables", () => {
+  const marked: BiblioRecord = {
+    type: "book",
+    title: "On <i>Homo sapiens</i> and CO<sub>2</sub>",
+    publisher: "Harper",
+    author: [cslName("Doe", "Jane")],
+    issued: { "date-parts": [[2001], [2003]] },
+    identifiers: {},
+    provenance: { source: "manual" },
+  };
+
+  it("renders the markup in every built-in style's plain text, never the tags", () => {
+    expect(renderReference(marked, { style: apaStyle })).toBe(
+      "Doe, J. (2001–2003). On Homo sapiens and CO2. Harper.",
+    );
+    expect(renderReference(marked, { style: vancouverStyle })).toBe(
+      "Doe J. On Homo sapiens and CO2. Harper; 2001–2003.",
+    );
+    expect(renderReference(marked, { style: chicagoNotesStyle })).toBe(
+      "Doe, Jane. On Homo sapiens and CO2. Harper, 2001–2003.",
+    );
+  });
+
+  it("keeps the markup in rich output", () => {
+    expect(toHtml(renderReferenceRich(marked, { style: apaStyle }))).toBe(
+      "Doe, J. (2001–2003). <i>On <i>Homo sapiens</i> and CO<sub>2</sub></i>. Harper.",
+    );
+  });
+
+  it("sorts an untitled record by its author", () => {
+    const { title: _title, ...untitled } = marked;
+    const abel = { ...untitled, author: [cslName("Abel", "Ann")] };
+    expect(
+      renderBibliography([marked, abel], { style: apaStyle }).entries.map((entry) => entry.text),
+    ).toEqual([
+      "Abel, A. (2001–2003). Harper.",
+      "Doe, J. (2001–2003). On Homo sapiens and CO2. Harper.",
+    ]);
+  });
+
+  it("sorts by the title's plain text (`<` would sort a tagged title first)", () => {
+    const tagged = { ...marked, author: [], title: "<i>b</i>" };
+    const plain = { ...marked, author: [], title: "a" };
+    expect(
+      renderBibliography([tagged, plain], { style: apaStyle }).entries.map((entry) => entry.text),
+    ).toEqual(["(2001–2003). a. Harper.", "(2001–2003). b. Harper."]);
   });
 });
 

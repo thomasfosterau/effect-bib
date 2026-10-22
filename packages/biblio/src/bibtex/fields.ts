@@ -1,10 +1,10 @@
 /**
  * BibTeX and BibLaTeX fields as CSL: the entry-type mapping, the field
- * mapping onto the record's typed slots, the CSL variables the record does
- * not type yet (kept in `extra` under their CSL names: `title-short`,
- * `genre`, `keyword`, …), and every remaining field in `extra` as
- * `tex.<field>`, so nothing in the entry is silently dropped. The one field
- * ignored outright is `file` (a local attachment path).
+ * mapping onto the record's typed slots (`title-short`, `genre`, `keyword`
+ * and the other CSL variables among them, and the PubMed and arXiv
+ * identifiers), and every remaining field in `extra` as `tex.<field>`, so
+ * nothing in the entry is silently dropped. The one field ignored outright
+ * is `file` (a local attachment path).
  *
  * The mapping follows the published BibLaTeX → CSL mapping Pandoc and
  * citeproc-js use.
@@ -22,7 +22,7 @@ import * as Option from "effect/Option";
 import * as Record from "effect/Record";
 import * as Result from "effect/Result";
 import type * as Types from "effect/Types";
-import { decodeIsbn, decodeIssn } from "../identifiers.ts";
+import { decodeArxiv, decodeIsbn, decodeIssn, decodePmcid, decodePmid } from "../identifiers.ts";
 import type { RawFields } from "../raw-fields.ts";
 import {
   type BiblioRecord,
@@ -55,16 +55,32 @@ export interface BibtexMapped {
   readonly additions: BibtexAdditions;
 }
 
-/** The longest field source decoded; the sanitised result is clamped far shorter. */
+/**
+ * The longest field source decoded, unless the caller's field-length limit
+ * is longer; the sanitised result is clamped to that limit.
+ */
 const MAX_SOURCE_LENGTH = 64_000;
 
 /**
  * The most inherited field source decoded across one document: four times
- * the input cap (`MAX_INPUT_LENGTH`). Past it an inherited field decodes to
- * nothing, so thousands of children of one large `crossref` parent cannot
- * multiply the work.
+ * the input cap. Past it an inherited field decodes to nothing, so
+ * thousands of children of one large `crossref` parent cannot multiply the
+ * work.
  */
-const MAX_DECODED_SOURCE = 32_000_000;
+const DECODED_SOURCE_FACTOR = 4;
+
+/**
+ * The bounds one document is mapped under: the longest sanitised field, the
+ * most names per name variable, and the input cap the decoding budget
+ * scales with.
+ *
+ * @since 1.0.0
+ */
+export interface BibtexLimits {
+  readonly maxFieldLength: number;
+  readonly maxAuthors: number;
+  readonly maxInputLength: number;
+}
 
 /** BibTeX / BibLaTeX entry type → CSL item type; an unlisted type is `document`. */
 const ENTRY_TYPES = HashMap.fromIterable<string, CslItemType>([
@@ -210,6 +226,7 @@ const IGNORED_FIELDS = HashSet.make("file");
 /** An entry being mapped: its fields, and the ones a mapping has used. */
 interface Reader {
   readonly kind: string;
+  readonly limits: BibtexLimits;
   readonly inherited: HashSet.HashSet<string>;
   readonly budget: Budget;
   readonly fields: HashMap.HashMap<string, string>;
@@ -222,7 +239,7 @@ interface Reader {
  * entry's own fields are bounded by the input already.
  */
 function budgeted(reader: Reader, key: string, source: string): Option.Option<string> {
-  const clamped = source.slice(0, MAX_SOURCE_LENGTH);
+  const clamped = source.slice(0, Math.max(MAX_SOURCE_LENGTH, reader.limits.maxFieldLength));
   const covered = !HashSet.has(reader.inherited, key) || spend(reader.budget, clamped.length);
   return covered ? Option.some(clamped) : Option.none();
 }
@@ -231,14 +248,16 @@ function budgeted(reader: Reader, key: string, source: string): Option.Option<st
 const decodeText =
   (reader: Reader, key: string) =>
   (source: string): Option.Option<string> =>
-    Option.flatMap(budgeted(reader, key, source), (clamped) => sanitiseText(decodeLatex(clamped)));
+    Option.flatMap(budgeted(reader, key, source), (clamped) =>
+      sanitiseText(decodeLatex(clamped), reader.limits.maxFieldLength),
+    );
 
 /** Sanitises a verbatim field, unescaping `\_`, `\%`, `\#`, `\&`, `\$` and `\~`. */
 const decodeVerbatim =
   (reader: Reader, key: string) =>
   (source: string): Option.Option<string> =>
     Option.flatMap(budgeted(reader, key, source), (clamped) =>
-      sanitiseText(clamped.replace(/\\([_%#&$~])/g, "$1")),
+      sanitiseText(clamped.replace(/\\([_%#&$~])/g, "$1"), reader.limits.maxFieldLength),
     );
 
 /** A field's source, without marking it used. */
@@ -384,7 +403,7 @@ function readNames(
       return Option.match(budgeted(reader, key, source), {
         onNone: () => [],
         onSome: (clamped) => {
-          const list = parseBibtexNames(clamped, usePrefix);
+          const list = parseBibtexNames(clamped, usePrefix, reader.limits.maxAuthors);
           if (list.others) others.push(key);
           return list.names;
         },
@@ -489,34 +508,51 @@ interface Eprint {
   readonly pmid: Option.Option<string>;
 }
 
-/** Reads `eprint` by its `eprinttype` (or BibTeX's `archiveprefix`); an unmapped kind stays in `extra`. */
+/**
+ * Reads `eprint` by its `eprinttype` (or BibTeX's `archiveprefix`) as a
+ * valid arXiv or PubMed id; an unmapped kind or an invalid id stays in
+ * `extra`.
+ */
 function readEprint(reader: Reader): Eprint {
   const kind = Option.map(
     Option.orElse(peek(reader, "eprinttype"), () => peek(reader, "archiveprefix")),
     (value) => value.trim().toLowerCase(),
   );
   const id = Option.flatMap(peek(reader, "eprint"), decodeVerbatim(reader, "eprint"));
-  const as = (wanted: string): Option.Option<string> => {
-    if (!Option.exists(kind, (value) => value === wanted) || Option.isNone(id))
-      return Option.none();
-    Array.forEach(["eprint", "eprinttype", "archiveprefix"], (key) => {
-      if (HashMap.has(reader.fields, key)) MutableHashSet.add(reader.consumed, key);
-    });
-    return id;
+  const as = (wanted: string, isValid: (value: string) => boolean): Option.Option<string> => {
+    const valid = Option.filter(
+      Option.filter(id, () => Option.exists(kind, (value) => value === wanted)),
+      isValid,
+    );
+    if (Option.isSome(valid)) {
+      Array.forEach(["eprint", "eprinttype", "archiveprefix"], (key) => {
+        if (HashMap.has(reader.fields, key)) MutableHashSet.add(reader.consumed, key);
+      });
+    }
+    return valid;
   };
   return {
-    arxiv: Option.filter(as("arxiv"), (value) => /^[\w./-]+$/.test(value)),
-    pmid: as("pubmed"),
+    arxiv: as("arxiv", (value) => Option.isSome(decodeArxiv(value))),
+    pmid: as("pubmed", (value) => Option.isSome(decodePmid(value))),
   };
 }
 
-/** The CSL variables the record does not type, as `[variable, value]` for `extra`. */
-function cslExtras(
+/** A verbatim identifier field, consumed only when `isValid` accepts it (else it stays in `extra`). */
+function validField(
   reader: Reader,
-  genre: Option.Option<string>,
-  numbering: Numbering,
-  eprint: Eprint,
-) {
+  key: string,
+  isValid: (value: string) => boolean,
+): Option.Option<string> {
+  const value = Option.filter(
+    Option.flatMap(peek(reader, key), decodeVerbatim(reader, key)),
+    isValid,
+  );
+  if (Option.isSome(value)) MutableHashSet.add(reader.consumed, key);
+  return value;
+}
+
+/** The further CSL text variables a BibLaTeX field fills, as `[variable, value]`. */
+function cslVariables(reader: Reader, genre: Option.Option<string>, numbering: Numbering) {
   return [
     ["title-short", text(reader, "shorttitle")],
     ["container-title-short", text(reader, "shortjournal")],
@@ -534,8 +570,6 @@ function cslExtras(
     ["original-publisher-place", text(reader, "origlocation")],
     ["status", text(reader, "pubstate")],
     ["annote", firstText(reader, ["annotation", "annote"])],
-    ["PMID", Option.orElse(eprint.pmid, () => text(reader, "pmid"))],
-    ["PMCID", text(reader, "pmcid")],
   ] as const;
 }
 
@@ -572,10 +606,10 @@ function readAdditions(
   reader: Reader,
   titles: Titles,
   numbering: Numbering,
+  arxiv: Option.Option<string>,
   others: string[],
 ): BibtexAdditions {
   const usePrefix = usesPrefix(reader);
-  const eprint = readEprint(reader);
   const additions: Types.Mutable<BibtexAdditions> = {};
   const translator = readNames(reader, "translator", usePrefix, others);
   const containerAuthor = readNames(reader, "bookauthor", usePrefix, others);
@@ -584,10 +618,7 @@ function readAdditions(
     additions["container-author"] = containerAuthor;
   assignAll(additions, [
     ["collection-title", titles.collectionTitle],
-    [
-      "number",
-      Option.orElse(numbering.number, () => Option.map(eprint.arxiv, (id) => `arXiv:${id}`)),
-    ],
+    ["number", Option.orElse(numbering.number, () => Option.map(arxiv, (id) => `arXiv:${id}`))],
     ["publisher-place", firstText(reader, ["location", "address"])],
     ["edition", text(reader, "edition")],
     ["abstract", text(reader, "abstract")],
@@ -600,7 +631,7 @@ function readAdditions(
       Option.firstSomeOf([
         Option.flatMap(take(reader, "url"), decodeVerbatim(reader, "url")),
         howPublishedUrl(reader),
-        Option.map(eprint.arxiv, (id) => `https://arxiv.org/abs/${id}`),
+        Option.map(arxiv, (id) => `https://arxiv.org/abs/${id}`),
       ]),
     ],
   ]);
@@ -610,8 +641,8 @@ function readAdditions(
     ["original-date", dateField(reader, "origdate")],
     ["event-date", dateField(reader, "eventdate")],
   ]);
+  assignAll(additions, cslVariables(reader, readGenre(reader), numbering));
   const extra: Types.Mutable<Record<string, unknown>> = {};
-  assignAll(extra, cslExtras(reader, readGenre(reader), numbering, eprint));
   if (Array.isArrayNonEmpty(others)) extra["tex.others"] = others;
   Array.forEach(leftovers(reader), ([key, value]) => {
     extra[key] = value;
@@ -621,9 +652,10 @@ function readAdditions(
 }
 
 /** Maps one resolved entry, decoding against the document's budget. */
-function mapEntry(entry: BibtexEntry, budget: Budget): BibtexMapped {
+function mapEntry(entry: BibtexEntry, limits: BibtexLimits, budget: Budget): BibtexMapped {
   const reader: Reader = {
     kind: entry.kind,
+    limits,
     inherited: entry.inherited,
     budget,
     fields: entry.fields,
@@ -634,6 +666,8 @@ function mapEntry(entry: BibtexEntry, budget: Budget): BibtexMapped {
   const others: string[] = [];
   const titles = readTitles(reader);
   const numbering = readNumbering(reader, Option.isSome(peek(reader, "series")));
+  const eprint = readEprint(reader);
+  const key = sanitiseText(entry.key, limits.maxFieldLength);
   const fields: RawFields = {
     type: Option.some(type),
     title: titles.title,
@@ -652,21 +686,31 @@ function mapEntry(entry: BibtexEntry, budget: Budget): BibtexMapped {
     isbn: firstValid(reader, "isbn", (candidate) => Option.isSome(decodeIsbn(candidate))),
     issn: firstValid(reader, "issn", (candidate) => Option.isSome(decodeIssn(candidate))),
     doi: Option.flatMap(take(reader, "doi"), decodeVerbatim(reader, "doi")),
+    pmid: Option.orElse(eprint.pmid, () =>
+      validField(reader, "pmid", (value) => Option.isSome(decodePmid(value))),
+    ),
+    pmcid: validField(reader, "pmcid", (value) => Option.isSome(decodePmcid(value))),
+    arxiv: eprint.arxiv,
+    id: key,
+    citationKey: key,
     names: readNames(reader, "author", usePrefix, others),
     editors: readNames(reader, "editor", usePrefix, others),
   };
-  return { fields, additions: readAdditions(reader, titles, numbering, others) };
+  return { fields, additions: readAdditions(reader, titles, numbering, eprint.arxiv, others) };
 }
 
 /**
  * Maps a document's resolved BibTeX / BibLaTeX entries to the shared field
- * bag and the further record members. Every field is consumed by a mapping
- * or kept in `extra`, except `file`; decoding shares one budget across the
- * document.
+ * bag and the further record members, under the caller's limits. Every
+ * field is consumed by a mapping or kept in `extra`, except `file`;
+ * decoding shares one budget across the document.
  *
  * @since 0.1.0
  */
-export function mapBibtexEntries(entries: readonly BibtexEntry[]): BibtexMapped[] {
-  const budget: Budget = { remaining: MAX_DECODED_SOURCE };
-  return Array.map(entries, (entry) => mapEntry(entry, budget));
+export function mapBibtexEntries(
+  entries: readonly BibtexEntry[],
+  limits: BibtexLimits,
+): BibtexMapped[] {
+  const budget: Budget = { remaining: DECODED_SOURCE_FACTOR * limits.maxInputLength };
+  return Array.map(entries, (entry) => mapEntry(entry, limits, budget));
 }
