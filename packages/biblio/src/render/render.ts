@@ -23,6 +23,7 @@ import * as Option from "effect/Option";
 import * as Order from "effect/Order";
 import type { BiblioRecord } from "../record.ts";
 import { enLocale } from "./locale.ts";
+import { type RichText, text } from "./rich.ts";
 import type {
   CitationStyle,
   RenderContext,
@@ -37,6 +38,22 @@ function resolveContext(options: RenderOptions): RenderContext {
 }
 
 /**
+ * A style's rich reference: its `reference` renderer, or its plain
+ * `renderReference` text for a style without one.
+ *
+ * @since 0.1.0
+ */
+export function styleReference(
+  style: CitationStyle,
+  record: BiblioRecord,
+  ctx: RenderContext,
+): RichText {
+  return style.reference !== undefined
+    ? style.reference(record, ctx)
+    : text(style.renderReference(record, ctx));
+}
+
+/**
  * The records in display order: sorted by sort key for `author-date` styles,
  * left in citation order for `numeric`. `Array.sortWith` delegates to
  * `Array.prototype.sort`, which is stable, so sort-key ties keep input order.
@@ -46,6 +63,7 @@ function orderRecords(
   style: CitationStyle,
 ): readonly BiblioRecord[] {
   if (style.category === "numeric") return records;
+  // Author-date and note bibliographies are alphabetical.
   return Array.sortWith(records, style.sortKey, Order.String);
 }
 
@@ -85,6 +103,30 @@ export function renderReference(record: BiblioRecord, options: RenderOptions): s
 }
 
 /**
+ * Renders a single record to a formatted reference as rich text: the same
+ * reference as {@link renderReference}, with its formatting (italic titles,
+ * linked DOIs) kept.
+ *
+ * @example
+ * ```ts
+ * import * as assert from "node:assert"
+ * import { apaStyle, fromCslJson, renderReferenceRich, toHtml } from "@thomasfosterau/biblio"
+ *
+ * const book = fromCslJson({ type: "book", title: "Sapiens", publisher: "Harper", author: [{ family: "Harari", given: "Yuval Noah" }], issued: { "date-parts": [[2015]] } })
+ *
+ * assert.strictEqual(
+ *   toHtml(renderReferenceRich(book, { style: apaStyle })),
+ *   "Harari, Y. N. (2015). <i>Sapiens</i>. Harper.",
+ * )
+ * ```
+ *
+ * @since 0.1.0
+ */
+export function renderReferenceRich(record: BiblioRecord, options: RenderOptions): RichText {
+  return styleReference(options.style, record, resolveContext(options));
+}
+
+/**
  * Renders a bibliography of records to structured {@link RenderedEntry}s in
  * display order — sorted for author-date styles, numbered for numeric.
  *
@@ -118,11 +160,15 @@ export function renderBibliography(
   const ctx = resolveContext(options);
   const { style } = options;
   const ordered = orderRecords(records, style);
-  const entries: RenderedEntry[] = ordered.map((record, i) => ({
-    index: i + 1,
-    label: style.category === "numeric" ? Option.some(`${i + 1}.`) : Option.none(),
-    text: style.renderReference(record, ctx),
-  }));
+  const entries: RenderedEntry[] = ordered.map((record, i) => {
+    const rich = styleReference(style, record, ctx);
+    return {
+      index: i + 1,
+      label: style.category === "numeric" ? Option.some(`${i + 1}.`) : Option.none(),
+      text: style.renderReference(record, ctx),
+      rich,
+    };
+  });
   return { style: style.id, entries };
 }
 

@@ -371,8 +371,8 @@ describe("getStyle / builtInStyles", () => {
     expect(getStyle("chicago")).toBeUndefined();
   });
 
-  it("exposes both built-in styles", () => {
-    expect(Record.keys(builtInStyles)).toEqual(["apa", "vancouver"]);
+  it("exposes the built-in styles", () => {
+    expect(Record.keys(builtInStyles)).toEqual(["apa", "vancouver", "chicago-notes"]);
   });
 });
 

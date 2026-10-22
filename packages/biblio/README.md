@@ -154,7 +154,20 @@ assert.strictEqual(isConfidentMatch(score), true);
 
 **`renderReference(record, { style, locale? }): string`** and **`renderBibliography(records, options): RenderedBibliography`** — author-date styles sort by the style's `sortKey` and carry no label; numeric styles keep citation order and number each entry (`label: Option<string>`). **`bibliographyToText(bibliography)`** flattens to one line per entry. `locale` defaults to `enLocale`.
 
-**`apaStyle`** (APA 7th, author-date) and **`vancouverStyle`** (numeric) are the built-ins; `builtInStyles` holds the two (`{ apa, vancouver }`) and `getStyle(id)` looks a style up by any id (`undefined` when unknown). A `CitationStyle` is data — `{ id, title, category, renderReference, sortKey }` — so a consumer can supply its own without touching the engine, composing the `format.ts` primitives (`formatNameList`, `givenInitials`, `issuedYearText`, `pagesLabel`, `preferredUrl`, `dispatchReference`, …).
+**`apaStyle`** (APA 7th, author-date), **`vancouverStyle`** (numeric) and **`chicagoNotesStyle`** (Chicago 17th notes and bibliography, a note style) are the built-ins; `builtInStyles` holds the three (`{ apa, vancouver, "chicago-notes" }`) and `getStyle(id)` looks a style up by any id (`undefined` when unknown). A `CitationStyle` is data — `{ id, title, category, renderReference, sortKey }`, optionally `reference` (rich output) and `citation` (in-text settings: et-al thresholds, affixes, delimiters, a note style's first and short forms) — so a consumer can supply its own without touching the engine, composing the `format.ts` primitives (`formatNameList`, `givenInitials`, `issuedYearText`, `pagesLabel`, `preferredUrl`, `dispatchRich`, …).
+
+**Rich text.** `renderReferenceRich(record, options): RichText` is the same reference with its formatting kept (APA's italic titles, journals and volumes; a linked DOI), and every `RenderedEntry` carries `rich` beside `text`. `RichText` is a small format-neutral inline AST (`Text`, `Italic`, `Bold`, `SmallCaps`, `Superscript`, `Subscript`, `Link`, `Display`) with `toPlainText`, `toHtml` (citeproc-js's markup; a link renders only for an `http(s)` or `mailto` URL) and `toMarkdown` adapters. The string functions are `toPlainText` over the same tree.
+
+**`renderCitations(clusters, records, { style, locale?, nocite? }): RenderedCitations`** renders a whole document's in-text citations and its bibliography in one pass. `records` is any iterable of `[id, record]` pairs (a `Map`); a cluster is `{ cites: [{ id, locator?, label?, prefix?, suffix?, mode? }] }`, with `mode` one of `normal`, `suppress-author`, `author-only` and `author-in-text` (narrative: `Ray (2004)`). Author-date styles sort and group a cluster's cites (`Smith, 2001, 2004`) and disambiguate across the document (more names, then initials, then a year suffix `2004a` the bibliography repeats); numeric styles number sources in order of first citation and compress runs (`[1–3, 5]`); note styles give a source's first note in full, later ones short, and a repeat "ibid.", with each cite's position reported. `nocite` (ids, or `"*"`) adds uncited records to the bibliography, and `missing` lists cited ids with no record.
+
+```ts
+const apa = renderCitations(clusters, records, { style: apaStyle });
+assert.deepStrictEqual(
+  apa.citations.map((citation) => citation.text),
+  ["(Ray, 2004, p. 5; Smith, 2001, 2004b)", "Ray (2004)", "(Smith, 2004a)"],
+);
+assert.strictEqual(apa.bibliography.entries[3]?.text, "Smith, J. (2004b). Third.");
+```
 
 ```ts
 assert.strictEqual(
