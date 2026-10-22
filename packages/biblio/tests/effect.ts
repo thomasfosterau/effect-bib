@@ -7,12 +7,12 @@
  * internals that the Vite+ vitest alias does not expose — importing it fails
  * at module evaluation with `TypeError: Cannot read properties of undefined
  * (reading 'config')` (website, June 2026). Provide layers per test with
- * `Effect.provide` at the call site, per the effect-solutions testing guide.
+ * `Effect.provide` at the call site.
  *
  * @module biblio/tests/effect
  */
 
-import { expect } from "vite-plus/test";
+import { assert, expect } from "vite-plus/test";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
@@ -29,13 +29,13 @@ export const runTest = <A, E>(effect: Effect.Effect<A, E, never>): Promise<A> =>
  */
 export const expectFailureInstanceOf = async <A, E>(
   program: Effect.Effect<A, E, never>,
-  errorClass: abstract new (...args: never[]) => unknown,
+  errorClass: abstract new (...args: never[]) => object,
 ): Promise<E> => {
   const exit = await Effect.runPromiseExit(program);
 
-  expect(Exit.isFailure(exit)).toBe(true);
-  if (!Exit.isFailure(exit)) throw new Error("Expected a failure exit");
-  const failure = Option.getOrThrow(Cause.findErrorOption(exit.cause));
-  expect(failure).toBeInstanceOf(errorClass);
-  return failure;
+  assert(Exit.isFailure(exit), "expected a failure exit");
+  const failure = Cause.findErrorOption(exit.cause);
+  assert(Option.isSome(failure), "expected the failure to carry a typed error");
+  expect(failure.value).toBeInstanceOf(errorClass);
+  return failure.value;
 };

@@ -212,6 +212,15 @@ describe("toCslJson / fromCslJson", () => {
     expect(fromCslJson(null).identifiers).toEqual({});
   });
 
+  it("drops a non-array date-parts entry and keeps the usable ones", () => {
+    const record = fromCslJson({
+      type: "book",
+      title: "t",
+      issued: { "date-parts": [2015, [2016, 3]] },
+    });
+    expect(record.issued).toEqual({ "date-parts": [[2016, 3]] });
+  });
+
   it("falls back to the document type for an unknown CSL type", () => {
     expect(fromCslJson({ type: "holo-novel", title: "t", DOI: "10.1000/x" }).type).toBe("document");
   });

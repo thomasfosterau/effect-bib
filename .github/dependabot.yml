@@ -1,42 +1,47 @@
-# Dependabot version-update configuration (a subset of the preferenceflow
-# application's, whose catalog this workspace mirrors).
+# Dependabot version-update configuration.
 #
-# `groups` collect dependencies that MUST move together: the Effect 4 release
-# line is a lockstep-versioned singleton set.
+# The `npm` ecosystem at `/` reads the pnpm workspace, its catalogs and
+# pnpm-lock.yaml, so a bump lands as a catalog edit plus a lockfile update.
 #
-# The vitest toolchain (`vite` / `vitest` / `vite-plus` /
-# `@vitest/coverage-istanbul`) is a set too, but it has no group, because
-# Dependabot's version updates never move it: it is pinned to vite-plus's exact
-# versions, so it moves only by hand, with a vite-plus release (see the
-# `vite-plus` note in pnpm-workspace.yaml), and its version updates are ignored
-# below. The coverage provider is in that set because vite-plus ships none and
-# its `test --coverage` guard throws unless the provider equals its bundled
-# `vitest` exactly (#47); a Dependabot bump of the provider alone breaks
-# `test:coverage`, which is CI's unit-test step (#49). Security updates stay
-# enabled (the ignore is scoped to the `version-update:semver-*` update types),
-# so a security PR touching `vite`, `vitest`, `@vitest/coverage-istanbul` or
-# `vite-plus` can still open: do NOT merge it alone. Moving one member skews
-# the set off vite-plus's exact pins, and CI catches only a provider skew, so
-# a lone `vite` or `vitest` move can stay green; take the fix by moving the
-# whole set with a vite-plus release instead. A group with
-# `applies-to: security-updates` would not help: it only combines members that
-# are themselves vulnerable, so it never moves the rest of the set along.
+# `groups` collect the sets that MUST move together, so no member can drift
+# from the rest in a PR of its own. Dependabot puts a dependency in the FIRST
+# group whose patterns match, so the groups run specific → general, and
+# `exclude-patterns` keep each package out of a group it would otherwise also
+# match. Every catalog entry in pnpm-workspace.yaml belongs to exactly one:
 #
-# `@effect/tsgo`, `typescript` (the TS6 alias) and `@typescript/native` are a
-# set too: `effect-tsgo patch` matches the native `tsc` and `oxlint` by gitHead
-# / version and hard-errors (UnsupportedTargetPackageVersionError) on any
-# pairing it ships no artifact for, so a Dependabot PR that moves one of them
-# alone goes red. They move by hand, as a set with `vite-plus`, after reading
-# the `components` table in node_modules/@effect/tsgo/dist/effect-tsgo.cjs (see
-# the `@effect/tsgo` note in pnpm-workspace.yaml). Their version updates are
-# ignored below and `@effect/tsgo` is excluded from the `effect` group; security
-# updates stay enabled (same `version-update:semver-*` scoping).
+# - `toolchain`: `vite-plus` pins the `oxlint`, `oxfmt`, `oxlint-tsgolint` and
+#   `vitest` it carries (and `vite` is its aliased core,
+#   `@voidzero-dev/vite-plus-core`); the coverage provider must equal that
+#   bundled `vitest` exactly (#47); `effect-tsgo patch` (the root `prepare`)
+#   hard-errors on a `@typescript/native` (TS7) / `typescript` (the TS6 alias,
+#   `@typescript/typescript6`) / oxlint pairing its release ships no artifact
+#   for; and `@mpsuesser/oxlint-plugin-effect` runs inside that oxlint. One
+#   PR, then, even for a major: read the `components` table in
+#   node_modules/@effect/tsgo/dist/effect-tsgo.cjs and the version notes in
+#   pnpm-workspace.yaml before merging it.
+# - `docgen`: `@effect/docgen` runs every example under `tsx`.
+# - `effect`: the Effect 4 release line is a lockstep-versioned singleton set
+#   (the `effect` override in pnpm-workspace.yaml forces one copy). It also
+#   carries `@effect/language-service`. `@effect/tsgo` and `@effect/docgen`
+#   are excluded: they belong to the groups above.
+# - `changesets`, `fallow`: each its own set.
+# - `minor-and-patch`: everything else (`@types/node`,
+#   `@thomasfosterau/effect-parse`), minor and patch only, so PR volume stays
+#   low; a major outside the lockstep sets opens on its own.
 #
-# `cooldown` mirrors pnpm-workspace.yaml's `minimumReleaseAge`.
+# The `overrides` in pnpm-workspace.yaml (`vite`, `vitest`, `effect`) all point
+# at `catalog:`, so a catalog bump moves them; there is no overrides-only pin to
+# move by hand. The published peer range (`catalogs.peers.effect`) is a
+# deliberate floor, not a version to chase: change it by hand, with a
+# changeset.
+#
+# `cooldown` mirrors pnpm-workspace.yaml's `minimumReleaseAge` (1 day), with
+# the same `@thomasfosterau/*` exemption as `minimumReleaseAgeExclude`.
 version: 2
 updates:
   - package-ecosystem: "npm"
     directory: "/"
+    target-branch: "trunk"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -45,70 +50,61 @@ updates:
       - "dependencies"
     commit-message:
       prefix: "chore"
-      prefix-development: "chore"
     cooldown:
       default-days: 1
       exclude:
         - "@thomasfosterau/*"
     groups:
+      toolchain:
+        applies-to: version-updates
+        patterns:
+          - "vite-plus"
+          - "vite"
+          - "@voidzero-dev/*"
+          - "vitest"
+          - "@vitest/*"
+          - "oxlint"
+          - "oxfmt"
+          - "oxlint-tsgolint"
+          - "@effect/tsgo"
+          - "@typescript/native"
+          - "typescript"
+          - "@typescript/typescript6"
+          - "@mpsuesser/oxlint-plugin-effect"
+        update-types: ["major", "minor", "patch"]
+      docgen:
+        applies-to: version-updates
+        patterns:
+          - "@effect/docgen"
+          - "tsx"
+        update-types: ["major", "minor", "patch"]
       effect:
+        applies-to: version-updates
         patterns:
           - "effect"
           - "@effect/*"
         exclude-patterns:
           - "@effect/tsgo"
-    ignore:
-      - dependency-name: "@effect/tsgo"
-        update-types:
-          [
-            "version-update:semver-major",
-            "version-update:semver-minor",
-            "version-update:semver-patch",
-          ]
-      - dependency-name: "typescript"
-        update-types:
-          [
-            "version-update:semver-major",
-            "version-update:semver-minor",
-            "version-update:semver-patch",
-          ]
-      - dependency-name: "@typescript/native"
-        update-types:
-          [
-            "version-update:semver-major",
-            "version-update:semver-minor",
-            "version-update:semver-patch",
-          ]
-      - dependency-name: "vite"
-        update-types:
-          [
-            "version-update:semver-major",
-            "version-update:semver-minor",
-            "version-update:semver-patch",
-          ]
-      - dependency-name: "vitest"
-        update-types:
-          [
-            "version-update:semver-major",
-            "version-update:semver-minor",
-            "version-update:semver-patch",
-          ]
-      - dependency-name: "@vitest/coverage-istanbul"
-        update-types:
-          [
-            "version-update:semver-major",
-            "version-update:semver-minor",
-            "version-update:semver-patch",
-          ]
-      - dependency-name: "vite-plus"
-        update-types:
-          [
-            "version-update:semver-major",
-            "version-update:semver-minor",
-            "version-update:semver-patch",
-          ]
+          - "@effect/docgen"
+        update-types: ["major", "minor", "patch"]
+      changesets:
+        applies-to: version-updates
+        patterns:
+          - "@changesets/*"
+        update-types: ["major", "minor", "patch"]
+      fallow:
+        applies-to: version-updates
+        patterns:
+          - "fallow"
+        update-types: ["major", "minor", "patch"]
+      minor-and-patch:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        update-types: ["minor", "patch"]
   - package-ecosystem: "github-actions"
     directory: "/"
+    target-branch: "trunk"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -116,5 +112,8 @@ updates:
     labels:
       - "dependencies"
     commit-message:
-      prefix: "ci"
-      include: "scope"
+      prefix: "chore"
+    groups:
+      actions:
+        patterns:
+          - "*"

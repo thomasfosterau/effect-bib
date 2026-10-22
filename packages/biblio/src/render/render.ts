@@ -38,7 +38,7 @@ function resolveContext(options: RenderOptions): RenderContext {
 
 /**
  * The records in display order: sorted by sort key for `author-date` styles,
- * left in citation order for `numeric`. `Array.sort` delegates to
+ * left in citation order for `numeric`. `Array.sortWith` delegates to
  * `Array.prototype.sort`, which is stable, so sort-key ties keep input order.
  */
 function orderRecords(
@@ -46,7 +46,7 @@ function orderRecords(
   style: CitationStyle,
 ): readonly BiblioRecord[] {
   if (style.category === "numeric") return records;
-  return Array.sort(records, Order.mapInput(Order.String, style.sortKey));
+  return Array.sortWith(records, style.sortKey, Order.String);
 }
 
 /**

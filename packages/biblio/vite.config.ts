@@ -23,7 +23,10 @@ const testConfig = {
   testTimeout: 30_000,
   coverage: {
     provider: "istanbul" as const,
-    reporter: ["text-summary", "json-summary"],
+    // `json` writes coverage-final.json, the Istanbul map `fallow audit`
+    // reads for exact per-function CRAP scores (`health.coverage` in
+    // .fallowrc.json); without it every function scores as uncovered.
+    reporter: ["text-summary", "json-summary", "json"],
     reportsDirectory: "./coverage",
     include: ["src/**/*.ts"],
     exclude: ["**/*.d.ts"],
@@ -39,8 +42,7 @@ export default defineConfig({
       // assertions) are checked here alongside the sources.
       check: {
         command: "tsc -p tsconfig.json",
-        input: cacheInputs,
-        output: [],
+        cache: { input: cacheInputs, output: [] },
       },
       // Emits `dist/` (JavaScript + declarations) with the native, Effect-
       // patched `tsc`. `rm -rf` first so a renamed module leaves no stale file.
@@ -58,32 +60,30 @@ export default defineConfig({
       // list of system tools, and `ls` is on it but `find` is not.
       build: {
         command: "sh -c 'rm -rf dist && tsc -p tsconfig.build.json && ls -R dist > /dev/null'",
-        input: cacheInputs,
-        output: ["dist/**"],
+        cache: { input: cacheInputs, output: ["dist/**"] },
       },
       // Compiles AND executes every JSDoc `@example` under src/ (docgen.json),
       // writing the generated module docs to docs/ (gitignored: the README is
       // the API reference; this task is the gate that keeps the examples true).
       docgen: {
         command: "docgen",
-        input: cacheInputs,
-        output: ["docs/**"],
+        cache: { input: cacheInputs, output: ["docs/**"] },
       },
       // Both test tasks build first: `tests/entry-points.test.ts` re-walks
       // and loads the built `dist/`, and skips those cases without it (#22).
       "test:unit": {
         command: "vp test run tests",
         dependsOn: ["build"],
-        env: ["VITEST_MAX_WORKERS", "NODE_OPTIONS"],
-        input: cacheInputs,
-        output: [],
+        cache: { env: ["VITEST_MAX_WORKERS", "NODE_OPTIONS"], input: cacheInputs, output: [] },
       },
       "test:coverage": {
         command: "vp test run tests --coverage",
         dependsOn: ["build"],
-        env: ["VITEST_MAX_WORKERS", "NODE_OPTIONS"],
-        input: cacheInputs,
-        output: ["coverage/**"],
+        cache: {
+          env: ["VITEST_MAX_WORKERS", "NODE_OPTIONS"],
+          input: cacheInputs,
+          output: ["coverage/**"],
+        },
       },
     },
   },

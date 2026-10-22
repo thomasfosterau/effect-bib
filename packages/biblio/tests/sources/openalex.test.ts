@@ -70,6 +70,19 @@ describe("normaliseOpenAlexRecord", () => {
     expect(record.type).toBe("document");
   });
 
+  it("never reads an inherited object key as a type mapping", () => {
+    const record = expectSome(normaliseOpenAlexRecord(asWork({ title: "X", type: "constructor" })));
+    expect(record.type).toBe("document");
+  });
+
+  it("uses the first page alone when the work has no last page", () => {
+    const record = expectSome(
+      normaliseOpenAlexRecord(asWork({ title: "X", biblio: { volume: "3", first_page: "7" } })),
+    );
+    expect(record.volume).toBe("3");
+    expect(record.page).toBe("7");
+  });
+
   it("falls back to the deprecated host_venue when primary_location is absent", () => {
     const record = expectSome(
       normaliseOpenAlexRecord(asWork({ title: "X", host_venue: { display_name: "Old Venue" } })),

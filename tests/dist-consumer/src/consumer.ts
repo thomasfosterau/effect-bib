@@ -82,10 +82,7 @@ export const bibliography = renderBibliography([record], { style: vancouverStyle
 
 // ── sources ───────────────────────────────────────────────────────────────
 
-export const program = Effect.gen(function* () {
-  const lookup = yield* BiblioLookup;
-  return yield* lookup.byIsbnRecord(raw);
-});
+export const program = BiblioLookup.use((lookup) => lookup.byIsbnRecord(raw));
 export const contact: LookupContact = { product: "consumer/1.0", email: "ops@example.org" };
 export const provided = program.pipe(Effect.provide(biblioLookupLayer({ contact })));
 export const clientLayer: Layer.Layer<BiblioLookup, never, HttpClient.HttpClient> =

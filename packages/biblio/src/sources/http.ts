@@ -53,7 +53,7 @@ function describeHttpError(error: HttpClientError.HttpClientError): string {
  *
  * @since 0.1.0
  */
-export const makeGet =
+export const jsonGet =
   (client: HttpClient.HttpClient, base: string, source: LookupSource) =>
   <S extends Schema.Top>(
     path: string,

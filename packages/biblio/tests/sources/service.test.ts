@@ -26,7 +26,7 @@ import {
   LookupFailed,
 } from "@thomasfosterau/biblio/sources";
 import { expectFailureInstanceOf, runTest } from "../effect.ts";
-import { stubRouter } from "./stub-http.ts";
+import { stubRouter, type StubRouter } from "./stub-http.ts";
 import { expectPresent, expectSome } from "../assert.ts";
 import rayResponse from "../fixtures/crossref-ray-2004.json" with { type: "json" };
 import searchResponse from "../fixtures/openalex-search-sapiens.json" with { type: "json" };
@@ -49,13 +49,13 @@ const lookupLayer = biblioLookupClientLayer({ contact: CONTACT });
  * is looking for.
  */
 const withLookup = <A, E>(
-  layer: ReturnType<typeof stubRouter>["layer"],
+  layer: StubRouter["layer"],
   use: (lookup: BiblioLookup["Service"]) => Effect.Effect<A, E>,
 ): Effect.Effect<A, E, never> =>
   Effect.gen(function* () {
     const lookup = yield* BiblioLookup;
     return yield* use(lookup);
-  }).pipe(Effect.provide(lookupLayer.pipe(Layer.provide(layer)))) as Effect.Effect<A, E, never>;
+  }).pipe(Effect.provide(lookupLayer.pipe(Layer.provide(layer))));
 
 // ── CSL-native surface ──────────────────────────────────────────────────
 

@@ -35,14 +35,15 @@
 
 import { Parser, Token } from "@thomasfosterau/effect-parse";
 import * as Array from "effect/Array";
+import * as HashMap from "effect/HashMap";
 import * as Match from "effect/Match";
 import * as MutableHashMap from "effect/MutableHashMap";
 import * as Option from "effect/Option";
-import * as Predicate from "effect/Predicate";
 import * as Record from "effect/Record";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 import * as String from "effect/String";
+import type * as Types from "effect/Types";
 import {
   decodeDoi,
   decodeIsbn,
@@ -185,24 +186,20 @@ export function parseBibliographicFile(content: string, format: ImportFormat): P
 interface RawFields {
   /** The CSL item type, or `Option.none()` to infer it from the identifier. */
   readonly type: Option.Option<CslItemType>;
-  readonly title: unknown;
-  readonly subtitle?: unknown;
-  readonly year?: unknown;
-  readonly publisher?: unknown;
-  readonly containerTitle?: unknown;
-  readonly volume?: unknown;
-  readonly issue?: unknown;
-  readonly page?: unknown;
-  readonly isbn?: unknown;
-  readonly issn?: unknown;
-  readonly doi?: unknown;
+  readonly title: Option.Option<string>;
+  readonly subtitle: Option.Option<string>;
+  /** A year as a number or as text that holds one (`2015`, `"2015"`). */
+  readonly year: Option.Option<string | number>;
+  readonly publisher: Option.Option<string>;
+  readonly containerTitle: Option.Option<string>;
+  readonly volume: Option.Option<string>;
+  readonly issue: Option.Option<string>;
+  readonly page: Option.Option<string>;
+  readonly isbn: Option.Option<string>;
+  readonly issn: Option.Option<string>;
+  readonly doi: Option.Option<string>;
   readonly names: readonly CslName[];
-  readonly editors?: readonly CslName[];
-}
-
-/** Decodes a raw value through a branded-identifier decoder, or `None`. */
-function decodeId<T>(decode: (raw: string) => Option.Option<T>, value: unknown): Option.Option<T> {
-  return Predicate.isString(value) ? decode(value) : Option.none();
+  readonly editors: readonly CslName[];
 }
 
 /** The subset of CSL string variables the parsers populate. */
@@ -219,15 +216,17 @@ type ParserStringVar = "publisher" | "container-title" | "volume" | "issue" | "p
 function toOutcome(fields: RawFields, source: ProvenanceSource): ParseOutcome {
   const title = sanitiseTitle(fields.title, fields.subtitle);
   if (Option.isNone(title)) return { outcome: "skipped", reason: "no-title" };
-  const year = sanitiseYear(fields.year);
+  const year = Option.flatMap(fields.year, sanitiseYear);
 
-  const isbn = decodeId<Isbn>(decodeIsbn, fields.isbn);
-  const doi = decodeId<Doi>(decodeDoi, fields.doi);
-  const issn = decodeId<Issn>(decodeIssn, fields.issn);
+  const isbn = Option.flatMap(fields.isbn, decodeIsbn);
+  const doi = Option.flatMap(fields.doi, decodeDoi);
+  const issn = Option.flatMap(fields.issn, decodeIssn);
   if (Option.isNone(isbn) && Option.isNone(doi)) {
     return { outcome: "skipped", reason: "no-identifier" };
   }
 
+  const issued: Types.Mutable<Pick<BiblioRecord, "issued">> = {};
+  if (Option.isSome(year)) issued.issued = dateFromYear(year.value);
   const record: BiblioRecord = {
     type: Option.isSome(fields.type)
       ? fields.type.value
@@ -237,7 +236,7 @@ function toOutcome(fields: RawFields, source: ProvenanceSource): ParseOutcome {
     title: title.value,
     ...collectStringVars(fields),
     ...collectContributors(fields),
-    ...(Option.isNone(year) ? {} : { issued: dateFromYear(year.value) }),
+    ...issued,
     identifiers: assembleIdentifiers(isbn, doi, issn),
     provenance: { source },
   };
@@ -250,11 +249,11 @@ function assembleIdentifiers(
   doi: Option.Option<Doi>,
   issn: Option.Option<Issn>,
 ): RecordIdentifiers {
-  return {
-    ...(Option.isSome(isbn) ? { isbn: isbn.value } : {}),
-    ...(Option.isSome(doi) ? { doi: doi.value } : {}),
-    ...(Option.isSome(issn) ? { issn: issn.value } : {}),
-  };
+  const identifiers: Types.Mutable<RecordIdentifiers> = {};
+  if (Option.isSome(isbn)) identifiers.isbn = isbn.value;
+  if (Option.isSome(doi)) identifiers.doi = doi.value;
+  if (Option.isSome(issn)) identifiers.issn = issn.value;
+  return identifiers;
 }
 
 /** Collects the sanitised CSL string variables a parser populated. */
@@ -270,22 +269,23 @@ function collectStringVars(fields: RawFields): Partial<Record<ParserStringVar, s
 
 /** Collects the bounded author / editor name lists. */
 function collectContributors(fields: RawFields): Partial<Pick<BiblioRecord, "author" | "editor">> {
-  const editors = fields.editors ?? [];
-  return {
-    ...(Array.isReadonlyArrayNonEmpty(fields.names)
-      ? { author: fields.names.slice(0, MAX_AUTHORS) }
-      : {}),
-    ...(Array.isReadonlyArrayNonEmpty(editors) ? { editor: editors.slice(0, MAX_AUTHORS) } : {}),
-  };
+  const contributors: Types.Mutable<Partial<Pick<BiblioRecord, "author" | "editor">>> = {};
+  if (Array.isReadonlyArrayNonEmpty(fields.names)) {
+    contributors.author = fields.names.slice(0, MAX_AUTHORS);
+  }
+  if (Array.isReadonlyArrayNonEmpty(fields.editors)) {
+    contributors.editor = fields.editors.slice(0, MAX_AUTHORS);
+  }
+  return contributors;
 }
 
 /** Sets a sanitised CSL string variable on the accumulator when non-empty. */
 function assignString(
   target: Partial<Record<ParserStringVar, string>>,
   key: ParserStringVar,
-  value: unknown,
+  value: Option.Option<string>,
 ): void {
-  const clean = sanitiseText(value);
+  const clean = Option.flatMap(value, sanitiseText);
   if (Option.isSome(clean)) target[key] = clean.value;
 }
 
@@ -294,10 +294,13 @@ function assignString(
  * the OpenLibrary normaliser uses so both import paths agree.
  * `Option.none()` when there is no usable title.
  */
-function sanitiseTitle(rawTitle: unknown, rawSubtitle: unknown): Option.Option<string> {
-  const base = sanitiseText(rawTitle);
+function sanitiseTitle(
+  rawTitle: Option.Option<string>,
+  rawSubtitle: Option.Option<string>,
+): Option.Option<string> {
+  const base = Option.flatMap(rawTitle, sanitiseText);
   if (Option.isNone(base)) return Option.none();
-  const subtitle = sanitiseText(rawSubtitle);
+  const subtitle = Option.flatMap(rawSubtitle, sanitiseText);
   return Option.isNone(subtitle) ? base : sanitiseText(`${base.value}: ${subtitle.value}`);
 }
 
@@ -503,23 +506,20 @@ export function parseBibtex(content: string): ParseOutcome[] {
   return Array.map(splitBibtexEntries(content).slice(0, MAX_RECORDS), (entry) => {
     const fields = parseBibtexFields(entry.body);
     const field = (key: string): Option.Option<string> => MutableHashMap.get(fields, key);
-    // `RawFields` carries still-untrusted values the sanitisers run over, so
-    // the `Option`s unwrap to plain values at that seam.
-    const raw = (key: string): unknown => Option.getOrUndefined(field(key));
     return toOutcome(
       {
         type: Option.some(bibtexType(entry.kind)),
-        title: raw("title"),
-        subtitle: raw("subtitle"),
-        year: raw("year") ?? raw("date"),
-        publisher: raw("publisher"),
-        containerTitle: raw("journal") ?? raw("booktitle"),
-        volume: raw("volume"),
-        issue: raw("number"),
-        page: raw("pages"),
-        isbn: raw("isbn"),
-        issn: raw("issn"),
-        doi: raw("doi"),
+        title: field("title"),
+        subtitle: field("subtitle"),
+        year: Option.orElse(field("year"), () => field("date")),
+        publisher: field("publisher"),
+        containerTitle: Option.orElse(field("journal"), () => field("booktitle")),
+        volume: field("volume"),
+        issue: field("number"),
+        page: field("pages"),
+        isbn: field("isbn"),
+        issn: field("issn"),
+        doi: field("doi"),
         names: structuredNames(splitBibtexNames(field("author"))),
         editors: structuredNames(splitBibtexNames(field("editor"))),
       },
@@ -530,19 +530,36 @@ export function parseBibtex(content: string): ParseOutcome[] {
 
 // ── Zotero / CSL-JSON ─────────────────────────────────────────────────
 
+const decodeString = Schema.decodeUnknownOption(Schema.String);
+
+/** A CSL `issued` date object: structured `date-parts`, or a free-text `raw` date. */
+const CslIssued = Schema.Struct({
+  "date-parts": Schema.optional(Schema.Unknown),
+  raw: Schema.optional(Schema.Unknown),
+});
+const decodeCslIssued = Schema.decodeUnknownOption(CslIssued);
+
+/** A CSL `date-parts` value whose first part list is non-empty: `[[year, …], …]`. */
+const decodeFirstDatePart = Schema.decodeUnknownOption(
+  Schema.TupleWithRest(
+    Schema.Tuple([Schema.TupleWithRest(Schema.Tuple([Schema.Unknown]), [Schema.Unknown])]),
+    [Schema.Unknown],
+  ),
+);
+
+/** A year candidate: a number, or text that may hold one. */
+const decodeYearCandidate = Schema.decodeUnknownOption(
+  Schema.Union([Schema.String, Schema.Number]),
+);
+
 /** Reads the year from a CSL `issued` date object (`date-parts` or `raw`). */
-function cslYear(entry: unknown): unknown {
-  if (!Predicate.isObjectOrArray(entry)) return undefined;
-  const obj = entry as { "date-parts"?: unknown; raw?: unknown };
-  const parts = obj["date-parts"];
-  if (Array.isArray(parts) && Array.isArray(parts[0]) && Array.isArrayNonEmpty(parts[0])) {
-    return parts[0][0];
-  }
-  if (Predicate.isString(obj.raw)) {
-    const match = obj.raw.match(/(\d{4})/);
-    return match ? match[1] : undefined;
-  }
-  return undefined;
+function cslYear(issued: typeof CslIssued.Type): Option.Option<string | number> {
+  const parts = decodeFirstDatePart(issued["date-parts"]);
+  if (Option.isSome(parts)) return decodeYearCandidate(parts.value[0][0]);
+  return Option.flatMap(decodeString(issued.raw), (raw) => {
+    const match = raw.match(/(\d{4})/);
+    return match ? Option.some(match[1]) : Option.none();
+  });
 }
 
 /**
@@ -550,16 +567,10 @@ function cslYear(entry: unknown): unknown {
  * Zotero emits as either a single string or a space / comma separated
  * list. Yields the raw token so {@link toOutcome} decodes it canonically.
  */
-function cslFirstIsbn(value: unknown): Option.Option<string> {
-  if (!Predicate.isString(value)) return Option.none();
+function cslFirstIsbn(value: string): Option.Option<string> {
   return Array.findFirst(value.split(/[\s,;]+/), (candidate) =>
     Option.isSome(decodeIsbn(candidate)),
   );
-}
-
-/** Reads the first CSL item type present, or `None` to infer it. */
-function cslType(value: unknown): Option.Option<CslItemType> {
-  return Predicate.isString(value) && isCslItemType(value) ? Option.some(value) : Option.none();
 }
 
 /**
@@ -573,43 +584,73 @@ function cslType(value: unknown): Option.Option<CslItemType> {
 export function parseZoteroJson(content: string): ParseOutcome[] {
   const data = decodeJsonBody(content);
   if (Option.isNone(data)) return [{ outcome: "skipped", reason: "malformed" }];
-  return Array.map(cslItems(data.value).slice(0, MAX_RECORDS), cslItemOutcome);
+  const items = Option.getOrElse(
+    Option.orElse(decodeCslItemArray(data.value), () =>
+      Option.map(decodeCslEnvelope(data.value), (envelope) => envelope.items),
+    ),
+    (): readonly unknown[] => [],
+  );
+  return Array.map(items.slice(0, MAX_RECORDS), (item) =>
+    // An array item reads as an item with no fields (→ `no-title`); only a
+    // non-object is `malformed`.
+    Option.match(
+      Option.orElse(decodeCslItem(item), () => Option.as(decodeCslItemArray(item), CSL_EMPTY_ITEM)),
+      {
+        onNone: (): ParseOutcome => ({ outcome: "skipped", reason: "malformed" }),
+        onSome: cslItemOutcome,
+      },
+    ),
+  );
 }
 
 /** Decodes an untrusted JSON document body; `None` when the text is not JSON. */
 const decodeJsonBody = Schema.decodeUnknownOption(Schema.fromJsonString(Schema.Unknown));
 
-/** Resolves the item list from a parsed CSL body — array or `{ items }` envelope. */
-function cslItems(data: unknown): readonly unknown[] {
-  if (Array.isArray(data)) return data;
-  if (Predicate.isObjectOrArray(data)) {
-    const items = (data as { items?: unknown }).items;
-    if (Array.isArray(items)) return items;
-  }
-  return [];
-}
+/** A parsed CSL body that is a bare array of items. */
+const decodeCslItemArray = Schema.decodeUnknownOption(Schema.Array(Schema.Unknown));
 
-/** Maps one CSL item object to a {@link ParseOutcome} (non-object → malformed). */
-function cslItemOutcome(item: unknown): ParseOutcome {
-  if (!Predicate.isObjectOrArray(item)) {
-    return { outcome: "skipped", reason: "malformed" };
-  }
-  const obj = item as Record<string, unknown>;
+/** A parsed CSL body that is a `{ items: [...] }` envelope. */
+const decodeCslEnvelope = Schema.decodeUnknownOption(
+  Schema.Struct({ items: Schema.Array(Schema.Unknown) }),
+);
+
+/** One CSL item object, read as far as the fields the parser consumes. */
+const CslItem = Schema.Struct({
+  type: Schema.optional(Schema.Unknown),
+  title: Schema.optional(Schema.Unknown),
+  issued: Schema.optional(Schema.Unknown),
+  publisher: Schema.optional(Schema.Unknown),
+  "container-title": Schema.optional(Schema.Unknown),
+  volume: Schema.optional(Schema.Unknown),
+  issue: Schema.optional(Schema.Unknown),
+  page: Schema.optional(Schema.Unknown),
+  ISBN: Schema.optional(Schema.Unknown),
+  ISSN: Schema.optional(Schema.Unknown),
+  DOI: Schema.optional(Schema.Unknown),
+  author: Schema.optional(Schema.Unknown),
+  editor: Schema.optional(Schema.Unknown),
+});
+const decodeCslItem = Schema.decodeUnknownOption(CslItem);
+const CSL_EMPTY_ITEM: typeof CslItem.Type = {};
+
+/** Maps one CSL item object to a {@link ParseOutcome}. */
+function cslItemOutcome(item: typeof CslItem.Type): ParseOutcome {
   return toOutcome(
     {
-      type: cslType(obj.type),
-      title: obj.title,
-      year: cslYear(obj.issued),
-      publisher: obj.publisher,
-      containerTitle: obj["container-title"],
-      volume: obj.volume,
-      issue: obj.issue,
-      page: obj.page,
-      isbn: Option.getOrUndefined(cslFirstIsbn(obj.ISBN)),
-      issn: Predicate.isString(obj.ISSN) ? obj.ISSN : undefined,
-      doi: Predicate.isString(obj.DOI) ? obj.DOI : undefined,
-      names: readCslNameArray(obj.author),
-      editors: readCslNameArray(obj.editor),
+      type: Option.filter(decodeString(item.type), isCslItemType),
+      title: decodeString(item.title),
+      subtitle: Option.none(),
+      year: Option.flatMap(decodeCslIssued(item.issued), cslYear),
+      publisher: decodeString(item.publisher),
+      containerTitle: decodeString(item["container-title"]),
+      volume: decodeString(item.volume),
+      issue: decodeString(item.issue),
+      page: decodeString(item.page),
+      isbn: Option.flatMap(decodeString(item.ISBN), cslFirstIsbn),
+      issn: decodeString(item.ISSN),
+      doi: decodeString(item.DOI),
+      names: readCslNameArray(item.author),
+      editors: readCslNameArray(item.editor),
     },
     "csl-json",
   );
@@ -718,27 +759,32 @@ export function parseCsv(content: string): ParseOutcome[] {
   const index = csvHeaderIndex(header);
   if (index.title === undefined) return [{ outcome: "skipped", reason: "malformed" }];
 
-  const cell = (cells: readonly string[], key: CsvColumn): unknown => {
-    const at = index[key];
-    return at === undefined ? undefined : cells[at];
-  };
+  const cell = (cells: readonly string[], key: CsvColumn): Option.Option<string> =>
+    Option.flatMap(Option.fromUndefinedOr(index[key]), (at) => Array.get(cells, at));
 
   return Array.map(rows.slice(1, MAX_RECORDS + 1), (row) => {
     const cells = parseCsvLine(row);
-    const authorCell = cell(cells, "author");
-    const authorNames = Predicate.isString(authorCell)
-      ? authorCell.split(/\s*(?:;|\sand\s)\s*/i).filter((s) => String.isNonEmpty(s.trim()))
-      : [];
+    const authorNames = Option.match(cell(cells, "author"), {
+      onNone: (): string[] => [],
+      onSome: (authorCell) =>
+        authorCell.split(/\s*(?:;|\sand\s)\s*/i).filter((s) => String.isNonEmpty(s.trim())),
+    });
     return toOutcome(
       {
         type: Option.none(),
         title: cell(cells, "title"),
+        subtitle: Option.none(),
         year: cell(cells, "year"),
         publisher: cell(cells, "publisher"),
+        containerTitle: Option.none(),
+        volume: Option.none(),
+        issue: Option.none(),
+        page: Option.none(),
         isbn: cell(cells, "isbn"),
         issn: cell(cells, "issn"),
         doi: cell(cells, "doi"),
         names: structuredNames(authorNames),
+        editors: [],
       },
       "csv",
     );
@@ -764,38 +810,38 @@ function splitRisRecords(content: string): RisRecord[] {
     records.push(record);
     return records.length < MAX_RECORDS;
   };
-  const trailing = Array.reduce(
-    content.split(/\r?\n/),
-    { current: Option.none(), done: false } as {
-      readonly current: Option.Option<RisRecord>;
-      readonly done: boolean;
-    },
-    (state, line) => {
-      if (state.done) return state;
-      const match = /^([A-Z][A-Z0-9])\s{2}-\s?(.*)$/.exec(line);
-      if (match === null) return state;
-      const tag = match[1];
-      const value = match[2].trim();
-      if (tag === "TY") {
-        if (Option.isSome(state.current) && !push(state.current.value)) {
-          return { current: Option.none(), done: true };
-        }
-        const started: RisRecord = MutableHashMap.empty();
-        addRisTag(started, tag, value);
-        return { current: Option.some(started), done: false };
+  const initial: RisScan = { current: Option.none(), done: false };
+  const trailing = Array.reduce(content.split(/\r?\n/), initial, (state, line): RisScan => {
+    if (state.done) return state;
+    const match = /^([A-Z][A-Z0-9])\s{2}-\s?(.*)$/.exec(line);
+    if (match === null) return state;
+    const tag = match[1];
+    const value = match[2].trim();
+    if (tag === "TY") {
+      if (Option.isSome(state.current) && !push(state.current.value)) {
+        return { current: Option.none(), done: true };
       }
-      if (tag === "ER") {
-        if (Option.isNone(state.current)) return state;
-        return { current: Option.none(), done: !push(state.current.value) };
-      }
-      if (Option.isSome(state.current)) addRisTag(state.current.value, tag, value);
-      return state;
-    },
-  );
+      const started: RisRecord = MutableHashMap.empty();
+      addRisTag(started, tag, value);
+      return { current: Option.some(started), done: false };
+    }
+    if (tag === "ER") {
+      if (Option.isNone(state.current)) return state;
+      return { current: Option.none(), done: !push(state.current.value) };
+    }
+    if (Option.isSome(state.current)) addRisTag(state.current.value, tag, value);
+    return state;
+  });
   if (Option.isSome(trailing.current) && records.length < MAX_RECORDS) {
     records.push(trailing.current.value);
   }
   return records;
+}
+
+/** The RIS scanner's running state: the record being read, and whether the record cap was hit. */
+interface RisScan {
+  readonly current: Option.Option<RisRecord>;
+  readonly done: boolean;
 }
 
 /** One RIS record: each two-character tag mapped to its values, in order. */
@@ -824,27 +870,30 @@ function risValues(record: RisRecord, tag: string): readonly string[] {
 }
 
 /** RIS `TY` → CSL item type; unlisted types fall back to `document`. */
-const RIS_TYPES: Readonly<Record<string, CslItemType>> = {
-  BOOK: "book",
-  EBOOK: "book",
-  JOUR: "article-journal",
-  MGZN: "article-magazine",
-  NEWS: "article-newspaper",
-  CHAP: "chapter",
-  CONF: "paper-conference",
-  CPAPER: "paper-conference",
-  THES: "thesis",
-  RPRT: "report",
-  ELEC: "webpage",
-  WEB: "webpage",
-  DATA: "dataset",
-  ENCYC: "entry-encyclopedia",
-  DICT: "entry-dictionary",
-};
+const RIS_TYPES = HashMap.fromIterable<string, CslItemType>([
+  ["BOOK", "book"],
+  ["EBOOK", "book"],
+  ["JOUR", "article-journal"],
+  ["MGZN", "article-magazine"],
+  ["NEWS", "article-newspaper"],
+  ["CHAP", "chapter"],
+  ["CONF", "paper-conference"],
+  ["CPAPER", "paper-conference"],
+  ["THES", "thesis"],
+  ["RPRT", "report"],
+  ["ELEC", "webpage"],
+  ["WEB", "webpage"],
+  ["DATA", "dataset"],
+  ["ENCYC", "entry-encyclopedia"],
+  ["DICT", "entry-dictionary"],
+]);
 
 /** Maps an RIS `TY` type to a CSL item type, defaulting to `document`. */
 function risType(ty: Option.Option<string>): CslItemType {
-  return RIS_TYPES[Option.isNone(ty) ? "" : ty.value] ?? "document";
+  return Option.getOrElse(
+    Option.flatMap(ty, (type) => HashMap.get(RIS_TYPES, type)),
+    (): CslItemType => "document",
+  );
 }
 
 /** Extracts a 4-digit year from an RIS date value (`2015`, `2015/01/01/`, …). */
@@ -860,14 +909,18 @@ function risPages(sp: Option.Option<string>, ep: Option.Option<string>): Option.
   return Option.isNone(ep) ? sp : Option.some(`${sp.value}-${ep.value}`);
 }
 
+/** The first RIS `SN` values that hold a valid ISBN and ISSN. */
+interface RisSerials {
+  readonly isbn: Option.Option<string>;
+  readonly issn: Option.Option<string>;
+}
+
 /** Picks the first RIS `SN` value that is a valid ISBN / ISSN respectively. */
-function risSerials(record: RisRecord): { isbn?: string; issn?: string } {
+function risSerials(record: RisRecord): RisSerials {
   const values = risValues(record, "SN");
-  const isbn = Array.findFirst(values, (value) => Option.isSome(decodeIsbn(value)));
-  const issn = Array.findFirst(values, (value) => Option.isSome(decodeIssn(value)));
   return {
-    ...(Option.isSome(isbn) ? { isbn: isbn.value } : {}),
-    ...(Option.isSome(issn) ? { issn: issn.value } : {}),
+    isbn: Array.findFirst(values, (value) => Option.isSome(decodeIsbn(value))),
+    issn: Array.findFirst(values, (value) => Option.isSome(decodeIssn(value))),
   };
 }
 
@@ -877,39 +930,32 @@ function risRecordOutcome(record: RisRecord): ParseOutcome {
   return toOutcome(
     {
       type: Option.some(risType(risFirst(record, "TY"))),
-      title: Option.getOrUndefined(
+      title: Option.firstSomeOf([
+        risFirst(record, "TI"),
+        risFirst(record, "T1"),
+        risFirst(record, "BT"),
+      ]),
+      subtitle: Option.none(),
+      year: risYear(
         Option.firstSomeOf([
-          risFirst(record, "TI"),
-          risFirst(record, "T1"),
-          risFirst(record, "BT"),
+          risFirst(record, "PY"),
+          risFirst(record, "Y1"),
+          risFirst(record, "DA"),
         ]),
       ),
-      year: Option.getOrUndefined(
-        risYear(
-          Option.firstSomeOf([
-            risFirst(record, "PY"),
-            risFirst(record, "Y1"),
-            risFirst(record, "DA"),
-          ]),
-        ),
-      ),
-      publisher: Option.getOrUndefined(risFirst(record, "PB")),
-      containerTitle: Option.getOrUndefined(
-        Option.firstSomeOf([
-          risFirst(record, "JO"),
-          risFirst(record, "JF"),
-          risFirst(record, "T2"),
-          risFirst(record, "J2"),
-        ]),
-      ),
-      volume: Option.getOrUndefined(risFirst(record, "VL")),
-      issue: Option.getOrUndefined(risFirst(record, "IS")),
-      page: Option.getOrUndefined(risPages(risFirst(record, "SP"), risFirst(record, "EP"))),
+      publisher: risFirst(record, "PB"),
+      containerTitle: Option.firstSomeOf([
+        risFirst(record, "JO"),
+        risFirst(record, "JF"),
+        risFirst(record, "T2"),
+        risFirst(record, "J2"),
+      ]),
+      volume: risFirst(record, "VL"),
+      issue: risFirst(record, "IS"),
+      page: risPages(risFirst(record, "SP"), risFirst(record, "EP")),
       isbn: serials.isbn,
       issn: serials.issn,
-      doi: Option.getOrUndefined(
-        Option.firstSomeOf([risFirst(record, "DO"), risFirst(record, "DOI")]),
-      ),
+      doi: Option.firstSomeOf([risFirst(record, "DO"), risFirst(record, "DOI")]),
       names: structuredNames(risAll(record, ["AU", "A1"])),
       editors: structuredNames(risAll(record, ["ED", "A2"])),
     },

@@ -139,7 +139,7 @@ const makeBiblioLookup = Effect.fnUntraced(function* ({ contact }: BiblioLookupO
     // does NOT fail on status codes by default, so without this a 404 or
     // 5xx that still carries a JSON body would decode against the
     // (deliberately lenient) schemas and look like an empty success. The
-    // error is re-classified in `makeGet` (`sources/http.ts`): 404 →
+    // error is re-classified in `jsonGet` (`sources/http.ts`): 404 →
     // `Option.none` (a clean "not found"), anything else → a typed
     // `LookupFailed`.
     HttpClient.filterStatusOk,

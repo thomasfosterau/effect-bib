@@ -28,10 +28,11 @@
 
 import * as Array from "effect/Array";
 import * as Effect from "effect/Effect";
+import * as HashMap from "effect/HashMap";
 import * as Option from "effect/Option";
-import * as Predicate from "effect/Predicate";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
+import type * as Types from "effect/Types";
 import { HttpClient } from "effect/http";
 import { decodeDoi, decodeOrcid, type Doi } from "../identifiers.ts";
 import {
@@ -45,7 +46,7 @@ import {
 } from "../record.ts";
 import { type LookupContact } from "./contact.ts";
 import { LookupFailed } from "./errors.ts";
-import { makeGet } from "./http.ts";
+import { jsonGet } from "./http.ts";
 
 const OPENALEX_BASE = "https://api.openalex.org";
 
@@ -97,90 +98,111 @@ export type OpenAlexSearchResponse = typeof OpenAlexSearchResponse.Type;
 const decodeOpenAlexWork = Schema.decodeUnknownOption(OpenAlexWork);
 
 /** OpenAlex `type` → CSL item type; unlisted types fall back to `document`. */
-const OPENALEX_TYPES: Readonly<Record<string, CslItemType>> = {
-  article: "article-journal",
-  "book-chapter": "chapter",
-  book: "book",
-  dissertation: "thesis",
-  dataset: "dataset",
-  "peer-review": "review",
-  "posted-content": "manuscript",
-  "proceedings-article": "paper-conference",
-  report: "report",
-  standard: "standard",
-  editorial: "article",
-  letter: "article",
-  erratum: "article",
-};
+const OPENALEX_TYPES = HashMap.fromIterable<string, CslItemType>([
+  ["article", "article-journal"],
+  ["book-chapter", "chapter"],
+  ["book", "book"],
+  ["dissertation", "thesis"],
+  ["dataset", "dataset"],
+  ["peer-review", "review"],
+  ["posted-content", "manuscript"],
+  ["proceedings-article", "paper-conference"],
+  ["report", "report"],
+  ["standard", "standard"],
+  ["editorial", "article"],
+  ["letter", "article"],
+  ["erratum", "article"],
+]);
+
+const decodeString = Schema.decodeUnknownOption(Schema.String);
 
 /** Maps an OpenAlex `type`, defaulting to `document` for the long tail. */
-function openAlexType(raw: unknown): CslItemType {
-  return Predicate.isString(raw) ? (OPENALEX_TYPES[raw] ?? "document") : "document";
+function openAlexType(raw: Option.Option<string>): CslItemType {
+  return Option.getOrElse(
+    Option.flatMap(raw, (type) => HashMap.get(OPENALEX_TYPES, type)),
+    (): CslItemType => "document",
+  );
 }
 
+/** An OpenAlex location object: `{ display_name }` directly, or nested under `source`. */
+const OpenAlexLocation = Schema.Struct({
+  display_name: Schema.optional(Schema.Unknown),
+  source: Schema.optional(Schema.Unknown),
+});
+const decodeOpenAlexLocation = Schema.decodeUnknownOption(OpenAlexLocation);
+
+/** The `source` of an OpenAlex location, which carries its own `display_name`. */
+const decodeOpenAlexSource = Schema.decodeUnknownOption(
+  Schema.Struct({ display_name: Schema.optional(Schema.Unknown) }),
+);
+
 /** Reads the display name of an OpenAlex `{ source: { display_name } }` / `{ display_name }` location object. */
-function locationDisplayName(value: unknown): Option.Option<string> {
-  if (!Predicate.isObjectOrArray(value)) return Option.none();
-  const obj = value as { display_name?: unknown; source?: unknown };
-  const direct = sanitiseText(obj.display_name);
+function locationDisplayName(location: typeof OpenAlexLocation.Type): Option.Option<string> {
+  const direct = sanitiseText(location.display_name);
   if (Option.isSome(direct)) return direct;
-  if (Predicate.isObjectOrArray(obj.source)) {
-    return sanitiseText((obj.source as { display_name?: unknown }).display_name);
-  }
-  return Option.none();
+  return Option.flatMap(decodeOpenAlexSource(location.source), (source) =>
+    sanitiseText(source.display_name),
+  );
 }
 
 /** The hosting container title: `primary_location` first, else the deprecated `host_venue`. */
 function openAlexContainerTitle(work: OpenAlexWork): Option.Option<string> {
   return Option.firstSomeOf([
-    locationDisplayName(work.primary_location),
-    locationDisplayName(work.host_venue),
+    Option.flatMap(decodeOpenAlexLocation(work.primary_location), locationDisplayName),
+    Option.flatMap(decodeOpenAlexLocation(work.host_venue), locationDisplayName),
   ]);
 }
 
+/** OpenAlex's `biblio` sub-object: volume, issue and the page range's ends. */
+const decodeOpenAlexBiblio = Schema.decodeUnknownOption(
+  Schema.Struct({
+    volume: Schema.optional(Schema.Unknown),
+    issue: Schema.optional(Schema.Unknown),
+    first_page: Schema.optional(Schema.Unknown),
+    last_page: Schema.optional(Schema.Unknown),
+  }),
+);
+
+/** The sanitised volume, issue and page range read from an OpenAlex `biblio` sub-object. */
+interface OpenAlexBiblioFields {
+  readonly volume: Option.Option<string>;
+  readonly issue: Option.Option<string>;
+  readonly page: Option.Option<string>;
+}
+
 /** Volume / issue / page range from OpenAlex's `biblio` sub-object. */
-function openAlexBiblio(work: OpenAlexWork): {
-  readonly volume?: string;
-  readonly issue?: string;
-  readonly page?: string;
-} {
-  if (!Predicate.isObjectOrArray(work.biblio)) return {};
-  const b = work.biblio as {
-    volume?: unknown;
-    issue?: unknown;
-    first_page?: unknown;
-    last_page?: unknown;
-  };
-  const volume = sanitiseText(b.volume);
-  const issue = sanitiseText(b.issue);
-  const first = sanitiseText(b.first_page);
-  const last = sanitiseText(b.last_page);
-  const page = Option.isNone(first)
-    ? Option.none()
-    : Option.isNone(last)
-      ? first
-      : Option.some(`${first.value}-${last.value}`);
+function openAlexBiblio(work: OpenAlexWork): OpenAlexBiblioFields {
+  const biblio = decodeOpenAlexBiblio(work.biblio);
+  const first = Option.flatMap(biblio, (b) => sanitiseText(b.first_page));
+  const last = Option.flatMap(biblio, (b) => sanitiseText(b.last_page));
   return {
-    ...(Option.isSome(volume) ? { volume: volume.value } : {}),
-    ...(Option.isSome(issue) ? { issue: issue.value } : {}),
-    ...(Option.isSome(page) ? { page: page.value } : {}),
+    volume: Option.flatMap(biblio, (b) => sanitiseText(b.volume)),
+    issue: Option.flatMap(biblio, (b) => sanitiseText(b.issue)),
+    page: Option.map(first, (start) =>
+      Option.match(last, { onNone: () => start, onSome: (end) => `${start}-${end}` }),
+    ),
   };
 }
 
+/** One `authorships[]` entry: `{ author: { display_name, orcid } }`. */
+const decodeOpenAlexAuthorship = Schema.decodeUnknownOption(
+  Schema.Struct({
+    author: Schema.Struct({
+      display_name: Schema.String,
+      orcid: Schema.optional(Schema.Unknown),
+    }),
+  }),
+);
+
 /** Structures one `authorships[]` entry's `{ author: { display_name, orcid } }` into a {@link CslName}. */
-function openAlexAuthorName(entry: unknown): Option.Option<CslName> {
-  if (!Predicate.isObjectOrArray(entry)) return Option.none();
-  const author = (entry as { author?: unknown }).author;
-  if (!Predicate.isObjectOrArray(author)) return Option.none();
-  const a = author as { display_name?: unknown; orcid?: unknown };
-  if (!Predicate.isString(a.display_name)) return Option.none();
-  const base = parsePersonName(a.display_name);
+function openAlexAuthorName(author: {
+  readonly display_name: string;
+  readonly orcid?: unknown;
+}): Option.Option<CslName> {
+  const base = parsePersonName(author.display_name);
   if (base === null) return Option.none();
-  if (Predicate.isString(a.orcid)) {
-    const orcid = decodeOrcid(a.orcid);
-    if (Option.isSome(orcid)) return Option.some({ ...base, orcid: orcid.value });
-  }
-  return Option.some(base);
+  const orcid = Option.flatMap(decodeString(author.orcid), decodeOrcid);
+  return Option.some(Option.isSome(orcid) ? { ...base, orcid: orcid.value } : base);
 }
 
 /** Bounded, ordered author list from `authorships[]`. */
@@ -188,11 +210,15 @@ function openAlexAuthors(value: Option.Option<readonly unknown[]>): CslName[] {
   return Array.filterMap(
     Option.isNone(value) ? [] : value.value,
     (entry): Result.Result<CslName, void> => {
-      const name = openAlexAuthorName(entry);
+      const name = Option.flatMap(decodeOpenAlexAuthorship(entry), ({ author }) =>
+        openAlexAuthorName(author),
+      );
       return Option.isNone(name) ? Result.failVoid : Result.succeed(name.value);
     },
   ).slice(0, MAX_AUTHORS);
 }
+
+const decodeNumber = Schema.decodeUnknownOption(Schema.Number);
 
 /**
  * Normalises one OpenAlex `Work` into a CSL-aligned {@link BiblioRecord}.
@@ -207,28 +233,26 @@ export function normaliseOpenAlexRecord(work: OpenAlexWork): Option.Option<Bibli
   const author = openAlexAuthors(Option.fromNullishOr(work.authorships));
   const containerTitle = openAlexContainerTitle(work);
   const { volume, issue, page } = openAlexBiblio(work);
-  const doi = Predicate.isString(work.doi) ? decodeDoi(work.doi) : Option.none();
-  const year =
-    Predicate.isNumber(work.publication_year) && Number.isInteger(work.publication_year)
-      ? Option.some(work.publication_year)
-      : Option.none();
+  const doi = Option.flatMap(decodeString(work.doi), decodeDoi);
+  const year = Option.filter(decodeNumber(work.publication_year), Number.isInteger);
 
+  const optional: Types.Mutable<Partial<BiblioRecord>> = {};
+  if (Option.isSome(containerTitle)) optional["container-title"] = containerTitle.value;
+  if (Option.isSome(volume)) optional.volume = volume.value;
+  if (Option.isSome(issue)) optional.issue = issue.value;
+  if (Option.isSome(page)) optional.page = page.value;
+  if (Array.isReadonlyArrayNonEmpty(author)) optional.author = author;
+  if (Option.isSome(year)) optional.issued = dateFromYear(year.value);
   return Option.some({
-    type: openAlexType(work.type),
+    type: openAlexType(decodeString(work.type)),
     title: title.value,
-    ...(Option.isSome(containerTitle) ? { "container-title": containerTitle.value } : {}),
-    ...(volume !== undefined ? { volume } : {}),
-    ...(issue !== undefined ? { issue } : {}),
-    ...(page !== undefined ? { page } : {}),
-    ...(Array.isReadonlyArrayNonEmpty(author) ? { author } : {}),
-    ...(Option.isSome(year) ? { issued: dateFromYear(year.value) } : {}),
+    ...optional,
     identifiers: Option.isSome(doi) ? { doi: doi.value } : {},
     provenance: {
       source: "openalex",
-      retrievedBy: {
-        ...(Option.isSome(doi) ? { identifierType: "doi", identifier: doi.value } : {}),
-        endpoint: OPENALEX_BASE,
-      },
+      retrievedBy: Option.isSome(doi)
+        ? { identifierType: "doi", identifier: doi.value, endpoint: OPENALEX_BASE }
+        : { endpoint: OPENALEX_BASE },
     },
   });
 }
@@ -251,7 +275,7 @@ export const lookupOpenAlexByDoi: (
   contact: LookupContact,
 ) => Effect.Effect<Option.Option<BiblioRecord>, LookupFailed> = Effect.fn("lookupOpenAlexByDoi")(
   function* (client: HttpClient.HttpClient, doi: Doi, contact: LookupContact) {
-    const get = makeGet(client, OPENALEX_BASE, "openalex");
+    const get = jsonGet(client, OPENALEX_BASE, "openalex");
     const mailto = encodeURIComponent(contact.email);
     // The `doi:` id form is OpenAlex's documented DOI-lookup shorthand;
     // percent-encoding the DOI (which may itself contain `/`) matches the
@@ -286,7 +310,7 @@ export const searchOpenAlexByTitle: (
       "per-page": String(MAX_SEARCH_RESULTS),
       mailto: contact.email,
     });
-    const get = makeGet(client, OPENALEX_BASE, "openalex");
+    const get = jsonGet(client, OPENALEX_BASE, "openalex");
     const response = yield* get(`/works?${params.toString()}`, OpenAlexSearchResponse);
     if (Option.isNone(response)) return [];
 

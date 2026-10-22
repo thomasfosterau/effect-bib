@@ -13,13 +13,19 @@
 import { register } from "node:module";
 import { FORBIDDEN_SPECIFIER } from "./forbidden-effect-modules.mjs";
 
+// The pattern reaches the hooks thread through `initialize`'s `data`, so no
+// value is spliced into the hook source.
 register(
   `data:text/javascript,
+    let forbidden;
+    export async function initialize ({ source }) {
+      forbidden = new RegExp(source)
+    }
     export async function resolve (specifier, context, next) {
-      if (new RegExp(${JSON.stringify(FORBIDDEN_SPECIFIER.source)}).test(specifier)) {
+      if (forbidden.test(specifier)) {
         throw new Error("FORBIDDEN_PEER:" + specifier)
       }
       return next(specifier, context)
     }`,
-  import.meta.url,
+  { parentURL: import.meta.url, data: { source: FORBIDDEN_SPECIFIER.source } },
 );
