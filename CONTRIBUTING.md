@@ -30,5 +30,5 @@ vp run -r test:unit                        # the same unit tests, no coverage (b
 vp test run tests/some.test.ts             # single file (from inside the package)
 vp run -r build                            # emit dist/
 vp run -r docgen                           # compile + execute the JSDoc examples
-vp run fallow:audit                        # change-set review (not a CI gate)
+vp run fallow:audit                        # change-set review (not a CI gate; run test:coverage first for the coverage map)
 ```

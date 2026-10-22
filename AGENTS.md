@@ -4,6 +4,7 @@
 
 ## Common pitfalls
 
+- **The Effect lint preset has no allowances left.** `@mpsuesser/oxlint-plugin-effect` (`effect.configs.recommended`) and `@effect/tsgo`'s `recommended` run at their own levels in `vite.config.ts`; only `casting-awareness` is a warning by design. A finding is fixed in code, not suppressed: the two per-site exceptions (`prefer-option-over-null` on the plain-nullable seams, `no-unknown-parameters` on the public total decoders) are listed in the package CLAUDE.md, and a new one needs the same written contract.
 - **Package-local rules live in [`packages/biblio/CLAUDE.md`](packages/biblio/CLAUDE.md)**: the `BiblioRecord` wire contract, the browser-safe root entry and its forbidden-module list, total decoders, the plain-nullable seams (and why `effect/prefer-option-over-null` stays at `error`), the doc-comment rules (`@since`, `@example`, hover summaries). Read it before touching `packages/biblio`.
 - **This package emits declarations; the application never did.** `tests/dist-consumer` type-checks a consumer fixture against the emitted `dist/` declarations with `Equals<…>` assertions on the brands and the service shape (a brand that emits as `string`, or a service that emits as `any`, fails there rather than in an application). `vp run check` builds `dist/` first (the check depends on `@thomasfosterau/biblio#build`) and fails outright if the entry declarations are missing, rather than falling back to `src/` (#22).
 - **No application vocabulary.** No WEMI / spine mapping, no `owner_id`, no database rows, no ingest operations, no app paths in doc comments. Those stay in the apps; the package stops at the CSL record.
@@ -38,7 +39,7 @@ Before you report work as done, run the gates below in order (CI's order, `.gith
 4. `vp run -r test:coverage`
 5. `vp run -r docgen`
 6. `pnpm audit --audit-level high` (network)
-7. `fallow audit --format json --quiet --explain --gate-marker agent` (the fallow gate below; not a CI step)
+7. `fallow audit --format json --quiet --explain --gate-marker agent --base origin/trunk` (the fallow gate below; not a CI step). It reads the Istanbul map `packages/biblio/coverage/coverage-final.json` that step 4 writes (`health.coverage` in `.fallowrc.json`), so run it after `test:coverage`; without the map fallow scores every function as uncovered.
 
 - **`dist/` is built by the gates that read it.** `vp run check` and `vp run -r test:coverage` (like `test:unit`) each depend on `build` (#22), so on a clean tree they emit `dist/` before the dist-consumer check and the built-artifact cases in `packages/biblio/tests/entry-points.test.ts` run. Those cases still skip under a bare `vp test` without `dist/`, except under `CI`, where they fail instead; a skip there is not a run.
 - **Before pushing, reinstall from clean** to catch a missing peer a warm tree hides: `rm -rf node_modules packages/*/node_modules tests/*/node_modules && pnpm install --frozen-lockfile`, then the gates.
