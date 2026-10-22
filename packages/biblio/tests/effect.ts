@@ -7,7 +7,7 @@
  * internals that the Vite+ vitest alias does not expose — importing it fails
  * at module evaluation with `TypeError: Cannot read properties of undefined
  * (reading 'config')` (website, June 2026). Provide layers per test with
- * `Effect.provide` at the call site, per the effect-solutions testing guide.
+ * `Effect.provide` at the call site.
  *
  * @module biblio/tests/effect
  */

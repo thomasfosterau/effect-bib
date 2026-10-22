@@ -115,11 +115,13 @@ fi
 # ── 3. Dependencies ──────────────────────────────────────────────────────────
 # Unconditional, not only when node_modules is absent: a prebaked container can
 # carry a tree built from an OLDER lockfile, and stale dependencies masquerade
-# as `main` breakage. `--frozen-lockfile` is a sub-second no-op when in sync.
+# as `trunk` breakage. `--frozen-lockfile` is a sub-second no-op when in sync.
 if [ -f "$PROJECT_DIR/pnpm-lock.yaml" ]; then
   log "syncing dependencies against the lockfile…"
   (cd "$PROJECT_DIR" && vp install --frozen-lockfile >/dev/null 2>&1) \
     || (cd "$PROJECT_DIR" && pnpm install --frozen-lockfile >/dev/null 2>&1) \
+    || { command -v corepack >/dev/null 2>&1 \
+      && (cd "$PROJECT_DIR" && corepack pnpm install --frozen-lockfile >/dev/null 2>&1); } \
     || log "dependency install failed; continuing"
   # node_modules/.bin only exists after the install, so re-link what it provides.
   for tool in tsx fallow; do

@@ -26,7 +26,6 @@
     "@types/node": "catalog:",
     "@typescript/native": "catalog:",
     "effect": "catalog:",
-    "effect-solutions": "catalog:",
     "fallow": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:",
