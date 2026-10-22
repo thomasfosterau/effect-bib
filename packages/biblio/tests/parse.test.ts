@@ -140,7 +140,8 @@ describe("parseBibtex", () => {
     const record = expectParsed(
       parseBibtex(`@book{x, title={A {Nested} Title}, isbn={9780062316097}}`)[0],
     );
-    expect(record.title).toBe("A {Nested} Title");
+    // The grouping braces are decoded away once the entry is read.
+    expect(record.title).toBe("A Nested Title");
   });
 
   it("stops at an unbalanced / truncated tail without throwing", () => {
@@ -148,10 +149,11 @@ describe("parseBibtex", () => {
     expect(parseBibtex(`@book{x, title={Truncated`)).toEqual([]);
   });
 
-  it("keeps a `}` the citation key left without an opener as text", () => {
-    // The key swallows the `{`, so the title's `}` has no opener.
+  it("keeps parsing past a `}` the citation key left without an opener", () => {
+    // The key swallows the `{`, so the title's `}` has no opener; the field
+    // still parses, and the stray brace is decoded away like any other.
     const record = expectParsed(parseBibtex(`@book{{x, title=Stray}, isbn={9780062316097}}`)[0]);
-    expect(record.title).toBe("Stray}");
+    expect(record.title).toBe("Stray");
   });
 
   it("scans a non-entry block's body as text, so an entry inside it is found", () => {
@@ -163,9 +165,7 @@ describe("parseBibtex", () => {
   it("treats nesting deeper than the grammar's cap like an unbalanced tail", () => {
     const nested = (depth: number) =>
       `@book{x, title={${"{".repeat(depth - 2)}T${"}".repeat(depth - 2)}}, isbn={9780062316097}}`;
-    expect(expectParsed(parseBibtex(nested(32))[0]).title).toBe(
-      `${"{".repeat(30)}T${"}".repeat(30)}`,
-    );
+    expect(expectParsed(parseBibtex(nested(32))[0]).title).toBe("T");
     expect(parseBibtex(nested(33))).toEqual([]);
   });
 

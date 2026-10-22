@@ -1,0 +1,511 @@
+/**
+ * Unit tests for full-fidelity BibTeX / BibLaTeX parsing (`parseBibtex`):
+ * `@string` macros and `#` concatenation, LaTeX → Unicode decoding, BibTeX
+ * name rules, `crossref` / `xdata` inheritance, the BibLaTeX field set and
+ * dates, the entry-type mapping, and the `extra` passthrough for fields
+ * with no typed slot. The import policy (a title and an ISBN or DOI) is
+ * unchanged, so every fixture carries a DOI.
+ *
+ * @module tests/unit/biblio-bibtex
+ */
+
+import * as Record from "effect/Record";
+import { describe, expect, it } from "vite-plus/test";
+import { MAX_INPUT_LENGTH, parseBibtex, type ParseOutcome } from "@thomasfosterau/biblio";
+
+/** Narrows a `ParseOutcome` to its parsed record, failing the test otherwise. */
+function expectParsed(outcome: ParseOutcome) {
+  if (outcome.outcome !== "parsed") {
+    expect.fail(`expected a parsed outcome, got skipped (${outcome.reason})`);
+  }
+  return outcome.record;
+}
+
+/** Parses one `@<kind>{key, <fields>}` entry that carries a DOI, and returns its record. */
+const parseEntry = (kind: string, fields: string) =>
+  expectParsed(parseBibtex(`@${kind}{key, ${fields}, doi = {10.1000/x}}`)[0]);
+
+describe("@string macros", () => {
+  it("expands macros and `#` concatenation into later values", () => {
+    const record = expectParsed(
+      parseBibtex(`
+        @string{pub = "Harper"}
+        @STRING{ place = {New} # " " # "York" }
+        @book{k, title = "Volume " # 2, publisher = pub # {Collins}, address = place, doi = {10.1000/x}}
+      `)[0],
+    );
+    expect(record.title).toBe("Volume 2");
+    expect(record.publisher).toBe("HarperCollins");
+    expect(record["publisher-place"]).toBe("New York");
+  });
+
+  it("predefines the month macros and reads them into the date", () => {
+    expect(parseEntry("article", "title = {T}, year = 2015, month = mar").issued).toEqual({
+      "date-parts": [[2015, 3]],
+    });
+  });
+
+  it("keeps an undefined macro's name rather than dropping the value", () => {
+    expect(parseEntry("book", "title = {T}, publisher = undefinedpub").publisher).toBe(
+      "undefinedpub",
+    );
+  });
+
+  it("clamps self-doubling macros instead of growing exponentially", () => {
+    const doubling = Array.from({ length: 40 }, (_, i) => `@string{m${i + 1} = m${i} # m${i}}`);
+    const content = [
+      `@string{m0 = "abcdefgh"}`,
+      ...doubling,
+      `@book{k, title = m40, doi = {10.1000/x}}`,
+    ].join("\n");
+    const record = expectParsed(parseBibtex(content)[0]);
+    expect(record.title?.startsWith("abcdefgh")).toBe(true);
+  });
+});
+
+describe("LaTeX decoding", () => {
+  it("decodes accents, special letters and escaped specials", () => {
+    const record = parseEntry(
+      "book",
+      String.raw`title = {{\"O}sterreich, \'{e}t\'e, {\aa}r, gar\c{c}on, \v{S}koda, na\"{\i}ve, \o rsted, Stra{\ss}e: 50\% \& more}`,
+    );
+    expect(record.title).toBe(
+      "Österreich, été, år, garçon, Škoda, naïve, ørsted, Straße: 50% & more",
+    );
+  });
+
+  it("decodes dashes, quotes and ties, and keeps the text of formatting commands", () => {
+    const record = parseEntry(
+      "book",
+      "title = {\\emph{Homo} \\textbf{sapiens} in ``{DNA}'' studies, 1990--2000~---~a \\textsc{review}}",
+    );
+    expect(record.title).toBe("Homo sapiens in “DNA” studies, 1990–2000 — a review");
+  });
+
+  it("keeps a link's text and a URL's markup characters", () => {
+    const record = parseEntry(
+      "misc",
+      String.raw`title = {See \href{https://example.org}{the site}}, howpublished = {\url{https://example.org/~a_b--c}}`,
+    );
+    expect(record.title).toBe("See the site");
+    expect(record.URL).toBe("https://example.org/~a_b--c");
+  });
+
+  it("unescapes a verbatim url and DOI without decoding them as text", () => {
+    const record = expectParsed(
+      parseBibtex(
+        String.raw`@online{k, title = {T}, url = {https://example.org/a\_b?x=1\&y=2}, doi = {10.1000/a\_b}}`,
+      )[0],
+    );
+    expect(record.URL).toBe("https://example.org/a_b?x=1&y=2");
+    expect(record.identifiers.doi).toBe("10.1000/a_b");
+  });
+});
+
+describe("names", () => {
+  it("reads the three BibTeX name forms and particles", () => {
+    const record = parseEntry(
+      "book",
+      String.raw`title = {T}, author = {Ludwig van Beethoven and von Neumann, Jr, John and de la Fontaine, Jean and {\'E}mile Zola}`,
+    );
+    expect(record.author).toEqual([
+      { family: "Beethoven", given: "Ludwig", "dropping-particle": "van" },
+      { family: "Neumann", given: "John", "dropping-particle": "von", suffix: "Jr" },
+      { family: "Fontaine", given: "Jean", "dropping-particle": "de la" },
+      { family: "Zola", given: "Émile" },
+    ]);
+  });
+
+  it("makes the particle non-dropping under useprefix", () => {
+    const record = parseEntry(
+      "book",
+      "title = {T}, author = {van Gogh, Vincent}, options = {useprefix=true}",
+    );
+    expect(record.author).toEqual([
+      { family: "Gogh", given: "Vincent", "non-dropping-particle": "van" },
+    ]);
+  });
+
+  it("reads a braced corporate name as a literal, its `and` protected", () => {
+    const record = parseEntry(
+      "report",
+      "title = {T}, author = {{Barnes and Noble} and {World Health Organization}}",
+    );
+    expect(record.author).toEqual([
+      { literal: "Barnes and Noble" },
+      { literal: "World Health Organization" },
+    ]);
+  });
+
+  it("records `and others` as an et al. marker, not a name", () => {
+    const record = parseEntry(
+      "book",
+      "title = {T}, author = {Doe, Jane and others}, editor = {Roe, Rick}",
+    );
+    expect(record.author).toEqual([{ family: "Doe", given: "Jane" }]);
+    expect(record.editor).toEqual([{ family: "Roe", given: "Rick" }]);
+    expect(record.extra).toEqual({ "tex.others": ["author"] });
+  });
+
+  it("maps translators and book authors", () => {
+    const record = parseEntry(
+      "inbook",
+      "title = {T}, booktitle = {B}, translator = {Smith, Ann}, bookauthor = {Jones, Bob}",
+    );
+    expect(record.translator).toEqual([{ family: "Smith", given: "Ann" }]);
+    expect(record["container-author"]).toEqual([{ family: "Jones", given: "Bob" }]);
+  });
+});
+
+describe("crossref and xdata", () => {
+  it("inherits a parent book's title as an inbook's container, with its publisher and author", () => {
+    const outcomes = parseBibtex(`
+      @inbook{ch, crossref = {bk}, title = {Chapter}, pages = {1--10}, doi = {10.1000/ch}}
+      @book{bk, title = {The Book}, subtitle = {A Study}, author = {Doe, Jane}, publisher = {Pub}, year = 2001, doi = {10.1000/bk}}
+    `);
+    expect(outcomes).toHaveLength(2);
+    const chapter = expectParsed(outcomes[0]);
+    expect(chapter).toMatchObject({
+      type: "chapter",
+      title: "Chapter",
+      "container-title": "The Book: A Study",
+      publisher: "Pub",
+      author: [{ family: "Doe", given: "Jane" }],
+      "container-author": [{ family: "Doe", given: "Jane" }],
+      issued: { "date-parts": [[2001]] },
+      page: "1-10",
+    });
+    expect(chapter.extra).toBeUndefined();
+    expect(expectParsed(outcomes[1]).title).toBe("The Book: A Study");
+  });
+
+  it("maps a proceedings title to booktitle and a periodical title to the journal", () => {
+    const outcomes = parseBibtex(`
+      @inproceedings{p, crossref = {conf}, title = {Paper}, doi = {10.1000/p}}
+      @proceedings{conf, title = {Proc. of Things}, year = 1999}
+      @article{a, crossref = {per}, title = {Article}, doi = {10.1000/a}}
+      @periodical{per, title = {Journal of Things}, issn = {0378-5955}}
+    `);
+    expect(expectParsed(outcomes[0])["container-title"]).toBe("Proc. of Things");
+    expect(expectParsed(outcomes[2])["container-title"]).toBe("Journal of Things");
+    expect(expectParsed(outcomes[2]).identifiers.issn).toBe("0378-5955");
+  });
+
+  it("does not let a child's own field be overwritten, and keeps xref as a plain field", () => {
+    const record = expectParsed(
+      parseBibtex(`
+        @incollection{c, crossref = {col}, xref = {col}, title = {C}, publisher = {Own}, doi = {10.1000/c}}
+        @collection{col, title = {Col}, publisher = {Parent}}
+      `)[0],
+    );
+    expect(record.publisher).toBe("Own");
+    expect(record.extra).toEqual({ "tex.xref": "col" });
+  });
+
+  it("fills fields from xdata entries, which yield no outcome of their own", () => {
+    const outcomes = parseBibtex(`
+      @xdata{pubdata, publisher = {Shared Press}, location = {Paris}}
+      @book{b, title = {B}, xdata = {pubdata}, doi = {10.1000/b}}
+    `);
+    expect(outcomes).toHaveLength(1);
+    expect(expectParsed(outcomes[0])).toMatchObject({
+      publisher: "Shared Press",
+      "publisher-place": "Paris",
+    });
+  });
+
+  it("follows a chain of parents and stops on a cycle without throwing", () => {
+    const outcomes = parseBibtex(`
+      @inbook{a, crossref = {b}, title = {A}, doi = {10.1000/a}}
+      @book{b, crossref = {c}, title = {B}}
+      @book{c, crossref = {b}, publisher = {C Press}}
+    `);
+    expect(expectParsed(outcomes[0])).toMatchObject({
+      "container-title": "B",
+      publisher: "C Press",
+    });
+  });
+});
+
+describe("BibLaTeX fields", () => {
+  it("maps the BibLaTeX field set onto the record and its CSL variables", () => {
+    const record = parseEntry(
+      "article",
+      [
+        "title = {T}",
+        "shorttitle = {Short}",
+        "journaltitle = {Journal}",
+        "shortjournal = {J.}",
+        "volume = {12}",
+        "number = {3}",
+        "pages = {101--110}",
+        "date = {2020-05-17}",
+        "urldate = {2021-01-02}",
+        "url = {https://example.org}",
+        "langid = {british}",
+        "abstract = {An abstract.}",
+        "keywords = {one, two}",
+        "note = {A note}",
+        "addendum = {An addendum}",
+        "file = {:/home/me/paper.pdf:PDF}",
+        "custom = {Kept {Value}}",
+      ].join(", "),
+    );
+    expect(record).toMatchObject({
+      type: "article-journal",
+      title: "T",
+      "container-title": "Journal",
+      volume: "12",
+      issue: "3",
+      page: "101-110",
+      issued: { "date-parts": [[2020, 5, 17]] },
+      accessed: { "date-parts": [[2021, 1, 2]] },
+      URL: "https://example.org",
+      language: "en-GB",
+      abstract: "An abstract.",
+      note: "A note. An addendum",
+    });
+    expect(record.extra).toEqual({
+      "title-short": "Short",
+      "container-title-short": "J.",
+      keyword: "one, two",
+      "tex.custom": "Kept Value",
+    });
+  });
+
+  it("maps a book's series, edition, location and volumes", () => {
+    const record = parseEntry(
+      "book",
+      "title = {T}, series = {Lecture Notes}, number = {42}, edition = {2}, location = {Berlin}, volumes = {3}, pagetotal = {300}",
+    );
+    expect(record).toMatchObject({
+      "collection-title": "Lecture Notes",
+      edition: "2",
+      "publisher-place": "Berlin",
+    });
+    expect(record.number).toBeUndefined();
+    expect(record.extra).toEqual({
+      "collection-number": "42",
+      "number-of-volumes": "3",
+      "number-of-pages": "300",
+    });
+  });
+
+  it("maps theses, reports and institutions", () => {
+    const thesis = parseEntry("phdthesis", "title = {T}, school = {MIT}");
+    expect(thesis).toMatchObject({ type: "thesis", publisher: "MIT" });
+    expect(thesis.extra).toEqual({ genre: "PhD thesis" });
+    const report = parseEntry(
+      "report",
+      "title = {T}, type = {techreport}, institution = {Lab}, number = {TR-7}",
+    );
+    expect(report).toMatchObject({ type: "report", publisher: "Lab", number: "TR-7" });
+    expect(report.extra).toEqual({ genre: "Technical report" });
+  });
+
+  it("maps an arXiv eprint to a number and a URL", () => {
+    const record = parseEntry(
+      "online",
+      "title = {T}, eprint = {2101.00001}, eprinttype = {arXiv}, eprintclass = {cs.CL}",
+    );
+    expect(record).toMatchObject({
+      type: "webpage",
+      number: "arXiv:2101.00001",
+      URL: "https://arxiv.org/abs/2101.00001",
+    });
+    expect(record.extra).toEqual({ "tex.eprintclass": "cs.CL" });
+  });
+
+  it("maps event fields and a PubMed eprint", () => {
+    const record = parseEntry(
+      "inproceedings",
+      "title = {T}, booktitle = {Proc}, eventtitle = {Conf 2020}, venue = {Online}, eventdate = {2020-06-01/2020-06-03}, eprint = {123456}, eprinttype = {pubmed}",
+    );
+    expect(record["event-date"]).toEqual({
+      "date-parts": [
+        [2020, 6, 1],
+        [2020, 6, 3],
+      ],
+    });
+    expect(record.extra).toEqual({
+      "event-title": "Conf 2020",
+      "event-place": "Online",
+      PMID: "123456",
+    });
+  });
+});
+
+describe("dates", () => {
+  it("reads EDTF ranges, open ranges, seasons and approximate dates", () => {
+    expect(parseEntry("book", "title = {T}, date = {2001/2004}").issued).toEqual({
+      "date-parts": [[2001], [2004]],
+    });
+    expect(parseEntry("book", "title = {T}, date = {2001/..}").issued).toEqual({
+      "date-parts": [[2001]],
+      raw: "2001/..",
+    });
+    expect(parseEntry("book", "title = {T}, date = {2015-22}").issued).toEqual({
+      "date-parts": [[2015]],
+      season: 2,
+    });
+    expect(parseEntry("book", "title = {T}, date = {1850~}").issued).toEqual({
+      "date-parts": [[1850]],
+      circa: true,
+    });
+  });
+
+  it("refines a year with a month and day, and keeps a non-date year as a literal", () => {
+    expect(
+      parseEntry("book", "title = {T}, year = {2015}, month = {12}, day = {25}").issued,
+    ).toEqual({
+      "date-parts": [[2015, 12, 25]],
+    });
+    const forthcoming = parseEntry("book", "title = {T}, year = {forthcoming}, month = {Smarch}");
+    expect(forthcoming.issued).toEqual({ literal: "forthcoming" });
+    expect(forthcoming.extra).toEqual({ "tex.month": "Smarch" });
+    expect(parseEntry("book", "title = {T}, date = {2015-13-01}").issued).toEqual({
+      literal: "2015-13-01",
+    });
+  });
+});
+
+describe("entry types", () => {
+  it("maps BibTeX and BibLaTeX types to CSL item types", () => {
+    const typeOf = (kind: string, extra = "") => parseEntry(kind, `title = {T}${extra}`).type;
+    expect(typeOf("booklet")).toBe("pamphlet");
+    expect(typeOf("inreference")).toBe("entry-encyclopedia");
+    expect(typeOf("unpublished")).toBe("manuscript");
+    expect(typeOf("online")).toBe("webpage");
+    expect(typeOf("software")).toBe("software");
+    expect(typeOf("article", ", entrysubtype = {magazine}")).toBe("article-magazine");
+    expect(typeOf("constructor")).toBe("document");
+  });
+});
+
+describe("hostile input", () => {
+  it("keeps at most 256 distinct fields per entry, however many it lists", () => {
+    const fields = Array.from({ length: 600_000 }, (_, i) => `f${i}=v`).join(",");
+    const record = expectParsed(
+      parseBibtex(`@misc{k, title = {T}, doi = {10.1000/x}, ${fields}}`)[0],
+    );
+    expect(Record.keys(record.extra ?? {})).toHaveLength(254);
+  });
+
+  it("bounds macro expansion across a document, however many fields name a large macro", () => {
+    const big = "a".repeat(60_000);
+    const fields = Array.from({ length: 250 }, (_, i) => `f${i}=m`).join(",");
+    const content = `@string{m = {${big}}}\n@misc{k, title = {T}, ${fields}, doi = {10.1000/x}}`;
+    expect(content.length).toBeLessThanOrEqual(MAX_INPUT_LENGTH);
+    const record = expectParsed(parseBibtex(content)[0]);
+    // Only the first fields within the expansion budget expand.
+    const expanded = Record.keys(record.extra ?? {}).length;
+    expect(expanded).toBeGreaterThan(0);
+    expect(expanded).toBeLessThan(200);
+  });
+
+  it("bounds decoding across a document, however many children inherit a large parent", () => {
+    const parentFields = Array.from(
+      { length: 100 },
+      (_, i) => `g${i} = {${"b".repeat(60_000)}}`,
+    ).join(",");
+    const children = Array.from(
+      { length: 4999 },
+      (_, i) => `@inbook{c${i}, crossref = {p}, title = {T}, doi = {10.1000/x}}`,
+    ).join("\n");
+    const content = `@book{p, author = {Doe, Jane}, ${parentFields}}\n${children}`;
+    expect(content.length).toBeLessThanOrEqual(MAX_INPUT_LENGTH);
+    const outcomes = parseBibtex(content);
+    expect(outcomes).toHaveLength(5000);
+    // The first children decode the inherited fields; the budget stops the rest.
+    expect(Record.keys(expectParsed(outcomes[1]).extra ?? {})).toHaveLength(100);
+    expect(expectParsed(outcomes[1]).author).toEqual([{ family: "Doe", given: "Jane" }]);
+    expect(expectParsed(outcomes[4999]).extra).toBeUndefined();
+    expect(expectParsed(outcomes[4999]).author).toBeUndefined();
+  });
+
+  it("decodes a long value at the source cap without throwing", () => {
+    const long = String.raw`\"o`.repeat(Math.floor(MAX_INPUT_LENGTH / 8));
+    expect(() => parseBibtex(`@book{k, title = {${long}}, doi = {10.1000/x}}`)).not.toThrow();
+  });
+});
+
+describe("edge cases", () => {
+  it("decodes the less common LaTeX forms", () => {
+    const record = parseEntry(
+      "book",
+      String.raw`title = {Ma\'\i z \enquote{quoted} \url{a~b} \url plain \t{oo} \"{} x\'\relax y end\'}`,
+    );
+    expect(record.title).toBe("Maíz “quoted” a~b plain o͡o xy end");
+  });
+
+  it("joins a title addon and keeps an unrecognised genre and language", () => {
+    const record = parseEntry(
+      "thesis",
+      "title = {T}, subtitle = {S}, titleaddon = {Addon}, type = {Habilitation}, language = {Klingon}, note = {Only a note.}",
+    );
+    expect(record.title).toBe("T: S. Addon");
+    expect(record.note).toBe("Only a note.");
+    expect(record.language).toBeUndefined();
+    expect(record.extra).toEqual({ genre: "Habilitation", "tex.language": "Klingon" });
+    expect(parseEntry("book", "title = {T}, langid = {en-AU}").language).toBe("en-AU");
+    expect(parseEntry("book", "title = {T}, addendum = {Only an addendum}").note).toBe(
+      "Only an addendum",
+    );
+  });
+
+  it("keeps a non-link howpublished as the publisher, and a bare URL as the URL", () => {
+    expect(parseEntry("misc", "title = {T}, howpublished = {Privately printed}").publisher).toBe(
+      "Privately printed",
+    );
+    expect(parseEntry("misc", "title = {T}, howpublished = {https://example.org/x}").URL).toBe(
+      "https://example.org/x",
+    );
+  });
+
+  it("skips empty names and treats a word with no letters as part of the given name", () => {
+    expect(parseEntry("book", "title = {T}, author = {{} and Ann 3 Lee}").author).toEqual([
+      { family: "Lee", given: "Ann 3" },
+    ]);
+  });
+
+  it("ignores an unknown xdata key and keeps the first of two entries with one key", () => {
+    const outcomes = parseBibtex(`
+      @book{dup, title = {First}, xdata = {missing}, doi = {10.1000/a}}
+      @book{dup, title = {Second}, doi = {10.1000/b}}
+      @inbook{child, crossref = {DUP}, title = {C}, doi = {10.1000/c}}
+    `);
+    expect(outcomes).toHaveLength(3);
+    expect(expectParsed(outcomes[2])["container-title"]).toBe("First");
+  });
+
+  it("does not let xdata pass on its own inheritance links", () => {
+    const outcomes = parseBibtex(`
+      @xdata{x, ids = {alias}, publisher = {P}}
+      @book{b, title = {B}, xdata = {x}, doi = {10.1000/b}}
+    `);
+    expect(expectParsed(outcomes[0]).extra).toBeUndefined();
+  });
+
+  it("reads month-precision dates and rejects out-of-range parts", () => {
+    const issued = (fields: string) => parseEntry("book", `title = {T}, ${fields}`).issued;
+    expect(issued("date = {2015-03}")).toEqual({ "date-parts": [[2015, 3]] });
+    expect(issued("date = {2015-03-32}")).toEqual({ literal: "2015-03-32" });
+    expect(issued("date = {3000}")).toEqual({ literal: "3000" });
+    expect(issued("date = {2001/2002/2003}")).toEqual({ literal: "2001/2002/2003" });
+    expect(issued("date = {2001/2002-13}")).toEqual({ literal: "2001/2002-13" });
+    expect(issued("date = {  }, year = {2010}")).toEqual({ "date-parts": [[2010]] });
+    expect(issued("year = {2010}, month = {13}")).toEqual({ "date-parts": [[2010]] });
+    expect(issued("year = {2010}, month = {5}, day = {40}")).toEqual({ "date-parts": [[2010, 5]] });
+    expect(issued("year = {2001/2004}, month = {5}")).toEqual({ "date-parts": [[2001], [2004]] });
+  });
+
+  it("keeps a subtitle with no title in extra rather than dropping it", () => {
+    const record = parseEntry("article", "title = {T}, journalsubtitle = {Orphan}");
+    expect(record["container-title"]).toBeUndefined();
+    expect(record.extra).toEqual({ "tex.journalsubtitle": "Orphan" });
+  });
+
+  it("reads an entry with no fields as having none", () => {
+    expect(parseBibtex(`@book{onlykey}`)).toEqual([{ outcome: "skipped", reason: "no-title" }]);
+  });
+});
