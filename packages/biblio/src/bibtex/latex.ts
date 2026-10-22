@@ -17,6 +17,7 @@
 import { Parser, Token } from "@thomasfosterau/effect-parse";
 import * as HashMap from "effect/HashMap";
 import * as Option from "effect/Option";
+import * as Record from "effect/Record";
 import * as Result from "effect/Result";
 import { braced } from "./scan.ts";
 
@@ -183,34 +184,44 @@ const withGroup = (f: (inner: string) => string): Parser.Parser<string> =>
   Parser.orElseSucceed(Parser.map(groupText, f), () => "");
 
 /**
- * What follows a control word. Accents take an argument; `\url` keeps its
- * group verbatim (a URL's `~`, `_` and `--` are not markup); `\href` drops
- * its URL group and keeps the link text; `\enquote` quotes its group; a
- * symbol word is its character; any other command is dropped, and its
- * arguments read on as ordinary text.
+ * What follows a control word, by name. Accents take an argument; `\url`
+ * keeps its group verbatim (a URL's `~`, `_` and `--` are not markup);
+ * `\href` drops its URL group and keeps the link text; `\enquote` quotes its
+ * group; a symbol word is its character. Built once: a record of cases, not a
+ * function, so a command's parser is not rebuilt each time it occurs.
+ * Later entries win, so an accent takes precedence over a symbol word.
  */
-function controlWord(name: string): Parser.Parser<string> {
-  const accent = HashMap.get(WORD_ACCENTS, name);
-  if (Option.isSome(accent)) return accented(accent.value);
-  if (name === "url") return withGroup((inner) => inner);
-  if (name === "href") return withGroup(() => "");
-  if (name === "enquote") return withGroup((inner) => `“${decodeLatex(inner)}”`);
-  return Parser.succeed(Option.getOrElse(HashMap.get(SYMBOL_WORDS, name), () => ""));
-}
+const controlWords = Record.fromEntries([
+  ...Array.from(SYMBOL_WORDS, ([name, symbol]) => [name, Parser.succeed(symbol)] as const),
+  ["url", withGroup((inner) => inner)],
+  ["href", withGroup(() => "")],
+  ["enquote", withGroup((inner) => `“${decodeLatex(inner)}”`)],
+  ...Array.from(WORD_ACCENTS, ([name, mark]) => [name, accented(mark)] as const),
+]);
 
-/** What follows a control symbol (`\"`, `\&`, `\\`, …). */
-function controlSymbol(char: string): Parser.Parser<string> {
-  const accent = HashMap.get(SYMBOL_ACCENTS, char);
-  if (Option.isSome(accent)) return accented(accent.value);
-  return Parser.succeed(Option.getOrElse(HashMap.get(SYMBOL_CHARACTERS, char), () => char));
-}
+/** Any other command is dropped, and its arguments read on as ordinary text. */
+const droppedCommand = Parser.succeed("");
 
-/** A `\` command: a control word (and the blanks after it), a control symbol, or a trailing `\`. */
+/** What follows a known control symbol (`\"`, `\&`, `\\`, …); an accent wins over a character. */
+const controlSymbols = Record.fromEntries([
+  ...Array.from(SYMBOL_CHARACTERS, ([char, text]) => [char, Parser.succeed(text)] as const),
+  ...Array.from(SYMBOL_ACCENTS, ([char, mark]) => [char, accented(mark)] as const),
+]);
+
+/**
+ * A `\` command: a control word (and the blanks after it), a control symbol
+ * (an unknown one is the character itself), or a trailing `\`.
+ */
 const command = Parser.preceded(
   Token.literal("\\"),
   Parser.alt(
-    Parser.dispatch(Parser.zipLeft(Token.takeWhile(isLetter, { min: 1 }), blank), controlWord),
-    Parser.dispatch(Token.any, controlSymbol),
+    Parser.dispatch(
+      Parser.zipLeft(Token.takeWhile(isLetter, { min: 1 }), blank),
+      controlWords,
+      droppedCommand,
+    ),
+    Parser.dispatch(Token.any, controlSymbols),
+    Token.any,
     Parser.succeed(""),
   ),
 );
