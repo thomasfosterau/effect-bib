@@ -248,6 +248,24 @@ describe("parseZoteroJson", () => {
     expect(outcomes[0]).toEqual({ outcome: "skipped", reason: "malformed" });
     expect(expectParsed(outcomes[1]).title).toBe("Good");
   });
+
+  it("reads an array item as an item with no fields (no-title), not as malformed", () => {
+    expect(parseZoteroJson(toJsonText([[1, 2]]))).toEqual([
+      { outcome: "skipped", reason: "no-title" },
+    ]);
+  });
+
+  it("yields no outcomes for JSON that is neither an item array nor an items envelope", () => {
+    expect(parseZoteroJson(toJsonText({ data: [] }))).toEqual([]);
+    expect(parseZoteroJson(toJsonText("text"))).toEqual([]);
+  });
+
+  it("reads the year from an issued raw date when it has no date-parts", () => {
+    const outcomes = parseZoteroJson(
+      toJsonText([{ title: "t", DOI: "10.1000/x", issued: { raw: "Spring 2015" } }]),
+    );
+    expect(expectParsed(outcomes[0]).issued).toEqual({ "date-parts": [[2015]] });
+  });
 });
 
 // ── Reading-list CSV ──────────────────────────────────────────────────

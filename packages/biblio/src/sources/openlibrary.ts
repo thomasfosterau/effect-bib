@@ -24,6 +24,7 @@ import * as Option from "effect/Option";
 import * as Predicate from "effect/Predicate";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
+import type * as Types from "effect/Types";
 import { HttpClient } from "effect/http";
 import { decodeIsbn, type Isbn } from "../identifiers.ts";
 import {
@@ -38,7 +39,7 @@ import {
   sanitiseYear,
 } from "../record.ts";
 import { LookupFailed } from "./errors.ts";
-import { firstString, makeGet } from "./http.ts";
+import { firstString, jsonGet } from "./http.ts";
 
 const OPENLIBRARY_BASE = "https://openlibrary.org";
 
@@ -87,20 +88,25 @@ export const OpenLibraryAuthor = Schema.Struct({
 export type OpenLibraryAuthor = typeof OpenLibraryAuthor.Type;
 
 /**
+ * One `authors[]` reference on an edition, `{ key: "/authors/OL12345A" }`.
+ * The strict key class is the SSRF guard for the follow-up author lookup URL.
+ */
+const decodeAuthorReference = Schema.decodeUnknownOption(
+  Schema.Struct({ key: Schema.String.check(Schema.isPattern(/^\/authors\/OL\d+A$/)) }),
+);
+
+/**
  * Extracts the `/authors/OL...A` keys referenced by an edition record.
  *
  * @since 0.1.0
  */
 export function openLibraryAuthorKeys(edition: OpenLibraryEdition): readonly string[] {
-  return Array.filterMap(edition.authors ?? [], (ref): Result.Result<string, void> => {
-    if (!Predicate.isObjectOrArray(ref) || !("key" in ref)) return Result.failVoid;
-    const key = (ref as { key: unknown }).key;
-    // Author keys look like `/authors/OL12345A`; the strict class is the
-    // SSRF guard for the follow-up author lookup URL.
-    return Predicate.isString(key) && /^\/authors\/OL\d+A$/.test(key)
-      ? Result.succeed(key)
-      : Result.failVoid;
-  }).slice(0, MAX_AUTHORS);
+  return Array.filterMap(edition.authors ?? [], (ref): Result.Result<string, void> =>
+    Option.match(decodeAuthorReference(ref), {
+      onNone: () => Result.failVoid,
+      onSome: ({ key }) => Result.succeed(key),
+    }),
+  ).slice(0, MAX_AUTHORS);
 }
 
 /**
@@ -112,9 +118,10 @@ export function openLibraryAuthorName(author: OpenLibraryAuthor): Option.Option<
   return sanitiseText(author.name);
 }
 
+const decodeString = Schema.decodeUnknownOption(Schema.String);
+
 /** Extracts a {@link CslDate} carrying just the year from a free-text `publish_date` like "Jan 2003". */
-function dateFromPublishDate(value: unknown): Option.Option<CslDate> {
-  if (!Predicate.isString(value)) return Option.none();
+function dateFromPublishDate(value: string): Option.Option<CslDate> {
   const match = value.match(/(\d{4})/);
   const year = match ? sanitiseYear(match[1]) : Option.none<number>();
   return Option.isNone(year) ? Option.none() : Option.some(dateFromYear(year.value));
@@ -175,17 +182,21 @@ export function normaliseOpenLibraryRecord(
   const isbn = pickIsbn(edition, requestedIsbn);
   const publisher = firstString(Option.fromNullishOr(edition.publishers));
   const publisherPlace = firstString(Option.fromNullishOr(edition.publish_places));
-  const issued = dateFromPublishDate(edition.publish_date);
+  const issued = Option.flatMap(decodeString(edition.publish_date), dateFromPublishDate);
   const author = structuredAuthors(authorNames);
   const subject = subjectList(Option.fromNullishOr(edition.subjects));
 
+  const optional: Types.Mutable<Partial<BiblioRecord>> = {};
+  if (Option.isSome(publisher)) optional.publisher = publisher.value;
+  if (Option.isSome(publisherPlace)) optional["publisher-place"] = publisherPlace.value;
+  if (Array.isReadonlyArrayNonEmpty(author)) optional.author = author;
+  if (Option.isSome(issued)) optional.issued = issued.value;
+  const passthrough: Types.Mutable<Pick<BiblioRecord, "extra">> = {};
+  if (Option.isSome(subject)) passthrough.extra = { subject: subject.value };
   return Option.some({
     type: "book",
     title,
-    ...(Option.isSome(publisher) ? { publisher: publisher.value } : {}),
-    ...(Option.isSome(publisherPlace) ? { "publisher-place": publisherPlace.value } : {}),
-    ...(Array.isReadonlyArrayNonEmpty(author) ? { author } : {}),
-    ...(Option.isSome(issued) ? { issued: issued.value } : {}),
+    ...optional,
     identifiers: { isbn },
     provenance: {
       source: "openlibrary",
@@ -195,7 +206,7 @@ export function normaliseOpenLibraryRecord(
         endpoint: `${OPENLIBRARY_BASE}/isbn/${requestedIsbn}.json`,
       },
     },
-    ...(Option.isSome(subject) ? { extra: { subject: subject.value } } : {}),
+    ...passthrough,
   });
 }
 
@@ -214,7 +225,7 @@ export const lookupOpenLibraryByIsbn: (
 ) => Effect.Effect<Option.Option<BiblioRecord>, LookupFailed> = Effect.fn(
   "lookupOpenLibraryByIsbn",
 )(function* (client: HttpClient.HttpClient, isbn: Isbn) {
-  const ol = makeGet(client, OPENLIBRARY_BASE, "openlibrary");
+  const ol = jsonGet(client, OPENLIBRARY_BASE, "openlibrary");
   // `isbn` is exclusively digits (the identifier layer's SSRF guard) —
   // safe in the path.
   const edition = yield* ol(`/isbn/${isbn}.json`, OpenLibraryEdition);

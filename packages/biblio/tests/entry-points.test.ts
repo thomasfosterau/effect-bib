@@ -21,8 +21,18 @@ import * as fs from "node:fs";
 import { createRequire } from "node:module";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
+import * as Array from "effect/Array";
+import * as Function from "effect/Function";
+import * as HashSet from "effect/HashSet";
+import * as MutableHashMap from "effect/MutableHashMap";
+import * as MutableHashSet from "effect/MutableHashSet";
+import * as Option from "effect/Option";
+import * as Order from "effect/Order";
+import * as Record from "effect/Record";
+import * as Schema from "effect/Schema";
 import ts from "typescript";
 import { describe, expect, it } from "vite-plus/test";
+import { expectSome } from "./assert.ts";
 import {
   FORBIDDEN_DIRECTORIES,
   FORBIDDEN_ENCODING_MODULES,
@@ -60,11 +70,15 @@ const specifiersOf = (file: string): ReadonlyArray<string> => {
   return found;
 };
 
-// oxlint-disable-next-line effect/prefer-option-over-null -- feeds `expect(...).toBeDefined()`, whose message names the broken import
-const resolveRelative = (from: string, specifier: string): string | undefined => {
+/** Code-unit order, the order a bare `Array.prototype.sort()` gives strings. */
+const sorted = (items: Iterable<string>): ReadonlyArray<string> =>
+  Array.sortWith(Array.fromIterable(items), Function.identity, Order.String);
+
+const resolveRelative = (from: string, specifier: string): Option.Option<string> => {
   const base = path.resolve(path.dirname(from), specifier);
   const candidates = [base.replace(/\.js$/, ".ts"), base, `${base}.ts`];
-  return candidates.find(
+  return Array.findFirst(
+    candidates,
     (candidate) => fs.existsSync(candidate) && fs.statSync(candidate).isFile(),
   );
 };
@@ -73,35 +87,36 @@ interface Graph {
   /** Files reached, relative to `dir`. */
   readonly modules: ReadonlyArray<string>;
   /** Bare specifiers reached, each mapped to the chain of files that reached it. */
-  readonly externals: ReadonlyMap<string, ReadonlyArray<string>>;
+  readonly externals: ReadonlyArray<readonly [string, ReadonlyArray<string>]>;
 }
 
 /** Walks the transitive import graph from `entry`, recording how each external was reached. */
 const graphFrom = (entry: string, dir: string): Graph => {
-  const modules = new Set<string>();
-  const externals = new Map<string, ReadonlyArray<string>>();
+  const modules = MutableHashSet.empty<string>();
+  const externals = MutableHashMap.empty<string, ReadonlyArray<string>>();
   const walk = (file: string, trail: ReadonlyArray<string>): void => {
-    if (modules.has(file)) return;
-    modules.add(file);
+    if (MutableHashSet.has(modules, file)) return;
+    MutableHashSet.add(modules, file);
     const here = [...trail, path.relative(dir, file)];
-    for (const specifier of specifiersOf(file)) {
-      if (specifier.startsWith(".")) {
-        const resolved = resolveRelative(file, specifier);
-        // An unresolvable relative import is a broken graph, not a pass.
-        expect(
-          resolved,
-          `${path.relative(dir, file)} imports unresolvable "${specifier}"`,
-        ).toBeDefined();
-        if (resolved !== undefined) walk(resolved, here);
-      } else if (!externals.has(specifier)) {
-        externals.set(specifier, here);
+    Array.forEach(specifiersOf(file), (specifier) => {
+      if (!specifier.startsWith(".")) {
+        if (!MutableHashMap.has(externals, specifier)) {
+          MutableHashMap.set(externals, specifier, here);
+        }
+        return;
       }
-    }
+      // An unresolvable relative import is a broken graph, not a pass.
+      const resolved = expectSome(
+        resolveRelative(file, specifier),
+        `a resolution of "${specifier}", imported by ${path.relative(dir, file)}`,
+      );
+      walk(resolved, here);
+    });
   };
   walk(entry, []);
   return {
-    modules: [...modules].map((file) => path.relative(dir, file)).sort(),
-    externals,
+    modules: sorted(Array.map(Array.fromIterable(modules), (file) => path.relative(dir, file))),
+    externals: Array.fromIterable(externals),
   };
 };
 
@@ -110,15 +125,18 @@ const EFFECT_PARSE = "@thomasfosterau/effect-parse";
 
 /** Bare specifiers in `graph` other than `effect` and its modules. */
 const nonEffect = (graph: Graph): ReadonlyArray<string> =>
-  [...graph.externals.keys()].filter(
+  Array.filter(
+    Array.map(graph.externals, ([specifier]) => specifier),
     (specifier) => specifier !== "effect" && !specifier.startsWith("effect/"),
   );
 
 const unstable = (graph: Graph): ReadonlyArray<string> =>
-  [...graph.externals.entries()]
-    .filter(([specifier]) => FORBIDDEN_SPECIFIER.test(specifier))
-    .map(([specifier, trail]) => `${specifier} via ${trail.join(" -> ")}`)
-    .sort();
+  sorted(
+    Array.map(
+      Array.filter(graph.externals, ([specifier]) => FORBIDDEN_SPECIFIER.test(specifier)),
+      ([specifier, trail]) => `${specifier} via ${trail.join(" -> ")}`,
+    ),
+  );
 
 describe("root entry point", () => {
   const root = graphFrom(path.join(SRC, "index.ts"), SRC);
@@ -157,7 +175,7 @@ describe("root entry point", () => {
 
   it("exports the pure surface and none of the lookup surface", async () => {
     const index = await import("@thomasfosterau/biblio");
-    const names = Object.keys(index);
+    const names = Record.keys(index);
     expect(names).toContain("BiblioRecord");
     expect(names).toContain("decodeIsbn");
     expect(names).toContain("parseBibliographicFile");
@@ -171,7 +189,7 @@ describe("root entry point", () => {
 describe("sources entry point", () => {
   it("exports the service, its layers, the per-source lookups and the error channel", async () => {
     const sources = await import("@thomasfosterau/biblio/sources");
-    expect(Object.keys(sources).sort()).toEqual([
+    expect(sorted(Record.keys(sources))).toEqual([
       "BiblioLookup",
       "CrossrefResponse",
       "InvalidIdentifier",
@@ -197,10 +215,16 @@ describe("sources entry point", () => {
 });
 
 describe("package exports map", () => {
-  const manifest = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8")) as {
-    exports: Record<string, string>;
-    publishConfig: { exports: Record<string, { types: string; default: string }> };
-  };
+  // The two exports maps stay raw, so `toEqual` below sees every condition
+  // in them rather than only the ones a schema would keep.
+  const manifest = Schema.decodeUnknownSync(
+    Schema.fromJsonString(
+      Schema.Struct({
+        exports: Schema.Unknown,
+        publishConfig: Schema.Struct({ exports: Schema.Unknown }),
+      }),
+    ),
+  )(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"));
 
   it("points the workspace entries at the two source barrels", () => {
     expect(manifest.exports).toEqual({
@@ -235,9 +259,11 @@ describe("built artifact", () => {
   });
 
   it.skipIf(unbuilt)("ships declarations for both entry points", () => {
-    for (const file of ["index.js", "index.d.ts", "sources/index.js", "sources/index.d.ts"]) {
-      expect(fs.existsSync(path.join(DIST, file)), `dist/${file} missing`).toBe(true);
-    }
+    const missing = Array.filter(
+      ["index.js", "index.d.ts", "sources/index.js", "sources/index.d.ts"],
+      (file) => !fs.existsSync(path.join(DIST, file)),
+    );
+    expect(missing, "dist/ files missing").toEqual([]);
   });
 
   /**
@@ -253,7 +279,9 @@ describe("built artifact", () => {
         fileURLToPath(new URL("./fixtures/forbid-http-peer.mjs", import.meta.url)),
         "--input-type=module",
         "-e",
-        `await import(${JSON.stringify(entry)}); console.log("LOADED")`,
+        // The entry arrives as an argument, so no path is spliced into the code.
+        `await import(process.argv[1]); console.log("LOADED")`,
+        entry,
       ],
       { cwd: ROOT, encoding: "utf8" },
     );
@@ -286,40 +314,40 @@ describe("forbidden effect module list", () => {
     "dist",
   );
   const subdirectories = (dir: string): ReadonlyArray<string> =>
-    fs
-      .readdirSync(dir, { withFileTypes: true })
-      .filter((entry) => entry.isDirectory())
-      .map((entry) => entry.name)
-      .sort();
-  const STABLE_ENCODING = new Set(["Base64", "Base64Url", "Hex", "EncodingError", "index"]);
+    sorted(
+      fs
+        .readdirSync(dir, { withFileTypes: true })
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => entry.name),
+    );
+  const STABLE_ENCODING = HashSet.make("Base64", "Base64Url", "Hex", "EncodingError", "index");
 
   it("covers every effect directory except encoding, testing and internal", () => {
     const expected = subdirectories(dist).filter(
       (name) => !["encoding", "testing", "internal"].includes(name),
     );
-    expect([...FORBIDDEN_DIRECTORIES].sort()).toEqual(expected);
+    expect(sorted(FORBIDDEN_DIRECTORIES)).toEqual(expected);
   });
 
   it("covers every effect/encoding module that was unstable", () => {
-    const expected = fs
-      .readdirSync(path.join(dist, "encoding"))
-      .filter((name) => name.endsWith(".js") && !name.endsWith(".map"))
-      .map((name) => name.replace(/\.js$/, ""))
-      .filter((name) => !STABLE_ENCODING.has(name))
-      .sort();
-    expect([...FORBIDDEN_ENCODING_MODULES].sort()).toEqual(expected);
+    const expected = sorted(
+      fs
+        .readdirSync(path.join(dist, "encoding"))
+        .filter((name) => name.endsWith(".js") && !name.endsWith(".map"))
+        .map((name) => name.replace(/\.js$/, ""))
+        .filter((name) => !HashSet.has(STABLE_ENCODING, name)),
+    );
+    expect(sorted(FORBIDDEN_ENCODING_MODULES)).toEqual(expected);
   });
 
   it("matches the forbidden modules and leaves the stable ones alone", () => {
-    for (const specifier of [
+    const forbidden = [
       "effect/http",
       "effect/http/HttpClient",
       "effect/http-api/HttpApi",
       "effect/encoding/Yaml",
-    ]) {
-      expect(FORBIDDEN_SPECIFIER.test(specifier), specifier).toBe(true);
-    }
-    for (const specifier of [
+    ];
+    const allowed = [
       "effect",
       "effect/Schema",
       "effect/Option",
@@ -327,8 +355,10 @@ describe("forbidden effect module list", () => {
       "effect/encoding",
       "effect/testing",
       "effect/httpx",
-    ]) {
-      expect(FORBIDDEN_SPECIFIER.test(specifier), specifier).toBe(false);
-    }
+    ];
+    expect(Array.filter(forbidden, (specifier) => !FORBIDDEN_SPECIFIER.test(specifier))).toEqual(
+      [],
+    );
+    expect(Array.filter(allowed, (specifier) => FORBIDDEN_SPECIFIER.test(specifier))).toEqual([]);
   });
 });

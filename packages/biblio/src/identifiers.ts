@@ -170,14 +170,27 @@ export function convertIsbn13To10(isbn13: string): Option.Option<string> {
 }
 
 /**
+ * The two canonical forms of a proven {@link Isbn}, as {@link isbnForms}
+ * returns them.
+ *
+ * @since 0.1.0
+ */
+export interface IsbnForms {
+  /** The ISBN-13 form, always present. */
+  readonly isbn13: string;
+  /** The ISBN-10 form, or `null` when the ISBN-13 has none (a `979` prefix). */
+  // oxlint-disable-next-line effect/prefer-option-over-null -- cross-slice: apps/api consumes `isbn10` as a plain nullable
+  readonly isbn10: string | null;
+}
+
+/**
  * Both canonical forms of a proven {@link Isbn}: the 13-form always, the
  * 10-form when it exists. `isbn10` is `null`, not an `Option`, by contract
  * (a stable shape existing consumers rely on).
  *
  * @since 0.1.0
  */
-// oxlint-disable-next-line effect/prefer-option-over-null -- cross-slice: apps/api consumes `isbn10` as a plain nullable
-export function isbnForms(isbn: Isbn): { readonly isbn13: string; readonly isbn10: string | null } {
+export function isbnForms(isbn: Isbn): IsbnForms {
   return { isbn13: isbn, isbn10: Option.getOrNull(convertIsbn13To10(isbn)) };
 }
 

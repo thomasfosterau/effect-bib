@@ -23,13 +23,21 @@ export interface StubRoute {
  * actually composes the client before handing it to a source's lookup
  * function. Effect's `HttpClient` does **not** fail on non-2xx status by
  * default, so a test that `yield*`s the raw `HttpClient.HttpClient`
- * instead of this never exercises the `makeGet` 404 → `Option.none()` /
+ * instead of this never exercises the `jsonGet` 404 → `Option.none()` /
  * `LookupFailed` classification at all — a 4xx/5xx with a JSON body just
  * decodes as an ordinary "success". Use this everywhere a per-source test
  * needs a client, not the bare tag.
  */
 export const filteredClient: Effect.Effect<HttpClient.HttpClient, never, HttpClient.HttpClient> =
   Effect.map(HttpClient.HttpClient, HttpClient.filterStatusOk);
+
+/** What {@link stubRouter} hands a test: the captured requests, the routing fetch and its layer. */
+export interface StubRouter {
+  readonly urls: string[];
+  readonly userAgents: string[];
+  readonly fetch: typeof globalThis.fetch;
+  readonly layer: Layer.Layer<HttpClient.HttpClient>;
+}
 
 /**
  * Builds a Layer providing a `FetchHttpClient` whose fetch routes by exact
@@ -41,12 +49,7 @@ export const filteredClient: Effect.Effect<HttpClient.HttpClient, never, HttpCli
  * `FetchHttpClient.Fetch` under a layer that supplies its own
  * `FetchHttpClient`.
  */
-export function stubRouter(routes: Record<string, StubRoute>): {
-  readonly urls: string[];
-  readonly userAgents: string[];
-  readonly fetch: typeof globalThis.fetch;
-  readonly layer: Layer.Layer<HttpClient.HttpClient>;
-} {
+export function stubRouter(routes: Record<string, StubRoute>): StubRouter {
   const urls: string[] = [];
   const userAgents: string[] = [];
   const toJsonText = Schema.encodeSync(Schema.fromJsonString(Schema.Unknown));

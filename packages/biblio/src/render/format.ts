@@ -18,6 +18,7 @@
 // website#1072. The pure, plain-TypeScript posture matches `dedup-match.ts`.
 
 import * as Array from "effect/Array";
+import * as HashMap from "effect/HashMap";
 import * as Option from "effect/Option";
 import * as Result from "effect/Result";
 import * as String from "effect/String";
@@ -253,29 +254,29 @@ export function preferredUrl(
  */
 export type ReferenceClass = "book" | "chapter" | "article" | "webpage" | "generic";
 
-const REFERENCE_CLASS: Readonly<Record<string, ReferenceClass>> = {
-  book: "book",
-  classic: "book",
-  manuscript: "book",
-  pamphlet: "book",
-  chapter: "chapter",
-  entry: "chapter",
-  "entry-dictionary": "chapter",
-  "entry-encyclopedia": "chapter",
-  "article-journal": "article",
-  article: "article",
-  "article-magazine": "article",
-  "article-newspaper": "article",
-  "paper-conference": "article",
-  review: "article",
-  "review-book": "article",
-  periodical: "article",
-  webpage: "webpage",
-  post: "webpage",
-  "post-weblog": "webpage",
-  dataset: "webpage",
-  software: "webpage",
-};
+const REFERENCE_CLASS = HashMap.fromIterable<string, ReferenceClass>([
+  ["book", "book"],
+  ["classic", "book"],
+  ["manuscript", "book"],
+  ["pamphlet", "book"],
+  ["chapter", "chapter"],
+  ["entry", "chapter"],
+  ["entry-dictionary", "chapter"],
+  ["entry-encyclopedia", "chapter"],
+  ["article-journal", "article"],
+  ["article", "article"],
+  ["article-magazine", "article"],
+  ["article-newspaper", "article"],
+  ["paper-conference", "article"],
+  ["review", "article"],
+  ["review-book", "article"],
+  ["periodical", "article"],
+  ["webpage", "webpage"],
+  ["post", "webpage"],
+  ["post-weblog", "webpage"],
+  ["dataset", "webpage"],
+  ["software", "webpage"],
+]);
 
 /**
  * Maps a CSL item type to its {@link ReferenceClass} (`"generic"` fallback).
@@ -283,7 +284,7 @@ const REFERENCE_CLASS: Readonly<Record<string, ReferenceClass>> = {
  * @since 0.1.0
  */
 export function referenceClass(type: string): ReferenceClass {
-  return REFERENCE_CLASS[type] ?? "generic";
+  return Option.getOrElse(HashMap.get(REFERENCE_CLASS, type), (): ReferenceClass => "generic");
 }
 
 /**

@@ -14,7 +14,6 @@
 
 import * as Array from "effect/Array";
 import * as Option from "effect/Option";
-import * as Order from "effect/Order";
 import * as Record from "effect/Record";
 import { describe, expect, it } from "vite-plus/test";
 import {
@@ -373,7 +372,7 @@ describe("getStyle / builtInStyles", () => {
   });
 
   it("exposes both built-in styles", () => {
-    expect(Array.sort(Record.keys(builtInStyles), Order.String)).toEqual(["apa", "vancouver"]);
+    expect(Record.keys(builtInStyles)).toEqual(["apa", "vancouver"]);
   });
 });
 

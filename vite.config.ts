@@ -64,50 +64,11 @@ export default defineConfig({
       // "effect/Option"`) this library shares with its consumers.
       "effect/prefer-namespace-imports": "off",
 
-      // ---- Effect preset: ported-code allowances ---------------------------
-      // The modules under packages/*/src are ports of code the website
-      // application carries today, which predates the Effect oxlint preset.
-      // The rules below sit at `warn` so the verbatim ports stay committable
-      // while each site stays reported; a new site is a defect, not headroom.
-      // `prefer-option-over-null` is NOT here: it stays at `error`, because
-      // every deliberate `null` on a cross-package contract (the plain-nullable
-      // seams listed in packages/biblio/CLAUDE.md) carries a written
-      // justification in an `oxlint-disable` block, and that discipline is
-      // the point.
-      "effect/imperative-loops": "warn",
-      "effect/avoid-native-object-helpers": "warn",
-      "effect/avoid-non-null-assertion": "warn",
-      "effect/avoid-any": "warn",
-      "effect/avoid-untagged-errors": "warn",
-      "effect/avoid-direct-json": "warn",
-      "effect/prefer-arr-match": "warn",
-      "effect/no-length-comparison": "warn",
-      "effect/prefer-arr-sort": "warn",
-      "effect/avoid-try-catch": "warn",
-      "effect/yield-in-for-loop": "warn",
-      "effect/prefer-effect-is": "warn",
-      "effect/avoid-expect-in-if": "warn",
-      "effect/effect-run-in-body": "warn",
-      "effect/prefer-effect-fn": "warn",
-      "effect/avoid-direct-tag-checks": "warn",
-      "effect/avoid-option-getorthrow": "warn",
-      "effect/no-barrel-imports": "warn",
-      "effect/throw-in-effect-gen": "warn",
-      // Rules the preset gained after the website copy was last linted
-      // (plugin 0.5): the lenient upstream-response decoders take `unknown`
-      // by design (`no-unknown-parameters` / `no-unknown-returns`), the CSL
-      // vocabulary maps are open dictionaries on purpose
-      // (`no-known-value-widening`), the optional-CSL-key spreads are how
-      // `exactOptionalPropertyTypes` records omit a key
-      // (`no-conditional-empty-object-spread`), and the narrowings on
-      // untrusted JSON carry their reasoning in prose rather than a
-      // `SAFETY:` marker (`require-safety-comment-for-type-assertion`).
-      "effect/no-conditional-empty-object-spread": "warn",
-      "effect/no-unknown-parameters": "warn",
-      "effect/no-unknown-returns": "warn",
-      "effect/no-known-value-widening": "warn",
-      "effect/no-service-constructor-imports": "warn",
-      "effect/require-safety-comment-for-type-assertion": "warn",
+      // No ported-code allowances remain: every preset rule is at its `error`
+      // level. `prefer-option-over-null` and `no-unknown-parameters` stay
+      // there with a handful of per-site `oxlint-disable` justifications —
+      // the plain-nullable seams and the untrusted-input boundary listed in
+      // packages/biblio/CLAUDE.md — so a new site cannot land silently.
       "typescript/no-explicit-any": "off",
       "typescript/no-empty-object-type": "off",
       "typescript/ban-ts-comment": "off",
@@ -138,6 +99,16 @@ export default defineConfig({
           "effect/use-path-service": "off",
           "effect/avoid-native-fetch": "off",
           "effect/effect-promise-vs-trypromise": "off",
+        },
+      },
+      // The suite's run helpers ARE the test harness boundary the rule
+      // points to, but it has no entrypoint detection: running the Effect is
+      // their whole job (`@effect/vitest`'s `it.effect` does not load under
+      // the Vite+ vitest alias; see the module comment).
+      {
+        files: ["packages/biblio/tests/effect.ts"],
+        rules: {
+          "effect/effect-run-in-body": "off",
         },
       },
       // Type-level tests: every binding exists to be assigned, never read,

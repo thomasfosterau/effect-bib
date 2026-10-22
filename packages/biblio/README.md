@@ -87,7 +87,7 @@ Name and date helpers: `makeCslName(parts)`, `parsePersonName(raw)` (`"Family, G
 
 **`Isbn`, `Doi`, `Issn`, `Orcid`** — `Schema.String.pipe(Schema.brand(…))`. The `Type` is the brand, the `Encoded` is `string`: the brand is a proof, not a representation. A raw string is never assignable to a brand and the four brands are distinct from each other (`tests/identifiers.types.ts` pins this at the type level).
 
-**`decodeIsbn(raw): Option<Isbn>`** — accepts a hyphenated / spaced ISBN-10 or ISBN-13, validates the checksum (mod-11 / EAN mod-10), returns the canonical 13-digit form. **`isbnForms(isbn)`** gives `{ isbn13, isbn10 | null }`; `convertIsbn10To13` / `convertIsbn13To10` are the raw converters.
+**`decodeIsbn(raw): Option<Isbn>`** — accepts a hyphenated / spaced ISBN-10 or ISBN-13, validates the checksum (mod-11 / EAN mod-10), returns the canonical 13-digit form. **`isbnForms(isbn)`** gives an `IsbnForms`, `{ isbn13, isbn10 | null }`; `convertIsbn10To13` / `convertIsbn13To10` are the raw converters.
 
 ```ts
 const isbn = decodeIsbn("0-06-231609-5");
@@ -142,7 +142,7 @@ assert.strictEqual(isConfidentMatch(score), true);
 
 **`renderReference(record, { style, locale? }): string`** and **`renderBibliography(records, options): RenderedBibliography`** — author-date styles sort by the style's `sortKey` and carry no label; numeric styles keep citation order and number each entry (`label: Option<string>`). **`bibliographyToText(bibliography)`** flattens to one line per entry. `locale` defaults to `enLocale`.
 
-**`apaStyle`** (APA 7th, author-date) and **`vancouverStyle`** (numeric) are the built-ins; `builtInStyles` is the registry and `getStyle(id)` the lookup. A `CitationStyle` is data — `{ id, title, category, renderReference, sortKey }` — so a consumer can supply its own without touching the engine, composing the `format.ts` primitives (`formatNameList`, `givenInitials`, `issuedYearText`, `pagesLabel`, `preferredUrl`, `dispatchReference`, …).
+**`apaStyle`** (APA 7th, author-date) and **`vancouverStyle`** (numeric) are the built-ins; `builtInStyles` holds the two (`{ apa, vancouver }`) and `getStyle(id)` looks a style up by any id (`undefined` when unknown). A `CitationStyle` is data — `{ id, title, category, renderReference, sortKey }` — so a consumer can supply its own without touching the engine, composing the `format.ts` primitives (`formatNameList`, `givenInitials`, `issuedYearText`, `pagesLabel`, `preferredUrl`, `dispatchReference`, …).
 
 ```ts
 assert.strictEqual(
