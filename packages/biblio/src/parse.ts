@@ -19,6 +19,9 @@
  *   the checksum-validating decoders ({@link decodeIsbn},
  *   {@link decodeDoi}), which are the SSRF / path-injection guards, before
  *   anything is trusted. An ISBN must pass its checksum to parse.
+ * - **full-fidelity BibTeX** — macros, LaTeX decoding, BibTeX name rules,
+ *   `crossref` / `xdata` inheritance and the BibLaTeX field set (see
+ *   {@link parseBibtex}); a field with no typed slot is kept in `extra`.
  * - **resource bounds** — total input length ({@link MAX_INPUT_LENGTH}),
  *   per-field length (`sanitiseText`), author count (`MAX_AUTHORS`), and
  *   record count ({@link MAX_RECORDS}) are all capped.
@@ -33,7 +36,6 @@
  * @since 0.1.0
  */
 
-import { Parser, Token } from "@thomasfosterau/effect-parse";
 import * as Array from "effect/Array";
 import * as HashMap from "effect/HashMap";
 import * as Match from "effect/Match";
@@ -66,6 +68,10 @@ import {
   sanitiseText,
   sanitiseYear,
 } from "./record.ts";
+import type { RawFields } from "./raw-fields.ts";
+import { mapBibtexEntries } from "./bibtex/fields.ts";
+import { resolveInheritance } from "./bibtex/inherit.ts";
+import { scanBibtex } from "./bibtex/scan.ts";
 
 // ── Public surface ────────────────────────────────────────────────────
 
@@ -177,30 +183,6 @@ export function parseBibliographicFile(content: string, format: ImportFormat): P
 }
 
 // ── Shared record assembly ────────────────────────────────────────────
-
-/**
- * A pre-assembly bag of the fields a parser pulls out of one source entry.
- * Names are already structured ({@link CslName}); identifier and free-text
- * values are still raw — {@link toOutcome} runs the decoders / sanitisers.
- */
-interface RawFields {
-  /** The CSL item type, or `Option.none()` to infer it from the identifier. */
-  readonly type: Option.Option<CslItemType>;
-  readonly title: Option.Option<string>;
-  readonly subtitle: Option.Option<string>;
-  /** A year as a number or as text that holds one (`2015`, `"2015"`). */
-  readonly year: Option.Option<string | number>;
-  readonly publisher: Option.Option<string>;
-  readonly containerTitle: Option.Option<string>;
-  readonly volume: Option.Option<string>;
-  readonly issue: Option.Option<string>;
-  readonly page: Option.Option<string>;
-  readonly isbn: Option.Option<string>;
-  readonly issn: Option.Option<string>;
-  readonly doi: Option.Option<string>;
-  readonly names: readonly CslName[];
-  readonly editors: readonly CslName[];
-}
 
 /** The subset of CSL string variables the parsers populate. */
 type ParserStringVar = "publisher" | "container-title" | "volume" | "issue" | "page";
@@ -314,218 +296,60 @@ function structuredNames(raw: readonly string[]): CslName[] {
 
 // ── BibTeX ────────────────────────────────────────────────────────────
 
-/** One raw BibTeX entry: its `@type` and its `{ ... }` body. */
-interface BibtexEntry {
-  readonly kind: string;
-  readonly body: string;
-}
-
 /**
- * The deepest `{…}` nesting the BibTeX grammar accepts. The grammar is
- * unrolled to this depth rather than recursive: effect-parse's interpreter
- * recurses once per nesting level, and an unbounded `Parser.suspend` grammar
- * overflows the stack (`RangeError`) at a few thousand levels, so a hostile
- * 5 KB `{{{…` would throw (effect-parse#14). Deeper nesting is treated like
- * an unbalanced tail.
- */
-const MAX_BRACE_DEPTH = 32;
-
-/**
- * Consumes a parser's repetitions. The output is discarded, so compiled code
- * collects no array of matches.
- */
-const skipMany = <A>(self: Parser.Parser<A>): Parser.Parser<void> =>
-  Parser.asVoid(Parser.repeat(self));
-
-/** A run of characters that are not braces. */
-const unbracedRun = Token.takeTill("{}", { min: 1 });
-
-/** A balanced `{…}` group, nested at most `depth` levels. */
-function bracedTo(depth: number): Parser.Parser<void> {
-  const inner = depth <= 1 ? unbracedRun : Parser.alt(unbracedRun, bracedTo(depth - 1));
-  return Parser.asVoid(Parser.delimited(Token.literal("{"), skipMany(inner), Token.literal("}")));
-}
-
-const braced = bracedTo(MAX_BRACE_DEPTH);
-
-/** `@comment`, `@string` and `@preamble` heads, which are not reference entries. */
-const isNonEntryKind = (kind: string): boolean =>
-  kind === "comment" || kind === "string" || kind === "preamble" || kind === "";
-
-/** An entry head: skips to the next `@` and reads its type up to the `{`. */
-const entryHead = Parser.preceded(
-  Parser.seq(Token.takeUntil("@"), Token.literal("@")),
-  Parser.map(Token.takeUntil("{"), (kind) => kind.trim().toLowerCase()),
-);
-
-/** A non-entry head steps past its `{` only: its body is scanned as text. */
-const nonEntryStep = Parser.as(
-  Parser.zipLeft(Parser.filter(entryHead, isNonEntryKind), Token.literal("{")),
-  Option.none<BibtexEntry>(),
-);
-
-/** A reference entry: its head and its brace-balanced `{ ... }` body. */
-const entryStep = Parser.map(
-  Parser.seq(entryHead, Parser.taken(braced)),
-  ([kind, body]): Option.Option<BibtexEntry> => Option.some({ kind, body: body.slice(1, -1) }),
-);
-
-/**
- * The whole entry scan: stops at the first unbalanced entry or the end, and
- * keeps the first {@link MAX_RECORDS} entries (it scans past them: a `fold`
- * cannot stop on its accumulator, effect-parse#16). Compiled with the `closure`
- * backend, which never calls `new Function`, so a page's Content Security
- * Policy never sees it.
- */
-const bibtexEntries = Parser.compile(
-  Parser.fold(Parser.alt(nonEntryStep, entryStep), {
-    init: (): BibtexEntry[] => [],
-    f: (entries, step) => {
-      if (Option.isSome(step) && entries.length < MAX_RECORDS) entries.push(step.value);
-      return entries;
-    },
-  }),
-  { backend: "closure" },
-);
-
-/**
- * Splits a BibTeX document into raw `@type{ ... }` entries: finds each `@`
- * entry head, then balances braces to the matching close so a
- * `title = {a {nested} brace}` field doesn't terminate the entry early. A
- * truncated / unbalanced tail stops the scan — it never throws.
- */
-function splitBibtexEntries(content: string): BibtexEntry[] {
-  // A `fold` with no minimum always succeeds, so this never fails.
-  const scanned = Parser.parsePeek(bibtexEntries, content);
-  return Result.isSuccess(scanned) ? scanned.success[1] : [];
-}
-
-/** Strips one layer of wrapping `{…}` or `"…"` from a BibTeX field value. */
-function unwrapBibtexValue(value: string): string {
-  const trimmed = value.trim();
-  if (trimmed.startsWith("{") && trimmed.endsWith("}")) return trimmed.slice(1, -1);
-  if (trimmed.startsWith('"') && trimmed.endsWith('"')) return trimmed.slice(1, -1);
-  return trimmed;
-}
-
-/**
- * A `}` with no open `{` in this value (the field key swallowed its `{`):
- * kept as text rather than ending the value, so the field still parses.
- */
-const strayClose = Token.literal("}");
-
-/** A `"…"` value; braces inside it still balance. */
-const quoted = Parser.delimited(
-  Token.literal('"'),
-  skipMany(Parser.alt(Token.takeTill('{}"', { min: 1 }), braced, Parser.asVoid(strayClose))),
-  Token.literal('"'),
-);
-
-/** An unterminated `"`: the value runs to the end of the body. */
-const unterminatedQuote = Parser.preceded(Token.literal('"'), Token.rest);
-
-/** A field value, up to the next top-level, unquoted `,` or the end. */
-const fieldValue = Parser.taken(
-  skipMany(
-    Parser.alt(
-      Token.takeTill('{}",', { min: 1 }),
-      braced,
-      Parser.asVoid(strayClose),
-      Parser.asVoid(quoted),
-      Parser.asVoid(unterminatedQuote),
-    ),
-  ),
-);
-
-/** One `key = value` field and its terminating `,` (or the end). */
-const bibtexField = Parser.seq(
-  Token.takeUntil("="),
-  Token.literal("="),
-  fieldValue,
-  Parser.alt(Token.literal(","), Parser.eof),
-);
-
-/** An entry body: the citation key, then the fields (compiled as above). */
-const bibtexFields = Parser.compile(
-  Parser.preceded(
-    Parser.seq(Token.takeUntil(","), Token.literal(",")),
-    Parser.fold(bibtexField, {
-      init: () => MutableHashMap.empty<string, string>(),
-      f: (fields, [rawKey, , value]) => {
-        const key = rawKey.trim().toLowerCase();
-        if (String.isNonEmpty(key)) MutableHashMap.set(fields, key, unwrapBibtexValue(value));
-        return fields;
-      },
-    }),
-  ),
-  { backend: "closure" },
-);
-
-/**
- * Pulls the `key = value` fields out of one BibTeX entry body into a map.
- * Brace-balances each value so a `,` inside `{…}` doesn't split a field.
- * Unknown / duplicate keys are last-wins.
- */
-function parseBibtexFields(body: string): MutableHashMap.MutableHashMap<string, string> {
-  // Fails only on a body with no `,` after the citation key: no fields.
-  const scanned = Parser.parsePeek(bibtexFields, body);
-  return Result.isSuccess(scanned) ? scanned.success[1] : MutableHashMap.empty<string, string>();
-}
-
-/** Splits a BibTeX name field on the ` and ` separator into display names. */
-function splitBibtexNames(raw: Option.Option<string>): string[] {
-  if (Option.isNone(raw)) return [];
-  return raw.value.split(/\s+and\s+/i);
-}
-
-/** BibTeX `@type` → CSL item type; unlisted types fall back to `document`. */
-const BIBTEX_TYPES: Readonly<Record<string, CslItemType>> = {
-  book: "book",
-  booklet: "book",
-  article: "article-journal",
-  inbook: "chapter",
-  incollection: "chapter",
-  inproceedings: "paper-conference",
-  conference: "paper-conference",
-  phdthesis: "thesis",
-  mastersthesis: "thesis",
-  techreport: "report",
-};
-
-/** Maps a BibTeX `@type` to a CSL item type, defaulting to `document`. */
-function bibtexType(kind: string): CslItemType {
-  return BIBTEX_TYPES[kind] ?? "document";
-}
-
-/**
- * Parses a BibTeX document into per-entry {@link ParseOutcome}s.
+ * Parses a BibTeX or BibLaTeX document into per-entry {@link ParseOutcome}s.
+ *
+ * The whole document is read before any entry is mapped: `@string` macros
+ * (and the predefined `jan` … `dec`) expand, with `#` concatenation, into
+ * every value after their definition; `crossref` and `xdata` fill the fields
+ * an entry lacks, with BibLaTeX's inheritance rules (a parent book's
+ * `title` is an `@inbook`'s `booktitle`); `@xdata` and `@set` entries yield
+ * no outcome. Each value is decoded from LaTeX to Unicode (`{\"o}` → `ö`,
+ * `--` → `–`, `\emph{…}` → its text, grouping braces removed), names follow
+ * BibTeX's rules (`von Last, Jr, First`, a braced corporate name as a
+ * `literal`), and dates keep their month, day and range. Fields with a CSL
+ * variable the record does not type (`shorttitle`, `keywords`, `type`, …)
+ * land in `extra` under that CSL name, the rest under `tex.<field>`, and a
+ * name list ending `and others` is recorded as `extra["tex.others"]`; only
+ * `file` is dropped. The import policy is unchanged: an entry still needs a
+ * title and an ISBN or DOI.
+ *
+ * @example
+ * ```ts
+ * import * as assert from "node:assert"
+ * import { parseBibtex } from "@thomasfosterau/biblio"
+ *
+ * // (Each entry on one line here only because a line-leading `@` would read
+ * // as a JSDoc tag; a real file has the usual layout.)
+ * const outcomes = parseBibtex([
+ *   '@string{ups = "Oxford University Press"}',
+ *   "@book{oxford, title = {The {Oxford} Handbook}, publisher = ups, location = {Oxford}, date = {2015-03}, isbn = {9780199695836}}",
+ *   "@inbook{chapter, crossref = {oxford}, title = {Sch{\\\"o}n's Method}, author = {van der Berg, Anna and others}, pages = {1--20}, doi = {10.1093/oxfordhb/9780199695836.013.1}}",
+ * ].join("\n"))
+ *
+ * const chapter = outcomes[1].outcome === "parsed" ? outcomes[1].record : undefined
+ * assert.strictEqual(chapter?.title, "Schön's Method")
+ * // Inherited from the crossref parent: its title as the container title.
+ * assert.strictEqual(chapter?.["container-title"], "The Oxford Handbook")
+ * assert.strictEqual(chapter?.publisher, "Oxford University Press")
+ * assert.deepStrictEqual(chapter?.issued, { "date-parts": [[2015, 3]] })
+ * assert.deepStrictEqual(chapter?.author, [{ family: "Berg", given: "Anna", "dropping-particle": "van der" }])
+ * assert.deepStrictEqual(chapter?.extra, { "tex.others": ["author"] })
+ * assert.strictEqual(chapter?.page, "1-20")
+ * ```
  *
  * @since 0.1.0
  */
 export function parseBibtex(content: string): ParseOutcome[] {
-  return Array.map(splitBibtexEntries(content).slice(0, MAX_RECORDS), (entry) => {
-    const fields = parseBibtexFields(entry.body);
-    const field = (key: string): Option.Option<string> => MutableHashMap.get(fields, key);
-    return toOutcome(
-      {
-        type: Option.some(bibtexType(entry.kind)),
-        title: field("title"),
-        subtitle: field("subtitle"),
-        year: Option.orElse(field("year"), () => field("date")),
-        publisher: field("publisher"),
-        containerTitle: Option.orElse(field("journal"), () => field("booktitle")),
-        volume: field("volume"),
-        issue: field("number"),
-        page: field("pages"),
-        isbn: field("isbn"),
-        issn: field("issn"),
-        doi: field("doi"),
-        names: structuredNames(splitBibtexNames(field("author"))),
-        editors: structuredNames(splitBibtexNames(field("editor"))),
-      },
-      "bibtex",
-    );
-  });
+  return Array.map(
+    mapBibtexEntries(resolveInheritance(scanBibtex(content))),
+    ({ fields, additions }): ParseOutcome => {
+      const outcome = toOutcome(fields, "bibtex");
+      return outcome.outcome === "parsed"
+        ? { outcome: "parsed", record: { ...outcome.record, ...additions } }
+        : outcome;
+    },
+  );
 }
 
 // ── Zotero / CSL-JSON ─────────────────────────────────────────────────

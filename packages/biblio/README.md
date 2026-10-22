@@ -126,6 +126,18 @@ assert.deepStrictEqual(
 );
 ```
 
+**`parseBibtex(content)`** reads BibTeX and BibLaTeX in full: `@string` macros (and the predefined `jan` … `dec`) with `#` concatenation; LaTeX decoded to Unicode (`{\"o}` → `ö`, `--` → `–`, `\emph{…}` → its text; grouping braces are removed, so `{DNA}`'s case protection is not kept yet); BibTeX name rules (`von Last, Jr, First`, a braced corporate name as a `literal`, `and others` as `extra["tex.others"]`); `crossref` and `xdata` inheritance with BibLaTeX's rules (an `@inbook` takes its parent book's `title` as its container title); BibLaTeX's fields and dates (`journaltitle`, `location`, `urldate`, EDTF ranges as full `date-parts`, arXiv `eprint`s); and the BibTeX / BibLaTeX → CSL entry-type mapping Pandoc and citeproc-js use. A field with a CSL variable the record does not type (`shorttitle`, `keywords`, `type`, …) lands in `extra` under the CSL name (`title-short`, `keyword`, `genre`), and any other field under `tex.<field>`; only `file` is dropped.
+
+```ts
+const chapter = outcomes[1].outcome === "parsed" ? outcomes[1].record : undefined;
+assert.strictEqual(chapter?.title, "Schön's Method");
+assert.strictEqual(chapter?.["container-title"], "The Oxford Handbook");
+assert.deepStrictEqual(chapter?.author, [
+  { family: "Berg", given: "Anna", "dropping-particle": "van der" },
+]);
+assert.deepStrictEqual(chapter?.extra, { "tex.others": ["author"] });
+```
+
 ### Dedup — `.`
 
 **`recordMatchInput(record): MatchInput`** projects a record to `{ title, authors }`; **`scoreMatch(incoming, candidate): MatchScore`** scores title-token Jaccard, author-surname Jaccard (`Option.none()` when either side has no authors) and the shared significant title tokens; **`isConfidentMatch(score)`** is the high-precision same-work decision (title ≥ 0.9 with author agreement ≥ 0.5, or title ≥ 0.95 with ≥ 2 shared tokens when there is no author signal); **`matchConfidence(score)`** ranks; **`bestConfidentMatch(incoming, candidates)`** picks the best confident candidate or `null`. Normalisers: `normaliseForMatch`, `titleTokens`, `authorSurname`.
