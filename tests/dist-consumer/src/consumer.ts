@@ -13,22 +13,37 @@ import * as Option from "effect/Option";
 import type { HttpClient } from "effect/http";
 import {
   apaStyle,
+  type Arxiv,
   type BiblioRecord,
   bestConfidentMatch,
   type CslItemType,
+  type CslName,
+  type CslDate,
   type Doi,
+  decodeArxiv,
   decodeDoi,
   decodeIsbn,
+  decodePmcid,
+  decodePmid,
   fromCslJson,
   type Isbn,
   isbnForms,
   type MatchInput,
   parseBibliographicFile,
+  parseCslMarkup,
+  type ParseMode,
+  type ParseOptions,
   type ParseOutcome,
+  type Pmcid,
+  type Pmid,
   recordMatchInput,
+  type RecordLimits,
   renderBibliography,
   renderReference,
+  type RichText,
   scoreMatch,
+  type SkipReason,
+  type SourcePosition,
   toCslJson,
   vancouverStyle,
 } from "@thomasfosterau/biblio";
@@ -57,17 +72,29 @@ declare const client: HttpClient.HttpClient;
 
 export const isbn: Option.Option<Isbn> = decodeIsbn(raw);
 export const doi: Option.Option<Doi> = decodeDoi(raw);
+export const pmid: Option.Option<Pmid> = decodePmid(raw);
+export const pmcid: Option.Option<Pmcid> = decodePmcid(raw);
+export const arxiv: Option.Option<Arxiv> = decodeArxiv(raw);
 export const forms = Option.map(isbn, isbnForms);
 
 // ── record ────────────────────────────────────────────────────────────────
 
 export const record: BiblioRecord = fromCslJson({ type: "book", title: "Sapiens" });
+export const limited: BiblioRecord = fromCslJson({ type: "book" }, { maxAuthors: 500 });
 export const csl = toCslJson(record);
 type IdentifierSlot = BiblioRecord["identifiers"]["isbn"];
+export const markup: RichText = parseCslMarkup("<i>Sapiens</i>");
 
 // ── parse ─────────────────────────────────────────────────────────────────
 
 export const outcomes: ParseOutcome[] = parseBibliographicFile("", "bibtex");
+export const lenient: ParseOutcome[] = parseBibliographicFile("", "bibtex", {
+  mode: "lenient",
+  maxRecords: 10_000,
+  maxInputLength: 16_000_000,
+  maxFieldLength: 20_000,
+  maxAuthors: 1_000,
+});
 
 // ── dedup ─────────────────────────────────────────────────────────────────
 
@@ -106,7 +133,45 @@ export type Checks = [
   // oxlint-disable-next-line effect/prefer-option-over-null -- asserts the record's own optional-key wire shape
   /** _identifierSlotIsBranded */ Assert<Equals<IdentifierSlot, Isbn | undefined>>,
   /** _itemTypeIsClosed */ Assert<Equals<Extract<CslItemType, "book">, "book">>,
+  /** _pubMedAndArxivAreBranded */ Assert<Not<Equals<Pmid, string>>>,
+  /** _pmidIsNotPmcid */ Assert<Not<Equals<Pmid, Pmcid>>>,
+  /** _arxivIsBranded */ Assert<Not<Equals<Arxiv, string>>>,
+  // oxlint-disable-next-line effect/prefer-option-over-null -- asserts the record's own optional-key wire shape
+  /** _pmidSlot */ Assert<Equals<BiblioRecord["identifiers"]["pmid"], Pmid | undefined>>,
+  // oxlint-disable-next-line effect/prefer-option-over-null -- asserts the record's own optional-key wire shape
+  /** _pmcidSlot */ Assert<Equals<BiblioRecord["identifiers"]["pmcid"], Pmcid | undefined>>,
+  // oxlint-disable-next-line effect/prefer-option-over-null -- asserts the record's own optional-key wire shape
+  /** _arxivSlot */ Assert<Equals<BiblioRecord["identifiers"]["arxiv"], Arxiv | undefined>>,
+  // oxlint-disable-next-line effect/prefer-option-over-null -- asserts the record's own optional-key wire shape
+  /** _citationKey */ Assert<Equals<BiblioRecord["citation-key"], string | undefined>>,
+  // oxlint-disable-next-line effect/prefer-option-over-null -- asserts the record's own optional-key wire shape
+  /** _itemId */ Assert<Equals<BiblioRecord["id"], string | number | undefined>>,
+  // oxlint-disable-next-line effect/prefer-option-over-null -- asserts the record's own optional-key wire shape
+  /** _standardVariable */ Assert<Equals<BiblioRecord["archive_location"], string | undefined>>,
+  /** _nameVariable */ Assert<
+    // oxlint-disable-next-line effect/prefer-option-over-null -- asserts the record's own optional-key wire shape
+    Equals<BiblioRecord["executive-producer"], readonly CslName[] | undefined>
+  >,
+  // oxlint-disable-next-line effect/prefer-option-over-null -- asserts the record's own optional-key wire shape
+  /** _dateVariable */ Assert<Equals<BiblioRecord["available-date"], CslDate | undefined>>,
+  /** _categories */ Assert<
+    // oxlint-disable-next-line effect/prefer-option-over-null -- asserts the record's own optional-key wire shape
+    Equals<BiblioRecord["categories"], readonly string[] | undefined>
+  >,
   /** _outcomeIsTagged */ Assert<Equals<ParseOutcome["outcome"], "parsed" | "skipped">>,
+  // oxlint-disable-next-line effect/prefer-option-over-null -- asserts the outcome's own optional-key shape
+  /** _outcomePosition */ Assert<Equals<ParseOutcome["position"], SourcePosition | undefined>>,
+  /** _skipReasons */ Assert<
+    Equals<SkipReason, "no-identifier" | "no-title" | "malformed" | "too-large" | "truncated">
+  >,
+  /** _parseModes */ Assert<Equals<ParseMode, "import" | "lenient">>,
+  /** _parseOptionsAreLimits */ Assert<
+    Equals<keyof RecordLimits & keyof ParseOptions, keyof RecordLimits>
+  >,
+  /** _parseTakesOptions */ Assert<
+    // oxlint-disable-next-line effect/prefer-option-over-null -- asserts an optional parameter's shape
+    Equals<Parameters<typeof parseBibliographicFile>[2], ParseOptions | undefined>
+  >,
   // oxlint-disable-next-line effect/prefer-option-over-null -- `bestConfidentMatch` returns the plain nullable website's ingest consumes
   /** _bestKeepsTheCandidateType */ Assert<Equals<NonNullable<typeof best>["id"], number>>,
   /** _bibliographyEntries */ Assert<

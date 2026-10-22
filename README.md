@@ -8,7 +8,7 @@ Reference management on [Effect](https://effect.website): typed CSL-JSON records
 
 | Package | Purpose |
 | --- | --- |
-| [`@thomasfosterau/biblio`](packages/biblio/README.md) | CSL-JSON records as Effect Schema, checksummed ISBN / DOI / ISSN / ORCID identifiers, BibTeX / RIS / CSV / CSL-JSON parsing, same-work dedup scoring and APA / Vancouver rendering (`.`, browser-safe), plus Crossref / OpenAlex / OpenLibrary lookup over Effect's `HttpClient` (`./sources`). Peer: `effect`. |
+| [`@thomasfosterau/biblio`](packages/biblio/README.md) | CSL-JSON records as Effect Schema (the full CSL 1.0.2 variable set, citation keys), validated ISBN / DOI / ISSN / ORCID / PubMed / arXiv identifiers, BibTeX / RIS / CSV / CSL-JSON parsing (an import policy or a lenient bibliography read), same-work dedup scoring and APA / Vancouver / Chicago rendering with in-text citations (`.`, browser-safe), plus Crossref / OpenAlex / OpenLibrary lookup over Effect's `HttpClient` (`./sources`). Peer: `effect`. |
 
 ## Install
 

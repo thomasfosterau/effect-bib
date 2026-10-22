@@ -1,6 +1,6 @@
 /**
- * First-class bibliographic identifiers — ISBN, DOI, ISSN, ORCID — as
- * branded, checksum-validated types.
+ * First-class bibliographic identifiers — ISBN, DOI, ISSN, ORCID, PubMed
+ * (PMID / PMCID) and arXiv — as branded, validated types.
  *
  * This module is the identity boundary and the SSRF / path-injection
  * boundary for every path that interpolates an identifier into a URL or
@@ -13,7 +13,8 @@
  *   partial or hostile input yields nothing, never a throw (the same
  *   untrusted-input posture as the lookup sources' response schemas);
  * - a **real checksum** where the scheme has one (ISBN-10 mod-11,
- *   ISBN-13 mod-10 / EAN, ISSN mod-11, ORCID ISO 7064 mod-11-2); and
+ *   ISBN-13 mod-10 / EAN, ISSN mod-11, ORCID ISO 7064 mod-11-2), and a
+ *   strict syntax where it has none (PMID, PMCID, arXiv); and
  * - a **converter** where meaningful (ISBN 10 ↔ 13).
  *
  * The branding is why a proven `Isbn` can't be confused with a raw
@@ -84,6 +85,41 @@ export const Orcid = Schema.String.pipe(Schema.brand("Orcid"));
  * @since 0.1.0
  */
 export type Orcid = typeof Orcid.Type;
+
+/**
+ * A proven PubMed identifier: its digits alone, no leading zero.
+ *
+ * @since 1.0.0
+ */
+export const Pmid = Schema.String.pipe(Schema.brand("Pmid"));
+/**
+ * @since 1.0.0
+ */
+export type Pmid = typeof Pmid.Type;
+
+/**
+ * A proven PubMed Central identifier in canonical `PMC1234567` form.
+ *
+ * @since 1.0.0
+ */
+export const Pmcid = Schema.String.pipe(Schema.brand("Pmcid"));
+/**
+ * @since 1.0.0
+ */
+export type Pmcid = typeof Pmcid.Type;
+
+/**
+ * A proven arXiv identifier, bare (no `arXiv:` prefix): a current-scheme
+ * `2101.01234` or an old-scheme `hep-th/9901001`, with any `v2` version
+ * suffix kept.
+ *
+ * @since 1.0.0
+ */
+export const Arxiv = Schema.String.pipe(Schema.brand("Arxiv"));
+/**
+ * @since 1.0.0
+ */
+export type Arxiv = typeof Arxiv.Type;
 
 // ── ISBN ──────────────────────────────────────────────────────────────
 
@@ -361,4 +397,89 @@ export function decodeOrcid(raw: string): Option.Option<Orcid> {
   if (!isValidOrcid(cleaned)) return Option.none();
   const canonical = `${cleaned.slice(0, 4)}-${cleaned.slice(4, 8)}-${cleaned.slice(8, 12)}-${cleaned.slice(12)}`;
   return Option.some(Orcid.make(canonical));
+}
+
+// ── PubMed ────────────────────────────────────────────────────────────
+
+/**
+ * Lenient PMID decoder: strips a `PMID:` prefix and returns the digits as a
+ * branded {@link Pmid}, or `Option.none()`. A PMID has no check digit, so
+ * the syntax (one to nine digits, no leading zero) is the whole test.
+ *
+ * @example
+ * ```ts
+ * import * as assert from "node:assert"
+ * import * as Option from "effect/Option"
+ * import { decodePmid } from "@thomasfosterau/biblio"
+ *
+ * assert.strictEqual(Option.getOrNull(decodePmid("PMID: 15371539")), "15371539")
+ * assert.strictEqual(Option.isNone(decodePmid("PMC3159421")), true)
+ * ```
+ *
+ * @since 1.0.0
+ */
+export function decodePmid(raw: string): Option.Option<Pmid> {
+  const bare = raw.trim().replace(/^pmid:?\s*/i, "");
+  return /^[1-9]\d{0,8}$/.test(bare) ? Option.some(Pmid.make(bare)) : Option.none();
+}
+
+/**
+ * Lenient PMCID decoder: accepts `PMC` followed by digits, in any case and
+ * with a `PMCID:` prefix, and returns the canonical `PMC1234567` branded
+ * {@link Pmcid}, or `Option.none()`. Bare digits are refused: they read as
+ * a PMID.
+ *
+ * @example
+ * ```ts
+ * import * as assert from "node:assert"
+ * import * as Option from "effect/Option"
+ * import { decodePmcid } from "@thomasfosterau/biblio"
+ *
+ * assert.strictEqual(Option.getOrNull(decodePmcid("pmc3159421")), "PMC3159421")
+ * ```
+ *
+ * @since 1.0.0
+ */
+export function decodePmcid(raw: string): Option.Option<Pmcid> {
+  const match = /^PMC(\d{1,9})$/i.exec(raw.trim().replace(/^pmcid:?\s*/i, ""));
+  return match === null ? Option.none() : Option.some(Pmcid.make(`PMC${match[1]}`));
+}
+
+// ── arXiv ─────────────────────────────────────────────────────────────
+
+/** A current-scheme arXiv id (`YYMM.NNNN` to April 2014, `YYMM.NNNNN` since), with an optional version. */
+const ARXIV_CURRENT = /^(\d{2})(0[1-9]|1[0-2])\.\d{4,5}(?:v[1-9]\d{0,2})?$/;
+
+/** An old-scheme arXiv id (`archive[.SC]/YYMMNNN`, before April 2007), with an optional version. */
+const ARXIV_OLD =
+  /^[a-z]+(?:-[a-z]+)*(?:\.[A-Z]{2})?\/\d{2}(?:0[1-9]|1[0-2])\d{3}(?:v[1-9]\d{0,2})?$/;
+
+/**
+ * Lenient arXiv decoder: strips an `arXiv:` prefix or an
+ * `https://arxiv.org/abs/` (or `/pdf/`) URL and returns the bare id as a
+ * branded {@link Arxiv} when it matches the current (`2101.01234v2`) or the
+ * old (`hep-th/9901001`) scheme, or `Option.none()`. The id is exclusively
+ * letters, digits, `.`, `-` and one `/`, so it is safe in a URL path.
+ *
+ * @example
+ * ```ts
+ * import * as assert from "node:assert"
+ * import * as Option from "effect/Option"
+ * import { decodeArxiv } from "@thomasfosterau/biblio"
+ *
+ * assert.strictEqual(Option.getOrNull(decodeArxiv("arXiv:2101.01234v2")), "2101.01234v2")
+ * assert.strictEqual(Option.getOrNull(decodeArxiv("https://arxiv.org/abs/hep-th/9901001")), "hep-th/9901001")
+ * ```
+ *
+ * @since 1.0.0
+ */
+export function decodeArxiv(raw: string): Option.Option<Arxiv> {
+  const bare = raw
+    .trim()
+    .replace(/^https?:\/\/(?:www\.|export\.)?arxiv\.org\/(?:abs|pdf)\//i, "")
+    .replace(/^arxiv:\s*/i, "")
+    .replace(/\.pdf$/i, "");
+  return ARXIV_CURRENT.test(bare) || ARXIV_OLD.test(bare)
+    ? Option.some(Arxiv.make(bare))
+    : Option.none();
 }

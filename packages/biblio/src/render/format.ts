@@ -23,8 +23,9 @@ import * as Option from "effect/Option";
 import * as Result from "effect/Result";
 import * as String from "effect/String";
 import type { BiblioRecord, CslDate, CslName } from "../record.ts";
-import { yearOf } from "../record.ts";
-import { joinRich, type RichText, text } from "./rich.ts";
+import { endYearOf, yearOf } from "../record.ts";
+import { parseCslMarkup, stripCslMarkup } from "./markup.ts";
+import { joinRich, type RichText } from "./rich.ts";
 import type { RenderContext } from "./types.ts";
 import type { Locale } from "./types.ts";
 
@@ -221,14 +222,21 @@ export function formatNameList(names: readonly CslName[], opts: NameListOptions)
 }
 
 /**
- * The issued date's year as text, or the locale's no-date term.
+ * The issued date's year as text — a range's years joined by an en dash
+ * (`2001–2003`) — else the date's `literal` form, else the locale's no-date
+ * term.
  *
  * @since 0.1.0
  */
 export function issuedYearText(issued: Option.Option<CslDate>, locale: Locale): string {
+  const date = Option.getOrUndefined(issued);
   // `yearOf` still takes/returns plain values — it is consumed by apps/api.
-  const year = yearOf(Option.getOrUndefined(issued));
-  return year === null ? locale.noDate : year.toString();
+  const year = yearOf(date);
+  if (year === null) return date?.literal ?? locale.noDate;
+  return Option.match(Option.flatMap(issued, endYearOf), {
+    onNone: () => year.toString(),
+    onSome: (end) => `${year}–${end}`,
+  });
 }
 
 /**
@@ -381,12 +389,21 @@ export function issuedYearWithSuffix(record: BiblioRecord, ctx: RenderContext): 
 }
 
 /**
- * A record's text variable as rich text, when present.
+ * A record's text variable as rich text, its CSL markup read, when present.
  *
  * @since 0.1.0
  */
 export const richField = (record: BiblioRecord, key: TextVariable): Option.Option<RichText> =>
-  Option.map(Option.fromNullishOr(record[key]), text);
+  Option.map(Option.fromNullishOr(record[key]), parseCslMarkup);
+
+/**
+ * A record's text variable as plain text, its CSL markup dropped, when
+ * present: for a style that renders a variable as a string, and for sorting.
+ *
+ * @since 1.0.0
+ */
+export const plainField = (record: BiblioRecord, key: TextVariable): Option.Option<string> =>
+  Option.map(Option.fromNullishOr(record[key]), stripCslMarkup);
 
 /**
  * The record's text-valued variables (`title`, `publisher`, …).

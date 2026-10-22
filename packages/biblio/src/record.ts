@@ -4,8 +4,9 @@
  * A {@link BiblioRecord} is a typed **superset of CSL-JSON**: its core is
  * the closed CSL 1.0.2 vocabulary (item types, standard/name/date
  * variables) modelled as Effect Schema, and its additions are strictly
- * additive — first-class **checksummed identifiers** (the {@link Isbn} /
- * {@link Doi} / {@link Issn} / {@link Orcid} brands), a **source
+ * additive — first-class **validated identifiers** (the {@link Isbn} /
+ * {@link Doi} / {@link Issn} / {@link Orcid} / {@link Pmid} / {@link Pmcid} /
+ * {@link Arxiv} brands), a **source
  * provenance** envelope, and an `extra` map that passes through CSL
  * variables the model does not consume. Two total functions at the interop
  * boundary make "typed superset" precise: {@link toCslJson} projects a
@@ -36,33 +37,60 @@ import * as String from "effect/String";
 import * as Struct from "effect/Struct";
 import type * as Types from "effect/Types";
 import {
+  Arxiv,
   Doi,
+  decodeArxiv,
   decodeDoi,
   decodeIsbn,
   decodeIssn,
   decodeOrcid,
+  decodePmcid,
+  decodePmid,
   Isbn,
   Issn,
   Orcid,
+  Pmcid,
+  Pmid,
 } from "./identifiers.ts";
+import { limitOr } from "./limits.ts";
 
 // ── Field bounds & untrusted-text sanitisers ────────────────────────
 
 /**
- * Upper bound, in UTF-16 code units, on any free-text field taken from
- * untrusted input; longer values are truncated, so a hostile or malformed
- * value can't push an unbounded blob downstream.
+ * The default upper bound, in UTF-16 code units, on any free-text field
+ * taken from untrusted input; longer values are truncated, so a hostile or
+ * malformed value can't push an unbounded blob downstream. A caller raises
+ * it per call with {@link RecordLimits}.
  *
  * @since 0.1.0
  */
 export const MAX_TEXT_FIELD_LENGTH = 2000;
 
 /**
- * Cap on how many contributors we extract from a single record.
+ * The default cap on how many names one name variable keeps (the rest are
+ * dropped). A caller raises it per call with {@link RecordLimits}.
  *
  * @since 0.1.0
  */
 export const MAX_AUTHORS = 100;
+
+/** The most `categories` one record keeps. */
+const MAX_CATEGORIES = 100;
+
+/**
+ * The bounds a decoder applies to one record, each defaulting to today's
+ * constant: `maxFieldLength` ({@link MAX_TEXT_FIELD_LENGTH}) clamps every
+ * free-text value, `maxAuthors` ({@link MAX_AUTHORS}) every name list. Raise
+ * them for a document's bibliography, where an abstract runs long or a
+ * collaboration lists hundreds of authors; a non-positive or non-integer
+ * value falls back to the default.
+ *
+ * @since 1.0.0
+ */
+export interface RecordLimits {
+  readonly maxFieldLength?: number;
+  readonly maxAuthors?: number;
+}
 
 /** The narrowest plausible publication year we accept. */
 const MIN_PUBLICATION_YEAR = 1;
@@ -71,17 +99,20 @@ const MAX_PUBLICATION_YEAR = 2200;
 
 /**
  * Trims an untrusted free-text value, collapses its whitespace and clamps
- * it to {@link MAX_TEXT_FIELD_LENGTH}.
+ * it to `maxLength` (default {@link MAX_TEXT_FIELD_LENGTH}).
  * `Option.none()` for empty / whitespace-only or non-string input.
  *
  * @since 0.1.0
  */
-// oxlint-disable-next-line effect/no-unknown-parameters -- untrusted-input boundary: a total sanitiser over any upstream value (see "The untrusted-input boundary" in packages/biblio/CLAUDE.md)
-export function sanitiseText(value: unknown): Option.Option<string> {
+export function sanitiseText(
+  // oxlint-disable-next-line effect/no-unknown-parameters -- untrusted-input boundary: a total sanitiser over any upstream value (see "The untrusted-input boundary" in packages/biblio/CLAUDE.md)
+  value: unknown,
+  maxLength: number = MAX_TEXT_FIELD_LENGTH,
+): Option.Option<string> {
   if (!Predicate.isString(value)) return Option.none();
   const collapsed = value.replace(/\s+/g, " ").trim();
   if (String.isEmpty(collapsed)) return Option.none();
-  return Option.some(collapsed.slice(0, MAX_TEXT_FIELD_LENGTH));
+  return Option.some(collapsed.slice(0, limitOr(Option.some(maxLength), MAX_TEXT_FIELD_LENGTH)));
 }
 
 /**
@@ -106,8 +137,11 @@ const decodeCslStringValue = Schema.decodeUnknownOption(
 );
 
 /** Sanitises a CSL string variable that upstreams may send as a number (e.g. `volume`). */
-function sanitiseCslString(value: Option.Option<string | number>): Option.Option<string> {
-  return Option.flatMap(value, (text) => sanitiseText(text.toString()));
+function sanitiseCslString(
+  value: Option.Option<string | number>,
+  maxLength: number,
+): Option.Option<string> {
+  return Option.flatMap(value, (text) => sanitiseText(text.toString(), maxLength));
 }
 
 // ── CSL vocabulary (modelled from the spec, not invented) ─────────────
@@ -233,6 +267,9 @@ export const RecordIdentifiers = Schema.Struct({
   isbn: Schema.optional(Isbn),
   doi: Schema.optional(Doi),
   issn: Schema.optional(Issn),
+  pmid: Schema.optional(Pmid),
+  pmcid: Schema.optional(Pmcid),
+  arxiv: Schema.optional(Arxiv),
 });
 /**
  * @since 0.1.0
@@ -283,41 +320,120 @@ export const Provenance = Schema.Struct({
 export type Provenance = typeof Provenance.Type;
 
 /**
- * The neutral bibliographic record. Its CSL core (item type + standard /
- * name / date variables, keyed by their CSL-JSON names) projects
- * losslessly to CSL-JSON; `identifiers`, `provenance`, and `extra` are the
- * strictly-additive superset. Every string field is sanitised before it
- * lands here — consumers treat these as trusted application values.
+ * The neutral bibliographic record. Its CSL core (item type, the CSL-JSON
+ * item `id` and every CSL 1.0.2 standard / name / date variable, keyed by
+ * their CSL-JSON names) projects losslessly to CSL-JSON; `identifiers`,
+ * `provenance`, and `extra` are the strictly-additive superset. Every string
+ * field is sanitised before it lands here — consumers treat these as
+ * trusted application values. A text variable may carry CSL's rich-text
+ * markup (`<i>`, `<b>`, `<sup>`, `<sub>`, the small-caps and `nocase`
+ * spans), which {@link parseCslMarkup} reads.
+ *
+ * The CSL identifier variables `DOI`, `ISBN`, `ISSN`, `PMID` and `PMCID`
+ * live, checksummed, in `identifiers`; the citation-time variables
+ * (`citation-number`, `first-reference-note-number`, `locator`,
+ * `year-suffix`) belong to a rendering, not a record, and stay in `extra`.
+ * Every member typed here beyond the 0.1.0 set (`id`, `citation-key`,
+ * `categories` and the rest of the CSL variables) was added in 1.0.0.
  *
  * @since 0.1.0
  */
 export const BiblioRecord = Schema.Struct({
   type: CslItemType,
-  // Standard variables (CSL-keyed).
-  title: Schema.optional(Schema.String),
-  "container-title": Schema.optional(Schema.String),
+  /** The CSL-JSON item id: a string or a number, as the exporting tool wrote it. */
+  id: Schema.optional(Schema.Union([Schema.String, Schema.Finite])),
+  /** CSL-JSON's free-form tags. */
+  categories: Schema.optional(Schema.Array(Schema.String)),
+  // Standard variables (CSL-keyed; numeric variables as their text).
+  abstract: Schema.optional(Schema.String),
+  annote: Schema.optional(Schema.String),
+  archive: Schema.optional(Schema.String),
+  archive_collection: Schema.optional(Schema.String),
+  archive_location: Schema.optional(Schema.String),
+  "archive-place": Schema.optional(Schema.String),
+  authority: Schema.optional(Schema.String),
+  "call-number": Schema.optional(Schema.String),
+  "chapter-number": Schema.optional(Schema.String),
+  "citation-key": Schema.optional(Schema.String),
+  "citation-label": Schema.optional(Schema.String),
+  "collection-number": Schema.optional(Schema.String),
   "collection-title": Schema.optional(Schema.String),
+  "container-title": Schema.optional(Schema.String),
+  "container-title-short": Schema.optional(Schema.String),
+  dimensions: Schema.optional(Schema.String),
+  division: Schema.optional(Schema.String),
+  edition: Schema.optional(Schema.String),
+  "event-title": Schema.optional(Schema.String),
+  "event-place": Schema.optional(Schema.String),
+  genre: Schema.optional(Schema.String),
+  issue: Schema.optional(Schema.String),
+  jurisdiction: Schema.optional(Schema.String),
+  keyword: Schema.optional(Schema.String),
+  language: Schema.optional(Schema.String),
+  license: Schema.optional(Schema.String),
+  medium: Schema.optional(Schema.String),
+  note: Schema.optional(Schema.String),
+  number: Schema.optional(Schema.String),
+  "number-of-pages": Schema.optional(Schema.String),
+  "number-of-volumes": Schema.optional(Schema.String),
+  "original-publisher": Schema.optional(Schema.String),
+  "original-publisher-place": Schema.optional(Schema.String),
+  "original-title": Schema.optional(Schema.String),
+  page: Schema.optional(Schema.String),
+  "page-first": Schema.optional(Schema.String),
+  part: Schema.optional(Schema.String),
+  "part-title": Schema.optional(Schema.String),
+  printing: Schema.optional(Schema.String),
   publisher: Schema.optional(Schema.String),
   "publisher-place": Schema.optional(Schema.String),
-  page: Schema.optional(Schema.String),
-  volume: Schema.optional(Schema.String),
-  issue: Schema.optional(Schema.String),
-  number: Schema.optional(Schema.String),
-  edition: Schema.optional(Schema.String),
-  abstract: Schema.optional(Schema.String),
-  language: Schema.optional(Schema.String),
+  references: Schema.optional(Schema.String),
+  "reviewed-genre": Schema.optional(Schema.String),
+  "reviewed-title": Schema.optional(Schema.String),
+  scale: Schema.optional(Schema.String),
+  section: Schema.optional(Schema.String),
+  source: Schema.optional(Schema.String),
+  status: Schema.optional(Schema.String),
+  supplement: Schema.optional(Schema.String),
+  title: Schema.optional(Schema.String),
+  "title-short": Schema.optional(Schema.String),
   URL: Schema.optional(Schema.String),
-  note: Schema.optional(Schema.String),
+  version: Schema.optional(Schema.String),
+  volume: Schema.optional(Schema.String),
+  "volume-title": Schema.optional(Schema.String),
+  "volume-title-short": Schema.optional(Schema.String),
   // Name variables.
   author: Schema.optional(Schema.Array(CslName)),
-  editor: Schema.optional(Schema.Array(CslName)),
-  translator: Schema.optional(Schema.Array(CslName)),
+  chair: Schema.optional(Schema.Array(CslName)),
+  "collection-editor": Schema.optional(Schema.Array(CslName)),
+  compiler: Schema.optional(Schema.Array(CslName)),
+  composer: Schema.optional(Schema.Array(CslName)),
   "container-author": Schema.optional(Schema.Array(CslName)),
+  contributor: Schema.optional(Schema.Array(CslName)),
+  curator: Schema.optional(Schema.Array(CslName)),
+  director: Schema.optional(Schema.Array(CslName)),
+  editor: Schema.optional(Schema.Array(CslName)),
+  "editorial-director": Schema.optional(Schema.Array(CslName)),
+  "executive-producer": Schema.optional(Schema.Array(CslName)),
+  guest: Schema.optional(Schema.Array(CslName)),
+  host: Schema.optional(Schema.Array(CslName)),
+  interviewer: Schema.optional(Schema.Array(CslName)),
+  illustrator: Schema.optional(Schema.Array(CslName)),
+  narrator: Schema.optional(Schema.Array(CslName)),
+  organizer: Schema.optional(Schema.Array(CslName)),
+  "original-author": Schema.optional(Schema.Array(CslName)),
+  performer: Schema.optional(Schema.Array(CslName)),
+  producer: Schema.optional(Schema.Array(CslName)),
+  recipient: Schema.optional(Schema.Array(CslName)),
+  "reviewed-author": Schema.optional(Schema.Array(CslName)),
+  "script-writer": Schema.optional(Schema.Array(CslName)),
+  "series-creator": Schema.optional(Schema.Array(CslName)),
+  translator: Schema.optional(Schema.Array(CslName)),
   // Date variables.
-  issued: Schema.optional(CslDate),
   accessed: Schema.optional(CslDate),
-  "original-date": Schema.optional(CslDate),
+  "available-date": Schema.optional(CslDate),
   "event-date": Schema.optional(CslDate),
+  issued: Schema.optional(CslDate),
+  "original-date": Schema.optional(CslDate),
   submitted: Schema.optional(CslDate),
   // Superset additions.
   identifiers: RecordIdentifiers,
@@ -329,49 +445,137 @@ export const BiblioRecord = Schema.Struct({
  */
 export type BiblioRecord = typeof BiblioRecord.Type;
 
-// The CSL-key groupings that drive the interop loops. Typed as keys of the
-// record so indexing stays sound.
-const CSL_STRING_VARS = [
-  "title",
-  "container-title",
-  "collection-title",
-  "publisher",
-  "publisher-place",
-  "page",
-  "volume",
-  "issue",
-  "number",
-  "edition",
-  "abstract",
-  "language",
-  "URL",
-  "note",
-] as const satisfies readonly (keyof BiblioRecord)[];
-type CslStringVar = (typeof CSL_STRING_VARS)[number];
+/** The record's CSL variable slots whose values are `V` (the item type and the superset members aside). */
+type SlotsOf<V> = Exclude<
+  {
+    [K in keyof BiblioRecord]-?: NonNullable<BiblioRecord[K]> extends V ? K : never;
+  }[keyof BiblioRecord],
+  "type" | "identifiers" | "provenance" | "extra"
+>;
 
-const CSL_NAME_VARS = [
-  "author",
-  "editor",
-  "translator",
-  "container-author",
-] as const satisfies readonly (keyof BiblioRecord)[];
-type CslNameVar = (typeof CSL_NAME_VARS)[number];
+// The CSL-key groupings that drive the interop loops. Each is written as an
+// object keyed by every slot of its kind, so adding a variable to the schema
+// without listing it here fails to compile.
+const CSL_STRING_VARS = Struct.keys({
+  abstract: true,
+  annote: true,
+  archive: true,
+  archive_collection: true,
+  archive_location: true,
+  "archive-place": true,
+  authority: true,
+  "call-number": true,
+  "chapter-number": true,
+  "citation-key": true,
+  "citation-label": true,
+  "collection-number": true,
+  "collection-title": true,
+  "container-title": true,
+  "container-title-short": true,
+  dimensions: true,
+  division: true,
+  edition: true,
+  "event-title": true,
+  "event-place": true,
+  genre: true,
+  issue: true,
+  jurisdiction: true,
+  keyword: true,
+  language: true,
+  license: true,
+  medium: true,
+  note: true,
+  number: true,
+  "number-of-pages": true,
+  "number-of-volumes": true,
+  "original-publisher": true,
+  "original-publisher-place": true,
+  "original-title": true,
+  page: true,
+  "page-first": true,
+  part: true,
+  "part-title": true,
+  printing: true,
+  publisher: true,
+  "publisher-place": true,
+  references: true,
+  "reviewed-genre": true,
+  "reviewed-title": true,
+  scale: true,
+  section: true,
+  source: true,
+  status: true,
+  supplement: true,
+  title: true,
+  "title-short": true,
+  URL: true,
+  version: true,
+  volume: true,
+  "volume-title": true,
+  "volume-title-short": true,
+} satisfies { readonly [K in SlotsOf<string>]: true });
+type CslStringVar = SlotsOf<string>;
 
-const CSL_DATE_VARS = [
-  "issued",
-  "accessed",
-  "original-date",
-  "event-date",
-  "submitted",
-] as const satisfies readonly (keyof BiblioRecord)[];
-type CslDateVar = (typeof CSL_DATE_VARS)[number];
+const CSL_NAME_VARS = Struct.keys({
+  author: true,
+  chair: true,
+  "collection-editor": true,
+  compiler: true,
+  composer: true,
+  "container-author": true,
+  contributor: true,
+  curator: true,
+  director: true,
+  editor: true,
+  "editorial-director": true,
+  "executive-producer": true,
+  guest: true,
+  host: true,
+  interviewer: true,
+  illustrator: true,
+  narrator: true,
+  organizer: true,
+  "original-author": true,
+  performer: true,
+  producer: true,
+  recipient: true,
+  "reviewed-author": true,
+  "script-writer": true,
+  "series-creator": true,
+  translator: true,
+} satisfies { readonly [K in SlotsOf<readonly CslName[]>]: true });
+type CslNameVar = SlotsOf<readonly CslName[]>;
+
+const CSL_DATE_VARS = Struct.keys({
+  accessed: true,
+  "available-date": true,
+  "event-date": true,
+  issued: true,
+  "original-date": true,
+  submitted: true,
+} satisfies { readonly [K in SlotsOf<CslDate>]: true });
+type CslDateVar = SlotsOf<CslDate>;
+
+/**
+ * Zotero's and CSL's legacy aliases, read into their CSL 1.0.2 variable when
+ * that variable is absent: `[alias, variable]`.
+ */
+const CSL_ALIASES = [
+  ["event", "event-title"],
+  ["journalAbbreviation", "container-title-short"],
+  ["shortTitle", "title-short"],
+] as const satisfies ReadonlyArray<readonly [string, CslStringVar]>;
 
 /** CSL keys the model consumes into typed slots; everything else is passthrough. */
 const KNOWN_CSL_KEYS: HashSet.HashSet<string> = HashSet.fromIterable<string>([
   "type",
+  "id",
+  "categories",
   "ISBN",
   "DOI",
   "ISSN",
+  "PMID",
+  "PMCID",
   ...CSL_STRING_VARS,
   ...CSL_NAME_VARS,
   ...CSL_DATE_VARS,
@@ -481,15 +685,33 @@ export function dateFromYear(year: number): CslDate {
 }
 
 /**
- * The year of a {@link CslDate} — `date-parts[0][0]`, sanitised — or `null`.
+ * The year of a {@link CslDate} — `date-parts[0][0]` (a range's start),
+ * else the first four-digit year of its `raw` form, sanitised — or `null`.
+ * A season (CSL's `season`, or a month of 21–24) never changes the year.
  *
  * @since 0.1.0
  */
 export function yearOf(date: CslDate | undefined): number | null {
   const first = date?.["date-parts"]?.[0]?.[0];
-  return first === undefined ? null : Option.getOrNull(sanitiseYear(first));
+  if (first !== undefined) return Option.getOrNull(sanitiseYear(first));
+  const raw = date?.raw === undefined ? null : /\b(\d{4})\b/.exec(date.raw);
+  return raw === null ? null : Option.getOrNull(sanitiseYear(raw[1]));
 }
+
 /* oxlint-enable effect/prefer-option-over-null */
+
+/**
+ * The last year of a {@link CslDate} range — the year of its second
+ * `date-parts` entry — when it differs from {@link yearOf}'s, else
+ * `Option.none()`.
+ *
+ * @since 1.0.0
+ */
+export function endYearOf(date: CslDate): Option.Option<number> {
+  const last = date["date-parts"]?.[1]?.[0];
+  if (last === undefined) return Option.none();
+  return Option.filter(sanitiseYear(last), (end) => end !== yearOf(date));
+}
 
 // ── CSL-JSON interop ──────────────────────────────────────────────────
 
@@ -517,8 +739,10 @@ function dateToCsl(date: CslDate): Record<string, unknown> {
  * Projects a record to plain, schema-valid CSL-JSON: drops the provenance
  * envelope, serialises each branded identifier back to its canonical
  * string in the standard CSL variable (`isbn → ISBN`, `doi → DOI`,
- * `issn → ISSN`), and re-merges the passthrough map. Any CSL consumer
- * (Zotero, citeproc) reads the result directly.
+ * `issn → ISSN`, `pmid → PMID`, `pmcid → PMCID`; an arXiv id becomes
+ * `number: "arXiv:<id>"` when the record has no `number`, as Zotero writes
+ * it), and re-merges the passthrough map. Any CSL consumer (Zotero,
+ * citeproc) reads the result directly.
  *
  * @example
  * ```ts
@@ -535,15 +759,22 @@ function dateToCsl(date: CslDate): Record<string, unknown> {
  * @since 0.1.0
  */
 export function toCslJson(record: BiblioRecord): CslJsonItem {
-  const { isbn, doi, issn } = record.identifiers;
+  const { isbn, doi, issn, pmid, pmcid, arxiv } = record.identifiers;
   const identifiers: Types.Mutable<CslJsonIdentifiers> = {};
   if (isbn !== undefined) identifiers.ISBN = isbn;
   if (doi !== undefined) identifiers.DOI = doi;
   if (issn !== undefined) identifiers.ISSN = issn;
+  if (pmid !== undefined) identifiers.PMID = pmid;
+  if (pmcid !== undefined) identifiers.PMCID = pmcid;
+  if (arxiv !== undefined && record.number === undefined) identifiers.number = `arXiv:${arxiv}`;
+  const item: Types.Mutable<Pick<BiblioRecord, "id" | "categories">> = {};
+  if (record.id !== undefined) item.id = record.id;
+  if (record.categories !== undefined) item.categories = [...record.categories];
   return {
     // Passthrough first so modelled fields win over any stale carried key.
     ...record.extra,
     type: record.type,
+    ...item,
     ...definedFields(CSL_STRING_VARS, (key: CslStringVar) => Option.fromUndefinedOr(record[key])),
     ...definedFields(CSL_NAME_VARS, (key: CslNameVar) =>
       Option.map(Option.fromUndefinedOr(record[key]), (names) => names.map(nameToCsl)),
@@ -560,6 +791,9 @@ interface CslJsonIdentifiers {
   readonly ISBN?: Isbn;
   readonly DOI?: Doi;
   readonly ISSN?: Issn;
+  readonly PMID?: Pmid;
+  readonly PMCID?: Pmcid;
+  readonly number?: `arXiv:${Arxiv}`;
 }
 
 /** `{ key: projected }` for every key whose projected value is present. */
@@ -622,20 +856,26 @@ export function readCslName(entry: unknown): Option.Option<CslName> {
 }
 
 /**
- * Reads a bounded list of CSL names, dropping non-object / empty entries.
- * Shared by the CSL-JSON parser so the name-list bound lives in one place.
+ * Reads a bounded list of CSL names, dropping non-object / empty entries,
+ * keeping at most `maxNames` (default {@link MAX_AUTHORS}). Shared by the
+ * CSL-JSON parser so the name-list bound lives in one place.
  *
  * @since 0.1.0
  */
-// oxlint-disable-next-line effect/no-unknown-parameters -- untrusted-input boundary: a total decoder over any CSL name-list value (see "The untrusted-input boundary" in packages/biblio/CLAUDE.md)
-export function readCslNameArray(value: unknown): CslName[] {
+export function readCslNameArray(
+  // oxlint-disable-next-line effect/no-unknown-parameters -- untrusted-input boundary: a total decoder over any CSL name-list value (see "The untrusted-input boundary" in packages/biblio/CLAUDE.md)
+  value: unknown,
+  maxNames: number = MAX_AUTHORS,
+): CslName[] {
+  const cap = limitOr(Option.some(maxNames), MAX_AUTHORS);
   return Option.match(decodeUnknownArray(value), {
     onNone: (): CslName[] => [],
     onSome: (entries) =>
+      // Scans no further than the cap: a hostile list cannot make every entry cost.
       Array.filterMap(entries, (entry): Result.Result<CslName, void> => {
         const name = readCslName(entry);
         return Option.isNone(name) ? Result.failVoid : Result.succeed(name.value);
-      }).slice(0, MAX_AUTHORS),
+      }).slice(0, cap),
   });
 }
 
@@ -697,8 +937,12 @@ function fromCslDateValue(obj: typeof CslDateInput.Type): Option.Option<CslDate>
  * throws: a non-object, partial, or hostile item decodes to a thinner
  * record (item type `document`, empty identifiers), never an error.
  * Identifiers are validated where present — a checksum failure drops the
- * identifier rather than the record. Unknown CSL keys survive in `extra`.
- * The record is stamped `provenance.source: "csl-json"`.
+ * identifier rather than the record; an arXiv id is read from a
+ * `number: "arXiv:…"` or an arxiv.org `URL`. Every CSL 1.0.2 variable lands
+ * in its typed slot, with the legacy aliases `event`, `journalAbbreviation`
+ * and `shortTitle` read when their variable is absent; unknown CSL keys
+ * survive in `extra`. The record is stamped `provenance.source: "csl-json"`.
+ * `limits` raises the field-length and name-list bounds.
  *
  * @example
  * ```ts
@@ -706,8 +950,11 @@ function fromCslDateValue(obj: typeof CslDateInput.Type): Option.Option<CslDate>
  * import { fromCslJson } from "@thomasfosterau/biblio"
  *
  * const record = fromCslJson({
+ *   id: "harari2015",
+ *   "citation-key": "harari2015",
  *   type: "book",
  *   title: "Sapiens",
+ *   "title-short": "Sapiens",
  *   ISBN: "0-06-231609-5",
  *   author: [{ family: "Harari", given: "Yuval Noah" }],
  *   issued: { "date-parts": [[2015]] },
@@ -715,8 +962,11 @@ function fromCslDateValue(obj: typeof CslDateInput.Type): Option.Option<CslDate>
  * })
  *
  * // The ISBN was checksummed and canonicalised into its branded slot; the
- * // unknown key survived in `extra`; the record knows where it came from.
+ * // citation key and short title are typed; the unknown key survived in
+ * // `extra`; the record knows where it came from.
  * assert.strictEqual(record.identifiers.isbn, "9780062316097")
+ * assert.strictEqual(record["citation-key"], "harari2015")
+ * assert.strictEqual(record["title-short"], "Sapiens")
  * assert.deepStrictEqual(record.extra, { "custom-key": "kept" })
  * assert.deepStrictEqual(record.provenance, { source: "csl-json" })
  * ```
@@ -724,7 +974,7 @@ function fromCslDateValue(obj: typeof CslDateInput.Type): Option.Option<CslDate>
  * @since 0.1.0
  */
 // oxlint-disable-next-line effect/no-unknown-parameters -- untrusted-input boundary: the lenient interop decoder takes any value by contract (see "The untrusted-input boundary" in packages/biblio/CLAUDE.md)
-export function fromCslJson(item: unknown): BiblioRecord {
+export function fromCslJson(item: unknown, limits: RecordLimits = {}): BiblioRecord {
   const provenance: Provenance = { source: "csl-json" };
   if (!Predicate.isObjectOrArray(item)) {
     return { type: "document", identifiers: {}, provenance };
@@ -736,42 +986,95 @@ export function fromCslJson(item: unknown): BiblioRecord {
   const rawType = obj.type;
   const type: CslItemType =
     Predicate.isString(rawType) && isCslItemType(rawType) ? rawType : "document";
-  const extra = collectCslExtra(obj);
+  const maxFieldLength = limitOr(
+    Option.fromUndefinedOr(limits.maxFieldLength),
+    MAX_TEXT_FIELD_LENGTH,
+  );
+  const strings = readCslStrings(obj, maxFieldLength);
+  const extra = collectCslExtra(obj, strings.aliased);
   const passthrough: Types.Mutable<Pick<BiblioRecord, "extra">> = {};
   if (!Record.isEmptyRecord(extra)) passthrough.extra = extra;
   return {
     type,
-    ...readCslStrings(obj),
-    ...readCslNames(obj),
+    ...readCslItemMembers(obj, maxFieldLength),
+    ...strings.values,
+    ...readCslNames(obj, limitOr(Option.fromUndefinedOr(limits.maxAuthors), MAX_AUTHORS)),
     ...readCslDates(obj),
-    identifiers: readCslIdentifiers(obj),
+    identifiers: readCslIdentifiers(obj, strings.values),
     provenance,
     ...passthrough,
   };
 }
 
-/** Reads the modelled CSL string variables, sanitised. */
-function readCslStrings(obj: Record<string, unknown>): Partial<Record<CslStringVar, string>> {
-  return Record.fromEntries(
+/** A CSL string value. */
+const decodeString = Schema.decodeUnknownOption(Schema.String);
+
+/** A CSL item `id`: text or a finite number. */
+const decodeItemId = Schema.decodeUnknownOption(Schema.Union([Schema.String, Schema.Finite]));
+
+/** Reads the item-level members: the `id` and the `categories` tags. */
+function readCslItemMembers(
+  obj: Readonly<Record<string, unknown>>,
+  maxFieldLength: number,
+): Pick<BiblioRecord, "id" | "categories"> {
+  const members: Types.Mutable<Pick<BiblioRecord, "id" | "categories">> = {};
+  const id = Option.flatMap(decodeItemId(obj.id), (value): Option.Option<string | number> =>
+    Predicate.isNumber(value) ? Option.some(value) : sanitiseText(value, maxFieldLength),
+  );
+  if (Option.isSome(id)) members.id = id.value;
+  const categories = Option.match(decodeUnknownArray(obj.categories), {
+    onNone: (): string[] => [],
+    onSome: (values) =>
+      Array.getSomes(
+        values.slice(0, MAX_CATEGORIES).map((value) => sanitiseText(value, maxFieldLength)),
+      ),
+  });
+  if (Array.isArrayNonEmpty(categories)) members.categories = categories;
+  return members;
+}
+
+/** The modelled CSL string variables read from an item, and the aliases that filled one. */
+interface CslStrings {
+  readonly values: Partial<Record<CslStringVar, string>>;
+  readonly aliased: HashSet.HashSet<string>;
+}
+
+/** Reads the modelled CSL string variables, sanitised, falling back to their legacy aliases. */
+function readCslStrings(
+  obj: Readonly<Record<string, unknown>>,
+  maxFieldLength: number,
+): CslStrings {
+  const read = (key: string): Option.Option<string> =>
+    sanitiseCslString(decodeCslStringValue(obj[key]), maxFieldLength);
+  const values: Types.Mutable<Partial<Record<CslStringVar, string>>> = Record.fromEntries(
     Array.filterMap(
       CSL_STRING_VARS,
       (key): Result.Result<readonly [CslStringVar, string], void> => {
-        const value = sanitiseCslString(decodeCslStringValue(obj[key]));
+        const value = read(key);
         return Option.isNone(value) ? Result.failVoid : Result.succeed([key, value.value] as const);
       },
     ),
   );
+  const aliased = Array.filterMap(CSL_ALIASES, ([alias, key]): Result.Result<string, void> => {
+    if (values[key] !== undefined) return Result.failVoid;
+    const value = read(alias);
+    if (Option.isNone(value)) return Result.failVoid;
+    values[key] = value.value;
+    return Result.succeed(alias);
+  });
+  return { values, aliased: HashSet.fromIterable(aliased) };
 }
 
 /** Reads the modelled CSL name variables into structured name lists. */
 function readCslNames(
-  obj: Record<string, unknown>,
+  obj: Readonly<Record<string, unknown>>,
+  maxNames: number,
 ): Partial<Record<CslNameVar, readonly CslName[]>> {
   return Record.fromEntries(
     Array.filterMap(
       CSL_NAME_VARS,
       (key): Result.Result<readonly [CslNameVar, readonly CslName[]], void> => {
-        const list = fromCslNameList(readCslNameArray(obj[key]));
+        const list = fromCslNameList(readCslNameArray(obj[key], maxNames));
         return Option.isNone(list) ? Result.failVoid : Result.succeed([key, list.value] as const);
       },
     ),
@@ -779,7 +1082,9 @@ function readCslNames(
 }
 
 /** Reads the modelled CSL date variables into structured dates. */
-function readCslDates(obj: Record<string, unknown>): Partial<Record<CslDateVar, CslDate>> {
+function readCslDates(
+  obj: Readonly<Record<string, unknown>>,
+): Partial<Record<CslDateVar, CslDate>> {
   return Record.fromEntries(
     Array.filterMap(CSL_DATE_VARS, (key): Result.Result<readonly [CslDateVar, CslDate], void> => {
       const date = Option.flatMap(decodeCslDateInput(obj[key]), fromCslDateValue);
@@ -788,25 +1093,52 @@ function readCslDates(obj: Record<string, unknown>): Partial<Record<CslDateVar, 
   );
 }
 
-/** Validates the free-string CSL identifiers into their branded slots (checksum failures dropped). */
-function readCslIdentifiers(obj: Readonly<Record<string, unknown>>): RecordIdentifiers {
+/**
+ * Validates the free-string CSL identifiers into their branded slots
+ * (checksum failures dropped), and reads an arXiv id from the record's
+ * `number` (`arXiv:2101.01234`) or an arxiv.org `URL`.
+ */
+function readCslIdentifiers(
+  obj: Readonly<Record<string, unknown>>,
+  strings: Partial<Record<CslStringVar, string>>,
+): RecordIdentifiers {
   const identifiers: Types.Mutable<RecordIdentifiers> = {};
-  if (Predicate.isString(obj.ISBN)) {
-    const isbn = decodeIsbn(obj.ISBN);
-    if (Option.isSome(isbn)) identifiers.isbn = isbn.value;
-  }
-  if (Predicate.isString(obj.DOI)) {
-    const doi = decodeDoi(obj.DOI);
-    if (Option.isSome(doi)) identifiers.doi = doi.value;
-  }
-  if (Predicate.isString(obj.ISSN)) {
-    const issn = decodeIssn(obj.ISSN);
-    if (Option.isSome(issn)) identifiers.issn = issn.value;
-  }
+  const isbn = Option.flatMap(decodeString(obj.ISBN), decodeIsbn);
+  if (Option.isSome(isbn)) identifiers.isbn = isbn.value;
+  const doi = Option.flatMap(decodeString(obj.DOI), decodeDoi);
+  if (Option.isSome(doi)) identifiers.doi = doi.value;
+  const issn = Option.flatMap(decodeString(obj.ISSN), decodeIssn);
+  if (Option.isSome(issn)) identifiers.issn = issn.value;
+  const pmid = Option.flatMap(decodeCslStringValue(obj.PMID), (value) =>
+    decodePmid(value.toString()),
+  );
+  if (Option.isSome(pmid)) identifiers.pmid = pmid.value;
+  const pmcid = Option.flatMap(decodeString(obj.PMCID), decodePmcid);
+  if (Option.isSome(pmcid)) identifiers.pmcid = pmcid.value;
+  const arxiv = Option.orElse(
+    Option.flatMap(
+      Option.filter(Option.fromUndefinedOr(strings.number), (number) => /^arxiv:/i.test(number)),
+      decodeArxiv,
+    ),
+    () =>
+      Option.flatMap(
+        Option.filter(Option.fromUndefinedOr(strings.URL), (url) =>
+          /^https?:\/\/(?:www\.)?arxiv\.org\/abs\//i.test(url),
+        ),
+        decodeArxiv,
+      ),
+  );
+  if (Option.isSome(arxiv)) identifiers.arxiv = arxiv.value;
   return identifiers;
 }
 
-/** Captures the CSL keys the model doesn't consume into the passthrough map. */
-function collectCslExtra(obj: Readonly<Record<string, unknown>>): Record<string, unknown> {
-  return Record.filter(obj, (_value, key) => !HashSet.has(KNOWN_CSL_KEYS, key));
+/** Captures the CSL keys the model doesn't consume (nor read as an alias) into the passthrough map. */
+function collectCslExtra(
+  obj: Readonly<Record<string, unknown>>,
+  aliased: HashSet.HashSet<string>,
+): Record<string, unknown> {
+  return Record.filter(
+    obj,
+    (_value, key) => !HashSet.has(KNOWN_CSL_KEYS, key) && !HashSet.has(aliased, key),
+  );
 }

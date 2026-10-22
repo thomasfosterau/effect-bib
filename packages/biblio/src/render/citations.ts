@@ -27,7 +27,8 @@ import * as Result from "effect/Result";
 import * as String from "effect/String";
 import * as Struct from "effect/Struct";
 import type { BiblioRecord, CslName } from "../record.ts";
-import { citationName, givenInitials, issuedYearWithSuffix } from "./format.ts";
+import { citationName, givenInitials, issuedYearWithSuffix, plainField } from "./format.ts";
+import { stripCslMarkup } from "./markup.ts";
 import { enLocale } from "./locale.ts";
 import { styleReference } from "./render.ts";
 import { bold, concat, italic, joinRich, type RichText, text, toPlainText } from "./rich.ts";
@@ -237,7 +238,7 @@ function joinAll(forms: readonly string[], and: string): string {
 /** A record's names in a citation, joined with `and` (`"&"` in parentheses, the locale's word in prose). */
 function citeNames(record: BiblioRecord, form: NameForm, and: string, locale: Locale): string {
   const names = record.author ?? record.editor ?? [];
-  if (Array.isReadonlyArrayEmpty(names)) return record.title ?? "";
+  if (Array.isReadonlyArrayEmpty(names)) return stripCslMarkup(record.title ?? "");
   const forms = names.map((name, index) =>
     index === 0 && form.initials ? initialledName(name) : citationName(name),
   );
@@ -649,7 +650,7 @@ function withoutFinalPeriod(rich: RichText): RichText {
 /** A note style's short form: the first author's name and the title before any colon. */
 function defaultShort(record: BiblioRecord): RichText {
   const first = Array.head(record.author ?? record.editor ?? []);
-  const title = Option.map(Option.fromNullishOr(record.title), (value) =>
+  const title = Option.map(plainField(record, "title"), (value) =>
     italic(text(value.split(":")[0].trim())),
   );
   return joinRich([Option.map(first, (name) => text(citationName(name))), title], ", ");

@@ -23,13 +23,14 @@
 
 import * as Option from "effect/Option";
 import * as String from "effect/String";
-import type { BiblioRecord } from "../../record.ts";
+import { type BiblioRecord, yearOf } from "../../record.ts";
 import {
   dispatchRich,
   formatNameList,
   issuedYearWithSuffix,
   type NameListOptions,
   pagesLabel,
+  plainField,
   preferredUrl,
   richField,
   type TextVariable,
@@ -192,9 +193,10 @@ const reference = dispatchRich(head, {
 /** Sort key: primary-author family, then zero-padded year, then title. */
 function sortKey(record: BiblioRecord): string {
   const first = record.author?.[0];
-  const author = first !== undefined ? sortFamily(first) : (record.title ?? "").toLowerCase();
-  const year = (record.issued?.["date-parts"]?.[0]?.[0] ?? 0).toString().padStart(6, "0");
-  return `${author} ${year} ${(record.title ?? "").toLowerCase()}`;
+  const title = Option.getOrElse(plainField(record, "title"), () => "").toLowerCase();
+  const author = first !== undefined ? sortFamily(first) : title;
+  const year = (yearOf(record.issued) ?? 0).toString().padStart(6, "0");
+  return `${author} ${year} ${title}`;
 }
 
 /**

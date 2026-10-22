@@ -32,6 +32,7 @@ import * as Option from "effect/Option";
 import * as Result from "effect/Result";
 import * as String from "effect/String";
 import { type BiblioRecord, cslNameDisplay } from "./record.ts";
+import { stripCslMarkup } from "./render/markup.ts";
 
 /**
  * Leading articles dropped from a title's token set: they carry no
@@ -135,7 +136,7 @@ export function recordMatchInput(record: BiblioRecord): MatchInput {
     const display = cslNameDisplay(name);
     return display === null ? Result.failVoid : Result.succeed(display);
   });
-  return { title: record.title ?? "", authors };
+  return { title: stripCslMarkup(record.title ?? ""), authors };
 }
 
 /**

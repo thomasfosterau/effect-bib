@@ -100,18 +100,18 @@ describe("parseBibtex", () => {
   });
 
   it("rejects a checksum-invalid ISBN as no-identifier (B2 checksum gate)", () => {
-    expect(parseBibtex(`@book{x, title={t}, isbn={9780140449137}}`)[0]).toEqual({
+    expect(parseBibtex(`@book{x, title={t}, isbn={9780140449137}}`)[0]).toMatchObject({
       outcome: "skipped",
       reason: "no-identifier",
     });
   });
 
   it("skips entries with no identifier / no title", () => {
-    expect(parseBibtex(`@book{x, title={Untracked}, author={Nobody}}`)[0]).toEqual({
+    expect(parseBibtex(`@book{x, title={Untracked}, author={Nobody}}`)[0]).toMatchObject({
       outcome: "skipped",
       reason: "no-identifier",
     });
-    expect(parseBibtex(`@book{x, isbn={9780062316097}}`)[0]).toEqual({
+    expect(parseBibtex(`@book{x, isbn={9780062316097}}`)[0]).toMatchObject({
       outcome: "skipped",
       reason: "no-title",
     });
@@ -319,6 +319,7 @@ describe("parseCsv", () => {
     expect(parseCsv(["title,author", "Untracked,Nobody"].join("\n"))[0]).toEqual({
       outcome: "skipped",
       reason: "no-identifier",
+      position: { offset: 13, line: 2, column: 1 },
     });
   });
 });
@@ -391,6 +392,92 @@ describe("parseRis", () => {
     expect(parseRis(["TY  - BOOK", "TI  - Untracked", "ER  - "].join("\n"))[0]).toEqual({
       outcome: "skipped",
       reason: "no-identifier",
+      position: { offset: 0, line: 1, column: 1 },
+    });
+  });
+});
+
+// ── Lenient mode, citation keys and positions ─────────────────────────
+
+describe("lenient mode and citation keys", () => {
+  it("keeps CSV rows, RIS records and CSL-JSON items without an identifier", () => {
+    const csv = parseCsv("key,title,author\ndoe2020,On Things,Jane Doe\n,,", { mode: "lenient" });
+    expect(expectParsed(csv[0])).toEqual({
+      type: "document",
+      id: "doe2020",
+      "citation-key": "doe2020",
+      title: "On Things",
+      author: [{ family: "Doe", given: "Jane" }],
+      identifiers: {},
+      provenance: { source: "csv" },
+    });
+    expect(expectParsed(csv[1])).toEqual({
+      type: "document",
+      identifiers: {},
+      provenance: { source: "csv" },
+    });
+    const ris = parseRis("TY  - RPRT\nID  - lab7\nTI  - Report\nER  - ", { mode: "lenient" });
+    expect(expectParsed(ris[0])).toMatchObject({
+      type: "report",
+      "citation-key": "lab7",
+      id: "lab7",
+    });
+  });
+
+  it("reads CSL-JSON items in full in lenient mode, and their keys in either mode", () => {
+    const item = {
+      id: 7,
+      "citation-key": "doe2020",
+      type: "thesis",
+      title: "On Things",
+      genre: "PhD thesis",
+      PMID: 15371539,
+    };
+    const lenient = expectParsed(parseZoteroJson(toJsonText([item]), { mode: "lenient" })[0]);
+    expect(lenient).toMatchObject({
+      id: 7,
+      "citation-key": "doe2020",
+      genre: "PhD thesis",
+      identifiers: { pmid: "15371539" },
+    });
+    expect(parseZoteroJson(toJsonText([item]))[0]).toEqual({
+      outcome: "skipped",
+      reason: "no-identifier",
+    });
+    const imported = expectParsed(parseZoteroJson(toJsonText([{ ...item, DOI: "10.1000/x" }]))[0]);
+    expect(imported).toMatchObject({
+      id: 7,
+      "citation-key": "doe2020",
+      identifiers: { pmid: "15371539" },
+    });
+    expect(imported.genre).toBeUndefined();
+    expect(parseZoteroJson(toJsonText([1]), { mode: "lenient" })).toEqual([
+      { outcome: "skipped", reason: "malformed" },
+    ]);
+  });
+
+  it("positions CSV rows, quoted line breaks included, and RIS records after CRLF lines", () => {
+    const csv = parseCsv('title,isbn\r\n"A\nB",9780062316097\r\nC,9780062316097');
+    expect(csv.map((outcome) => outcome.position)).toEqual([
+      { offset: 12, line: 2, column: 1 },
+      { offset: 33, line: 4, column: 1 },
+    ]);
+    const ris = parseRis("junk\r\nTY  - BOOK\r\nER  - \r\n\r\n  \r\nTY  - BOOK\r\nER  - ", {
+      mode: "lenient",
+    });
+    expect(ris.map((outcome) => outcome.position)).toEqual([
+      { offset: 6, line: 2, column: 1 },
+      { offset: 32, line: 6, column: 1 },
+    ]);
+  });
+
+  it("falls back to the default for a bound that is not a positive integer", () => {
+    const authors = Array.makeBy(MAX_AUTHORS + 5, (i) => `Author${i}, A.`).join(" and ");
+    const entry = `@book{k, title = {T}, author = {${authors}}}`;
+    Array.forEach([0, -1, 1.5, Number.NaN], (maxAuthors) => {
+      expect(
+        expectParsed(parseBibtex(entry, { mode: "lenient", maxAuthors })[0]).author,
+      ).toHaveLength(MAX_AUTHORS);
     });
   });
 });
@@ -405,6 +492,7 @@ describe("format independence", () => {
     `;
     const ris = [
       "TY  - BOOK",
+      "ID  - book1",
       "TI  - Sapiens",
       "AU  - Harari, Yuval Noah",
       "PY  - 2015",
@@ -412,6 +500,7 @@ describe("format independence", () => {
       "SN  - 9780062316097",
       "ER  - ",
       "TY  - JOUR",
+      "ID  - art1",
       "TI  - The Structure of Scientific Revolutions",
       "AU  - Kuhn, Thomas",
       "AU  - Popper, Karl",
@@ -441,9 +530,13 @@ describe("format independence", () => {
 // ── Resource bounds / dispatch ────────────────────────────────────────
 
 describe("parseBibliographicFile resource bounds", () => {
-  it("drops the whole upload over the input-length cap", () => {
+  it("reports an upload over the input-length cap as one too-large outcome", () => {
     const huge = `@book{x, title={t}, isbn={9780062316097}}`.padEnd(MAX_INPUT_LENGTH + 1, " ");
-    expect(parseBibliographicFile(huge, "bibtex")).toEqual([]);
+    Array.forEach(["bibtex", "zotero-json", "csv", "ris"] as const, (format) => {
+      expect(parseBibliographicFile(huge, format)).toEqual([
+        { outcome: "skipped", reason: "too-large" },
+      ]);
+    });
   });
 
   it("parses hostile BibTeX at the input-length cap without throwing or unbounded memory", () => {
@@ -471,7 +564,41 @@ describe("parseBibliographicFile resource bounds", () => {
       (i) => `{ "title": "t${i}", "ISBN": "9780062316097" }`,
     ).join(",");
     const outcomes = parseBibliographicFile(`[${entries}]`, "zotero-json");
-    expect(outcomes.length).toBeLessThanOrEqual(MAX_RECORDS);
+    expect(outcomes).toHaveLength(MAX_RECORDS + 1);
+    expect(outcomes[MAX_RECORDS]).toEqual({ outcome: "skipped", reason: "truncated" });
+  });
+
+  it("caps every format at the caller's record cap, with a truncated outcome only past it", () => {
+    const options = { maxRecords: 2 };
+    const bibtex = (n: number) =>
+      Array.makeBy(n, (i) => `@book{k${i}, title={T}, isbn={9780062316097}}`).join("\n");
+    const json = (n: number) =>
+      `[${Array.makeBy(n, () => `{ "title": "T", "ISBN": "9780062316097" }`).join(",")}]`;
+    const csv = (n: number) =>
+      ["title,isbn", ...Array.makeBy(n, () => "T,9780062316097")].join("\n");
+    const ris = (n: number) =>
+      Array.makeBy(n, () => "TY  - BOOK\nTI  - T\nSN  - 9780062316097\nER  - ").join("\n");
+    const reasons = (outcomes: readonly ParseOutcome[]) =>
+      outcomes.map((outcome) => (outcome.outcome === "skipped" ? outcome.reason : "parsed"));
+    Array.forEach(
+      [
+        [bibtex, "bibtex"],
+        [json, "zotero-json"],
+        [csv, "csv"],
+        [ris, "ris"],
+      ] as const,
+      ([make, format]) => {
+        expect(reasons(parseBibliographicFile(make(2), format, options))).toEqual([
+          "parsed",
+          "parsed",
+        ]);
+        expect(reasons(parseBibliographicFile(make(3), format, options))).toEqual([
+          "parsed",
+          "parsed",
+          "truncated",
+        ]);
+      },
+    );
   });
 
   it("dispatches on the format discriminator, including RIS", () => {

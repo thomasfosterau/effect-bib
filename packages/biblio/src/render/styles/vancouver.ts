@@ -27,9 +27,11 @@ import {
   issuedYearText,
   joinParts,
   type NameListOptions,
+  plainField,
   terminate,
   terminatedField,
 } from "../format.ts";
+import { stripCslMarkup } from "../markup.ts";
 import type { CitationStyle, RenderContext } from "../types.ts";
 
 /** The editor role labels (style-local; distinct from APA's `"Ed."`). */
@@ -67,7 +69,7 @@ function editionSegment(record: BiblioRecord, ctx: RenderContext): Option.Option
 /** `"London: Penguin; 2020"` — place/publisher/year imprint tail. */
 function imprint(record: BiblioRecord, ctx: RenderContext): string {
   const place = joinParts(
-    [Option.fromNullishOr(record["publisher-place"]), Option.fromNullishOr(record.publisher)],
+    [plainField(record, "publisher-place"), plainField(record, "publisher")],
     ": ",
   );
   return joinParts(
@@ -82,7 +84,7 @@ function imprint(record: BiblioRecord, ctx: RenderContext): string {
 function book(record: BiblioRecord, ctx: RenderContext): string {
   return joinParts(
     [
-      terminatedField(Option.fromNullishOr(record.title)),
+      terminatedField(plainField(record, "title")),
       terminatedField(editionSegment(record, ctx)),
       Option.some(terminate(imprint(record, ctx))),
     ],
@@ -102,9 +104,9 @@ function chapter(record: BiblioRecord, ctx: RenderContext): string {
       : Option.none<string>();
   return joinParts(
     [
-      terminatedField(Option.fromNullishOr(record.title)),
+      terminatedField(plainField(record, "title")),
       inClause,
-      terminatedField(Option.fromNullishOr(record["container-title"])),
+      terminatedField(plainField(record, "container-title")),
       Option.some(terminate(imprint(record, ctx))),
       terminatedField(pages),
     ],
@@ -121,8 +123,8 @@ function article(record: BiblioRecord, ctx: RenderContext): string {
   const detail = `${issuedYearText(Option.fromNullishOr(record.issued), ctx.locale)}${String.isNonEmpty(volIssue) ? `;${volIssue}` : ""}${page}`;
   return joinParts(
     [
-      terminatedField(Option.fromNullishOr(record.title)),
-      terminatedField(Option.fromNullishOr(record["container-title"])),
+      terminatedField(plainField(record, "title")),
+      terminatedField(plainField(record, "container-title")),
       Option.some(terminate(detail)),
     ],
     " ",
@@ -132,7 +134,7 @@ function article(record: BiblioRecord, ctx: RenderContext): string {
 function webpage(record: BiblioRecord, ctx: RenderContext): string {
   const titleInternet =
     record.title !== undefined
-      ? Option.some(`${record.title} [${ctx.locale.internet}]`)
+      ? Option.some(`${stripCslMarkup(record.title)} [${ctx.locale.internet}]`)
       : Option.none<string>();
   const available =
     record.URL !== undefined
@@ -141,7 +143,7 @@ function webpage(record: BiblioRecord, ctx: RenderContext): string {
   return joinParts(
     [
       terminatedField(titleInternet),
-      terminatedField(Option.fromNullishOr(record["container-title"])),
+      terminatedField(plainField(record, "container-title")),
       Option.some(terminate(issuedYearText(Option.fromNullishOr(record.issued), ctx.locale))),
       available,
     ],
@@ -152,9 +154,9 @@ function webpage(record: BiblioRecord, ctx: RenderContext): string {
 function generic(record: BiblioRecord, ctx: RenderContext): string {
   return joinParts(
     [
-      terminatedField(Option.fromNullishOr(record.title)),
-      terminatedField(Option.fromNullishOr(record["container-title"])),
-      terminatedField(Option.fromNullishOr(record.publisher)),
+      terminatedField(plainField(record, "title")),
+      terminatedField(plainField(record, "container-title")),
+      terminatedField(plainField(record, "publisher")),
       Option.some(terminate(issuedYearText(Option.fromNullishOr(record.issued), ctx.locale))),
     ],
     " ",

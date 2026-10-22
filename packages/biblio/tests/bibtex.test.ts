@@ -264,13 +264,11 @@ describe("BibLaTeX fields", () => {
       language: "en-GB",
       abstract: "An abstract.",
       note: "A note. An addendum",
-    });
-    expect(record.extra).toEqual({
       "title-short": "Short",
       "container-title-short": "J.",
       keyword: "one, two",
-      "tex.custom": "Kept Value",
     });
+    expect(record.extra).toEqual({ "tex.custom": "Kept Value" });
   });
 
   it("maps a book's series, edition, location and volumes", () => {
@@ -282,25 +280,24 @@ describe("BibLaTeX fields", () => {
       "collection-title": "Lecture Notes",
       edition: "2",
       "publisher-place": "Berlin",
-    });
-    expect(record.number).toBeUndefined();
-    expect(record.extra).toEqual({
       "collection-number": "42",
       "number-of-volumes": "3",
       "number-of-pages": "300",
     });
+    expect(record.number).toBeUndefined();
+    expect(record.extra).toBeUndefined();
   });
 
   it("maps theses, reports and institutions", () => {
     const thesis = parseEntry("phdthesis", "title = {T}, school = {MIT}");
     expect(thesis).toMatchObject({ type: "thesis", publisher: "MIT" });
-    expect(thesis.extra).toEqual({ genre: "PhD thesis" });
+    expect(thesis.genre).toBe("PhD thesis");
     const report = parseEntry(
       "report",
       "title = {T}, type = {techreport}, institution = {Lab}, number = {TR-7}",
     );
     expect(report).toMatchObject({ type: "report", publisher: "Lab", number: "TR-7" });
-    expect(report.extra).toEqual({ genre: "Technical report" });
+    expect(report.genre).toBe("Technical report");
   });
 
   it("maps an arXiv eprint to a number and a URL", () => {
@@ -312,8 +309,27 @@ describe("BibLaTeX fields", () => {
       type: "webpage",
       number: "arXiv:2101.00001",
       URL: "https://arxiv.org/abs/2101.00001",
+      identifiers: { arxiv: "2101.00001" },
     });
     expect(record.extra).toEqual({ "tex.eprintclass": "cs.CL" });
+  });
+
+  it("keeps an eprint that is not a valid arXiv or PubMed id in extra", () => {
+    const record = parseEntry("online", "title = {T}, eprint = {not an id}, eprinttype = {arXiv}");
+    expect(record.identifiers.arxiv).toBeUndefined();
+    expect(record.number).toBeUndefined();
+    expect(record.extra).toEqual({ "tex.eprint": "not an id", "tex.eprinttype": "arXiv" });
+  });
+
+  it("maps pmid and pmcid fields to identifiers, keeping an invalid one in extra", () => {
+    expect(
+      parseEntry("article", "title = {T}, pmid = {15371539}, pmcid = {pmc3159421}").identifiers,
+    ).toEqual({
+      doi: "10.1000/x",
+      pmid: "15371539",
+      pmcid: "PMC3159421",
+    });
+    expect(parseEntry("article", "title = {T}, pmid = {n/a}").extra).toEqual({ "tex.pmid": "n/a" });
   });
 
   it("maps event fields and a PubMed eprint", () => {
@@ -327,11 +343,12 @@ describe("BibLaTeX fields", () => {
         [2020, 6, 3],
       ],
     });
-    expect(record.extra).toEqual({
+    expect(record).toMatchObject({
       "event-title": "Conf 2020",
       "event-place": "Online",
-      PMID: "123456",
+      identifiers: { pmid: "123456" },
     });
+    expect(record.extra).toBeUndefined();
   });
 });
 
@@ -446,7 +463,8 @@ describe("edge cases", () => {
     expect(record.title).toBe("T: S. Addon");
     expect(record.note).toBe("Only a note.");
     expect(record.language).toBeUndefined();
-    expect(record.extra).toEqual({ genre: "Habilitation", "tex.language": "Klingon" });
+    expect(record.genre).toBe("Habilitation");
+    expect(record.extra).toEqual({ "tex.language": "Klingon" });
     expect(parseEntry("book", "title = {T}, langid = {en-AU}").language).toBe("en-AU");
     expect(parseEntry("book", "title = {T}, addendum = {Only an addendum}").note).toBe(
       "Only an addendum",
@@ -506,6 +524,94 @@ describe("edge cases", () => {
   });
 
   it("reads an entry with no fields as having none", () => {
-    expect(parseBibtex(`@book{onlykey}`)).toEqual([{ outcome: "skipped", reason: "no-title" }]);
+    expect(parseBibtex(`@book{onlykey}`)).toEqual([
+      { outcome: "skipped", reason: "no-title", position: { offset: 0, line: 1, column: 1 } },
+    ]);
+    expect(parseBibtex(`@book{onlykey}`, { mode: "lenient" })).toEqual([
+      {
+        outcome: "parsed",
+        record: {
+          type: "book",
+          id: "onlykey",
+          "citation-key": "onlykey",
+          identifiers: {},
+          provenance: { source: "bibtex" },
+        },
+        position: { offset: 0, line: 1, column: 1 },
+      },
+    ]);
+  });
+});
+
+describe("citation keys, positions and lenient mode", () => {
+  it("keys every record by its entry key and positions every outcome at its @", () => {
+    const content = [
+      "% a comment",
+      "@book{harari2015, title = {Sapiens}, isbn = {9780062316097}}",
+      "",
+      "  @misc{web, title = {A page}, url = {https://example.org}}",
+    ].join("\r\n");
+    const [book, page] = parseBibtex(content);
+    expect(expectParsed(book)).toMatchObject({ id: "harari2015", "citation-key": "harari2015" });
+    expect(book.position).toEqual({ offset: 13, line: 2, column: 1 });
+    expect(page).toMatchObject({
+      outcome: "skipped",
+      reason: "no-identifier",
+      position: { offset: content.indexOf("@misc"), line: 4, column: 3 },
+    });
+  });
+
+  it("keeps entries without a title or identifier in lenient mode", () => {
+    const outcomes = parseBibtex(
+      "@misc{web, title = {A page}, url = {https://example.org}}\n@article{untitled, author = {Doe, Jane}, year = 2020}",
+      { mode: "lenient" },
+    );
+    expect(outcomes.map((outcome) => outcome.outcome)).toEqual(["parsed", "parsed"]);
+    expect(expectParsed(outcomes[0])).toMatchObject({
+      type: "document",
+      URL: "https://example.org",
+    });
+    expect(expectParsed(outcomes[1])).toMatchObject({
+      type: "article-journal",
+      "citation-key": "untitled",
+      author: [{ family: "Doe", given: "Jane" }],
+      issued: { "date-parts": [[2020]] },
+    });
+    expect(expectParsed(outcomes[1]).title).toBeUndefined();
+  });
+
+  it("reports the entries past the record cap as one truncated outcome", () => {
+    const content = Array.from({ length: 4 }, (_, i) => `@misc{k${i}, title = {T${i}}}`).join("\n");
+    const outcomes = parseBibtex(content, { mode: "lenient", maxRecords: 2 });
+    expect(outcomes).toHaveLength(3);
+    expect(outcomes[2]).toEqual({ outcome: "skipped", reason: "truncated" });
+    expect(parseBibtex(content, { mode: "lenient", maxRecords: 4 })).toHaveLength(4);
+  });
+
+  it("raises the field-length and author limits on request", () => {
+    const abstract = "word ".repeat(1000).trim();
+    const authors = Array.from({ length: 150 }, (_, i) => `Author${i}, A.`).join(" and ");
+    const entry = `@article{big, title = {T}, abstract = {${abstract}}, author = {${authors}}}`;
+    const clamped = expectParsed(parseBibtex(entry, { mode: "lenient" })[0]);
+    expect(clamped.abstract).toHaveLength(2000);
+    expect(clamped.author).toHaveLength(100);
+    const raised = expectParsed(
+      parseBibtex(entry, { mode: "lenient", maxFieldLength: 10_000, maxAuthors: 500 })[0],
+    );
+    expect(raised.abstract).toBe(abstract);
+    expect(raised.author).toHaveLength(150);
+  });
+
+  it("reads input over a raised input cap, and reports input over the cap as too-large", () => {
+    const entry = "@misc{k, title = {T}}";
+    expect(parseBibtex(entry, { maxInputLength: 5 })).toEqual([
+      { outcome: "skipped", reason: "too-large" },
+    ]);
+    expect(
+      parseBibtex(entry.padEnd(MAX_INPUT_LENGTH + 10, " "), {
+        mode: "lenient",
+        maxInputLength: MAX_INPUT_LENGTH + 10,
+      }),
+    ).toHaveLength(1);
   });
 });

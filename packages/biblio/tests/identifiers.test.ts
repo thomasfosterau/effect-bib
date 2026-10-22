@@ -22,7 +22,10 @@ import {
   decodeDoi,
   decodeIsbn,
   decodeIssn,
+  decodeArxiv,
   decodeOrcid,
+  decodePmcid,
+  decodePmid,
   isbnForms,
   normaliseDoi,
 } from "@thomasfosterau/biblio";
@@ -241,5 +244,63 @@ describe("decodeOrcid", () => {
       return count + 1;
     });
     expect(generated).toBeGreaterThan(0);
+  });
+});
+
+// ── PubMed and arXiv ──────────────────────────────────────────────────
+
+describe("decodePmid / decodePmcid", () => {
+  it("accepts bare and prefixed ids, canonicalising a PMCID's prefix", () => {
+    expect(Option.getOrNull(decodePmid("15371539"))).toBe("15371539");
+    expect(Option.getOrNull(decodePmid(" PMID:15371539 "))).toBe("15371539");
+    expect(Option.getOrNull(decodePmcid("PMC3159421"))).toBe("PMC3159421");
+    expect(Option.getOrNull(decodePmcid("pmcid: pmc3159421"))).toBe("PMC3159421");
+  });
+
+  it("rejects a leading zero, an over-long id, a PMCID as a PMID, and bare digits as a PMCID", () => {
+    Array.forEach(["0123", "1234567890", "PMC3159421", "12 34", "", "15371539/.."], (raw) => {
+      expect(Option.isNone(decodePmid(raw))).toBe(true);
+    });
+    Array.forEach(["3159421", "PMC", "PMC12a", "PMC1234567890"], (raw) => {
+      expect(Option.isNone(decodePmcid(raw))).toBe(true);
+    });
+  });
+});
+
+describe("decodeArxiv", () => {
+  it("accepts current- and old-scheme ids, with a version, a prefix or an abs / pdf URL", () => {
+    const cases: ReadonlyArray<readonly [string, string]> = [
+      ["2101.01234", "2101.01234"],
+      ["0704.0001", "0704.0001"],
+      ["arXiv:2101.01234v2", "2101.01234v2"],
+      ["ARXIV: 1501.00001", "1501.00001"],
+      ["https://arxiv.org/abs/2101.01234", "2101.01234"],
+      ["http://export.arxiv.org/pdf/2101.01234v1.pdf", "2101.01234v1"],
+      ["hep-th/9901001", "hep-th/9901001"],
+      ["math.GT/0309136", "math.GT/0309136"],
+      ["https://arxiv.org/abs/cond-mat/0207270v3", "cond-mat/0207270v3"],
+    ];
+    Array.forEach(cases, ([raw, id]) => {
+      expect(Option.getOrNull(decodeArxiv(raw))).toBe(id);
+    });
+  });
+
+  it("rejects a bad month, a traversal, whitespace and a bare word", () => {
+    Array.forEach(
+      [
+        "2113.01234",
+        "2100.01234",
+        "2101.123",
+        "../2101.01234",
+        "2101.01234 x",
+        "arXiv",
+        "hep-th/990100",
+        "HEP-TH/9901001",
+        "2101.01234v0",
+      ],
+      (raw) => {
+        expect(Option.isNone(decodeArxiv(raw))).toBe(true);
+      },
+    );
   });
 });
