@@ -16,6 +16,7 @@ import * as HashMap from "effect/HashMap";
 import * as Option from "effect/Option";
 import * as Record from "effect/Record";
 import { apaStyle } from "./styles/apa.ts";
+import { chicagoNotesStyle } from "./styles/chicago.ts";
 import { vancouverStyle } from "./styles/vancouver.ts";
 import type { CitationStyle } from "./types.ts";
 
@@ -27,6 +28,7 @@ import type { CitationStyle } from "./types.ts";
 export const builtInStyles = {
   apa: apaStyle,
   vancouver: vancouverStyle,
+  "chicago-notes": chicagoNotesStyle,
 } as const satisfies Readonly<Record<string, CitationStyle>>;
 
 /** {@link builtInStyles} as a lookup by any id; a non-style key (`toString`, …) is absent. */

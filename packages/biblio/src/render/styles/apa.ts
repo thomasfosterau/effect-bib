@@ -3,8 +3,9 @@
  *
  * A {@link CitationStyle} descriptor: it dispatches per {@link referenceClass}
  * through a lookup map of small, low-branch body renderers, each composing
- * the shared `format.ts` primitives. Output is plain text (no italic markup),
- * deterministic, and network-free.
+ * the shared `format.ts` primitives. Output is rich text (titles of whole
+ * works, journals and volumes in italics, the DOI or URL as a link), with a
+ * plain-text projection; deterministic and network-free.
  *
  * This is a **scoped subset** of APA, not a full CSL implementation: it
  * covers the five reference shapes the engine classifies (book, chapter, journal
@@ -24,17 +25,27 @@ import * as Option from "effect/Option";
 import * as String from "effect/String";
 import type { BiblioRecord } from "../../record.ts";
 import {
-  dispatchReference,
+  dispatchRich,
   formatNameList,
-  issuedYearText,
-  joinParts,
+  issuedYearWithSuffix,
   type NameListOptions,
   pagesLabel,
   preferredUrl,
+  richField,
+  type TextVariable,
   sortFamily,
   terminate,
-  terminatedField,
 } from "../format.ts";
+import {
+  concat,
+  italic,
+  joinRich,
+  link,
+  type RichText,
+  terminateRich,
+  text,
+  toPlainText,
+} from "../rich.ts";
 import type { CitationStyle, RenderContext } from "../types.ts";
 
 /** Author-list options: family-first, spaced periods, `", & "` before the last. */
@@ -58,108 +69,119 @@ function editorNames(ctx: RenderContext): NameListOptions {
 }
 
 /** `"Author, A. A. (2020)."` — the author + year head shared by every class. */
-function head(record: BiblioRecord, ctx: RenderContext): string {
+function head(record: BiblioRecord, ctx: RenderContext): RichText {
   const names = formatNameList(record.author ?? [], authorNames(ctx));
-  const year = issuedYearText(Option.fromNullishOr(record.issued), ctx.locale);
-  return String.isNonEmpty(names) ? `${terminate(names)} (${year}).` : `(${year}).`;
+  const year = issuedYearWithSuffix(record, ctx);
+  return text(String.isNonEmpty(names) ? `${terminate(names)} (${year}).` : `(${year}).`);
 }
 
 /** `"(2nd ed.)"` when an edition is present, else `None`. */
-function editionSuffix(record: BiblioRecord, ctx: RenderContext): Option.Option<string> {
+function editionSuffix(record: BiblioRecord, ctx: RenderContext): Option.Option<RichText> {
   return record.edition !== undefined
-    ? Option.some(`(${record.edition} ${ctx.locale.edition})`)
+    ? Option.some(text(`(${record.edition} ${ctx.locale.edition})`))
     : Option.none();
 }
 
-/** The trailing DOI/URL segment, or `None`. */
-function urlSuffix(record: BiblioRecord): Option.Option<string> {
-  return preferredUrl(record);
+/** The trailing DOI/URL segment, linked, or `None`. */
+function urlSuffix(record: BiblioRecord): Option.Option<RichText> {
+  return Option.map(preferredUrl(record), (url) => link(url));
 }
 
+/** An italic field (a title of a whole work), when present. */
+const italicField = (record: BiblioRecord, key: TextVariable): Option.Option<RichText> =>
+  Option.map(richField(record, key), italic);
+
+/** A field followed by a period, when present. */
+const terminated = (value: Option.Option<RichText>): Option.Option<RichText> =>
+  Option.map(value, terminateRich);
+
 /** `"In J. Smith (Ed.), Container title (pp. 12–30)"` — the chapter's container clause. */
-function containerClause(record: BiblioRecord, ctx: RenderContext): Option.Option<string> {
+function containerClause(record: BiblioRecord, ctx: RenderContext): Option.Option<RichText> {
   const editors = formatNameList(record.editor ?? [], editorNames(ctx));
   const label = (record.editor?.length ?? 0) > 1 ? ctx.locale.editors : ctx.locale.editor;
   const pages =
     record.page !== undefined
-      ? Option.some(`(${pagesLabel(record.page, ctx.locale)} ${record.page})`)
-      : Option.none<string>();
-  const container = joinParts([Option.fromNullishOr(record["container-title"]), pages], " ");
+      ? Option.some(text(`(${pagesLabel(record.page, ctx.locale)} ${record.page})`))
+      : Option.none<RichText>();
+  const container = joinRich([italicField(record, "container-title"), pages], " ");
   if (String.isNonEmpty(editors)) {
-    return Option.some(`${ctx.locale.in} ${editors} (${label}), ${container}`);
+    return Option.some(concat(text(`${ctx.locale.in} ${editors} (${label}), `), container));
   }
-  return String.isNonEmpty(container) ? Option.some(container) : Option.none();
+  return String.isNonEmpty(toPlainText(container)) ? Option.some(container) : Option.none();
 }
 
-function book(record: BiblioRecord, ctx: RenderContext): string {
+function book(record: BiblioRecord, ctx: RenderContext): RichText {
   const title =
     record.title !== undefined
       ? Option.some(
-          terminate(joinParts([Option.some(record.title), editionSuffix(record, ctx)], " ")),
+          terminateRich(joinRich([italicField(record, "title"), editionSuffix(record, ctx)], " ")),
         )
-      : Option.none<string>();
-  return joinParts(
-    [title, terminatedField(Option.fromNullishOr(record.publisher)), urlSuffix(record)],
-    " ",
-  );
+      : Option.none<RichText>();
+  return joinRich([title, terminated(richField(record, "publisher")), urlSuffix(record)], " ");
 }
 
-function chapter(record: BiblioRecord, ctx: RenderContext): string {
-  const container = containerClause(record, ctx);
-  return joinParts(
+function chapter(record: BiblioRecord, ctx: RenderContext): RichText {
+  return joinRich(
     [
-      terminatedField(Option.fromNullishOr(record.title)),
-      Option.map(container, terminate),
-      terminatedField(Option.fromNullishOr(record.publisher)),
+      terminated(richField(record, "title")),
+      terminated(containerClause(record, ctx)),
+      terminated(richField(record, "publisher")),
       urlSuffix(record),
     ],
     " ",
   );
 }
 
-function article(record: BiblioRecord): string {
+function article(record: BiblioRecord): RichText {
   const volIssue =
     record.volume !== undefined
-      ? Option.some(`${record.volume}${record.issue !== undefined ? `(${record.issue})` : ""}`)
-      : Option.none<string>();
-  const locator = joinParts(
-    [Option.fromNullishOr(record["container-title"]), volIssue, Option.fromNullishOr(record.page)],
+      ? Option.some(
+          concat(
+            italic(text(record.volume)),
+            text(record.issue !== undefined ? `(${record.issue})` : ""),
+          ),
+        )
+      : Option.none<RichText>();
+  const locator = joinRich(
+    [italicField(record, "container-title"), volIssue, richField(record, "page")],
     ", ",
   );
-  return joinParts(
+  return joinRich(
     [
-      terminatedField(Option.fromNullishOr(record.title)),
-      String.isNonEmpty(locator) ? Option.some(terminate(locator)) : Option.none<string>(),
+      terminated(richField(record, "title")),
+      String.isNonEmpty(toPlainText(locator))
+        ? Option.some(terminateRich(locator))
+        : Option.none<RichText>(),
       urlSuffix(record),
     ],
     " ",
   );
 }
 
-function webpage(record: BiblioRecord): string {
-  return joinParts(
+function webpage(record: BiblioRecord): RichText {
+  return joinRich(
     [
-      terminatedField(Option.fromNullishOr(record.title)),
-      terminatedField(Option.fromNullishOr(record["container-title"])),
+      terminated(italicField(record, "title")),
+      terminated(richField(record, "container-title")),
       urlSuffix(record),
     ],
     " ",
   );
 }
 
-function generic(record: BiblioRecord): string {
-  return joinParts(
+function generic(record: BiblioRecord): RichText {
+  return joinRich(
     [
-      terminatedField(Option.fromNullishOr(record.title)),
-      terminatedField(Option.fromNullishOr(record["container-title"])),
-      terminatedField(Option.fromNullishOr(record.publisher)),
+      terminated(italicField(record, "title")),
+      terminated(richField(record, "container-title")),
+      terminated(richField(record, "publisher")),
       urlSuffix(record),
     ],
     " ",
   );
 }
 
-const renderReference = dispatchReference(head, {
+const reference = dispatchRich(head, {
   book,
   chapter,
   article,
@@ -184,6 +206,8 @@ export const apaStyle: CitationStyle = {
   id: "apa",
   title: "APA 7th edition",
   category: "author-date",
-  renderReference,
+  renderReference: (record, ctx) => toPlainText(reference(record, ctx)),
+  reference,
   sortKey,
+  citation: { etAlMin: 3, etAlUseFirst: 1, open: "(", close: ")", delimiter: "; ", and: "&" },
 };

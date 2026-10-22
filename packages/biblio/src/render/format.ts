@@ -24,6 +24,7 @@ import * as Result from "effect/Result";
 import * as String from "effect/String";
 import type { BiblioRecord, CslDate, CslName } from "../record.ts";
 import { yearOf } from "../record.ts";
+import { joinRich, type RichText, text } from "./rich.ts";
 import type { RenderContext } from "./types.ts";
 import type { Locale } from "./types.ts";
 
@@ -162,6 +163,22 @@ export function sortFamily(name: CslName): string {
     ],
     " ",
   ).toLowerCase();
+}
+
+/**
+ * A name's short form in a citation: the literal, else the non-dropping
+ * particle and family name (`van Gogh`; a dropping particle is left out),
+ * else the given name.
+ *
+ * @since 0.1.0
+ */
+export function citationName(name: CslName): string {
+  if (name.literal !== undefined) return name.literal;
+  const family = joinParts(
+    [Option.fromNullishOr(name["non-dropping-particle"]), Option.fromNullishOr(name.family)],
+    " ",
+  );
+  return String.isNonEmpty(family) ? family : (name.given ?? "");
 }
 
 /** Combines a family cluster and given initials in the configured order. */
@@ -318,3 +335,64 @@ export function dispatchReference(head: BodyRenderer, bodies: BodyRenderers): Bo
       " ",
     );
 }
+
+/**
+ * Renders one record's rich reference body (post-head) for a given style.
+ *
+ * @since 0.1.0
+ */
+export type RichRenderer = (record: BiblioRecord, ctx: RenderContext) => RichText;
+
+/**
+ * The per-{@link ReferenceClass} rich body renderers a style dispatches over.
+ *
+ * @since 0.1.0
+ */
+export type RichRenderers = Readonly<Record<ReferenceClass, RichRenderer>>;
+
+/**
+ * The rich counterpart of {@link dispatchReference}: dispatch on the record's
+ * reference class, then join the head and body with a space.
+ *
+ * @since 0.1.0
+ */
+export function dispatchRich(head: RichRenderer, bodies: RichRenderers): RichRenderer {
+  return (record, ctx) =>
+    joinRich(
+      [
+        Option.some(head(record, ctx)),
+        Option.some(bodies[referenceClass(record.type)](record, ctx)),
+      ],
+      " ",
+    );
+}
+
+/**
+ * The issued year with the record's disambiguating suffix, or the no-date
+ * term (`"n.d.-a"` when suffixed, as APA writes it).
+ *
+ * @since 0.1.0
+ */
+export function issuedYearWithSuffix(record: BiblioRecord, ctx: RenderContext): string {
+  const year = issuedYearText(Option.fromNullishOr(record.issued), ctx.locale);
+  const suffix = ctx.yearSuffix ?? "";
+  if (String.isEmpty(suffix)) return year;
+  return yearOf(record.issued) === null ? `${year}-${suffix}` : `${year}${suffix}`;
+}
+
+/**
+ * A record's text variable as rich text, when present.
+ *
+ * @since 0.1.0
+ */
+export const richField = (record: BiblioRecord, key: TextVariable): Option.Option<RichText> =>
+  Option.map(Option.fromNullishOr(record[key]), text);
+
+/**
+ * The record's text-valued variables (`title`, `publisher`, …).
+ *
+ * @since 0.1.0
+ */
+export type TextVariable = {
+  [K in keyof BiblioRecord]-?: NonNullable<BiblioRecord[K]> extends string ? K : never;
+}[keyof BiblioRecord];

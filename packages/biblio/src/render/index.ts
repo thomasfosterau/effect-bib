@@ -23,4 +23,7 @@ export * from "./format.ts";
 export * from "./styles.ts";
 export * from "./styles/apa.ts";
 export * from "./styles/vancouver.ts";
+export * from "./styles/chicago.ts";
 export * from "./render.ts";
+export * from "./rich.ts";
+export * from "./citations.ts";
