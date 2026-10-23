@@ -117,10 +117,19 @@ function decodeEntities(text: string): string {
   });
 }
 
-/** A tag's attributes, names lower-cased, values entity-decoded; the first of a repeated name wins. */
+/** The longest opening tag read (room for a long `citation_abstract`); a longer one is skipped. */
+const MAX_TAG_LENGTH = 65_536;
+
+/**
+ * A tag's attributes, names lower-cased, values entity-decoded; the first of
+ * a repeated name wins. A name starts only after whitespace or a quote, so the
+ * scan never retries from inside a name and stays linear in the tag.
+ */
 function attributes(source: string): HashMap.HashMap<string, string> {
   return Array.reduce(
-    Array.fromIterable(source.matchAll(/([^\s=/>"']+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>"']+))/g)),
+    Array.fromIterable(
+      source.matchAll(/(?<=^|[\s"'])([^\s=/>"']+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>"']+))/g),
+    ),
     HashMap.empty<string, string>(),
     (found, match) => {
       const name = match[1].toLowerCase();
@@ -131,12 +140,67 @@ function attributes(source: string): HashMap.HashMap<string, string> {
   );
 }
 
-/** Every opening tag named `element` (case-insensitive), as its attributes. */
-const tags = (html: string, element: string): HashMap.HashMap<string, string>[] =>
-  Array.map(
-    Array.fromIterable(html.matchAll(new RegExp(`<${element}\\b([^>]*)>`, "gi"))),
-    (match) => attributes(match[1]),
+/** An opening tag: its attribute source and the offset just past its `>`. */
+interface OpenTag {
+  readonly source: string;
+  readonly end: number;
+}
+
+/**
+ * Every opening tag named `element` (case-insensitive), in page order, in
+ * one linear pass: a tag runs to the first `>` after its start, a start
+ * inside an earlier tag is part of that tag, and a tag longer than
+ * {@link MAX_TAG_LENGTH} is skipped, so each `>` is searched for once and
+ * each character read into at most one tag.
+ */
+function openTags(html: string, element: string): readonly OpenTag[] {
+  const found: OpenTag[] = [];
+  Array.reduce(
+    Array.fromIterable(html.matchAll(new RegExp(`<${element}\\b`, "gi"))),
+    // The first `>` at or after the last start searched; infinite once none is left.
+    -1,
+    (gt, match) => {
+      const from = match.index + match[0].length;
+      // A start before the last `>` found sits inside the tag that `>` ends: no tag of its own.
+      if (gt >= from) return gt;
+      const next = html.indexOf(">", from);
+      const end = next < 0 ? Number.POSITIVE_INFINITY : next;
+      if (end - from <= MAX_TAG_LENGTH) found.push({ source: html.slice(from, end), end: end + 1 });
+      return end;
+    },
   );
+  return found;
+}
+
+/** A `<script>` element: its opening tag's attribute source and its text. */
+interface Script {
+  readonly source: string;
+  readonly body: string;
+}
+
+/**
+ * The page's `<script>` elements, in one linear pass: each element's
+ * `</script>` is searched for from its opening tag, a `<script` inside an
+ * earlier element's text is skipped, and the scan stops at the first opening
+ * tag no `</script>` follows.
+ */
+function scripts(html: string): readonly Script[] {
+  const close = /<\/script\s{0,64}>/gi;
+  const found: Script[] = [];
+  Array.reduce(openTags(html, "script"), 0, (after, tag) => {
+    if (tag.end <= after) return after;
+    close.lastIndex = tag.end;
+    const end = close.exec(html);
+    if (end === null) return Number.POSITIVE_INFINITY;
+    found.push({ source: tag.source, body: html.slice(tag.end, end.index) });
+    return close.lastIndex;
+  });
+  return found;
+}
+
+/** Every opening tag named `element`, as its attributes. */
+const tags = (html: string, element: string): HashMap.HashMap<string, string>[] =>
+  openTags(html, element).map((tag) => attributes(tag.source));
 
 /** One `<meta>` tag's name (or `property`) and content. */
 interface Meta {
@@ -461,17 +525,15 @@ function schemaItem(node: Node): Option.Option<Item> {
 
 /** The schema.org works the page's JSON-LD scripts describe. */
 function jsonLd(html: string): Item[] {
-  return Array.flatMap(
-    Array.fromIterable(html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi)),
-    (match) =>
-      Option.exists(HashMap.get(attributes(match[1]), "type"), (type) =>
-        /^\s*application\/ld\+json\s*$/i.test(type),
-      )
-        ? Option.match(decodeJson(match[2].trim()), {
-            onNone: () => [],
-            onSome: (document) => Array.getSomes(nodesOf(document).map(schemaItem)),
-          })
-        : [],
+  return Array.flatMap(scripts(html), (script) =>
+    Option.exists(HashMap.get(attributes(script.source), "type"), (type) =>
+      /^\s*application\/ld\+json\s*$/i.test(type),
+    )
+      ? Option.match(decodeJson(script.body.trim()), {
+          onNone: () => [],
+          onSome: (document) => Array.getSomes(nodesOf(document).map(schemaItem)),
+        })
+      : [],
   );
 }
 
@@ -594,6 +656,30 @@ const coins = (html: string): Item[] =>
 
 // ── Assembly ──────────────────────────────────────────────────────────
 
+/**
+ * A link as an absolute `http(s)` URL, resolved against the page's URL when
+ * relative; `None` for any other scheme (`javascript:`, `data:`, …) or
+ * unparseable text, so no page can plant a script URL in a record.
+ */
+function httpUrl(value: string, base: Option.Option<string>): Option.Option<string> {
+  return Result.try(() => new URL(value.trim(), Option.getOrUndefined(base))).pipe(
+    Result.getSuccess,
+    Option.filter((url) => url.protocol === "http:" || url.protocol === "https:"),
+    Option.map((url) => url.href),
+  );
+}
+
+/** An item with its `URL` made a safe absolute link, or dropped. */
+function withSafeUrl(found: Item, base: Option.Option<string>): Item {
+  const rest = Record.remove<string, Schema.Json, string>(found, "URL");
+  return Option.match(
+    Option.flatMap(Option.filter(get(found, "URL"), Predicate.isString), (url) =>
+      httpUrl(url, base),
+    ),
+    { onNone: () => rest, onSome: (url) => ({ ...rest, URL: url }) },
+  );
+}
+
 /** A record from an assembled item, stamped as read from the page. */
 function toRecord(found: Item, options: EmbeddedOptions): BiblioRecord {
   const rest = Record.remove<string, Schema.Json, string>(found, "number_arxiv");
@@ -663,18 +749,20 @@ export function readEmbeddedMetadata(
     return { page: Option.none(), coins: [] };
   }
   const found = metas(html);
+  const base = Option.flatMap(Option.fromUndefinedOr(options.url), (url) =>
+    httpUrl(url, Option.none()),
+  );
   const candidates = [
     ...Option.toArray(highwire(found)),
     ...jsonLd(html),
     ...Option.toArray(dublinCore(found)),
-  ];
+  ].map((candidate) => withSafeUrl(candidate, base));
   const page = Option.map(
     Array.findFirst(candidates, (candidate) => hasKey(candidate, "title")),
     (primary) => {
       const merged = Array.reduce(candidates, primary, (acc, other) => ({ ...other, ...acc }));
-      const url = Option.fromUndefinedOr(options.url);
       return toRecord(
-        hasKey(merged, "URL") || Option.isNone(url) ? merged : { ...merged, URL: url.value },
+        hasKey(merged, "URL") || Option.isNone(base) ? merged : { ...merged, URL: base.value },
         options,
       );
     },
@@ -684,6 +772,6 @@ export function readEmbeddedMetadata(
     page,
     coins: coins(html)
       .slice(0, maxRecords)
-      .map((record) => toRecord(record, options)),
+      .map((record) => toRecord(withSafeUrl(record, base), options)),
   };
 }
