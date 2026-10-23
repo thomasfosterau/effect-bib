@@ -13,6 +13,7 @@
 
 export * from "./dedup-match.ts";
 export * from "./detect.ts";
+export * from "./embedded.ts";
 export * from "./identifiers.ts";
 // Named, not `export *`: `parse.ts` also exports the streaming front end's
 // internal `parseBibtexDocument`, which is not part of the package's API.

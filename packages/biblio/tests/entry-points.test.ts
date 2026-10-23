@@ -202,6 +202,7 @@ describe("sources entry point", () => {
       "biblioLookupClientLayer",
       "biblioLookupLayer",
       "lookupCrossrefByDoi",
+      "lookupDoiCsl",
       "lookupOpenAlexByDoi",
       "lookupOpenLibraryByIsbn",
       "normaliseCrossrefRecord",

@@ -252,9 +252,23 @@ assert.strictEqual(
 );
 ```
 
+### Embedded metadata — `.`
+
+**`readEmbeddedMetadata(html, options?): EmbeddedMetadata`** reads the citation metadata a web page carries: `{ page, coins }`, where `page` is the record for the page itself (`Option<BiblioRecord>`) and `coins` one record per COinS span (`<span class="Z3988" title="…">`, an OpenURL ContextObject; a list page cites many works). The page record comes from the first source that has a title, in order: the Highwire Press `<meta name="citation_…">` tags publishers write for Google Scholar, schema.org JSON-LD (`<script type="application/ld+json">`: `ScholarlyArticle`, `Book`, `Chapter`, `Dataset`, … with their authors, ORCIDs and the periodical, volume and issue they are part of, `@graph` included), then Dublin Core `<meta name="DC.…">` tags; any field it lacks is filled from the others, and `options.url` becomes its `URL` when the page names none. Every value goes through `fromCslJson`, so text is sanitised and identifiers validated; records carry `provenance: { source: "html", retrievedBy?: { identifierType: "url", identifier: options.url } }`. Pure and total: the page is scanned as text and never executed, a page with no metadata yields `{ page: Option.none(), coins: [] }`, a page longer than `options.maxInputLength` (default `MAX_INPUT_LENGTH`) yields nothing, and `options.maxRecords` (default `MAX_RECORDS`) caps the COinS records.
+
+```ts
+const html = `<html><head>
+  <meta name="citation_title" content="Structure of Scientific Revolutions">
+  <meta name="citation_author" content="Kuhn, Thomas S.">
+  <meta name="citation_doi" content="10.1037/0003-066X.59.1.29">
+</head></html>`;
+const { page } = readEmbeddedMetadata(html, { url: "https://example.org/kuhn" });
+assert.strictEqual(Option.getOrThrow(page).identifiers.doi, "10.1037/0003-066x.59.1.29");
+```
+
 ### Lookup — `./sources`
 
-**`BiblioLookup`** — `Context.Service` with `byIsbnRecord(isbn: string)`, `byDoiRecord(doi: string)` → `Effect<Option<BiblioRecord>, LookupError>` and `byTitle(query: string)` → `Effect<readonly BiblioRecord[], LookupError>`. Each method decodes the raw identifier first and fails with `InvalidIdentifier` before any request; a clean upstream 404 is `Option.none()`; `byTitle` never fails on an empty result.
+**`BiblioLookup`** — `Context.Service` with `byIsbnRecord(isbn: string)`, `byDoiRecord(doi: string)`, `byDoiCsl(doi: string)` → `Effect<Option<BiblioRecord>, LookupError>` and `byTitle(query: string)` → `Effect<readonly BiblioRecord[], LookupError>`. Each method decodes the raw identifier first and fails with `InvalidIdentifier` before any request; a clean upstream 404 is `Option.none()`; `byTitle` never fails on an empty result. `byDoiCsl` asks `https://doi.org` itself for the DOI's CSL-JSON by content negotiation (`Accept: application/vnd.citationstyles.csl+json`), which the DOI's own registration agency answers — Crossref, DataCite or mEDRA — so it reaches DOIs Crossref's API does not hold; the record carries `provenance: { source: "csl-json", retrievedBy: { identifierType: "doi", endpoint: "https://doi.org" } }`.
 
 **`biblioLookupLayer(options): Layer<BiblioLookup>`** — production, over `FetchHttpClient` (the global fetch). **`biblioLookupClientLayer(options): Layer<BiblioLookup, never, HttpClient>`** — over whatever `HttpClient` is in context, which is how a test injects a stubbed fetch. Both attach `acceptJson`, `filterStatusOk` and a polite `User-Agent` built from the required `options.contact`. Each call builds a new layer, so build it once and share it.
 
@@ -271,9 +285,9 @@ const lookupLayer = biblioLookupLayer({
 program.pipe(Effect.provide(lookupLayer)); // Effect<Option<BiblioRecord>, LookupError>
 ```
 
-**Errors** — `InvalidIdentifier { kind: "isbn" | "doi", value }` (fix the input, don't retry) and `LookupFailed { source: LookupSource, description }` (transport, non-404 status or decode failure); `LookupError` is their union and `LookupSource` is `"openlibrary" | "crossref" | "openalex"`.
+**Errors** — `InvalidIdentifier { kind: "isbn" | "doi", value }` (fix the input, don't retry) and `LookupFailed { source: LookupSource, description }` (transport, non-404 status or decode failure); `LookupError` is their union and `LookupSource` is `"openlibrary" | "crossref" | "openalex" | "doi"`.
 
-**Per-source functions** (take an already-composed `HttpClient` and a proven identifier): `lookupOpenLibraryByIsbn(client, isbn)`, `lookupCrossrefByDoi(client, doi)`, `lookupOpenAlexByDoi(client, doi, contact)`, `searchOpenAlexByTitle(client, query, contact)` (the OpenAlex pair sends `contact.email` as `mailto`; the User-Agent is whatever your client sets). The lenient response schemas (`OpenLibraryEdition`, `OpenLibraryAuthor`, `CrossrefResponse`, `OpenAlexWork`, `OpenAlexSearchResponse`) and normalisers (`normaliseOpenLibraryRecord`, `normaliseCrossrefRecord`, `normaliseOpenAlexRecord`) are exported so a consumer can drive them against recorded fixtures.
+**Per-source functions** (take an already-composed `HttpClient` and a proven identifier): `lookupOpenLibraryByIsbn(client, isbn)`, `lookupCrossrefByDoi(client, doi)`, `lookupDoiCsl(client, doi)`, `lookupOpenAlexByDoi(client, doi, contact)`, `searchOpenAlexByTitle(client, query, contact)` (the OpenAlex pair sends `contact.email` as `mailto`; the User-Agent is whatever your client sets). The lenient response schemas (`OpenLibraryEdition`, `OpenLibraryAuthor`, `CrossrefResponse`, `OpenAlexWork`, `OpenAlexSearchResponse`) and normalisers (`normaliseOpenLibraryRecord`, `normaliseCrossrefRecord`, `normaliseOpenAlexRecord`) are exported so a consumer can drive them against recorded fixtures.
 
 ## Compatibility
 

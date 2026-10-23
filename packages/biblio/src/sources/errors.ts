@@ -13,11 +13,12 @@
 import * as Schema from "effect/Schema";
 
 /**
- * The external source authorities a lookup can fail against.
+ * The external source authorities a lookup can fail against. `doi` (content
+ * negotiation at `doi.org`) was added in 1.0.0.
  *
  * @since 0.1.0
  */
-export const LookupSource = Schema.Literals(["openlibrary", "crossref", "openalex"]);
+export const LookupSource = Schema.Literals(["openlibrary", "crossref", "openalex", "doi"]);
 /**
  * @since 0.1.0
  */

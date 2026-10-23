@@ -277,7 +277,8 @@ export const RecordIdentifiers = Schema.Struct({
 export type RecordIdentifiers = typeof RecordIdentifiers.Type;
 
 /**
- * The external authority (or channel) a record came from.
+ * The external authority (or channel) a record came from. `html` (citation
+ * metadata embedded in a web page) was added in 1.0.0.
  *
  * @since 0.1.0
  */
@@ -289,6 +290,7 @@ export const ProvenanceSource = Schema.Literals([
   "csl-json",
   "ris",
   "csv",
+  "html",
   "manual",
 ]);
 /**
