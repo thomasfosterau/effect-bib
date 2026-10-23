@@ -1,6 +1,6 @@
 /**
  * File-format parsers for bibliographic import — **BibTeX**, **CSL-JSON**
- * (the Zotero export shape), reading-list **CSV**, and **RIS** — each
+ * (the Zotero export shape), **CSL YAML**, reading-list **CSV**, and **RIS** — each
  * emitting the CSL-aligned {@link BiblioRecord}.
  *
  * The parsers are the file-side analogue of the source-client normalisers:
@@ -74,17 +74,18 @@ import {
   dateFromYear,
   fromCslJson,
   isCslItemType,
+  readCslName,
   MAX_AUTHORS,
   MAX_TEXT_FIELD_LENGTH,
   parsePersonName,
   type ProvenanceSource,
-  readCslNameArray,
   type RecordIdentifiers,
   type RecordLimits,
   sanitiseText,
   sanitiseYear,
 } from "./record.ts";
 import type { RawFields } from "./raw-fields.ts";
+import { readYaml } from "./yaml.ts";
 import { mapBibtexEntries } from "./bibtex/fields.ts";
 import { resolveInheritance } from "./bibtex/inherit.ts";
 import { scanBibtex } from "./bibtex/scan.ts";
@@ -92,11 +93,11 @@ import { scanBibtex } from "./bibtex/scan.ts";
 // ── Public surface ────────────────────────────────────────────────────
 
 /**
- * The file formats this module can parse.
+ * The file formats this module can parse. `csl-yaml` was added in 1.0.0.
  *
  * @since 0.1.0
  */
-export type ImportFormat = "bibtex" | "zotero-json" | "csv" | "ris";
+export type ImportFormat = "bibtex" | "zotero-json" | "csl-yaml" | "csv" | "ris";
 
 /**
  * Why a source entry produced no importable record. `too-large` and
@@ -325,6 +326,7 @@ export function parseBibliographicFile(
   return Match.value(format).pipe(
     Match.when("bibtex", () => parseBibtex(content, options)),
     Match.when("zotero-json", () => parseZoteroJson(content, options)),
+    Match.when("csl-yaml", () => parseCslYaml(content, options)),
     Match.when("csv", () => parseCsv(content, options)),
     Match.when("ris", () => parseRis(content, options)),
     Match.exhaustive,
@@ -539,57 +541,15 @@ export function parseBibtex(content: string, options: ParseOptions = {}): ParseO
 
 // ── Zotero / CSL-JSON ─────────────────────────────────────────────────
 
-const decodeString = Schema.decodeUnknownOption(Schema.String);
-
-/** A CSL `issued` date object: structured `date-parts`, or a free-text `raw` date. */
-const CslIssued = Schema.Struct({
-  "date-parts": Schema.optional(Schema.Unknown),
-  raw: Schema.optional(Schema.Unknown),
-});
-const decodeCslIssued = Schema.decodeUnknownOption(CslIssued);
-
-/** A CSL `date-parts` value whose first part list is non-empty: `[[year, …], …]`. */
-const decodeFirstDatePart = Schema.decodeUnknownOption(
-  Schema.TupleWithRest(
-    Schema.Tuple([Schema.TupleWithRest(Schema.Tuple([Schema.Unknown]), [Schema.Unknown])]),
-    [Schema.Unknown],
-  ),
-);
-
-/** A year candidate: a number, or text that may hold one. */
-const decodeYearCandidate = Schema.decodeUnknownOption(
-  Schema.Union([Schema.String, Schema.Number]),
-);
-
-/** Reads the year from a CSL `issued` date object (`date-parts` or `raw`). */
-function cslYear(issued: typeof CslIssued.Type): Option.Option<string | number> {
-  const parts = decodeFirstDatePart(issued["date-parts"]);
-  if (Option.isSome(parts)) return decodeYearCandidate(parts.value[0][0]);
-  return Option.flatMap(decodeString(issued.raw), (raw) => {
-    const match = raw.match(/(\d{4})/);
-    return match ? Option.some(match[1]) : Option.none();
-  });
-}
-
-/**
- * Reads the first checksum-valid ISBN from a CSL `ISBN` field, which
- * Zotero emits as either a single string or a space / comma separated
- * list. Yields the raw token so {@link toOutcome} decodes it canonically.
- */
-function cslFirstIsbn(value: string): Option.Option<string> {
-  return Array.findFirst(value.split(/[\s,;]+/), (candidate) =>
-    Option.isSome(decodeIsbn(candidate)),
-  );
-}
-
 /**
  * Parses a Zotero / CSL-JSON export into per-entry {@link ParseOutcome}s.
  * Accepts a top-level array of item objects or a `{ items: [...] }`
  * envelope. Invalid JSON yields a single `malformed` outcome; a non-object
- * item is skipped as `malformed`. In `import` mode an item is read as far
- * as the import needs (title, container, numbering, date, identifiers,
- * authors, editors, `id`, `citation-key`); in `lenient` mode each item is
- * read in full with {@link fromCslJson}. JSON carries no positions, so
+ * item is skipped as `malformed`. Each item is read in full with
+ * {@link fromCslJson}, so importing a file is no lossier than decoding one
+ * item; in `import` mode the policy then applies (a title and an ISBN or
+ * DOI), and an item with no valid `type` is typed by its identifier (an
+ * ISBN → `book`, a DOI → `article-journal`). JSON carries no positions, so
  * these outcomes have none.
  *
  * @since 0.1.0
@@ -598,7 +558,7 @@ export function parseZoteroJson(content: string, options: ParseOptions = {}): Pa
   return withinInputCap(content, settings(options), (input, config) => {
     const data = decodeJsonBody(input);
     if (Option.isNone(data)) return [{ outcome: "skipped", reason: "malformed" }];
-    const [items, truncated] = capped(
+    return cslItemOutcomes(
       Option.getOrElse(
         Option.orElse(decodeCslItemArray(data.value), () =>
           Option.map(decodeCslEnvelope(data.value), (envelope) => envelope.items),
@@ -607,17 +567,46 @@ export function parseZoteroJson(content: string, options: ParseOptions = {}): Pa
       ),
       config,
     );
-    const outcomes = Array.map(items, (item): ParseOutcome => {
-      if (!Predicate.isObjectOrArray(item)) return { outcome: "skipped", reason: "malformed" };
-      if (config.lenient) return { outcome: "parsed", record: fromCslJson(item, config) };
-      // An array item reads as an item with no fields (→ `no-title`).
-      return cslItemOutcome(
-        Option.getOrElse(decodeCslItem(item), () => CSL_EMPTY_ITEM),
-        config,
-      );
-    });
-    return endOutcomes(outcomes, truncated);
   });
+}
+
+/** The outcomes of a list of CSL items (from CSL-JSON or CSL YAML), up to the record cap. */
+function cslItemOutcomes(all: readonly unknown[], config: Settings): ParseOutcome[] {
+  const [items, truncated] = capped(all, config);
+  const outcomes = Array.map(items, (item): ParseOutcome => {
+    if (!Predicate.isObjectOrArray(item)) return { outcome: "skipped", reason: "malformed" };
+    const record = fromCslJson(item, config);
+    if (config.lenient) return { outcome: "parsed", record };
+    const declared = Option.filter(
+      Option.flatMap(decodeTypedItem(item), (typed) => Option.fromUndefinedOr(typed.type)),
+      isCslItemType,
+    );
+    return cslImportOutcome(record, declared);
+  });
+  return endOutcomes(outcomes, truncated);
+}
+
+/** An item object's `type` member, when it is text. */
+const decodeTypedItem = Schema.decodeUnknownOption(
+  Schema.Struct({ type: Schema.optional(Schema.String) }),
+);
+
+/**
+ * Applies the import policy to a CSL item read in full: a title and an ISBN
+ * or DOI, and a type from the identifier when the item declared none.
+ */
+function cslImportOutcome(
+  record: BiblioRecord,
+  declared: Option.Option<CslItemType>,
+): ParseOutcome {
+  if (record.title === undefined) return { outcome: "skipped", reason: "no-title" };
+  const { isbn, doi } = record.identifiers;
+  if (isbn === undefined && doi === undefined)
+    return { outcome: "skipped", reason: "no-identifier" };
+  const type = Option.getOrElse(declared, (): CslItemType =>
+    isbn !== undefined ? "book" : "article-journal",
+  );
+  return { outcome: "parsed", record: { ...record, type } };
 }
 
 /** Decodes an untrusted JSON document body; `None` when the text is not JSON. */
@@ -631,61 +620,70 @@ const decodeCslEnvelope = Schema.decodeUnknownOption(
   Schema.Struct({ items: Schema.Array(Schema.Unknown) }),
 );
 
-/** One CSL item object, read as far as the fields the parser consumes. */
-const CslItem = Schema.Struct({
-  type: Schema.optional(Schema.Unknown),
-  title: Schema.optional(Schema.Unknown),
-  issued: Schema.optional(Schema.Unknown),
-  publisher: Schema.optional(Schema.Unknown),
-  "container-title": Schema.optional(Schema.Unknown),
-  volume: Schema.optional(Schema.Unknown),
-  issue: Schema.optional(Schema.Unknown),
-  page: Schema.optional(Schema.Unknown),
-  ISBN: Schema.optional(Schema.Unknown),
-  ISSN: Schema.optional(Schema.Unknown),
-  DOI: Schema.optional(Schema.Unknown),
-  PMID: Schema.optional(Schema.Unknown),
-  PMCID: Schema.optional(Schema.Unknown),
-  id: Schema.optional(Schema.Unknown),
-  "citation-key": Schema.optional(Schema.Unknown),
-  author: Schema.optional(Schema.Unknown),
-  editor: Schema.optional(Schema.Unknown),
-});
-const decodeCslItem = Schema.decodeUnknownOption(CslItem);
-const CSL_EMPTY_ITEM: typeof CslItem.Type = {};
+// ── CSL YAML ──────────────────────────────────────────────────────────
 
-/** A CSL value that may be text or a number (`id`, `PMID`). */
-const decodeStringOrNumber = Schema.decodeUnknownOption(
-  Schema.Union([Schema.String, Schema.Finite]),
+/** A parsed CSL YAML body: a `references:` mapping (Pandoc's form). */
+const decodeCslReferences = Schema.decodeUnknownOption(
+  Schema.Struct({ references: Schema.Array(Schema.Unknown) }),
 );
 
-/** Maps one CSL item object to a {@link ParseOutcome}. */
-function cslItemOutcome(item: typeof CslItem.Type, config: Settings): ParseOutcome {
-  return toOutcome(
-    {
-      type: Option.filter(decodeString(item.type), isCslItemType),
-      title: decodeString(item.title),
-      subtitle: Option.none(),
-      year: Option.flatMap(decodeCslIssued(item.issued), cslYear),
-      publisher: decodeString(item.publisher),
-      containerTitle: decodeString(item["container-title"]),
-      volume: decodeString(item.volume),
-      issue: decodeString(item.issue),
-      page: decodeString(item.page),
-      isbn: Option.flatMap(decodeString(item.ISBN), cslFirstIsbn),
-      issn: decodeString(item.ISSN),
-      doi: decodeString(item.DOI),
-      pmid: Option.map(decodeStringOrNumber(item.PMID), (value) => value.toString()),
-      pmcid: decodeString(item.PMCID),
-      arxiv: Option.none(),
-      id: decodeStringOrNumber(item.id),
-      citationKey: decodeString(item["citation-key"]),
-      names: readCslNameArray(item.author, config.maxAuthors),
-      editors: readCslNameArray(item.editor, config.maxAuthors),
-    },
-    "csl-json",
-    config,
-  );
+/**
+ * Parses CSL YAML — a Pandoc bibliography file, or a Markdown document's
+ * front matter, holding `references:` — into per-entry
+ * {@link ParseOutcome}s. It is the same data as CSL-JSON in YAML form, read
+ * the same way (each item in full with {@link fromCslJson}, the `import`
+ * policy on top); a bare top-level list of items is read too. The YAML
+ * reader takes the subset bibliographies are written in (block mappings and
+ * lists, one-line flow lists, plain, quoted and block scalars, comments);
+ * YAML outside it (anchors, aliases, tags), or a document with no
+ * references, is one `malformed` outcome. YAML carries no positions here,
+ * so the outcomes have none.
+ *
+ * @example
+ * ```ts
+ * import * as assert from "node:assert"
+ * import { parseCslYaml } from "@thomasfosterau/biblio"
+ *
+ * const markdown = [
+ *   "---",
+ *   "title: My paper",
+ *   "references:",
+ *   "- id: harari2015",
+ *   "  type: book",
+ *   "  title: 'Sapiens: A Brief History of Humankind'",
+ *   "  author:",
+ *   "  - family: Harari",
+ *   "    given: Yuval Noah",
+ *   "  issued:",
+ *   "    date-parts: [[2015]]",
+ *   "  ISBN: 9780062316097",
+ *   "---",
+ *   "",
+ *   "As @harari2015 argues…",
+ * ].join("\n")
+ *
+ * const [outcome] = parseCslYaml(markdown)
+ * const record = outcome.outcome === "parsed" ? outcome.record : undefined
+ * assert.strictEqual(record?.title, "Sapiens: A Brief History of Humankind")
+ * assert.strictEqual(record?.identifiers.isbn, "9780062316097")
+ * assert.deepStrictEqual(record?.issued, { "date-parts": [[2015]] })
+ * ```
+ *
+ * @since 1.0.0
+ */
+export function parseCslYaml(content: string, options: ParseOptions = {}): ParseOutcome[] {
+  return withinInputCap(content, settings(options), (input, config) => {
+    const items = Option.flatMap(readYaml(input), (data) =>
+      Option.orElse(
+        Option.map(decodeCslReferences(data), (body) => body.references),
+        () => decodeCslItemArray(data),
+      ),
+    );
+    return Option.match(items, {
+      onNone: (): ParseOutcome[] => [{ outcome: "skipped", reason: "malformed" }],
+      onSome: (list) => cslItemOutcomes(list, config),
+    });
+  });
 }
 
 // ── Reading-list CSV ──────────────────────────────────────────────────
@@ -991,6 +989,22 @@ function risSerials(record: RisRecord): RisSerials {
   };
 }
 
+/**
+ * Structures RIS names: `Last, First, Suffix` (the suffix is the text after
+ * a second comma), else as a display-form name; bounded and empties dropped.
+ */
+function risNames(raw: readonly string[], maxAuthors: number): CslName[] {
+  return Array.filterMap(raw, (value): Result.Result<CslName, void> => {
+    const parts = value.split(",");
+    return Result.fromOption(
+      parts.length >= 3
+        ? readCslName({ family: parts[0], given: parts[1], suffix: parts.slice(2).join(",") })
+        : Option.fromNullishOr(parsePersonName(value)),
+      () => undefined,
+    );
+  }).slice(0, maxAuthors);
+}
+
 /** Maps one RIS record multimap to a {@link ParseOutcome}. */
 function risRecordOutcome(record: RisRecord, config: Settings): ParseOutcome {
   const serials = risSerials(record);
@@ -1029,8 +1043,8 @@ function risRecordOutcome(record: RisRecord, config: Settings): ParseOutcome {
       arxiv: Option.none(),
       id: key,
       citationKey: key,
-      names: structuredNames(risAll(record, ["AU", "A1"]), config.maxAuthors),
-      editors: structuredNames(risAll(record, ["ED", "A2"]), config.maxAuthors),
+      names: risNames(risAll(record, ["AU", "A1"]), config.maxAuthors),
+      editors: risNames(risAll(record, ["ED", "A2"]), config.maxAuthors),
     },
     "ris",
     config,

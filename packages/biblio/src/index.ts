@@ -1,8 +1,8 @@
 /**
  * The pure, network-free half of the toolkit: the CSL-aligned
  * {@link BiblioRecord} and its interop boundary, the branded checksummed
- * identifiers, the bibliographic-file parsers, same-work dedup scoring and
- * citation rendering. Depends on `effect` and, for the BibTeX parser,
+ * identifiers, the bibliographic-file parsers and writers, same-work dedup
+ * scoring and citation rendering. Depends on `effect` and, for the BibTeX parser,
  * `@thomasfosterau/effect-parse`, never on `effect/http`, so a browser
  * bundle that imports it never loads the lookup sources (those are the
  * `./sources` entry point).
@@ -12,7 +12,9 @@
  */
 
 export * from "./dedup-match.ts";
+export * from "./detect.ts";
 export * from "./identifiers.ts";
 export * from "./parse.ts";
 export * from "./record.ts";
 export * from "./render/index.ts";
+export * from "./write/index.ts";

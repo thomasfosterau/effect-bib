@@ -26,6 +26,7 @@ import {
   parseZoteroJson,
   toCslJson,
   type ParseOutcome,
+  yearOf,
 } from "@thomasfosterau/biblio";
 
 /** Encodes a fixture value to the JSON text a parser receives. */
@@ -260,11 +261,34 @@ describe("parseZoteroJson", () => {
     expect(parseZoteroJson(toJsonText("text"))).toEqual([]);
   });
 
-  it("reads the year from an issued raw date when it has no date-parts", () => {
+  it("keeps an issued raw date as written (its year still reads)", () => {
     const outcomes = parseZoteroJson(
       toJsonText([{ title: "t", DOI: "10.1000/x", issued: { raw: "Spring 2015" } }]),
     );
-    expect(expectParsed(outcomes[0]).issued).toEqual({ "date-parts": [[2015]] });
+    const issued = expectParsed(outcomes[0]).issued;
+    expect(issued).toEqual({ raw: "Spring 2015" });
+    expect(yearOf(issued)).toBe(2015);
+  });
+
+  it("reads an import-mode item in full, and the first valid ISBN of a list", () => {
+    const [outcome] = parseZoteroJson(
+      toJsonText([
+        {
+          title: "Sapiens",
+          ISBN: "not-an-isbn 0-06-231609-5",
+          issued: { "date-parts": [[2015, 3, 14]] },
+          "publisher-place": "New York",
+          translator: [{ family: "Purcell", given: "John" }],
+        },
+      ]),
+    );
+    expect(expectParsed(outcome)).toMatchObject({
+      type: "book",
+      issued: { "date-parts": [[2015, 3, 14]] },
+      "publisher-place": "New York",
+      translator: [{ family: "Purcell", given: "John" }],
+      identifiers: { isbn: "9780062316097" },
+    });
   });
 });
 
@@ -450,7 +474,8 @@ describe("lenient mode and citation keys", () => {
       "citation-key": "doe2020",
       identifiers: { pmid: "15371539" },
     });
-    expect(imported.genre).toBeUndefined();
+    // Read in full, as in lenient mode (#82).
+    expect(imported.genre).toBe("PhD thesis");
     expect(parseZoteroJson(toJsonText([1]), { mode: "lenient" })).toEqual([
       { outcome: "skipped", reason: "malformed" },
     ]);
