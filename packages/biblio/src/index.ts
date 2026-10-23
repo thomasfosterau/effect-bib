@@ -14,7 +14,26 @@
 export * from "./dedup-match.ts";
 export * from "./detect.ts";
 export * from "./identifiers.ts";
-export * from "./parse.ts";
+// Named, not `export *`: `parse.ts` also exports the streaming front end's
+// internal `parseBibtexDocument`, which is not part of the package's API.
+export {
+  type ImportFormat,
+  MAX_INPUT_LENGTH,
+  MAX_RECORDS,
+  parseBibliographicFile,
+  parseBibtex,
+  parseCslYaml,
+  parseCsv,
+  type ParsedEntry,
+  type ParseMode,
+  type ParseOptions,
+  type ParseOutcome,
+  parseRis,
+  parseZoteroJson,
+  type SkippedEntry,
+  type SkipReason,
+  type SourcePosition,
+} from "./parse.ts";
 export * from "./record.ts";
 export * from "./render/index.ts";
 export * from "./streaming.ts";
