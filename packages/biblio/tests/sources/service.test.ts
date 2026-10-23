@@ -188,6 +188,58 @@ describe("BiblioLookup.byDoiCsl", () => {
     expect(failure).toMatchObject({ source: "doi" });
   });
 
+  it("follows a redirect to a registration agency by hand, never letting fetch follow it", async () => {
+    const agency = "https://api.crossref.org/v1/works/10.5281%2Fzenodo.1234567/transform";
+    const { layer, urls, redirects } = stubRouter({
+      [url]: { status: 302, body: {}, location: agency },
+      [agency]: { status: 200, body: { type: "dataset", title: "Via Crossref", DOI: doi } },
+    });
+    const record = expectSome(
+      await runTest(withLookup(layer, (lookup) => lookup.byDoiCsl(doi))),
+      "a record",
+    );
+    expect(record.title).toBe("Via Crossref");
+    expect(urls).toEqual([url, agency]);
+    expect(redirects).toEqual(["manual", "manual"]);
+  });
+
+  it.each([
+    ["an internal host", "http://169.254.169.254/latest/meta-data/"],
+    ["a loopback address over https", "https://127.0.0.1/admin"],
+    ["an unknown host", "https://evil.example/record"],
+    ["plain http to an agency", "http://api.crossref.org/works/x"],
+    ["an agency with credentials", "https://user:pw@api.crossref.org/works/x"],
+    ["an agency on another port", "https://api.crossref.org:8443/works/x"],
+    ["an unparseable location", "https://[bad"],
+  ])("refuses a redirect to %s", async (_, location) => {
+    const { layer, urls } = stubRouter({ [url]: { status: 302, body: {}, location } });
+    const failure = await expectFailureInstanceOf(
+      withLookup(layer, (lookup) => lookup.byDoiCsl(doi)),
+      LookupFailed,
+    );
+    expect(failure).toMatchObject({ source: "doi" });
+    expect(urls).toEqual([url]);
+  });
+
+  it("fails on a redirect loop, a redirect without a location and a non-JSON body", async () => {
+    const loop = stubRouter({ [url]: { status: 302, body: {}, location: url } });
+    await expectFailureInstanceOf(
+      withLookup(loop.layer, (lookup) => lookup.byDoiCsl(doi)),
+      LookupFailed,
+    );
+    expect(loop.urls).toHaveLength(6);
+    const bare = stubRouter({ [url]: { status: 303, body: {} } });
+    await expectFailureInstanceOf(
+      withLookup(bare.layer, (lookup) => lookup.byDoiCsl(doi)),
+      LookupFailed,
+    );
+    const html = stubRouter({ [url]: { status: 200, body: {}, raw: "<html>not json</html>" } });
+    await expectFailureInstanceOf(
+      withLookup(html.layer, (lookup) => lookup.byDoiCsl(doi)),
+      LookupFailed,
+    );
+  });
+
   it("fails with InvalidIdentifier for a malformed DOI, before any request", async () => {
     const { layer, urls } = stubRouter({});
     await expectFailureInstanceOf(
