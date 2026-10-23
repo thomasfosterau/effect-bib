@@ -1,0 +1,185 @@
+[
+  {
+    "abstract": "Some abstract",
+    "author": [
+      {
+        "family": "AAA"
+      },
+      {
+        "family": "BBB"
+      },
+      {
+        "family": "CCC"
+      },
+      {
+        "family": "DDD"
+      },
+      {
+        "family": "EEE"
+      }
+    ],
+    "id": "i3Š",
+    "issued": {
+      "date-parts": [[2003]]
+    },
+    "keyword": "keyword, keyword2,keyword3",
+    "publisher-place": "one; two",
+    "title": "Š title",
+    "type": "manuscript"
+  },
+  {
+    "author": [
+      {
+        "family": "Ellington",
+        "given": "Edward Paul"
+      }
+    ],
+    "id": "xd1",
+    "type": "book"
+  },
+  {
+    "id": "b1",
+    "issued": {
+      "date-parts": [[1999]]
+    },
+    "publisher-place": "London; Edinburgh",
+    "title": "Booktitle",
+    "type": "book"
+  },
+  {
+    "id": "mv1",
+    "other-ids": "mvalias",
+    "title": "Maintitle: Mainsubtitle. Maintitleaddon",
+    "title-short": "Maintitle",
+    "type": "book"
+  },
+  {
+    "accessed": {
+      "date-parts": [
+        [2004, 4, 25],
+        [2004, 4, 5]
+      ]
+    },
+    "event-date": {
+      "date-parts": [
+        [2004, 4, 25],
+        [2004, 4, 5]
+      ]
+    },
+    "id": "dt1",
+    "issued": {
+      "date-parts": [
+        [2004, 4, 25],
+        [2004, 4, 5]
+      ]
+    },
+    "original-date": {
+      "date-parts": [
+        [2004, 4, 25],
+        [2004, 4, 5]
+      ]
+    },
+    "type": "book"
+  },
+  {
+    "container-title": "A Journal",
+    "id": "m1",
+    "issued": {
+      "date-parts": [[2017]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Foo"
+      }
+    ],
+    "id": "badcr1",
+    "issued": {
+      "date-parts": [[2019]]
+    },
+    "title": "Foo",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Bar"
+      }
+    ],
+    "id": "badcr2",
+    "issued": {
+      "date-parts": [[2019]]
+    },
+    "title": "Bar",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Smith",
+        "given": "John"
+      },
+      {
+        "dropping-particle": "and",
+        "family": "Terry Brown"
+      }
+    ],
+    "id": "badname",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "Smith",
+        "given": "Simon"
+      }
+    ],
+    "editor": [],
+    "id": "gxd1",
+    "note": "xdata=gxd2-note. xdata=missing",
+    "publisher": "xdata=gxd2-author-3; xdata=gxd2",
+    "publisher-place": "xdata=gxd3-location-1; B",
+    "title": "Xdata=gxd4-title",
+    "translator": [],
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Smith",
+        "given": "Simon"
+      }
+    ],
+    "id": "bo1",
+    "other-ids": "box1,box2",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "AAA"
+      },
+      {
+        "family": "BBB"
+      },
+      {
+        "family": "CCC"
+      },
+      {
+        "family": "DDD"
+      },
+      {
+        "family": "EEE"
+      }
+    ],
+    "id": "ld1",
+    "issued": {
+      "date-parts": [[2003, 4]]
+    },
+    "publisher": "Publisher",
+    "title": "A title",
+    "type": "book"
+  }
+]

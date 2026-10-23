@@ -1,0 +1,538 @@
+[
+  {
+    "author": [
+      {
+        "family": "Smith",
+        "given": "John"
+      },
+      {
+        "family": "Smith",
+        "given": "Bert"
+      }
+    ],
+    "id": "us1",
+    "issued": {
+      "date-parts": [[1968]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Reynolds",
+        "given": "Bill"
+      },
+      {
+        "family": "Plumb",
+        "given": "James"
+      }
+    ],
+    "id": "us2",
+    "issued": {
+      "date-parts": [[1932]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Plumb",
+        "given": "Alan"
+      },
+      {
+        "family": "Reynolds",
+        "given": "Trevor"
+      }
+    ],
+    "id": "us3",
+    "issued": {
+      "date-parts": [[1945]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Brown",
+        "given": "Basil"
+      },
+      {
+        "family": "Heretic",
+        "given": "Helen"
+      }
+    ],
+    "id": "us4",
+    "issued": {
+      "date-parts": [[1984]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Brown",
+        "given": "Mary"
+      }
+    ],
+    "id": "us5",
+    "issued": {
+      "date-parts": [[1983]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Prefect",
+        "given": "Peter"
+      },
+      {
+        "family": "Mangle",
+        "given": "Martin"
+      },
+      {
+        "family": "Loon",
+        "given": "Leigh"
+      }
+    ],
+    "id": "us6",
+    "issued": {
+      "date-parts": [[1982]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Prefect",
+        "given": "Russ"
+      },
+      {
+        "family": "Mangle",
+        "given": "Graham"
+      }
+    ],
+    "id": "us7",
+    "issued": {
+      "date-parts": [[1989]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Jingle",
+        "given": "Jeremy"
+      },
+      {
+        "family": "Irate",
+        "given": "Otto"
+      }
+    ],
+    "id": "us8",
+    "issued": {
+      "date-parts": [[1982]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Jingle",
+        "given": "Kevin"
+      },
+      {
+        "family": "Montle",
+        "given": "Barbara"
+      }
+    ],
+    "id": "us9",
+    "issued": {
+      "date-parts": [[1989]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Red",
+        "given": "Richard"
+      },
+      {
+        "family": "Green",
+        "given": "Graham"
+      }
+    ],
+    "id": "us10",
+    "issued": {
+      "date-parts": [[1982]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Red",
+        "given": "Victor"
+      },
+      {
+        "family": "Green",
+        "given": "Mark"
+      }
+    ],
+    "id": "us11",
+    "issued": {
+      "date-parts": [[1989]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Slip",
+        "given": "Simon"
+      },
+      {
+        "family": "Brass",
+        "given": "Bertie"
+      }
+    ],
+    "id": "us12",
+    "issued": {
+      "date-parts": [[1989]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Slip",
+        "given": "Steven"
+      },
+      {
+        "family": "Brass",
+        "given": "Bertie"
+      }
+    ],
+    "id": "us13",
+    "issued": {
+      "date-parts": [[1989]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Gurgle",
+        "given": "Peter"
+      },
+      {
+        "family": "Splonk",
+        "given": "Martin"
+      },
+      {
+        "family": "Remedial",
+        "given": "Leigh"
+      },
+      {
+        "family": "Argue",
+        "given": "Trevor"
+      }
+    ],
+    "id": "us14",
+    "issued": {
+      "date-parts": [[1989]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Gurgle",
+        "given": "Alan"
+      },
+      {
+        "family": "Splonk",
+        "given": "Michael"
+      },
+      {
+        "family": "Remedial",
+        "given": "Leigh"
+      }
+    ],
+    "id": "us15",
+    "issued": {
+      "date-parts": [[1989]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "AAA"
+      },
+      {
+        "family": "BBB"
+      },
+      {
+        "family": "CCC"
+      }
+    ],
+    "id": "us16",
+    "issued": {
+      "date-parts": [[1902]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "AAA"
+      },
+      {
+        "family": "BBB"
+      },
+      {
+        "family": "CCC"
+      },
+      {
+        "family": "DDD"
+      }
+    ],
+    "id": "us17",
+    "issued": {
+      "date-parts": [[1906]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "AAAA",
+        "given": "A."
+      },
+      {
+        "family": "BBBB"
+      },
+      {
+        "family": "CCCC"
+      }
+    ],
+    "id": "us18",
+    "issued": {
+      "date-parts": [[1902]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "AAAA",
+        "given": "B."
+      },
+      {
+        "family": "BBBB"
+      },
+      {
+        "family": "CCCC"
+      },
+      {
+        "family": "DDDD"
+      }
+    ],
+    "id": "us19",
+    "issued": {
+      "date-parts": [[1906]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Schmitz",
+        "given": "Ulrich"
+      }
+    ],
+    "id": "us20",
+    "issued": {
+      "date-parts": [[1906]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Schmitz",
+        "given": "Ulrich"
+      }
+    ],
+    "id": "us21",
+    "issued": {
+      "date-parts": [[1934]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Cambell",
+        "given": "Brian"
+      },
+      {
+        "family": "Schmitz",
+        "given": "Frank"
+      }
+    ],
+    "id": "us22",
+    "issued": {
+      "date-parts": [[1936]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Oligarch",
+        "given": "Oliver"
+      }
+    ],
+    "id": "us23",
+    "issued": {
+      "date-parts": [[1906]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Oligarch",
+        "given": "Otto"
+      }
+    ],
+    "id": "us24",
+    "issued": {
+      "date-parts": [[1934]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Ink",
+        "given": "Ian"
+      },
+      {
+        "family": "Oligarch",
+        "given": "Peter"
+      }
+    ],
+    "id": "us25",
+    "issued": {
+      "date-parts": [[1936]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Meredith",
+        "given": "Roger"
+      }
+    ],
+    "id": "us26",
+    "issued": {
+      "date-parts": [[1936]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Meredith",
+        "given": "Roger"
+      }
+    ],
+    "id": "us27a",
+    "issued": {
+      "date-parts": [[1934]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Meredith",
+        "given": "Alan"
+      }
+    ],
+    "id": "us27",
+    "issued": {
+      "date-parts": [[1936]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Meredith",
+        "given": "Andrew"
+      }
+    ],
+    "id": "us28",
+    "issued": {
+      "date-parts": [[1936]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Creation",
+        "given": "Clive"
+      },
+      {
+        "family": "Patronage",
+        "given": "Peter"
+      }
+    ],
+    "id": "us29",
+    "issued": {
+      "date-parts": [[1936]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Creation",
+        "given": "Clive"
+      },
+      {
+        "family": "Patronage",
+        "given": "Peter"
+      }
+    ],
+    "id": "us29a",
+    "issued": {
+      "date-parts": [[1934]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Creation",
+        "given": "Liam"
+      },
+      {
+        "family": "Patronage",
+        "given": "Peter"
+      }
+    ],
+    "id": "us30",
+    "issued": {
+      "date-parts": [[1932]]
+    },
+    "type": "article-journal"
+  }
+]

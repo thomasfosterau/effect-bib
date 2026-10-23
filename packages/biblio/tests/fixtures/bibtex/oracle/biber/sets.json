@@ -1,0 +1,156 @@
+[
+  {
+    "DOI": "10.1109/TIT.1955.1055126",
+    "ISSN": "0096-1000",
+    "author": [
+      {
+        "family": "Elias",
+        "given": "P."
+      }
+    ],
+    "container-title": "IRE Transactions on Information Theory",
+    "id": "Elias1955",
+    "issued": {
+      "date-parts": [[1955]]
+    },
+    "number": "1",
+    "page": "16-24",
+    "title": "Predictive coding–i",
+    "type": "",
+    "volume": "1"
+  },
+  {
+    "DOI": "10.1109/TIT.1955.1055126",
+    "ISSN": "0096-1000",
+    "author": [
+      {
+        "family": "Elias",
+        "given": "P."
+      }
+    ],
+    "container-title": "IRE Transactions on Information Theory",
+    "id": "Elias1955a",
+    "issue": "1",
+    "issued": {
+      "date-parts": [[1955]]
+    },
+    "other-ids": "Elias1955aALIAS",
+    "page": "16-24",
+    "title": "Predictive coding–i",
+    "type": "article-journal",
+    "volume": "1"
+  },
+  {
+    "DOI": "10.1109/TIT.1955.1055116",
+    "ISSN": "0096-1000",
+    "author": [
+      {
+        "family": "Elias",
+        "given": "P."
+      }
+    ],
+    "container-title": "IRE Transactions on Information Theory",
+    "id": "Elias1955b",
+    "issue": "1",
+    "issued": {
+      "date-parts": [[1955]]
+    },
+    "page": "24-33",
+    "title": "Predictive coding–II",
+    "type": "article-journal",
+    "volume": "1"
+  },
+  {
+    "annote": "Some notes",
+    "id": "Static1",
+    "type": ""
+  },
+  {
+    "annote": "Some Blessed Note",
+    "author": [
+      {
+        "family": "Bumble",
+        "given": "Brian"
+      }
+    ],
+    "id": "Static2",
+    "issued": {
+      "date-parts": [[2001]]
+    },
+    "other-ids": "Somealias, Static2alias",
+    "title": "Blessed brains",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Dingle",
+        "given": "Derek"
+      }
+    ],
+    "id": "Static3",
+    "issued": {
+      "date-parts": [[2002]]
+    },
+    "title": "Castles and crime",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Crenellation",
+        "given": "Clive"
+      }
+    ],
+    "id": "Static4",
+    "issued": {
+      "date-parts": [[2005]]
+    },
+    "title": "Dungeons, dark and dangerous",
+    "type": "book"
+  },
+  {
+    "annote": "Some Dynamic Note",
+    "author": [
+      {
+        "family": "Dynamism",
+        "given": "Derek"
+      }
+    ],
+    "id": "Dynamic1",
+    "issued": {
+      "date-parts": [[2002]]
+    },
+    "title": "Doing daring deeds",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Bunting",
+        "given": "Brian"
+      }
+    ],
+    "id": "Dynamic2",
+    "issued": {
+      "date-parts": [[2010]]
+    },
+    "title": "Beautiful birthdays",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Regardless",
+        "given": "Roger"
+      }
+    ],
+    "id": "Dynamic3",
+    "issued": {
+      "date-parts": [[2000]]
+    },
+    "other-ids": "Dynamic3alias",
+    "title": "Reckless ravishings",
+    "type": "book"
+  }
+]

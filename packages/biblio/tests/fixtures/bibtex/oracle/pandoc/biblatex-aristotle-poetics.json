@@ -1,0 +1,28 @@
+[
+  {
+    "annote": "A book entry with an author and an editor as well as a series field",
+    "author": [
+      {
+        "family": "Aristotle"
+      }
+    ],
+    "collection-title": "Clarendon Aristotle",
+    "editor": [
+      {
+        "family": "Lucas",
+        "given": "D. W."
+      }
+    ],
+    "id": "aristotle:poetics",
+    "issued": {
+      "date-parts": [[1968]]
+    },
+    "keyword": "primary",
+    "language": "en-GB",
+    "publisher": "Clarendon Press",
+    "publisher-place": "Oxford",
+    "title": "Poetics",
+    "title-short": "Poetics",
+    "type": "book"
+  }
+]

@@ -1,0 +1,89 @@
+[
+  {
+    "director": [
+      {
+        "family": "Marka",
+        "given": "Sebastiaan"
+      }
+    ],
+    "id": "Marka.S:2011movie",
+    "issued": {
+      "date-parts": [[2011]]
+    },
+    "publisher-place": "DE",
+    "title": "Interview",
+    "type": "motion_picture"
+  },
+  {
+    "director": [
+      {
+        "family": "Marka",
+        "given": "Sebastian"
+      }
+    ],
+    "id": "Marka.S:2011video",
+    "issued": {
+      "date-parts": [[2011]]
+    },
+    "publisher-place": "DE",
+    "title": "Interview",
+    "type": "motion_picture"
+  },
+  {
+    "author": [
+      {
+        "family": "Roy",
+        "given": "Olivier"
+      }
+    ],
+    "id": "Roy.O:2017a",
+    "issued": {
+      "date-parts": [[2017]]
+    },
+    "original-date": {
+      "date-parts": [[2016]]
+    },
+    "original-publisher-place": "Paris",
+    "original-title": "Le djihad et la mort le djihad et la mort",
+    "publisher": "Oxford University Press",
+    "publisher-place": "New York",
+    "title": "Jihad and death: The global appeal of islamic state",
+    "title-short": "Jihad and death",
+    "translator": [
+      {
+        "family": "Schoch",
+        "given": "Cynthia"
+      }
+    ],
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Ball",
+        "given": "Wes"
+      }
+    ],
+    "editor": [
+      {
+        "family": "Oppenheim",
+        "given": "Noah"
+      },
+      {
+        "family": "Myers",
+        "given": "Grant Pierce"
+      },
+      {
+        "family": "Nowlin",
+        "given": "T. S."
+      }
+    ],
+    "id": "Ball.W:2014a",
+    "issued": {
+      "date-parts": [[2014]]
+    },
+    "publisher-place": "US",
+    "title": "The maze runner",
+    "type": "motion_picture"
+  }
+]

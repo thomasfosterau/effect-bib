@@ -1,0 +1,41 @@
+[
+  {
+    "URL": "https://www.scilab.org/",
+    "abstract": "Software for Numerical Computation freely distributed.",
+    "author": [
+      {
+        "family": "Delebecque",
+        "given": "François"
+      },
+      {
+        "family": "Gomez",
+        "given": "Claude"
+      },
+      {
+        "family": "Goursat",
+        "given": "Maurice"
+      },
+      {
+        "family": "Nikoukhah",
+        "given": "Ramine"
+      },
+      {
+        "family": "Steer",
+        "given": "Serge"
+      },
+      {
+        "family": "Chancelier",
+        "given": "Jean-Philippe"
+      }
+    ],
+    "id": "delebecque:hal-02090402v1",
+    "issued": {
+      "date-parts": [[1994, 1]]
+    },
+    "note": "First Scilab version. It was distributed by anonymous ftp.",
+    "publisher": "Inria",
+    "title": "Scilab",
+    "type": "",
+    "version": "1.1"
+  }
+]

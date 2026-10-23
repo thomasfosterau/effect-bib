@@ -1,0 +1,92 @@
+[
+  {
+    "id": "L1",
+    "issued": {
+      "date-parts": [[1995]]
+    },
+    "publisher": "puba",
+    "title": "Title 1",
+    "type": "book"
+  },
+  {
+    "id": "L2",
+    "issued": {
+      "date-parts": [[1995]]
+    },
+    "publisher": "pubb",
+    "title": "Title 1",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Smith",
+        "given": "Jim"
+      }
+    ],
+    "id": "L3",
+    "issued": {
+      "date-parts": [[1995]]
+    },
+    "type": "book"
+  },
+  {
+    "id": "L4",
+    "issued": {
+      "date-parts": [[1996]]
+    },
+    "title": "Title 1",
+    "type": "book"
+  },
+  {
+    "id": "L5",
+    "issued": {
+      "date-parts": [[1995]]
+    },
+    "title": "Title 1",
+    "title-short": "Title a",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Example",
+        "given": "Arthur"
+      }
+    ],
+    "id": "LY1",
+    "issued": {
+      "date-parts": [[2006], [2009]]
+    },
+    "title": "Some title",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Example",
+        "given": "Arthur"
+      }
+    ],
+    "id": "LY2",
+    "issued": {
+      "date-parts": [[2006]]
+    },
+    "title": "Some title",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Example",
+        "given": "Arthur"
+      }
+    ],
+    "id": "LY3",
+    "issued": {
+      "date-parts": [[2006], [0]]
+    },
+    "title": "Some title",
+    "type": "book"
+  }
+]

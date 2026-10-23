@@ -1,0 +1,21 @@
+[
+  {
+    "ISBN": "0-822-32714-7",
+    "annote": "This is a collection entry. Note the format of the location field in the database file as well as the isbn field",
+    "editor": [
+      {
+        "family": "Gaonkar",
+        "given": "Dilip Parameshwar"
+      }
+    ],
+    "id": "gaonkar",
+    "issued": {
+      "date-parts": [[2001]]
+    },
+    "language": "en-US",
+    "publisher": "Duke University Press",
+    "publisher-place": "Durham; London",
+    "title": "Alternative modernities",
+    "type": "book"
+  }
+]

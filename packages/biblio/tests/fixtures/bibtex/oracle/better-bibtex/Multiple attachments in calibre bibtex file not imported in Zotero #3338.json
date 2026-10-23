@@ -1,0 +1,19 @@
+[
+  {
+    "author": [
+      {
+        "family": "Consortium",
+        "given": "DAISY"
+      }
+    ],
+    "id": "DAISYConsortium1",
+    "issued": {
+      "date-parts": [[100, 12]]
+    },
+    "note": "These tests include starting the reading system and opening the titles, navigating the content, searching, and using bookmarks and notes.",
+    "title": "Fundamental accessibility tests: Basic functionality",
+    "title-short": "Fundamental accessibility tests",
+    "type": "",
+    "volume": "1"
+  }
+]

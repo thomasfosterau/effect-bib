@@ -1,0 +1,72 @@
+[
+  {
+    "author": [
+      {
+        "family": "Gähler",
+        "given": "F."
+      }
+    ],
+    "id": "CaratInterface2.3.4",
+    "issued": {
+      "date-parts": [[2022, 7]]
+    },
+    "keyword": "crystallographic groups; finite unimodular groups; GLnZ",
+    "note": "Refereed GAP package",
+    "publisher": "https://www.math.uni-bielefeld.de/ gaehler/gap/packages.php",
+    "title": "CaratInterface, interface to CARAT, a crystallographic groups package, Version 2.3.4",
+    "type": ""
+  },
+  {
+    "id": "GAP4.13dev",
+    "keyword": "groups; *; gap; manual",
+    "publisher": "The GAP Group; https://www.gap-system.org",
+    "title": "GAP  Groups, Algorithms, and Programming, Version 4.13dev",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "Eick",
+        "given": "B."
+      },
+      {
+        "family": "Gähler",
+        "given": "F."
+      },
+      {
+        "family": "Nickel",
+        "given": "W."
+      }
+    ],
+    "id": "Cryst4.1.26",
+    "issued": {
+      "date-parts": [[2023, 4]]
+    },
+    "keyword": "crystallographic groups; affine crystallographic groups; space groups; color groups; point group; Wyckoff positions; International Tables for Crystallography; maximal subgroups; normalizer",
+    "note": "Refereed GAP package",
+    "publisher": "https://www.math.uni-bielefeld.de/ gaehler/gap/packages.php",
+    "title": "Cryst, computing with crystallographic groups, Version 4.1.26",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "Felsch",
+        "given": "V."
+      },
+      {
+        "family": "Gähler",
+        "given": "F."
+      }
+    ],
+    "id": "CrystCat1.1.10",
+    "issued": {
+      "date-parts": [[2022, 7]]
+    },
+    "keyword": "crystallographic groups; space groups",
+    "note": "Refereed GAP package",
+    "publisher": "https://www.math.uni-bielefeld.de/ gaehler/gap/packages.php",
+    "title": "CrystCat, the crystallographic groups catalog, Version 1.1.10",
+    "type": ""
+  }
+]

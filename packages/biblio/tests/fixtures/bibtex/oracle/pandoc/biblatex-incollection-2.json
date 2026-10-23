@@ -1,0 +1,73 @@
+[
+  {
+    "annote": "A cross-referenced article from a collection. This is an incollection entry with a crossref field. Note the subtitle and indextitle fields",
+    "author": [
+      {
+        "family": "Westfahl",
+        "given": "Gary"
+      }
+    ],
+    "container-title": "Space and beyond: The frontier theme in science fiction",
+    "editor": [
+      {
+        "family": "Westfahl",
+        "given": "Gary"
+      }
+    ],
+    "id": "westfahl:space",
+    "issued": {
+      "date-parts": [[2000]]
+    },
+    "language": "en-US",
+    "page": "55-65",
+    "publisher": "Greenwood",
+    "publisher-place": "Westport, Conn.; London",
+    "title": "The true frontier: Confronting and avoiding the realities of space in American science fiction films",
+    "title-short": "The true frontier",
+    "type": "chapter"
+  },
+  {
+    "ISBN": "0-822-32714-7",
+    "author": [
+      {
+        "family": "Gaonkar",
+        "given": "Dilip Parameshwar"
+      }
+    ],
+    "container-title": "Alternative modernities",
+    "editor": [
+      {
+        "family": "Gaonkar",
+        "given": "Dilip Parameshwar"
+      }
+    ],
+    "id": "gaonkar:in",
+    "issued": {
+      "date-parts": [[2001]]
+    },
+    "page": "1-23",
+    "publisher": "Duke University Press",
+    "publisher-place": "Durham; London",
+    "title": "On alternative modernities",
+    "type": "chapter"
+  },
+  {
+    "annote": "This is a collection entry. Note the format of the location field as well as the subtitle and booksubtitle fields",
+    "editor": [
+      {
+        "family": "Westfahl",
+        "given": "Gary"
+      }
+    ],
+    "id": "westfahl:frontier",
+    "issued": {
+      "date-parts": [[2000]]
+    },
+    "language": "en-US",
+    "publisher": "Greenwood",
+    "publisher-place": "Westport, Conn.; London",
+    "title": "Space and beyond: The frontier theme in science fiction",
+    "title-short": "Space and beyond",
+    "type": "book"
+  }
+]

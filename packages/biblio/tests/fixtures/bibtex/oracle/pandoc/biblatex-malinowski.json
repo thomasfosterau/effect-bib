@@ -1,0 +1,22 @@
+[
+  {
+    "annote": "This is a book entry. Note the format of the publisher and edition fields as well as the subtitle field",
+    "author": [
+      {
+        "family": "Malinowski",
+        "given": "Bronisław"
+      }
+    ],
+    "edition": "8",
+    "id": "malinowski",
+    "issued": {
+      "date-parts": [[1972]]
+    },
+    "language": "en-GB",
+    "publisher": "Routledge and Kegan Paul",
+    "publisher-place": "London",
+    "title": "Argonauts of the Western Pacific: An account of native enterprise and adventure in the Archipelagoes of Melanesian New Guinea",
+    "title-short": "Argonauts",
+    "type": "book"
+  }
+]

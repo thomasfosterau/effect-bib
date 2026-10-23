@@ -1,0 +1,61 @@
+[
+  {
+    "author": [
+      {
+        "family": "Author",
+        "given": "Ann"
+      }
+    ],
+    "container-title": "The Journaltitle",
+    "id": "article-req",
+    "issued": {
+      "date-parts": [[2013, 7, 29]]
+    },
+    "language": "en-US",
+    "title": "An article entry with just the required fields",
+    "type": "article-journal"
+  },
+  {
+    "DOI": "10.1086/520976",
+    "ISSN": "issn",
+    "URL": "http://foo.bar.baz/",
+    "accessed": {
+      "date-parts": [[2013, 7, 29]]
+    },
+    "author": [
+      {
+        "family": "Author",
+        "given": "Ann A.",
+        "suffix": "Jr."
+      }
+    ],
+    "collection-title": "New series",
+    "container-title": "The Journaltitle: The Journalsubtitle",
+    "editor": [
+      {
+        "family": "Editor",
+        "given": "Edward"
+      }
+    ],
+    "id": "article-opt",
+    "issue": "number, issue",
+    "issued": {
+      "date-parts": [[2008, 12, 31]]
+    },
+    "language": "en-US",
+    "note": "The Note. The Addendum",
+    "page": "pages",
+    "status": "in press",
+    "title": "An article entry with the required and all optional fields: The subtitle. The titleaddon",
+    "title-short": "An article entry with the required and all optional fields",
+    "translator": [
+      {
+        "family": "Translator",
+        "given": "Ted"
+      }
+    ],
+    "type": "article-journal",
+    "version": "version",
+    "volume": "volume"
+  }
+]

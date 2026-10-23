@@ -1,0 +1,50 @@
+[
+  {
+    "DOI": "10.1109/JPROC.2016.2526118",
+    "ISSN": "0193-6530",
+    "abstract": "Abstract here",
+    "author": [
+      {
+        "family": "Doe",
+        "given": "J."
+      },
+      {
+        "family": "Smith",
+        "given": "R."
+      }
+    ],
+    "container-title": "Ieee_j_proc",
+    "id": "test_citation1",
+    "issued": {
+      "date-parts": [[2016, 2]]
+    },
+    "keyword": "Keyword 1; Keyword 2",
+    "page": "300-301",
+    "title": "Test Title With 100 \\muJ, 200 J Energy, and \\pm0.1% Accuracy, 0.2 mm^2 Size, and -50 dB Attenuation",
+    "type": "paper-conference"
+  },
+  {
+    "DOI": "10.1109/JPROC.2016.2526118",
+    "ISSN": "0193-6530",
+    "abstract": "Abstract here",
+    "author": [
+      {
+        "family": "Doe",
+        "given": "J."
+      },
+      {
+        "family": "Smith",
+        "given": "R."
+      }
+    ],
+    "container-title": "Ieee_j_proc",
+    "id": "test_citation2",
+    "issued": {
+      "date-parts": [[2016, 2]]
+    },
+    "keyword": "Keyword 1; Keyword 2",
+    "page": "300-301",
+    "title": "Test Title with spacequad, spacesemi-colon, spacecolon, space comma, space nbsp",
+    "type": "paper-conference"
+  }
+]

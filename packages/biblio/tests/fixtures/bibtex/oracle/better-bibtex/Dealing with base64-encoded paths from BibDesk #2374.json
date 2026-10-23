@@ -1,0 +1,87 @@
+[
+  {
+    "author": [
+      {
+        "family": "El-Husseini",
+        "given": "Hashem"
+      },
+      {
+        "family": "Toepler",
+        "given": "Stefan"
+      },
+      {
+        "family": "Salamon",
+        "given": "Lester M."
+      }
+    ],
+    "chapter-number": "12",
+    "container-title": "Global civil society: Dimensions of the nonprofit sector",
+    "editor": [
+      {
+        "family": "Salamon",
+        "given": "Lester M."
+      },
+      {
+        "family": "Sokolowski",
+        "given": "S. Wojciech"
+      }
+    ],
+    "id": "El-HusseiniToeplerSalamon:2004",
+    "issued": {
+      "date-parts": [[2004]]
+    },
+    "page": "227-32",
+    "publisher": "Kumarian Press",
+    "publisher-place": "Bloomfield, CT",
+    "title": "Lebanon",
+    "type": "chapter",
+    "volume": "2"
+  },
+  {
+    "editor": [
+      {
+        "family": "Salamon",
+        "given": "Lester M."
+      },
+      {
+        "family": "Sokolowski",
+        "given": "S. Wojciech"
+      }
+    ],
+    "id": "SalamonSokolowski:2004",
+    "issued": {
+      "date-parts": [[2004]]
+    },
+    "publisher": "Kumarian Press",
+    "publisher-place": "Bloomfield, CT",
+    "title": "Global civil society: Dimensions of the nonprofit sector",
+    "title-short": "Global civil society",
+    "type": "book",
+    "volume": "2"
+  },
+  {
+    "DOI": "10.1111/disa.12301",
+    "author": [
+      {
+        "family": "Kraft",
+        "given": "Kathryn"
+      },
+      {
+        "family": "Smith",
+        "given": "Jonathan D."
+      }
+    ],
+    "container-title": "Disasters",
+    "id": "KraftSmith:2019",
+    "issue": "1",
+    "issued": {
+      "date-parts": [[2019, 1]]
+    },
+    "keyword": "000000000000 Read next",
+    "page": "24-45",
+    "title": "Between international donors and local faith communities: Intermediaries in humanitarian assistance to Syrian refugees in Jordan and Lebanon",
+    "title-short": "Between international donors and local faith communities",
+    "type": "article-journal",
+    "volume": "43"
+  }
+]

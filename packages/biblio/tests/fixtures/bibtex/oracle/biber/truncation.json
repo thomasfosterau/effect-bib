@@ -1,0 +1,196 @@
+[
+  {
+    "author": [
+      {
+        "family": "Elk",
+        "given": "Anne"
+      }
+    ],
+    "id": "us1",
+    "issued": {
+      "date-parts": [[1972]]
+    },
+    "title": "A theory on brontosauruses",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Elk",
+        "given": "Anne"
+      },
+      {
+        "literal": "others"
+      }
+    ],
+    "id": "us2",
+    "issued": {
+      "date-parts": [[1972]]
+    },
+    "title": "A theory on einiosauruses",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Uthor",
+        "given": "Anne"
+      }
+    ],
+    "id": "us3",
+    "issued": {
+      "date-parts": [[2000]]
+    },
+    "title": "Title b",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Uthor",
+        "given": "Anne"
+      },
+      {
+        "family": "Ditor",
+        "given": "Editha"
+      },
+      {
+        "family": "Writer",
+        "given": "William"
+      },
+      {
+        "family": "Doe",
+        "given": "Jane"
+      }
+    ],
+    "id": "us4",
+    "issued": {
+      "date-parts": [[2000]]
+    },
+    "title": "Title a",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Uthor",
+        "given": "Anne"
+      },
+      {
+        "family": "Ditor",
+        "given": "Editha"
+      },
+      {
+        "family": "Writer",
+        "given": "William"
+      },
+      {
+        "family": "Doe",
+        "given": "Jane"
+      }
+    ],
+    "id": "us5",
+    "issued": {
+      "date-parts": [[2000]]
+    },
+    "title": "Title c",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Red",
+        "given": "Roger"
+      }
+    ],
+    "id": "us6",
+    "issued": {
+      "date-parts": [[1971]]
+    },
+    "title": "Ragged rubles",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Red",
+        "given": "Roger"
+      },
+      {
+        "literal": "others"
+      }
+    ],
+    "id": "us7",
+    "issued": {
+      "date-parts": [[1971]]
+    },
+    "title": "Ragged rupees",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "Sly",
+        "given": "Simon"
+      }
+    ],
+    "id": "us8",
+    "issued": {
+      "date-parts": [[2000]]
+    },
+    "title": "Title b",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Sly",
+        "given": "Simon"
+      },
+      {
+        "family": "Tremble",
+        "given": "Terrence"
+      },
+      {
+        "family": "Miserable",
+        "given": "Mark"
+      },
+      {
+        "family": "Jolly",
+        "given": "Jake"
+      }
+    ],
+    "id": "us9",
+    "issued": {
+      "date-parts": [[2000]]
+    },
+    "title": "Title a",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Sly",
+        "given": "Simon"
+      },
+      {
+        "family": "Tremble",
+        "given": "Terrence"
+      },
+      {
+        "family": "Miserable",
+        "given": "Mark"
+      },
+      {
+        "family": "Jolly",
+        "given": "Jake"
+      }
+    ],
+    "id": "us10",
+    "issued": {
+      "date-parts": [[2000]]
+    },
+    "title": "Title c",
+    "type": "book"
+  }
+]

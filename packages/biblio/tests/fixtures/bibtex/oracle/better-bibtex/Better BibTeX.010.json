@@ -1,0 +1,64 @@
+[
+  {
+    "ISBN": "978-0-7695-3902-7",
+    "URL": "http://dblp.uni-trier.de/db/conf/icdm/icdmw2009.html#HulseKNW09",
+    "author": [
+      {
+        "family": "Hulse",
+        "given": "Jason Van"
+      },
+      {
+        "family": "Khoshgoftaar",
+        "given": "Taghi M."
+      },
+      {
+        "family": "Napolitano",
+        "given": "Amri"
+      },
+      {
+        "family": "Wald",
+        "given": "Randall"
+      }
+    ],
+    "container-title": "ICDM workshops",
+    "editor": [
+      {
+        "family": "Saygin",
+        "given": "Yücel"
+      },
+      {
+        "family": "Yu",
+        "given": "Jeffrey Xu"
+      },
+      {
+        "family": "Kargupta",
+        "given": "Hillol"
+      },
+      {
+        "family": "Wang",
+        "given": "Wei"
+      },
+      {
+        "family": "Ranka",
+        "given": "Sanjay"
+      },
+      {
+        "family": "Yu",
+        "given": "Philip S."
+      },
+      {
+        "family": "Wu",
+        "given": "Xindong"
+      }
+    ],
+    "id": "Hulse2009",
+    "issued": {
+      "date-parts": [[2010, 1, 27]]
+    },
+    "keyword": "dblp",
+    "page": "507-514",
+    "publisher": "IEEE Computer Society",
+    "title": "Feature selection with high-dimensional imbalanced data#",
+    "type": "paper-conference"
+  }
+]

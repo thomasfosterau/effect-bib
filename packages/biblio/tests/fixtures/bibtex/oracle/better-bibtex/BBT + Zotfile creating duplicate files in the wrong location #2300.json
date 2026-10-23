@@ -1,0 +1,152 @@
+[
+  {
+    "ISBN": "0415170540 (hardcover)",
+    "editor": [
+      {
+        "family": "Gaukroger",
+        "given": "Stephen"
+      }
+    ],
+    "id": "ZGaukroger1998a",
+    "issued": {
+      "date-parts": [[1998]]
+    },
+    "keyword": "Emotions",
+    "publisher": "Routledge",
+    "publisher-place": "London",
+    "title": "The soft underbelly of reason : The passions in the seventeenth century",
+    "title-short": "The soft underbelly of reason ",
+    "type": "book"
+  },
+  {
+    "ISBN": "0521531802",
+    "edition": "2Rev Ed",
+    "editor": [
+      {
+        "family": "Garber",
+        "given": "Daniel"
+      },
+      {
+        "family": "Ayers",
+        "given": "Michael"
+      }
+    ],
+    "id": "garberayers1998b",
+    "issued": {
+      "date-parts": [[1998]]
+    },
+    "publisher": "Cambridge University Press",
+    "title": "The cambridge history of seventeenth-century philosophy",
+    "type": "book"
+  },
+  {
+    "annote": "B51 .G576 1964",
+    "author": [
+      {
+        "family": "Goclenius",
+        "given": "Rudolph"
+      }
+    ],
+    "id": "gocl1613",
+    "issued": {
+      "date-parts": [[1964]]
+    },
+    "keyword": "Dictionaries, Scholasticism",
+    "note": "Rodolphus Goclenius. Reprint (1st work). Originally published: Francofurti : M. Becker, 1613. Added title page, engr. of original edition.",
+    "original-date": {
+      "date-parts": [[1613]]
+    },
+    "publisher": "G. Olms",
+    "publisher-place": "Hildesheim",
+    "title": "Lexicon philosophicum, quo tanquam clave philosophicae fores aperiuntur",
+    "type": "book"
+  },
+  {
+    "ISBN": "0521651778",
+    "edition": "2nd",
+    "editor": [
+      {
+        "family": "Cohen",
+        "given": "I. Bernard"
+      },
+      {
+        "family": "Smith",
+        "given": "George E."
+      }
+    ],
+    "id": "zcosm02",
+    "issued": {
+      "date-parts": [[2002]]
+    },
+    "publisher": "Cambridge University Press",
+    "publisher-place": "Cambridge",
+    "title": "The cambridge companion to Newton",
+    "type": "book"
+  },
+  {
+    "annote": "In the paper at hand, I provide an editorial history of Isaac Newton’s famous regulae philosophandi on the basis of extant manuscript material.&amp;lt;/p&amp;gt;",
+    "author": [
+      {
+        "family": "Ducheyne",
+        "given": "Steffen"
+      }
+    ],
+    "container-title": "Estudios de Filosofía",
+    "id": "ducheyne_2015",
+    "issue": "51",
+    "issued": {
+      "date-parts": [[2015]]
+    },
+    "page": "143-164",
+    "title": "An editorial history of newton’s regulae philosophandi",
+    "type": "article-journal"
+  },
+  {
+    "ISSN": "00368075, 10959203",
+    "accessed": {
+      "date-parts": [[2022, 9, 27]]
+    },
+    "author": [
+      {
+        "family": "Westfall",
+        "given": "Richard S."
+      }
+    ],
+    "container-title": "Science",
+    "id": "westfall1973a",
+    "issue": "4075",
+    "issued": {
+      "date-parts": [[1973]]
+    },
+    "page": "751-758",
+    "publisher": "American Association for the Advancement of Science",
+    "title": "Newton and the fudge factor",
+    "type": "article-journal",
+    "volume": "179"
+  },
+  {
+    "ISSN": "0039-3681",
+    "URL": "https://doi.org/10.1016/j.shpsa.2022.07.002",
+    "author": [
+      {
+        "family": "Sakellariou",
+        "given": "Vassilis"
+      },
+      {
+        "family": "Test",
+        "given": "User"
+      }
+    ],
+    "container-title": "Studies in History and Philosophy of Science",
+    "id": "sakellariou202228",
+    "issued": {
+      "date-parts": [[2022]]
+    },
+    "keyword": "Constitutive, Synthesis, Historicised, Dynamical laws",
+    "page": "28-36",
+    "title": "Constituting the “object” of science in newton’s principia: The many faces of janus",
+    "title-short": "Constituting the “object” of science in newton’s principia",
+    "type": "article-journal",
+    "volume": "95"
+  }
+]

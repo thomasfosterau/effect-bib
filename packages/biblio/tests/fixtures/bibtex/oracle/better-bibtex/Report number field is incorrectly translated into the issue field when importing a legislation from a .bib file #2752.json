@@ -1,0 +1,18 @@
+[
+  {
+    "author": [
+      {
+        "literal": "A very well-known and serious institution"
+      }
+    ],
+    "id": "legislation1",
+    "issued": {
+      "date-parts": [[1995, 1]]
+    },
+    "language": "en-US",
+    "number": "mypreciousreportnumber",
+    "page": "6",
+    "title": "What a great report",
+    "type": "legislation"
+  }
+]

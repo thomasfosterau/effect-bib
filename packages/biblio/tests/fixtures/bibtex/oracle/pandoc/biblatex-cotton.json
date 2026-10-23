@@ -1,0 +1,33 @@
+[
+  {
+    "annote": "A book entry with  authors and an edition field. By default, long author and editor lists are automatically truncated. This is configurable",
+    "author": [
+      {
+        "family": "Cotton",
+        "given": "Frank Albert"
+      },
+      {
+        "family": "Wilkinson",
+        "given": "Geoffrey"
+      },
+      {
+        "family": "Murillio",
+        "given": "Carlos A."
+      },
+      {
+        "family": "Bochmann",
+        "given": "Manfred"
+      }
+    ],
+    "edition": "6",
+    "id": "cotton",
+    "issued": {
+      "date-parts": [[1999]]
+    },
+    "language": "en-GB",
+    "publisher": "Wiley",
+    "publisher-place": "Chichester",
+    "title": "Advanced inorganic chemistry",
+    "type": "book"
+  }
+]

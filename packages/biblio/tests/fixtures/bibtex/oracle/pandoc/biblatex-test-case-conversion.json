@@ -1,0 +1,18 @@
+[
+  {
+    "author": [
+      {
+        "family": "Author",
+        "given": "Ann"
+      }
+    ],
+    "container-title": "Journal",
+    "id": "item1",
+    "issued": {
+      "date-parts": [[2013]]
+    },
+    "language": "en-US",
+    "title": "A title, in English, with a Proper Name and an ACRONYM and a camelCase word and some units, 400 nm, 3 cm, and a quote, <i>Alea iacta est</i>",
+    "type": "article-journal"
+  }
+]

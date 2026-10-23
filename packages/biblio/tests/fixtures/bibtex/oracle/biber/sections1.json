@@ -1,0 +1,52 @@
+[
+  {
+    "author": [
+      {
+        "family": "Adamson",
+        "given": "Aaron"
+      }
+    ],
+    "id": "sect1",
+    "issued": {
+      "date-parts": [[1995]]
+    },
+    "note": "value1",
+    "publisher": "Aardvark Press",
+    "publisher-place": "Arlington",
+    "title": "Artificial advice",
+    "type": "article-journal",
+    "volume": "4"
+  },
+  {
+    "author": [
+      {
+        "family": "Britherthwaite",
+        "given": "Brian"
+      }
+    ],
+    "id": "sect2",
+    "issued": {
+      "date-parts": [[2004]]
+    },
+    "publisher": "British Bulldog Press",
+    "publisher-place": "Bridlington",
+    "title": "Best barnacled boat bottoms",
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "All",
+        "given": "Alan"
+      }
+    ],
+    "id": "sectall1",
+    "issued": {
+      "date-parts": [[2004]]
+    },
+    "publisher": "Average Aunt Press",
+    "publisher-place": "Allertron",
+    "title": "Alternative alternations",
+    "type": "article-journal"
+  }
+]

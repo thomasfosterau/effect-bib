@@ -1,0 +1,31 @@
+[
+  {
+    "annote": "A book with three authors. Note the formatting of the author list. By default, only the first name is reversed in the bibliography",
+    "author": [
+      {
+        "family": "Goossens",
+        "given": "Michel"
+      },
+      {
+        "family": "Mittelbach",
+        "given": "Frank"
+      },
+      {
+        "family": "Samarin",
+        "given": "Alexander"
+      }
+    ],
+    "edition": "1",
+    "id": "companion",
+    "issued": {
+      "date-parts": [[1994]]
+    },
+    "language": "en-US",
+    "number-of-pages": "528",
+    "publisher": "Addison-Wesley",
+    "publisher-place": "Reading, Mass.",
+    "title": "The LaTeX companion",
+    "title-short": "LaTeX companion",
+    "type": "book"
+  }
+]

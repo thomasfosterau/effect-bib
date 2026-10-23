@@ -1,0 +1,176 @@
+[
+  {
+    "author": [
+      {
+        "family": "Author",
+        "given": "Al"
+      }
+    ],
+    "container-title": "Journal",
+    "id": "year-month-old",
+    "issued": {
+      "date-parts": [[1999, 8]]
+    },
+    "title": "Year and month, bibtex style, supported by biblatex for backwards compatibility",
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Author",
+        "given": "Al"
+      }
+    ],
+    "container-title": "Journal",
+    "id": "year-month-new",
+    "issued": {
+      "date-parts": [[1999, 8]]
+    },
+    "title": "Year and month, biblatex style; note that biblatex does not have a “day” field",
+    "type": "article-journal"
+  },
+  {
+    "accessed": {
+      "date-parts": [[1999, 5, 23]]
+    },
+    "author": [
+      {
+        "family": "Author",
+        "given": "Al"
+      }
+    ],
+    "container-title": "Journal",
+    "event-date": {
+      "date-parts": [[2011, 10, 3]]
+    },
+    "id": "dates",
+    "issued": {
+      "date-parts": [[2012, 12, 13]]
+    },
+    "original-date": {
+      "date-parts": [[1888, 10, 1]]
+    },
+    "title": "Dates, default biblatex style; year, month to be ignored if date exists",
+    "type": "article-journal"
+  },
+  {
+    "accessed": {
+      "date-parts": [
+        [2012, 10, 12],
+        [2013, 1, 31]
+      ]
+    },
+    "author": [
+      {
+        "family": "Author",
+        "given": "Al"
+      }
+    ],
+    "container-title": "Journal",
+    "event-date": {
+      "date-parts": [
+        [1999, 12],
+        [2000, 1]
+      ]
+    },
+    "id": "date-ranges-different-years",
+    "issued": {
+      "date-parts": [
+        [1999, 10, 14],
+        [2010, 1, 23]
+      ]
+    },
+    "original-date": {
+      "date-parts": [
+        [1888, 1, 2],
+        [1913, 12, 13]
+      ]
+    },
+    "title": "Date ranges; different years",
+    "type": "article-journal"
+  },
+  {
+    "accessed": {
+      "date-parts": [
+        [2012, 10, 31],
+        [2012, 11, 1]
+      ]
+    },
+    "author": [
+      {
+        "family": "Author",
+        "given": "Al"
+      }
+    ],
+    "container-title": "Journal",
+    "event-date": {
+      "date-parts": [
+        [1999, 10],
+        [1999, 11]
+      ]
+    },
+    "id": "date-ranges-same-year",
+    "issued": {
+      "date-parts": [
+        [1999, 10, 14],
+        [1999, 10, 15]
+      ]
+    },
+    "original-date": {
+      "date-parts": [
+        [1888, 1, 2],
+        [1888, 12, 13]
+      ]
+    },
+    "title": "Date ranges; same year",
+    "type": "article-journal"
+  },
+  {
+    "accessed": {
+      "date-parts": [[2012, 10, 31], [0]]
+    },
+    "author": [
+      {
+        "family": "Author",
+        "given": "Al"
+      }
+    ],
+    "container-title": "Journal",
+    "event-date": {
+      "date-parts": [[1999, 10], [0]]
+    },
+    "id": "date-ranges-open",
+    "issued": {
+      "date-parts": [[1999, 10, 14], [0]]
+    },
+    "original-date": {
+      "date-parts": [[1888, 1, 2], [0]]
+    },
+    "title": "Date ranges, open-ended",
+    "type": "article-journal"
+  },
+  {
+    "accessed": {
+      "date-parts": [[999, 12, 14]]
+    },
+    "author": [
+      {
+        "family": "Author",
+        "given": "Al"
+      }
+    ],
+    "container-title": "Journal",
+    "event-date": {
+      "date-parts": [[311, 10, 3]]
+    },
+    "id": "dates-very-old",
+    "issued": {
+      "date-parts": [[712, 12, 13]]
+    },
+    "original-date": {
+      "date-parts": [[88, 10, 1]]
+    },
+    "title": "Dates, year less than 1000",
+    "type": "article-journal"
+  }
+]

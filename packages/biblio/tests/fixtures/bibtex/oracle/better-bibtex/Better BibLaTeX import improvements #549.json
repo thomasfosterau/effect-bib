@@ -1,0 +1,130 @@
+[
+  {
+    "author": [
+      {
+        "family": "01e"
+      }
+    ],
+    "id": "1e",
+    "title": "Blah <i>emph</i> and “enquote”.",
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "01b"
+      }
+    ],
+    "id": "1b",
+    "title": "Blah <i>mkbibemph</i> and “mkbibquote”.",
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "02e"
+      }
+    ],
+    "id": "2e",
+    "title": "Blah <i>emph</i> and “enquote”.",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "02b"
+      }
+    ],
+    "id": "2b",
+    "title": "Blah <i>mkbibemph</i> and “mkbibquote”.",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Bennett",
+        "given": "David Christopher"
+      }
+    ],
+    "genre": "Ph.D.",
+    "id": "Bennett2003",
+    "issued": {
+      "date-parts": [[2003]]
+    },
+    "publisher": "University of London",
+    "title": "Xenonika: Medical texts associated with xenones in the late byzantine period",
+    "title-short": "Xenonika",
+    "type": "thesis"
+  },
+  {
+    "author": [
+      {
+        "family": "Cooper",
+        "given": "Glen"
+      }
+    ],
+    "id": "Cooper2013",
+    "issued": {
+      "date-parts": [[2013]]
+    },
+    "page": "263-87",
+    "title": "Byzantium between east and west: Competing hellenisms in the <i>Alexiad</i> of anna komnene and her contemporaries",
+    "title-short": "Byzantium between east and west",
+    "type": "chapter"
+  },
+  {
+    "container-title": "Beiträge zur Geschichte der Philosophie des Mittelalters",
+    "editor": [
+      {
+        "family": "Correns",
+        "given": "Paul"
+      }
+    ],
+    "id": "Correns1891",
+    "issued": {
+      "date-parts": [[1891]]
+    },
+    "page": "1-11",
+    "title": "Die dem boethius fälschlich zugeschriebene abhandlung des dominicus gundisalvi ’De unitate’",
+    "type": "article-journal",
+    "volume": "1"
+  },
+  {
+    "author": [
+      {
+        "family": "Algar",
+        "given": "Hamid"
+      }
+    ],
+    "id": "Algar1985",
+    "issued": {
+      "date-parts": [[1985]]
+    },
+    "page": "172-4",
+    "title": "Encyclopedia iranica",
+    "type": "entry-encyclopedia",
+    "volume": "4"
+  },
+  {
+    "editor": [
+      {
+        "dropping-particle": "van",
+        "family": "Arsdall",
+        "given": "Anne"
+      },
+      {
+        "family": "Graham",
+        "given": "Timothy"
+      }
+    ],
+    "id": "Arsdall2012",
+    "issued": {
+      "date-parts": [[2012]]
+    },
+    "publisher": "Ashgate",
+    "publisher-place": "Burlington, VT",
+    "title": "Herbs and healers from the ancient mediterranean through the medieval west: Essays in honor of john m. riddle",
+    "title-short": "Herbs and healers from the ancient mediterranean through the medieval west",
+    "type": "book"
+  }
+]

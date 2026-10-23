@@ -1,0 +1,19 @@
+[
+  {
+    "author": [
+      {
+        "family": "Kullback",
+        "given": "Solomon"
+      }
+    ],
+    "id": "kullback",
+    "issued": {
+      "date-parts": [[1959]]
+    },
+    "language": "en-US",
+    "publisher": "John Wiley & Sons",
+    "publisher-place": "New York",
+    "title": "Information theory and statistics",
+    "type": "book"
+  }
+]

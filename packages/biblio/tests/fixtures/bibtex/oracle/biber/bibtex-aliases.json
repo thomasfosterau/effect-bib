@@ -1,0 +1,102 @@
+[
+  {
+    "author": [
+      {
+        "family": "Student",
+        "given": "Sammy"
+      }
+    ],
+    "genre": "PhD thesis",
+    "id": "alias1",
+    "issued": {
+      "date-parts": [[2003, 10, 1]]
+    },
+    "publisher": "University of Life",
+    "publisher-place": "Ivory Towers",
+    "title": "Four years later",
+    "type": "thesis"
+  },
+  {
+    "author": [
+      {
+        "family": "Strange",
+        "given": "Samuel"
+      }
+    ],
+    "id": "alias2",
+    "issued": {
+      "date-parts": [[2004, 3, 3]]
+    },
+    "publisher": "University of West Grantham; University of East Grantham",
+    "publisher-place": "Ivory Towers",
+    "title": "Entitled",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "Strange",
+        "given": "Samuel"
+      }
+    ],
+    "id": "alias3",
+    "title": "Hello",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "Strange",
+        "given": "Samuel"
+      }
+    ],
+    "id": "alias4",
+    "title": "Hello",
+    "type": ""
+  },
+  {
+    "abstract": "Some abstract",
+    "author": [
+      {
+        "family": "AAA"
+      },
+      {
+        "family": "BBB"
+      },
+      {
+        "family": "CCC"
+      },
+      {
+        "family": "DDD"
+      },
+      {
+        "family": "EEE"
+      }
+    ],
+    "id": "alias5",
+    "issued": {
+      "date-parts": [[2003]]
+    },
+    "title": "A title",
+    "type": "manuscript"
+  },
+  {
+    "author": [
+      {
+        "family": "Broom",
+        "given": "Brian"
+      }
+    ],
+    "id": "alias6",
+    "title": "Bristles",
+    "type": ""
+  },
+  {
+    "id": "alias7",
+    "type": "report"
+  },
+  {
+    "id": "alias8",
+    "type": "report"
+  }
+]

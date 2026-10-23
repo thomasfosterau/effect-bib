@@ -1,0 +1,21 @@
+[
+  {
+    "annote": "A plain book entry",
+    "author": [
+      {
+        "family": "Augustine",
+        "given": "Robert L."
+      }
+    ],
+    "id": "augustine",
+    "issued": {
+      "date-parts": [[1995]]
+    },
+    "language": "en-US",
+    "publisher": "Marcel Dekker",
+    "publisher-place": "New York",
+    "title": "Heterogeneous catalysis for the synthetic chemist",
+    "title-short": "Heterogeneous catalysis",
+    "type": "book"
+  }
+]

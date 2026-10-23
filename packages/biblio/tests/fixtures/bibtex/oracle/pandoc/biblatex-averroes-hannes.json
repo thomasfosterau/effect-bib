@@ -1,0 +1,33 @@
+[
+  {
+    "annote": "An annotated edition. Note the concatenation of the editor, translator, and annotator fields. Also note the shorttitle, indextitle, sorttitle, and indexsorttitle fields",
+    "author": [
+      {
+        "family": "Averroes"
+      }
+    ],
+    "editor": [
+      {
+        "family": "Hannes",
+        "given": "Ludwig"
+      }
+    ],
+    "id": "averroes-hannes",
+    "issued": {
+      "date-parts": [[1892]]
+    },
+    "keyword": "primary",
+    "language": "de-DE",
+    "publisher": "C. A. Kaemmerer",
+    "publisher-place": "Halle an der Saale",
+    "title": "Des Averroës Abhandlung: “Über die Möglichkeit der Conjunktion” oder “Über den materiellen Intellekt”",
+    "title-short": "Über die Möglichkeit der Conjunktion",
+    "translator": [
+      {
+        "family": "Hannes",
+        "given": "Ludwig"
+      }
+    ],
+    "type": "book"
+  }
+]

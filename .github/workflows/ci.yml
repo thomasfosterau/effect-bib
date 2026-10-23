@@ -58,6 +58,10 @@ jobs:
       # `@vitest/coverage-istanbul` equals its bundled `vitest` exactly (#47),
       # and the coverage thresholds in packages/biblio/vite.config.ts fail the
       # step on a drop (#50).
+      # Pandoc's BibLaTeX test cases for the BibTeX oracle (#91): GPL, so
+      # fetched at a pinned commit rather than vendored.
+      - name: Fetch the oracle corpora
+        run: vp run --filter ./packages/biblio oracles:fetch
       - name: Unit tests + coverage
         run: vp run -r test:coverage
       # Type-checks AND runs every JSDoc @example.

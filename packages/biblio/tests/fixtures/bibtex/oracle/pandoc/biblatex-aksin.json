@@ -1,0 +1,44 @@
+[
+  {
+    "author": [
+      {
+        "family": "Aksın",
+        "given": "Özge"
+      },
+      {
+        "family": "Türkmen",
+        "given": "Hayati"
+      },
+      {
+        "family": "Artok",
+        "given": "Levent"
+      },
+      {
+        "family": "Çetinkaya",
+        "given": "Bekir"
+      },
+      {
+        "family": "Ni",
+        "given": "Chaoying"
+      },
+      {
+        "family": "Büyükgüngör",
+        "given": "Orhan"
+      },
+      {
+        "family": "Özkal",
+        "given": "Erhan"
+      }
+    ],
+    "container-title": "J. Organomet. Chem.",
+    "id": "aksin",
+    "issue": "13",
+    "issued": {
+      "date-parts": [[2006]]
+    },
+    "page": "3027-3036",
+    "title": "Effect of immobilization on catalytic characteristics of saturated Pd-N-heterocyclic carbenes in Mizoroki-Heck reactions",
+    "type": "article-journal",
+    "volume": "691"
+  }
+]

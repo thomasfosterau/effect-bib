@@ -1,0 +1,19 @@
+[
+  {
+    "annote": "a \"monumental\" work on the mosaics of San Marco",
+    "author": [
+      {
+        "family": "Demus",
+        "given": "Otto"
+      }
+    ],
+    "id": "Demus1984",
+    "issued": {
+      "date-parts": [[1984]]
+    },
+    "publisher": "University of Chicago Press",
+    "publisher-place": "Chicago",
+    "title": "The mosaics of san marco in venice",
+    "type": "book"
+  }
+]

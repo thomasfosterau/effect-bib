@@ -1,0 +1,48 @@
+[
+  {
+    "ISBN": "978-2-7440-7182-9",
+    "author": [
+      {
+        "family": "Mittelbach",
+        "given": "Frank"
+      },
+      {
+        "family": "Goossens",
+        "given": "Michel"
+      }
+    ],
+    "edition": "2",
+    "id": "MittelbachLaTeXCompanion2006",
+    "issued": {
+      "date-parts": [[2006, 2]]
+    },
+    "language": "fr-FR",
+    "number-of-pages": "1008",
+    "publisher": "Pearson Education France",
+    "publisher-place": "Paris",
+    "title": "LaTeX Companion",
+    "translator": [
+      {
+        "family": "André",
+        "given": "Jacques"
+      },
+      {
+        "family": "Bellet",
+        "given": "Benoît"
+      },
+      {
+        "family": "Charpentier",
+        "given": "Jean-Côme"
+      },
+      {
+        "family": "Hufflen",
+        "given": "Jean-Michel"
+      },
+      {
+        "family": "Soulet",
+        "given": "Yves"
+      }
+    ],
+    "type": "book"
+  }
+]

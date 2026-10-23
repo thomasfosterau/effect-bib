@@ -1,0 +1,451 @@
+[
+  {
+    "author": [
+      {
+        "family": "AAA",
+        "given": "Alan"
+      },
+      {
+        "family": "BBB",
+        "given": "B."
+      },
+      {
+        "family": "CCC",
+        "given": "A."
+      }
+    ],
+    "id": "un8",
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "AAA",
+        "given": "Anthon"
+      },
+      {
+        "family": "BBB",
+        "given": "B."
+      },
+      {
+        "family": "CCC",
+        "given": "B."
+      },
+      {
+        "family": "DDD",
+        "given": "A."
+      }
+    ],
+    "id": "un9",
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "DDD",
+        "given": "B."
+      }
+    ],
+    "id": "un10",
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Ireys",
+        "given": "A."
+      },
+      {
+        "family": "Chernoff",
+        "given": "A."
+      },
+      {
+        "family": "DeVet",
+        "given": "A."
+      },
+      {
+        "family": "Kim",
+        "given": "A."
+      }
+    ],
+    "id": "unapa1",
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Ireys",
+        "given": "A."
+      },
+      {
+        "family": "Chernoff",
+        "given": "A."
+      },
+      {
+        "family": "Stein",
+        "given": "A."
+      },
+      {
+        "family": "DeVet",
+        "given": "A."
+      },
+      {
+        "family": "Silver",
+        "given": "A."
+      }
+    ],
+    "id": "unapa2",
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "NameA"
+      },
+      {
+        "family": "NameB"
+      },
+      {
+        "literal": "others"
+      }
+    ],
+    "id": "others1",
+    "issued": {
+      "date-parts": [[2011]]
+    },
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "NameA"
+      },
+      {
+        "family": "NameB"
+      },
+      {
+        "literal": "others"
+      }
+    ],
+    "id": "others2",
+    "issued": {
+      "date-parts": [[2011]]
+    },
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "Name11"
+      },
+      {
+        "family": "Name22"
+      },
+      {
+        "family": "Name33"
+      },
+      {
+        "family": "Name44"
+      },
+      {
+        "family": "Name55"
+      }
+    ],
+    "id": "unall1",
+    "issued": {
+      "date-parts": [[2011]]
+    },
+    "title": "Title 1",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Name11"
+      },
+      {
+        "family": "Name22"
+      },
+      {
+        "family": "Name33"
+      },
+      {
+        "family": "Name44"
+      },
+      {
+        "family": "Name55"
+      }
+    ],
+    "id": "unall2",
+    "issued": {
+      "date-parts": [[2011]]
+    },
+    "title": "Title 2",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "A111"
+      },
+      {
+        "family": "A222"
+      },
+      {
+        "family": "A333"
+      },
+      {
+        "family": "A444"
+      },
+      {
+        "family": "A555"
+      }
+    ],
+    "id": "unall3",
+    "issued": {
+      "date-parts": [[2011]]
+    },
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "A111"
+      },
+      {
+        "family": "A222"
+      },
+      {
+        "family": "A333"
+      },
+      {
+        "family": "A444"
+      },
+      {
+        "family": "A555"
+      },
+      {
+        "family": "A666"
+      }
+    ],
+    "id": "unall4",
+    "issued": {
+      "date-parts": [[2011]]
+    },
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Name1"
+      },
+      {
+        "family": "Name2"
+      },
+      {
+        "family": "Name3"
+      },
+      {
+        "family": "Name4"
+      },
+      {
+        "family": "Name5"
+      }
+    ],
+    "id": "unall5",
+    "issued": {
+      "date-parts": [[2010]]
+    },
+    "title": "Title 3",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Name1"
+      },
+      {
+        "family": "Name2"
+      },
+      {
+        "family": "Name3"
+      },
+      {
+        "family": "Name4"
+      },
+      {
+        "family": "Name5"
+      }
+    ],
+    "id": "unall6",
+    "issued": {
+      "date-parts": [[2010]]
+    },
+    "title": "Title 5",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Name1"
+      },
+      {
+        "family": "Name2"
+      },
+      {
+        "family": "Name3"
+      },
+      {
+        "family": "Name4"
+      },
+      {
+        "family": "Name6"
+      }
+    ],
+    "id": "unall7",
+    "issued": {
+      "date-parts": [[2010]]
+    },
+    "title": "Title 3",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Name1111"
+      },
+      {
+        "family": "Name2222"
+      },
+      {
+        "family": "Name3333"
+      },
+      {
+        "family": "Name4444"
+      },
+      {
+        "family": "Name5555"
+      }
+    ],
+    "id": "unall8",
+    "issued": {
+      "date-parts": [[2010]]
+    },
+    "title": "Title 3",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Name1111"
+      },
+      {
+        "family": "Name2222"
+      },
+      {
+        "family": "Name3333"
+      },
+      {
+        "family": "Name4444"
+      },
+      {
+        "family": "Name5555"
+      }
+    ],
+    "id": "unall9",
+    "issued": {
+      "date-parts": [[2010]]
+    },
+    "title": "Title 5",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Name1111"
+      },
+      {
+        "family": "Name2222"
+      },
+      {
+        "family": "Name3333"
+      },
+      {
+        "family": "Name4444"
+      },
+      {
+        "family": "Name5555"
+      }
+    ],
+    "id": "unall9a",
+    "issued": {
+      "date-parts": [[2010]]
+    },
+    "title": "Title 5",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Name1111"
+      },
+      {
+        "family": "Name2222"
+      },
+      {
+        "family": "Name3333"
+      },
+      {
+        "family": "Name4444"
+      },
+      {
+        "family": "Name5555"
+      },
+      {
+        "family": "Name6666"
+      }
+    ],
+    "id": "unall10",
+    "issued": {
+      "date-parts": [[2010]]
+    },
+    "title": "Title 5",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "XXX"
+      },
+      {
+        "family": "YYY"
+      },
+      {
+        "family": "ZZZ"
+      }
+    ],
+    "id": "ul01",
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "XXX"
+      },
+      {
+        "family": "YYY"
+      },
+      {
+        "family": "ZZZ"
+      },
+      {
+        "family": "MMM"
+      },
+      {
+        "family": "NNN"
+      }
+    ],
+    "id": "ul02",
+    "type": "article-journal"
+  }
+]

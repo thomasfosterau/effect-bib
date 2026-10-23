@@ -1,0 +1,87 @@
+[
+  {
+    "URL": "http://v3.espacenet.com/textdoc?IDX=EP1700367",
+    "author": [
+      {
+        "family": "Laufenberg",
+        "given": "Xaver"
+      },
+      {
+        "family": "Eynius",
+        "given": "Dominique"
+      },
+      {
+        "family": "Suelzle",
+        "given": "Helmut"
+      },
+      {
+        "family": "Usbeck",
+        "given": "Stephan"
+      },
+      {
+        "family": "Spaeth",
+        "given": "Matthias"
+      },
+      {
+        "family": "Neuser-Hoffmann",
+        "given": "Miriam"
+      },
+      {
+        "family": "Myrzik",
+        "given": "Christian"
+      },
+      {
+        "family": "Schmid",
+        "given": "Manfred"
+      },
+      {
+        "family": "Nietfeld",
+        "given": "Franz"
+      },
+      {
+        "family": "Thiel",
+        "given": "Alexander"
+      },
+      {
+        "family": "Braun",
+        "given": "Harald"
+      },
+      {
+        "family": "Ebner",
+        "given": "Norbert"
+      }
+    ],
+    "genre": "European patent",
+    "id": "laufenberg",
+    "issued": {
+      "date-parts": [[2006, 9, 13]]
+    },
+    "number": "1700367",
+    "title": "Elektrische einrichtung und betriebsverfahren",
+    "type": "patent"
+  },
+  {
+    "author": [
+      {
+        "family": "Sorace",
+        "given": "Ronald E."
+      },
+      {
+        "family": "Reinhardt",
+        "given": "Victor S."
+      },
+      {
+        "family": "Vaughn",
+        "given": "Steven A."
+      }
+    ],
+    "genre": "U.S. patent",
+    "id": "sorace",
+    "issued": {
+      "date-parts": [[1997, 9, 16]]
+    },
+    "number": "5668842",
+    "title": "High-speed digital-to-RF converter",
+    "type": "patent"
+  }
+]

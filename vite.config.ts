@@ -81,12 +81,15 @@ export default defineConfig({
       // read from and no `FileSystem` service to call, so `process.env` and
       // `node:*` are the only things that work there. The Effect preset's
       // service rules have no satisfiable fix in these files. The entry-point
-      // graph test walks the source tree with `node:fs` for the same reason.
+      // graph test walks the source tree with `node:fs` for the same reason,
+      // and the BibTeX oracle test reads its corpus (and, under
+      // `ORACLE_BASELINE` / `ORACLE_REPORT`, writes its baseline) the same way.
       {
         files: [
           "**/vite.config.ts",
           "**/vitest.config.ts",
           "**/tests/entry-points.test.ts",
+          "**/tests/bibtex-oracle.test.ts",
           "**/tests/fixtures/*.mjs",
         ],
         rules: {

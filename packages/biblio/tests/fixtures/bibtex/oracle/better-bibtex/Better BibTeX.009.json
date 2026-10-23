@@ -1,0 +1,90 @@
+[
+  {
+    "author": [
+      {
+        "family": "Adams",
+        "given": "Nancy K"
+      },
+      {
+        "family": "DeSilva",
+        "given": "Shanaka L"
+      },
+      {
+        "family": "Self",
+        "given": "Steven"
+      },
+      {
+        "family": "Salas",
+        "given": "Guido"
+      },
+      {
+        "family": "Schubring",
+        "given": "Steven"
+      },
+      {
+        "family": "Permenter",
+        "given": "Jason L"
+      },
+      {
+        "family": "Arbesman",
+        "given": "Kendra"
+      }
+    ],
+    "container-title": "Bulletin of Volcanology",
+    "id": "Adams2001",
+    "issued": {
+      "date-parts": [[2001]]
+    },
+    "keyword": "Vulcanian eruptions,breadcrust,plinian",
+    "page": "493-518",
+    "title": "The physical volcanology of the 1600 eruption of Huaynaputina, southern Peru",
+    "type": "article-journal",
+    "volume": "62"
+  },
+  {
+    "id": "emptyreference",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "Adams",
+        "given": "Nancy K"
+      },
+      {
+        "family": "DeSilva",
+        "given": "Shanaka L"
+      },
+      {
+        "family": "Self",
+        "given": "Steven"
+      },
+      {
+        "family": "Salas",
+        "given": "Guido"
+      },
+      {
+        "family": "Schubring",
+        "given": "Steven"
+      },
+      {
+        "family": "Permenter",
+        "given": "Jason L"
+      },
+      {
+        "family": "Arbesman",
+        "given": "Kendra"
+      }
+    ],
+    "container-title": "Bulletin of Volcanology",
+    "id": "Adams2002",
+    "issued": {
+      "date-parts": [[2001]]
+    },
+    "keyword": "Vulcanian eruptions,breadcrust,plinian",
+    "page": "493-518",
+    "title": "The physical volcanology of the 1600 eruption of Huaynaputina, southern Peru",
+    "type": "article-journal",
+    "volume": "62"
+  }
+]

@@ -1,0 +1,21 @@
+[
+  {
+    "annote": "A book entry with an edition field",
+    "author": [
+      {
+        "family": "Massa",
+        "given": "Werner"
+      }
+    ],
+    "edition": "2",
+    "id": "massa",
+    "issued": {
+      "date-parts": [[2004]]
+    },
+    "language": "en-GB",
+    "publisher": "Spinger",
+    "publisher-place": "Berlin",
+    "title": "Crystal structure determination",
+    "type": "book"
+  }
+]

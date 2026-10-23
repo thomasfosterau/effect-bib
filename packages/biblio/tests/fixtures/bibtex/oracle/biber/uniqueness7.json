@@ -1,0 +1,176 @@
+[
+  {
+    "author": [
+      {
+        "family": "Red",
+        "given": "Author"
+      },
+      {
+        "family": "Green",
+        "given": "Author"
+      },
+      {
+        "family": "Blue",
+        "given": "Author"
+      },
+      {
+        "family": "Black",
+        "given": "Author"
+      }
+    ],
+    "id": "po1",
+    "issued": {
+      "date-parts": [[2022]]
+    },
+    "title": "Title one",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Red",
+        "given": "Author"
+      },
+      {
+        "family": "Green",
+        "given": "Author"
+      },
+      {
+        "family": "Blue",
+        "given": "Author"
+      },
+      {
+        "family": "White",
+        "given": "Author"
+      }
+    ],
+    "id": "po2",
+    "issued": {
+      "date-parts": [[2022]]
+    },
+    "title": "Title two",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Abraham",
+        "given": "A."
+      },
+      {
+        "family": "Brown",
+        "given": "B."
+      },
+      {
+        "family": "Cuthbert",
+        "given": "C."
+      },
+      {
+        "family": "Abraham",
+        "given": "D."
+      }
+    ],
+    "id": "po3",
+    "issued": {
+      "date-parts": [[2022]]
+    },
+    "title": "Title one",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Abraham",
+        "given": "A."
+      },
+      {
+        "family": "Brown",
+        "given": "B."
+      },
+      {
+        "family": "Cuthbert",
+        "given": "C."
+      },
+      {
+        "family": "Darling",
+        "given": "D."
+      }
+    ],
+    "id": "po4",
+    "issued": {
+      "date-parts": [[2022]]
+    },
+    "title": "Title two",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Smith",
+        "given": "Neil"
+      }
+    ],
+    "id": "un1",
+    "issued": {
+      "date-parts": [[2022]]
+    },
+    "title": "Title one",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Smith",
+        "given": "Neil"
+      }
+    ],
+    "id": "un2",
+    "issued": {
+      "date-parts": [[2022]]
+    },
+    "title": "Title two",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Smith",
+        "given": "Neil"
+      }
+    ],
+    "id": "un3",
+    "issued": {
+      "date-parts": [[2023]]
+    },
+    "title": "Title three",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Smith",
+        "given": "Arthur"
+      }
+    ],
+    "id": "un4",
+    "issued": {
+      "date-parts": [[2000]]
+    },
+    "title": "Title one",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Smith",
+        "given": "Brian"
+      }
+    ],
+    "id": "un5",
+    "issued": {
+      "date-parts": [[2000]]
+    },
+    "title": "Title one",
+    "type": "book"
+  }
+]

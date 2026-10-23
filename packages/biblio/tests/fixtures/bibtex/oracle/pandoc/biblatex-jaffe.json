@@ -1,0 +1,22 @@
+[
+  {
+    "annote": "A collection entry with edition and volumes fields. Note the editora and editoratype fields",
+    "edition": "2",
+    "editor": [
+      {
+        "family": "Jaffé",
+        "given": "Philipp"
+      }
+    ],
+    "id": "jaffe",
+    "issued": {
+      "date-parts": [[1885], [1888]]
+    },
+    "language": "la",
+    "number-of-volumes": "2",
+    "publisher-place": "Leipzig",
+    "title": "Regesta Pontificum Romanorum ab condita ecclesia ad annum post Christum natum <span style=\"font-variant:small-caps;\">mcxcviii</span>",
+    "title-short": "Regesta Pontificum Romanorum",
+    "type": "book"
+  }
+]

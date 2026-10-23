@@ -1,0 +1,48 @@
+[
+  {
+    "DOI": "10.1177/0022002798042001001",
+    "author": [
+      {
+        "family": "Abbott",
+        "given": "Kenneth W."
+      },
+      {
+        "family": "Snidal",
+        "given": "Duncan"
+      }
+    ],
+    "container-title": "The Journal of Conflict Resolution",
+    "id": "AbbottSnidal:1998",
+    "issue": "1",
+    "issued": {
+      "date-parts": [[1998, 2]]
+    },
+    "page": "3-32",
+    "title": "Why states act through formal international organizations",
+    "type": "article-journal",
+    "volume": "42"
+  },
+  {
+    "DOI": "10.1177/0022002798042001001",
+    "author": [
+      {
+        "family": "Abbott",
+        "given": "Kenneth W."
+      },
+      {
+        "family": "Snidal",
+        "given": "Duncan"
+      }
+    ],
+    "container-title": "The Journal of Conflict Resolution",
+    "id": "AbbottSnidal",
+    "issue": "1",
+    "issued": {
+      "date-parts": [[1998, 2]]
+    },
+    "page": "3-32",
+    "title": "Why states act through formal international organizations",
+    "type": "article-journal",
+    "volume": "42"
+  }
+]

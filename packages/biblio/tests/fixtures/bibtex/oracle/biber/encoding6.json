@@ -1,0 +1,17 @@
+[
+  {
+    "author": [
+      {
+        "family": "Encalcer",
+        "given": "Edward"
+      }
+    ],
+    "id": "test",
+    "issued": {
+      "date-parts": [[1999]]
+    },
+    "publisher": "A press",
+    "title": "↑À titlé",
+    "type": "book"
+  }
+]

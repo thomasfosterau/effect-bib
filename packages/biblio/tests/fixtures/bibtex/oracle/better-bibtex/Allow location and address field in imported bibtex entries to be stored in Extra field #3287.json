@@ -1,0 +1,73 @@
+[
+  {
+    "DOI": "10.1145/3290605.3300233",
+    "ISBN": "9781450359702",
+    "URL": "https://doi.org/10.1145/3290605.3300233",
+    "author": [
+      {
+        "family": "Amershi",
+        "given": "Saleema"
+      },
+      {
+        "family": "Weld",
+        "given": "Dan"
+      },
+      {
+        "family": "Vorvoreanu",
+        "given": "Mihaela"
+      },
+      {
+        "family": "Fourney",
+        "given": "Adam"
+      },
+      {
+        "family": "Nushi",
+        "given": "Besmira"
+      },
+      {
+        "family": "Collisson",
+        "given": "Penny"
+      },
+      {
+        "family": "Suh",
+        "given": "Jina"
+      },
+      {
+        "family": "Iqbal",
+        "given": "Shamsi"
+      },
+      {
+        "family": "Bennett",
+        "given": "Paul N."
+      },
+      {
+        "family": "Inkpen",
+        "given": "Kori"
+      },
+      {
+        "family": "Teevan",
+        "given": "Jaime"
+      },
+      {
+        "family": "Kikin-Gil",
+        "given": "Ruth"
+      },
+      {
+        "family": "Horvitz",
+        "given": "Eric"
+      }
+    ],
+    "collection-title": "CHI ’19",
+    "container-title": "Proceedings of the 2019 CHI conference on human factors in computing systems",
+    "id": "10.1145/3290605.3300233",
+    "issued": {
+      "date-parts": [[2019]]
+    },
+    "keyword": "ai-infused systems, design guidelines, human-ai interaction",
+    "page": "1-13",
+    "publisher": "Association for Computing Machinery",
+    "publisher-place": "New York, NY, USA",
+    "title": "Guidelines for human-AI interaction",
+    "type": "paper-conference"
+  }
+]

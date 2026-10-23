@@ -1,0 +1,16 @@
+[
+  {
+    "author": [
+      {
+        "family": "Author"
+      }
+    ],
+    "container-title": "Phil. Trans. Roy. Soc. A",
+    "id": "key",
+    "issued": {
+      "date-parts": [[1990]]
+    },
+    "title": "Title",
+    "type": "article-journal"
+  }
+]

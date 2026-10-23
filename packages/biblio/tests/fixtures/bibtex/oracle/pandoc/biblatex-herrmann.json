@@ -1,0 +1,36 @@
+[
+  {
+    "author": [
+      {
+        "family": "Herrmann",
+        "given": "Wolfgang A."
+      },
+      {
+        "family": "Öfele",
+        "given": "Karl"
+      },
+      {
+        "family": "Schneider",
+        "given": "Sabine K."
+      },
+      {
+        "family": "Herdtweck",
+        "given": "Eberhardt"
+      },
+      {
+        "family": "Hoffmann",
+        "given": "Stephan D."
+      }
+    ],
+    "container-title": "Angew. Chem. Int. Ed.",
+    "id": "herrmann",
+    "issue": "23",
+    "issued": {
+      "date-parts": [[2006]]
+    },
+    "page": "3859-3862",
+    "title": "A carbocyclic carbene as an efficient catalyst ligand for C–C coupling reactions",
+    "type": "article-journal",
+    "volume": "45"
+  }
+]

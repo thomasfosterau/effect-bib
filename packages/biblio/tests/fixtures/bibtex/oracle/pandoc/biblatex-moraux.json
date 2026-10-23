@@ -1,0 +1,37 @@
+[
+  {
+    "annote": "This is a typical inproceedings entry. Note the booksubtitle, shorttitle, indextitle, and indexsorttitle fields. Also note the eventdate field.",
+    "author": [
+      {
+        "family": "Moraux",
+        "given": "Paul"
+      }
+    ],
+    "container-title": "Aristotle on Mind and the Senses. Proceedings of the Seventh Symposium Aristotelicum",
+    "editor": [
+      {
+        "family": "Lloyd",
+        "given": "G. E. R."
+      },
+      {
+        "family": "Owen",
+        "given": "G. E. L."
+      }
+    ],
+    "event-date": {
+      "date-parts": [[1975]]
+    },
+    "id": "moraux",
+    "issued": {
+      "date-parts": [[1979]]
+    },
+    "keyword": "secondary",
+    "language": "fr-FR",
+    "page": "281-324",
+    "publisher": "Cambridge University Press",
+    "publisher-place": "Cambridge",
+    "title": "Le <i>De Anima</i> dans la tradition grècque: Quelques aspects de l’interpretation du traité, de Theophraste à Themistius",
+    "title-short": "<i>De Anima</i> dans la tradition grècque",
+    "type": "paper-conference"
+  }
+]

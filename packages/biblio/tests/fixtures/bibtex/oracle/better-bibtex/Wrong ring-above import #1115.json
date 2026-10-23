@@ -1,0 +1,25 @@
+[
+  {
+    "URL": "http://is.muni.cz/publication/884893/en",
+    "author": [
+      {
+        "family": "Řehůřek",
+        "given": "Radim"
+      },
+      {
+        "family": "Sojka",
+        "given": "Petr"
+      }
+    ],
+    "container-title": "Proceedings of the LREC 2010 Workshop on New Challenges for NLP Frameworks",
+    "id": "rehurek_lrec",
+    "issued": {
+      "date-parts": [[2010, 5, 22]]
+    },
+    "page": "45-50",
+    "publisher": "ELRA",
+    "publisher-place": "Valletta, Malta",
+    "title": "Software Framework for Topic Modelling with Large Corpora",
+    "type": "paper-conference"
+  }
+]

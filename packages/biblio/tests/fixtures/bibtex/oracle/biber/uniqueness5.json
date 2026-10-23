@@ -1,0 +1,313 @@
+[
+  {
+    "author": [
+      {
+        "family": "Smith",
+        "given": "John"
+      },
+      {
+        "family": "Jones",
+        "given": "Henry"
+      }
+    ],
+    "id": "uls1",
+    "issued": {
+      "date-parts": [[2000]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Smith",
+        "given": "John"
+      },
+      {
+        "family": "Small",
+        "given": "Sam"
+      }
+    ],
+    "id": "uls2",
+    "issued": {
+      "date-parts": [[2001]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Helarn",
+        "given": "Henry"
+      },
+      {
+        "family": "Bonkers",
+        "given": "Brian"
+      }
+    ],
+    "id": "uls3",
+    "issued": {
+      "date-parts": [[2000]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Helarn",
+        "given": "Henry"
+      },
+      {
+        "family": "Resin",
+        "given": "Michael"
+      }
+    ],
+    "id": "uls4",
+    "issued": {
+      "date-parts": [[2000]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Feld",
+        "given": "Robert"
+      },
+      {
+        "family": "Ink",
+        "given": "Ian"
+      }
+    ],
+    "id": "uls5",
+    "issued": {
+      "date-parts": [[2000]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Feld",
+        "given": "Robert"
+      },
+      {
+        "family": "Belt",
+        "given": "Brian"
+      }
+    ],
+    "id": "uls6",
+    "issued": {
+      "date-parts": [[2000]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Feld",
+        "given": "Robert"
+      },
+      {
+        "family": "Gibbons",
+        "given": "Stanley"
+      }
+    ],
+    "id": "uls7",
+    "issued": {
+      "date-parts": [[2001]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Poodle",
+        "given": "Patrick"
+      },
+      {
+        "family": "Vessel",
+        "given": "Robin"
+      },
+      {
+        "family": "Eagle",
+        "given": "Marvin"
+      },
+      {
+        "family": "Trendle",
+        "given": "Rupert"
+      }
+    ],
+    "id": "uls8",
+    "issued": {
+      "date-parts": [[2000]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Poodle",
+        "given": "Patrick"
+      },
+      {
+        "family": "Vessel",
+        "given": "Robin"
+      },
+      {
+        "family": "Idle",
+        "given": "Jeremy"
+      },
+      {
+        "family": "Loog",
+        "given": "Leigh"
+      }
+    ],
+    "id": "uls9",
+    "issued": {
+      "date-parts": [[2001]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Vogel"
+      },
+      {
+        "family": "Beast"
+      },
+      {
+        "family": "Garble"
+      },
+      {
+        "family": "Rook"
+      }
+    ],
+    "id": "uls10",
+    "issued": {
+      "date-parts": [[2000]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Vogel"
+      },
+      {
+        "family": "Beast"
+      },
+      {
+        "family": "Tremble"
+      },
+      {
+        "family": "Bite"
+      }
+    ],
+    "id": "uls11",
+    "issued": {
+      "date-parts": [[2000]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Vogel"
+      },
+      {
+        "family": "Beast"
+      },
+      {
+        "family": "Acid"
+      },
+      {
+        "family": "Squeeze"
+      }
+    ],
+    "id": "uls12",
+    "issued": {
+      "date-parts": [[2001]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Uthor",
+        "given": "A."
+      },
+      {
+        "family": "Buthor",
+        "given": "B."
+      },
+      {
+        "family": "Guthor",
+        "given": "G."
+      },
+      {
+        "family": "Kuthor",
+        "given": "K."
+      }
+    ],
+    "id": "ulmy1",
+    "issued": {
+      "date-parts": [[2016]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Uthor",
+        "given": "A."
+      },
+      {
+        "family": "Guthor",
+        "given": "G."
+      },
+      {
+        "family": "Kuthor",
+        "given": "K."
+      },
+      {
+        "family": "Buthor",
+        "given": "B."
+      }
+    ],
+    "id": "ulmy2",
+    "issued": {
+      "date-parts": [[2016]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Uthor",
+        "given": "A."
+      },
+      {
+        "family": "Buthor",
+        "given": "B."
+      },
+      {
+        "family": "Cuthor",
+        "given": "C."
+      },
+      {
+        "family": "Duthor",
+        "given": "D."
+      },
+      {
+        "family": "Euthor",
+        "given": "E."
+      }
+    ],
+    "id": "ulmy3",
+    "issued": {
+      "date-parts": [[2014]]
+    },
+    "type": "article-journal"
+  }
+]

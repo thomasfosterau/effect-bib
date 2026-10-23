@@ -1,0 +1,24 @@
+[
+  {
+    "author": [
+      {
+        "family": "Author",
+        "given": "Al"
+      }
+    ],
+    "collection-number": "3",
+    "collection-title": "Series",
+    "container-title": "Maintitle: Mainsubtitle. Maintitleaddon",
+    "id": "item1",
+    "issued": {
+      "date-parts": [[2011]]
+    },
+    "language": "fr-FR",
+    "publisher": "Publisher",
+    "publisher-place": "Location",
+    "title": "Title of the “inbook” Entry: Subtitle. Titleaddon",
+    "type": "chapter",
+    "volume": "4",
+    "volume-title": "Booktitle: Booksubtitle. Booktitleaddon"
+  }
+]

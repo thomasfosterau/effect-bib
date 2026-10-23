@@ -1,0 +1,22 @@
+[
+  {
+    "author": [
+      {
+        "family": "Author",
+        "given": "Al"
+      }
+    ],
+    "collection-number": "3",
+    "collection-title": "Series",
+    "id": "item1",
+    "issued": {
+      "date-parts": [[2013]]
+    },
+    "language": "fr-FR",
+    "publisher": "Publisher",
+    "publisher-place": "Location",
+    "title": "Maintitle: Mainsubtitle. Maintitleaddon",
+    "type": "book",
+    "volume-title": "Title of the Book: Subtitle. Titleaddon"
+  }
+]

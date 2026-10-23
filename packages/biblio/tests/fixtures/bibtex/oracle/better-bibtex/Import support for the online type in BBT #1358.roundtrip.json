@@ -1,0 +1,16 @@
+[
+  {
+    "URL": "https://ark.intel.com/content/www/us/en/ark/products/78477/intel-atom-processor-e3826-1m-cache-1-46-ghz.html",
+    "author": [
+      {
+        "literal": "Intel"
+      }
+    ],
+    "id": "WEB:intel-ark-atom",
+    "issued": {
+      "date-parts": [[2019]]
+    },
+    "title": "Intel atom E3826 specifications",
+    "type": "webpage"
+  }
+]

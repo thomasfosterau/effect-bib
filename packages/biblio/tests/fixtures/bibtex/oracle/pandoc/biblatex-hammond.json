@@ -1,0 +1,21 @@
+[
+  {
+    "annote": "A book entry. Note the sorttitle and indextitle fields as well as the format of the publisher field",
+    "author": [
+      {
+        "family": "Hammond",
+        "given": "Christopher"
+      }
+    ],
+    "id": "hammond",
+    "issued": {
+      "date-parts": [[1997]]
+    },
+    "language": "en-GB",
+    "publisher": "International Union of Crystallography; Oxford University Press",
+    "publisher-place": "Oxford",
+    "title": "The basics of crystallography and diffraction",
+    "title-short": "Crystallography and diffraction",
+    "type": "book"
+  }
+]

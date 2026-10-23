@@ -1,0 +1,22 @@
+[
+  {
+    "annote": "A book entry. Note the format of the printed name and compare the useprefix option in the options field as well as brandt and geer",
+    "author": [
+      {
+        "family": "Gennep",
+        "given": "Arnold",
+        "non-dropping-particle": "van"
+      }
+    ],
+    "id": "vangennep",
+    "issued": {
+      "date-parts": [[1909]]
+    },
+    "language": "fr-FR",
+    "publisher": "Nourry",
+    "publisher-place": "Paris",
+    "title": "Les rites de passage",
+    "title-short": "Rites de passage",
+    "type": "book"
+  }
+]

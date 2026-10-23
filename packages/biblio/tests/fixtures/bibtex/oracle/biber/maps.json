@@ -1,0 +1,54 @@
+[
+  {
+    "author": [
+      {
+        "family": "Doe",
+        "given": "John"
+      }
+    ],
+    "id": "maps1",
+    "issued": {
+      "date-parts": [[1995]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Bran",
+        "given": "Bill"
+      }
+    ],
+    "id": "maps2",
+    "issued": {
+      "date-parts": [[1996]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Map",
+        "given": "Marvin"
+      }
+    ],
+    "id": "maps3",
+    "issued": {
+      "date-parts": [[1945]]
+    },
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Allele",
+        "given": "Alan"
+      }
+    ],
+    "id": "maps4",
+    "issued": {
+      "date-parts": [[1995]]
+    },
+    "type": "book"
+  }
+]

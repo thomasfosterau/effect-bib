@@ -1,0 +1,75 @@
+[
+  {
+    "annote": "An article entry with  authors. By default, long author and editor lists are automatically truncated. This is configurable",
+    "author": [
+      {
+        "family": "Hostetler",
+        "given": "Michael J."
+      },
+      {
+        "family": "Wingate",
+        "given": "Julia E."
+      },
+      {
+        "family": "Zhong",
+        "given": "Chuan-Jian"
+      },
+      {
+        "family": "Harris",
+        "given": "Jay E."
+      },
+      {
+        "family": "Vachet",
+        "given": "Richard W."
+      },
+      {
+        "family": "Clark",
+        "given": "Michael R."
+      },
+      {
+        "family": "Londono",
+        "given": "J. David"
+      },
+      {
+        "family": "Green",
+        "given": "Stephen J."
+      },
+      {
+        "family": "Stokes",
+        "given": "Jennifer J."
+      },
+      {
+        "family": "Wignall",
+        "given": "George D."
+      },
+      {
+        "family": "Glish",
+        "given": "Gary L."
+      },
+      {
+        "family": "Porter",
+        "given": "Marc D."
+      },
+      {
+        "family": "Evans",
+        "given": "Neal D."
+      },
+      {
+        "family": "Murray",
+        "given": "Royce W."
+      }
+    ],
+    "container-title": "Langmuir",
+    "id": "murray",
+    "issue": "1",
+    "issued": {
+      "date-parts": [[1998]]
+    },
+    "language": "en-US",
+    "page": "17-30",
+    "title": "Alkanethiolate gold cluster molecules with core diameters from 1.5 to 5.2 nm: Core and monolayer properties as a function of core size",
+    "title-short": "Alkanethiolate gold cluster molecules",
+    "type": "article-journal",
+    "volume": "14"
+  }
+]

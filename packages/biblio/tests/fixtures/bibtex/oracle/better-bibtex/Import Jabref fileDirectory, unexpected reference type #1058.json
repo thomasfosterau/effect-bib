@@ -1,0 +1,50 @@
+[
+  {
+    "ISSN": "1612-4642",
+    "URL": "http://dx.doi.org/10.1007/s10344-009-0327-7",
+    "author": [
+      {
+        "family": "Barrio",
+        "given": "Isabel"
+      },
+      {
+        "family": "Acevedo",
+        "given": "Pelayo"
+      },
+      {
+        "family": "Tortosa",
+        "given": "Francisco"
+      }
+    ],
+    "container-title": "European Journal of Wildlife Research",
+    "id": "springerlink:10.1007/s10344-009-0327-7",
+    "issued": {
+      "date-parts": [[2010]]
+    },
+    "note": "10.1007/s10344-009-0327-7",
+    "page": "335-340",
+    "publisher": "Springer Berlin / Heidelberg",
+    "title": "Assessment of methods for estimating wild rabbit population abundance in agricultural landscapes",
+    "type": "article-journal",
+    "volume": "56"
+  },
+  {
+    "author": [
+      {
+        "family": "Afonso",
+        "given": "Anabela"
+      },
+      {
+        "family": "Alpizar-Jara",
+        "given": "Russell"
+      }
+    ],
+    "id": "Afonso2011",
+    "issued": {
+      "date-parts": [[2011]]
+    },
+    "publisher-place": "Poster apresentado no Congresso da SPE",
+    "title": "Amostragem em duas fases adaptativa para estimar a abundância de populações raras",
+    "type": ""
+  }
+]

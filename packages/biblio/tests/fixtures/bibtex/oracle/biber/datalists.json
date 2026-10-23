@@ -1,0 +1,200 @@
+[
+  {
+    "author": [
+      {
+        "family": "Adamson",
+        "given": "Aaron"
+      }
+    ],
+    "id": "K1",
+    "issued": {
+      "date-parts": [[1995]]
+    },
+    "publisher": "Aardvark Press",
+    "publisher-place": "Arlington",
+    "title": "Artificial advice",
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Bully",
+        "given": "Brian"
+      }
+    ],
+    "id": "K2",
+    "issued": {
+      "date-parts": [[1971]]
+    },
+    "publisher": "Aardvark Press",
+    "publisher-place": "Arlington",
+    "title": "Lucid lamas",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Radiator",
+        "given": "Richard"
+      }
+    ],
+    "genre": "PhD thesis",
+    "id": "K3",
+    "issued": {
+      "date-parts": [[1953]]
+    },
+    "publisher-place": "Cambridge",
+    "title": "Zenos things",
+    "type": "thesis"
+  },
+  {
+    "author": [
+      {
+        "family": "Lucid",
+        "given": "Linda"
+      }
+    ],
+    "id": "K4",
+    "issued": {
+      "date-parts": [[1999]]
+    },
+    "keyword": "key1, key2",
+    "publisher": "Stuff; Nonesense Press",
+    "publisher-place": "London",
+    "title": "Collation is cruel",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Zånny",
+        "given": "Slippery"
+      }
+    ],
+    "id": "K5",
+    "issued": {
+      "date-parts": [[1932]]
+    },
+    "publisher": "Footwear Folios",
+    "publisher-place": "London",
+    "title": "Silent slippers",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Zznny",
+        "given": "Slippery"
+      }
+    ],
+    "id": "K6",
+    "issued": {
+      "date-parts": [[1945]]
+    },
+    "publisher": "Terrible Typists",
+    "publisher-place": "Grimsby",
+    "title": "People prefer packages to post",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Spaniard",
+        "given": "Simon"
+      }
+    ],
+    "id": "K7",
+    "issued": {
+      "date-parts": [[1906]]
+    },
+    "title": "Collation is chilling",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Tremble",
+        "given": "Terrance"
+      }
+    ],
+    "id": "K8",
+    "keyword": "key1",
+    "note": "Collation is chilling",
+    "title": "Collation is chilling",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Tremble",
+        "given": "Terrance"
+      }
+    ],
+    "id": "K9",
+    "keyword": "key1",
+    "note": "Collation is cruel",
+    "title": "Collation is chilling",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Tremble",
+        "given": "Terrance"
+      }
+    ],
+    "id": "K10",
+    "keyword": "key1",
+    "title": "Collation is cruel",
+    "type": "book"
+  },
+  {
+    "id": "D1",
+    "issued": {
+      "date-parts": [[-381]]
+    },
+    "type": "book"
+  },
+  {
+    "id": "D2",
+    "issued": {
+      "date-parts": [[-386]]
+    },
+    "type": "book"
+  },
+  {
+    "id": "D3",
+    "issued": {
+      "date-parts": [[-389]]
+    },
+    "type": "book"
+  },
+  {
+    "id": "D4",
+    "issued": {
+      "date-parts": [[2005]]
+    },
+    "type": "book"
+  },
+  {
+    "id": "D5",
+    "issued": {
+      "date-parts": [[380]]
+    },
+    "type": "book"
+  },
+  {
+    "id": "D6",
+    "issued": {
+      "date-parts": []
+    },
+    "type": "book"
+  },
+  {
+    "id": "D7",
+    "issued": {
+      "date-parts": []
+    },
+    "type": "book"
+  }
+]

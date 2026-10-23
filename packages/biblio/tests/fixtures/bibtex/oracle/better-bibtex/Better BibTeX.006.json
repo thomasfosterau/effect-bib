@@ -1,0 +1,8 @@
+[
+  {
+    "id": "test-ticket1661",
+    "title": "Non-braking space:  ; accented characters: ñ and ñ; tilde in URL: Http://example.com/~user",
+    "title-short": "Non-braking space",
+    "type": "article-journal"
+  }
+]

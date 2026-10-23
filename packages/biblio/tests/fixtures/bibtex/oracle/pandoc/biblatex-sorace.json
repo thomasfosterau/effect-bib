@@ -1,0 +1,28 @@
+[
+  {
+    "annote": "This is a patent entry with a holder field. Note the format of the type and date fields in the database file. Compare almendro, laufenberg, and kowalik",
+    "author": [
+      {
+        "family": "Sorace",
+        "given": "Ronald E."
+      },
+      {
+        "family": "Reinhardt",
+        "given": "Victor S."
+      },
+      {
+        "family": "Vaughn",
+        "given": "Steven A."
+      }
+    ],
+    "genre": "U.S. patent",
+    "id": "sorace",
+    "issued": {
+      "date-parts": [[1997, 9, 16]]
+    },
+    "language": "en-US",
+    "number": "5668842",
+    "title": "High-speed digital-to-RF converter",
+    "type": "patent"
+  }
+]

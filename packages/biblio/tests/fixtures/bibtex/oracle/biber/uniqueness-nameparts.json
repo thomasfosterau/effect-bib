@@ -1,0 +1,72 @@
+[
+  {
+    "author": [
+      {
+        "family": "Smith",
+        "given": "John"
+      }
+    ],
+    "id": "un1",
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Smith",
+        "given": "John"
+      }
+    ],
+    "id": "un2",
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Smith",
+        "given": "John"
+      }
+    ],
+    "id": "un3",
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Smith",
+        "given": "Alan"
+      }
+    ],
+    "id": "un4",
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Smith",
+        "given": "Arthur"
+      }
+    ],
+    "id": "un5",
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Smith",
+        "given": "Arthur"
+      }
+    ],
+    "id": "un6",
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Smith",
+        "given": "Arthur"
+      }
+    ],
+    "id": "un7",
+    "type": "article-journal"
+  }
+]

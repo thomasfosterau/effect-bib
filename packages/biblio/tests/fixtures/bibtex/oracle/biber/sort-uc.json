@@ -1,0 +1,92 @@
+[
+  {
+    "author": [
+      {
+        "family": "Slippery",
+        "given": "Zänny"
+      }
+    ],
+    "id": "LS1",
+    "issued": {
+      "date-parts": [[1932]]
+    },
+    "publisher": "Footwear Folios",
+    "publisher-place": "London",
+    "title": "Silent slippers",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Slippery",
+        "given": "Zznny"
+      }
+    ],
+    "id": "LS2",
+    "issued": {
+      "date-parts": [[1945]]
+    },
+    "publisher": "Terrible Typists",
+    "publisher-place": "Grimsby",
+    "title": "People prefer packages to post",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Slippery",
+        "given": "Zönny"
+      }
+    ],
+    "id": "LS3",
+    "issued": {
+      "date-parts": [[1966]]
+    },
+    "publisher": "Fruit Folios",
+    "publisher-place": "Catterick",
+    "title": "Last lingering lemons",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Slippery",
+        "given": "Zönny"
+      }
+    ],
+    "id": "LS4",
+    "issued": {
+      "date-parts": [[1966]]
+    },
+    "publisher": "Fruit Folios",
+    "publisher-place": "Catterick",
+    "title": "Last lingering lemons",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Slippery",
+        "given": "Zanny"
+      }
+    ],
+    "id": "LS5",
+    "issued": {
+      "date-parts": [[1989]]
+    },
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Slippery",
+        "given": "Zan"
+      }
+    ],
+    "id": "LS6",
+    "issued": {
+      "date-parts": [[1988]]
+    },
+    "type": "book"
+  }
+]

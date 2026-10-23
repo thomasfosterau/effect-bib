@@ -1,0 +1,35 @@
+[
+  {
+    "author": [
+      {
+        "family": "Albert",
+        "given": "Edwin"
+      }
+    ],
+    "id": "CS1",
+    "title": "TITLE",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "albert",
+        "given": "Edwin"
+      }
+    ],
+    "id": "CS2",
+    "title": "Title",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Albert",
+        "given": "edwin"
+      }
+    ],
+    "id": "CS3",
+    "title": "The title",
+    "type": "book"
+  }
+]

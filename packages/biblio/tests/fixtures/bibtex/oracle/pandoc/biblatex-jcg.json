@@ -1,0 +1,15 @@
+[
+  {
+    "ISSN": "0097-8493",
+    "annote": "This is a periodical entry with an issn field.",
+    "container-title": "Computers and Graphics",
+    "id": "jcg",
+    "issue": "4",
+    "issued": {
+      "date-parts": [[2011]]
+    },
+    "title": "Semantic 3D media and content",
+    "type": "article-journal",
+    "volume": "35"
+  }
+]

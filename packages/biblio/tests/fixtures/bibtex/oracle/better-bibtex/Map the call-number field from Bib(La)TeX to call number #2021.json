@@ -1,0 +1,25 @@
+[
+  {
+    "DOI": "10.7312/kirk11824",
+    "ISBN": "0231118244",
+    "author": [
+      {
+        "family": "Kirk",
+        "given": "Stuart A."
+      },
+      {
+        "family": "Reid",
+        "given": "William James"
+      }
+    ],
+    "id": "Kirk:2002er",
+    "issued": {
+      "date-parts": [[2002]]
+    },
+    "publisher": "Columbia University Press",
+    "publisher-place": "New York",
+    "title": "Science and social work: A critical appraisal",
+    "title-short": "Science and social work",
+    "type": "book"
+  }
+]

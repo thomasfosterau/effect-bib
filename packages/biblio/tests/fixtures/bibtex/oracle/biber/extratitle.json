@@ -1,0 +1,128 @@
+[
+  {
+    "author": [
+      {
+        "family": "Doe",
+        "given": "John"
+      }
+    ],
+    "id": "L1",
+    "issued": {
+      "date-parts": [[1995]]
+    },
+    "title": "Title 1",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Doe",
+        "given": "John"
+      }
+    ],
+    "id": "L2",
+    "issued": {
+      "date-parts": [[1996]]
+    },
+    "title": "Title 1",
+    "type": "book"
+  },
+  {
+    "id": "L3",
+    "issued": {
+      "date-parts": [[1995]]
+    },
+    "title": "Title 2",
+    "type": "book"
+  },
+  {
+    "id": "L4",
+    "issued": {
+      "date-parts": [[1995]]
+    },
+    "title": "Title 2",
+    "type": "book"
+  },
+  {
+    "id": "L5",
+    "issued": {
+      "date-parts": [[1995]]
+    },
+    "title": "Title 1",
+    "type": "book"
+  },
+  {
+    "id": "L6",
+    "issued": {
+      "date-parts": [[1995]]
+    },
+    "title": "Title 3",
+    "title-short": "Title a",
+    "type": "book"
+  },
+  {
+    "id": "L7",
+    "issued": {
+      "date-parts": [[1995]]
+    },
+    "title": "Title a",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Brown",
+        "given": "Billy"
+      }
+    ],
+    "id": "L8",
+    "issued": {
+      "date-parts": [[1934]]
+    },
+    "title": "Title a",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Brown",
+        "given": "Billy"
+      }
+    ],
+    "id": "L9",
+    "issued": {
+      "date-parts": [[1932]]
+    },
+    "title": "Title b",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Cautious",
+        "given": "Clive"
+      }
+    ],
+    "id": "L10",
+    "issued": {
+      "date-parts": [[1946]]
+    },
+    "title": "Title a",
+    "type": "book"
+  },
+  {
+    "id": "L11",
+    "issued": {
+      "date-parts": [[1946]]
+    },
+    "title": "Titular titilation",
+    "type": "book"
+  },
+  {
+    "id": "L12",
+    "issued": {
+      "date-parts": [[1943]]
+    },
+    "type": "book"
+  }
+]

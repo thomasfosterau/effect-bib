@@ -34,3 +34,7 @@ packages/*/docs/
 # `pnpm pack` output staged by scripts/release.sh.
 .release/
 *.tgz
+
+# Fetched oracle corpora (`vp run oracles:fetch`, #91): GPL test cases read at
+# test time, never committed.
+.oracles/

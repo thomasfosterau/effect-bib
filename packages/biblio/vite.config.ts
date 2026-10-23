@@ -69,6 +69,15 @@ export default defineConfig({
         command: "docgen",
         cache: { input: cacheInputs, output: ["docs/**"] },
       },
+      // Fetches Pandoc's BibLaTeX test cases (GPL, so never vendored) at a
+      // pinned commit into the git-ignored .oracles/, for the oracle test
+      // (tests/bibtex-oracle.test.ts, #91). Network; CI runs it before the
+      // tests, and the test fails under CI without it.
+      "oracles:fetch": {
+        command:
+          'sh -c \'rm -rf .oracles/pandoc && git clone -q --filter=blob:none --no-checkout https://github.com/jgm/pandoc.git .oracles/pandoc && cd .oracles/pandoc && git sparse-checkout set --no-cone "/test/command/biblatex-*.md" "/test/command/bibtex-*.md" && git checkout -q 66fcaff9258133aa5d2e918abb7b7d5e5c4a39fd\'',
+        cache: false,
+      },
       // Both test tasks build first: `tests/entry-points.test.ts` re-walks
       // and loads the built `dist/`, and skips those cases without it (#22).
       "test:unit": {

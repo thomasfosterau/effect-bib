@@ -1,0 +1,38 @@
+[
+  {
+    "DOI": "10.1051/0004-6361:20040307",
+    "URL": "https://arxiv.org/abs/astro-ph/0405395",
+    "author": [
+      {
+        "family": "Caputo",
+        "given": "F."
+      },
+      {
+        "family": "Castellani",
+        "given": "V."
+      },
+      {
+        "family": "Degl’Innocenti",
+        "given": "S."
+      },
+      {
+        "family": "Fiorentino",
+        "given": "G."
+      },
+      {
+        "family": "Marconi",
+        "given": "M."
+      }
+    ],
+    "container-title": "",
+    "id": "2004A&A...424..927C",
+    "issued": {
+      "date-parts": [[2004, 9]]
+    },
+    "keyword": "stars: variables: Cepheids, stars: evolution, Astrophysics",
+    "page": "927-934",
+    "title": "Bright metal-poor variables: Why “Anomalous” Cepheids?",
+    "type": "article-journal",
+    "volume": "424"
+  }
+]
