@@ -135,6 +135,69 @@ describe("BiblioLookup.byDoiRecord", () => {
   });
 });
 
+describe("BiblioLookup.byDoiCsl", () => {
+  const doi = "10.5281/zenodo.1234567";
+  const url = "https://doi.org/10.5281/zenodo.1234567";
+
+  it("asks doi.org for CSL-JSON and reads it into a record", async () => {
+    const { layer, urls, accepts, userAgents } = stubRouter({
+      [url]: {
+        status: 200,
+        body: {
+          type: "dataset",
+          title: "A Dataset",
+          DOI: doi,
+          author: [{ family: "Doe", given: "Jane" }],
+          issued: { "date-parts": [[2021]] },
+          publisher: "Zenodo",
+        },
+      },
+    });
+    const record = expectSome(
+      await runTest(withLookup(layer, (lookup) => lookup.byDoiCsl(doi))),
+      "a record",
+    );
+    expect(urls).toEqual([url]);
+    expect(accepts).toEqual(["application/vnd.citationstyles.csl+json"]);
+    expect(userAgents[0]).toContain("biblio-tests/0.0");
+    expect(record).toMatchObject({ type: "dataset", title: "A Dataset", publisher: "Zenodo" });
+    expect(record.identifiers.doi).toBe(doi);
+    expect(record.provenance).toEqual({
+      source: "csl-json",
+      retrievedBy: { identifierType: "doi", identifier: doi, endpoint: "https://doi.org" },
+    });
+  });
+
+  it("percent-encodes each path segment of the DOI", async () => {
+    const odd = "10.1000/a#b?c";
+    const { layer, urls } = stubRouter({});
+    await runTest(withLookup(layer, (lookup) => lookup.byDoiCsl(odd)));
+    expect(urls).toEqual(["https://doi.org/10.1000/a%23b%3Fc"]);
+  });
+
+  it("returns Option.none on a clean 404 and fails with LookupFailed on a 5xx", async () => {
+    const missing = stubRouter({});
+    expect(
+      Option.isNone(await runTest(withLookup(missing.layer, (lookup) => lookup.byDoiCsl(doi)))),
+    ).toBe(true);
+    const down = stubRouter({ [url]: { status: 503, body: {} } });
+    const failure = await expectFailureInstanceOf(
+      withLookup(down.layer, (lookup) => lookup.byDoiCsl(doi)),
+      LookupFailed,
+    );
+    expect(failure).toMatchObject({ source: "doi" });
+  });
+
+  it("fails with InvalidIdentifier for a malformed DOI, before any request", async () => {
+    const { layer, urls } = stubRouter({});
+    await expectFailureInstanceOf(
+      withLookup(layer, (lookup) => lookup.byDoiCsl("11.not/a-doi")),
+      InvalidIdentifier,
+    );
+    expect(urls).toEqual([]);
+  });
+});
+
 describe("BiblioLookup.byTitle", () => {
   it("returns ranked OpenAlex candidates for a title search", async () => {
     const path =

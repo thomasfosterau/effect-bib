@@ -12,6 +12,7 @@
 
 export * from "./contact.ts";
 export * from "./crossref.ts";
+export * from "./doi.ts";
 export * from "./errors.ts";
 export * from "./openalex.ts";
 export * from "./openlibrary.ts";

@@ -35,6 +35,7 @@ export const filteredClient: Effect.Effect<HttpClient.HttpClient, never, HttpCli
 export interface StubRouter {
   readonly urls: string[];
   readonly userAgents: string[];
+  readonly accepts: string[];
   readonly fetch: typeof globalThis.fetch;
   readonly layer: Layer.Layer<HttpClient.HttpClient>;
 }
@@ -44,7 +45,8 @@ export interface StubRouter {
  * URL. Unmapped URLs answer 404 (the natural "not found" a real upstream
  * would give for e.g. a follow-up author key we didn't stub). Every
  * requested URL is captured for path assertions, and every request's
- * `User-Agent` header (`""` when absent) for identity assertions. `fetch`
+ * `User-Agent` and `Accept` header (`""` when absent) for identity and
+ * negotiation assertions. `fetch`
  * is the routing function itself, for a test that overrides
  * `FetchHttpClient.Fetch` under a layer that supplies its own
  * `FetchHttpClient`.
@@ -52,11 +54,13 @@ export interface StubRouter {
 export function stubRouter(routes: Record<string, StubRoute>): StubRouter {
   const urls: string[] = [];
   const userAgents: string[] = [];
+  const accepts: string[] = [];
   const toJsonText = Schema.encodeSync(Schema.fromJsonString(Schema.Unknown));
   const fetch: typeof globalThis.fetch = async (input, init) => {
     const request = new Request(input, init);
     urls.push(request.url);
     userAgents.push(request.headers.get("user-agent") ?? "");
+    accepts.push(request.headers.get("accept") ?? "");
     const route = routes[request.url];
     if (!route) {
       return new Response(toJsonText({ error: "not found" }), {
@@ -72,5 +76,5 @@ export function stubRouter(routes: Record<string, StubRoute>): StubRouter {
   const layer = FetchHttpClient.layer.pipe(
     Layer.provide(Layer.succeed(FetchHttpClient.Fetch, fetch)),
   );
-  return { urls, userAgents, fetch, layer };
+  return { urls, userAgents, accepts, fetch, layer };
 }

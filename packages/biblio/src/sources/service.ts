@@ -40,6 +40,7 @@ import { type BiblioRecord } from "../record.ts";
 import { type LookupContact } from "./contact.ts";
 import { InvalidIdentifier, type LookupError } from "./errors.ts";
 import { lookupCrossrefByDoi } from "./crossref.ts";
+import { lookupDoiCsl } from "./doi.ts";
 import { lookupOpenLibraryByIsbn } from "./openlibrary.ts";
 import { searchOpenAlexByTitle } from "./openalex.ts";
 
@@ -96,6 +97,7 @@ export interface BiblioLookupOptions {
  * const stub = Layer.succeed(BiblioLookup, {
  *   byIsbnRecord: () => Effect.succeed(Option.none()),
  *   byDoiRecord: () => Effect.succeed(Option.none()),
+ *   byDoiCsl: () => Effect.succeed(Option.none()),
  *   byTitle: () => Effect.succeed([]),
  * })
  * const found = await Effect.runPromise(program.pipe(Effect.provide(stub)))
@@ -113,6 +115,11 @@ export class BiblioLookup extends Context.Service<
     ) => Effect.Effect<Option.Option<BiblioRecord>, LookupError>;
     /** CSL-native DOI lookup via Crossref. */
     readonly byDoiRecord: (doi: string) => Effect.Effect<Option.Option<BiblioRecord>, LookupError>;
+    /**
+     * DOI lookup by content negotiation at `doi.org`: CSL-JSON from whichever
+     * agency registered the DOI (Crossref, DataCite, …). Added in 1.0.0.
+     */
+    readonly byDoiCsl: (doi: string) => Effect.Effect<Option.Option<BiblioRecord>, LookupError>;
     /** CSL-native title search via OpenAlex, ranked by upstream relevance. */
     readonly byTitle: (query: string) => Effect.Effect<readonly BiblioRecord[], LookupError>;
   }
@@ -157,11 +164,17 @@ const makeBiblioLookup = Effect.fnUntraced(function* ({ contact }: BiblioLookupO
     return yield* lookupCrossrefByDoi(client, doi.value);
   });
 
+  const byDoiCsl = Effect.fn("BiblioLookup.byDoiCsl")(function* (raw: string) {
+    const doi = decodeDoi(raw);
+    if (Option.isNone(doi)) return yield* new InvalidIdentifier({ kind: "doi", value: raw });
+    return yield* lookupDoiCsl(client, doi.value);
+  });
+
   const byTitle = Effect.fn("BiblioLookup.byTitle")(function* (query: string) {
     return yield* searchOpenAlexByTitle(client, query, contact);
   });
 
-  return { byIsbnRecord, byDoiRecord, byTitle } as const;
+  return { byIsbnRecord, byDoiRecord, byDoiCsl, byTitle } as const;
 });
 
 /**
