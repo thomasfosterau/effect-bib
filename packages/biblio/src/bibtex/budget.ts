@@ -28,3 +28,16 @@ export function spend(budget: Budget, amount: number): boolean {
   budget.remaining -= amount;
   return true;
 }
+
+/**
+ * The two budgets one BibTeX reading spends: macro expansion (the scanner)
+ * and inherited field source decoded (the field mapping). A whole-file parse
+ * makes fresh ones per document; a streamed parse shares one pair across
+ * the stream, so many small documents cannot each claim a full budget.
+ *
+ * @since 1.0.0
+ */
+export interface BibtexBudgets {
+  readonly macros: Budget;
+  readonly decoded: Budget;
+}

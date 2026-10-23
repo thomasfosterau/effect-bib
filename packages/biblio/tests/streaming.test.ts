@@ -20,6 +20,7 @@ import {
   parseBibliographicFile,
   parseBibliographicStream,
   type ParseOptions,
+  type ParseOutcome,
 } from "@thomasfosterau/biblio";
 
 /** `text` cut into chunks of `size` characters. */
@@ -199,6 +200,100 @@ describe("parseBibliographicStream", () => {
       Stream.runCollect(parseBibliographicStream(failing, "bibtex", { mode: "lenient" })),
     );
     expect(exit).toEqual(Exit.fail("read error"));
+  });
+});
+
+describe("parseBibliographicStream's bounds", () => {
+  /** The stream's outcomes for `parts`, one chunk each. */
+  const fromParts = (parts: readonly string[], format: ImportFormat, options: ParseOptions) =>
+    runTest(
+      Stream.runCollect(parseBibliographicStream(Stream.fromIterable(parts), format, options)),
+    );
+
+  it("shares one macro-expansion budget across the stream, as the whole-file parse spends one", async () => {
+    const macros = [
+      `@string{a = "${"x".repeat(1000)}"}`,
+      `@string{b = ${Array.makeBy(50, () => "a").join(" # ")}}`,
+    ];
+    const entries = Array.makeBy(200, (index) => `@misc{k${index}, title = b}`);
+    const titled = (outcomes: readonly ParseOutcome[]) =>
+      outcomes.filter(
+        (outcome) => outcome.outcome === "parsed" && outcome.record.title !== undefined,
+      ).length;
+    const whole = parseBibliographicFile([...macros, ...entries].join("\n"), "bibtex", {
+      mode: "lenient",
+    });
+    const streamedOutcomes = await fromParts(
+      [`${macros.join("\n")}\n`, ...entries.map((entry) => `${entry}\n`)],
+      "bibtex",
+      { mode: "lenient" },
+    );
+    expect(streamedOutcomes).toHaveLength(200);
+    // Each title expands 50 000 characters: the budget runs out part-way,
+    // in the stream as in the whole file, rather than once per chunk. The
+    // stream spends at least as much as the whole file (each batch re-reads
+    // the macro definitions it uses), never a fresh budget per batch.
+    expect(titled(whole)).toBeLessThan(200);
+    expect(titled(streamedOutcomes)).toBeGreaterThan(0);
+    expect(titled(streamedOutcomes)).toBeLessThanOrEqual(titled(whole));
+  });
+
+  it("fails a whole-read format as soon as it passes the cap, without reading on", async () => {
+    const chunks = Stream.concat(
+      Stream.fromIterable(Array.makeBy(10, () => "[".padEnd(50, " "))),
+      Stream.fail("read past the cap" as const),
+    );
+    const exit = await runTestExit(
+      Stream.runCollect(parseBibliographicStream(chunks, "zotero-json", { maxInputLength: 100 })),
+    );
+    expect(exit).toEqual(
+      Exit.fail(
+        new InputTooLarge({
+          format: "zotero-json",
+          maxInputLength: 100,
+          message: "The zotero-json input is longer than 100 characters",
+        }),
+      ),
+    );
+  });
+
+  it("evicts cross-reference parents by length, and never holds more than the cap", async () => {
+    const big = (key: string) => `@book{${key}, title = {${key}}, note = {${"n".repeat(400)}}}`;
+    const parts = [
+      big("parent"),
+      big("other1"),
+      big("other2"),
+      big("other3"),
+      "@inbook{child, crossref = {parent}, title = {Child}}",
+    ].map((part) => `${part}\n`);
+    const outcomes = await fromParts(parts, "bibtex", { mode: "lenient", maxInputLength: 1000 });
+    const child = outcomes.find(
+      (outcome) => outcome.outcome === "parsed" && outcome.record.id === "child",
+    );
+    // The parent was pushed out of the 1000-character window by the entries after it.
+    expect(
+      child?.outcome === "parsed" ? child.record["container-title"] : "missing",
+    ).toBeUndefined();
+    expect(outcomes).toHaveLength(5);
+  });
+
+  it("reads children without their parent once the stream's context budget is spent", async () => {
+    const parent = `@book{parent, title = {Parent}, note = {${"n".repeat(1400)}}}\n`;
+    const children = Array.makeBy(
+      40,
+      (index) => `@inbook{c${index}, crossref = {parent}, title = {C}}\n`,
+    );
+    const outcomes = await fromParts([parent, ...children], "bibtex", {
+      mode: "lenient",
+      maxInputLength: 2000,
+    });
+    const inherited = outcomes.map((outcome) =>
+      outcome.outcome === "parsed" && outcome.record.id !== "parent"
+        ? outcome.record["container-title"] === "Parent"
+        : undefined,
+    );
+    expect(inherited.filter((value) => value === true).length).toBeGreaterThan(0);
+    expect(inherited[inherited.length - 1]).toBe(false);
   });
 });
 

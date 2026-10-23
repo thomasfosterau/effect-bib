@@ -86,6 +86,7 @@ import {
 } from "./record.ts";
 import type { RawFields } from "./raw-fields.ts";
 import { readYaml } from "./yaml.ts";
+import type { BibtexBudgets } from "./bibtex/budget.ts";
 import { mapBibtexEntries } from "./bibtex/fields.ts";
 import { resolveInheritance } from "./bibtex/inherit.ts";
 import { scanBibtex } from "./bibtex/scan.ts";
@@ -518,25 +519,60 @@ function structuredNames(raw: readonly string[], maxAuthors: number): CslName[] 
  * @since 0.1.0
  */
 export function parseBibtex(content: string, options: ParseOptions = {}): ParseOutcome[] {
-  return withinInputCap(content, settings(options), (input, config) => {
-    const scan = scanBibtex(input, config.maxRecords, config.maxInputLength);
-    const entries = resolveInheritance(scan.entries);
-    const position = locator(input);
-    const mapped = mapBibtexEntries(entries, config);
-    const outcomes = Array.map(
-      Array.zip(entries, mapped),
-      ([entry, { fields, additions }]): ParseOutcome => {
-        const outcome = toOutcome(fields, "bibtex", config);
-        return at(
-          outcome.outcome === "parsed"
-            ? { outcome: "parsed", record: { ...outcome.record, ...additions } }
-            : outcome,
-          position(entry.offset),
-        );
-      },
-    );
-    return endOutcomes(outcomes, scan.truncated);
+  return withinInputCap(content, settings(options), (input, config) =>
+    bibtexOutcomes(input, config, Option.none()),
+  );
+}
+
+/** The outcomes of a BibTeX document within the cap, spending `budgets` when given, else fresh ones. */
+function bibtexOutcomes(
+  input: string,
+  config: Settings,
+  budgets: Option.Option<BibtexBudgets>,
+): ParseOutcome[] {
+  const scan = Option.match(budgets, {
+    onNone: () => scanBibtex(input, config.maxRecords, config.maxInputLength),
+    onSome: ({ macros }) => scanBibtex(input, config.maxRecords, config.maxInputLength, macros),
   });
+  const entries = resolveInheritance(scan.entries);
+  const position = locator(input);
+  const mapped = Option.match(budgets, {
+    onNone: () => mapBibtexEntries(entries, config),
+    onSome: ({ decoded }) => mapBibtexEntries(entries, config, decoded),
+  });
+  const outcomes = Array.map(
+    Array.zip(entries, mapped),
+    ([entry, { fields, additions }]): ParseOutcome => {
+      const outcome = toOutcome(fields, "bibtex", config);
+      return at(
+        outcome.outcome === "parsed"
+          ? { outcome: "parsed", record: { ...outcome.record, ...additions } }
+          : outcome,
+        position(entry.offset),
+      );
+    },
+  );
+  return endOutcomes(outcomes, scan.truncated);
+}
+
+/**
+ * `parseBibtex` for one document of a streamed parse: the same reading,
+ * spending the stream's shared macro-expansion and decoding budgets rather
+ * than fresh ones, so a stream of many small documents cannot claim a full
+ * budget for each. Internal to the streaming front end: not exported from
+ * the package.
+ *
+ * @category internal
+ * @since 1.0.0
+ */
+export function parseBibtexDocument(
+  content: string,
+  options: ParseOptions,
+  budgets: BibtexBudgets,
+): ParseOutcome[] {
+  return withinInputCap(content, settings(options), (input, config) =>
+    bibtexOutcomes(input, config, Option.some(budgets)),
+  );
 }
 
 // ── Zotero / CSL-JSON ─────────────────────────────────────────────────

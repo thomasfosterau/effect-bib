@@ -62,8 +62,10 @@ const MAX_VALUE_LENGTH = 64_000;
  * budget is the larger of this and the input cap. Past it a macro expands to
  * nothing, so many fields that each name one large macro cannot multiply
  * the work.
+ *
+ * @since 1.0.0
  */
-const MIN_MACRO_EXPANSION = 8_000_000;
+export const MIN_MACRO_EXPANSION = 8_000_000;
 
 /** The macro table and the expansion budget a document's values are evaluated against. */
 interface Macros {
@@ -389,14 +391,20 @@ function readEntry(block: RawBlock, macros: Macros): BibtexEntry {
  * order, with every field value macro-expanded against the `@string`
  * definitions above it. `@comment` and `@preamble` bodies are scanned as
  * text; `@string` blocks define macros and yield no entry. The macro
- * expansion budget is the larger of 8,000,000 characters and `maxInput`.
+ * expansion budget is the larger of 8,000,000 characters and `maxInput`,
+ * unless the caller passes a `budget` it shares across documents.
  *
  * @since 0.1.0
  */
-export function scanBibtex(content: string, maxEntries: number, maxInput: number): BibtexScan {
+export function scanBibtex(
+  content: string,
+  maxEntries: number,
+  maxInput: number,
+  budget: Budget = { remaining: Math.max(MIN_MACRO_EXPANSION, maxInput) },
+): BibtexScan {
   const macros: Macros = {
     table: MutableHashMap.fromIterable(MONTH_MACROS),
-    budget: { remaining: Math.max(MIN_MACRO_EXPANSION, maxInput) },
+    budget,
   };
   const entries: BibtexEntry[] = [];
   // One entry past the cap tells a truncated document.

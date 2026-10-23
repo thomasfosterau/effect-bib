@@ -13,19 +13,24 @@
 
 import * as Array from "effect/Array";
 import * as Effect from "effect/Effect";
+import * as HashSet from "effect/HashSet";
+import * as MutableHashSet from "effect/MutableHashSet";
 import * as Option from "effect/Option";
 import * as Order from "effect/Order";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 import * as Stream from "effect/Stream";
 import * as String from "effect/String";
+import type { BibtexBudgets } from "./bibtex/budget.ts";
+import { DECODED_SOURCE_FACTOR } from "./bibtex/fields.ts";
+import { MIN_MACRO_EXPANSION } from "./bibtex/scan.ts";
 import { limitOr } from "./limits.ts";
 import {
   type ImportFormat,
   MAX_INPUT_LENGTH,
   MAX_RECORDS,
   parseBibliographicFile,
-  parseBibtex,
+  parseBibtexDocument,
   parseCsv,
   type ParseOptions,
   type ParseOutcome,
@@ -228,6 +233,10 @@ const findCsv: Finder = (buffer, final) => {
   });
 };
 
+/** The whole input as one unit, at its end: CSL-JSON and CSL YAML are read whole. */
+const findWhole: Finder = (buffer, final) =>
+  final && String.isNonEmpty(buffer) ? Option.some([0, buffer.length] as const) : Option.none();
+
 // ── Reading entries ───────────────────────────────────────────────────
 
 /** How many cross-referenceable entries a BibTeX stream keeps for later children. */
@@ -236,28 +245,40 @@ const PARENT_WINDOW = 1000;
 /** How many children a BibTeX stream holds back waiting for a parent that comes later. */
 const MAX_PENDING = 1000;
 
+/**
+ * How much context (macros and parents re-read with each batch) a BibTeX
+ * stream may parse, as a multiple of the input it has read (plus one input
+ * cap). Past it a batch is read without context, as an inherited field is
+ * once the whole-file parse's decoding budget is spent.
+ */
+const CONTEXT_FACTOR = 4;
+
 /** The stream's state between chunks. */
 interface State {
   buffered: Buffered;
   /** Records emitted so far, and whether the record cap has been reached. */
   emitted: number;
   done: boolean;
-  /** CSV: the header row, once read; `false` once the header proved unusable. */
+  /** CSV: the header row, once read. */
   header: Option.Option<string>;
-  /** BibTeX: the `@string` definitions seen so far, in order. */
-  macros: string[];
+  /** BibTeX: the `@string` definitions seen so far, by macro name, in definition order. */
+  macros: Array<readonly [string, string]>;
   /** BibTeX: recent entries by key, oldest first, for children that cross-reference them. */
   parents: Array<readonly [string, string]>;
+  /** BibTeX: the parents' total length. */
+  parentLength: number;
   /** BibTeX: children waiting for a parent not yet seen. */
   pending: Unit[];
+  /** BibTeX: the macro-expansion and decoding budgets, shared across the stream. */
+  readonly budgets: BibtexBudgets;
+  /** The input read so far, and the context parsed so far (both in characters). */
+  seen: number;
+  contextSpent: number;
 }
 
-/** The parse options for one batch: the caller's, with the record and input caps applied by the stream instead. */
-const batchOptions = (options: ParseOptions): ParseOptions => ({
-  ...options,
-  maxRecords: Number.MAX_SAFE_INTEGER,
-  maxInputLength: Number.MAX_SAFE_INTEGER,
-});
+/** The total length of some texts. */
+const lengthOf = (texts: Iterable<string>): number =>
+  Array.reduce(Array.fromIterable(texts), 0, (sum, text) => sum + text.length);
 
 /**
  * Parses a document assembled from `context` (macros, parents, a CSV
@@ -284,6 +305,20 @@ function parseUnits(
   });
 }
 
+/**
+ * The parse options for one assembled document: the caller's, with the
+ * record and length caps set to the document's own length. The stream
+ * applies the caller's caps itself (the record cap over the stream, the
+ * input cap to the text it holds), and a document is never longer than the
+ * caller's input cap, so this only stops the whole-document rejection; the
+ * BibTeX expansion and decoding budgets are the stream's shared ones.
+ */
+const documentOptions = (options: ParseOptions, document: string): ParseOptions => ({
+  ...options,
+  maxRecords: Math.max(1, document.length),
+  maxInputLength: Math.max(1, document.length),
+});
+
 /** An entry's key (the text between its delimiter and the first comma), lower-cased. */
 const entryKey = (text: string): Option.Option<string> =>
   Option.map(
@@ -302,8 +337,20 @@ const references = (text: string): string[] =>
         .filter(String.isNonEmpty),
   );
 
+/** An `@string` definition's macro name, lower-cased; `None` for any other entry. */
+const macroName = (text: string): Option.Option<string> =>
+  Option.map(Option.fromNullishOr(/^@\s*string\s*[{(]\s*([^=\s{}()]+)\s*=/i.exec(text)), (match) =>
+    match[1].toLowerCase(),
+  );
+
 /** True for an `@string` macro definition. */
 const isMacro = (text: string): boolean => /^@\s*string\s*[{(]/i.test(text);
+
+/** The names a text may use as macros (a bare word after `=` or `#`), lower-cased; an over-approximation. */
+const macroUses = (text: string): string[] =>
+  Array.map(Array.fromIterable(text.matchAll(/[=#]\s*([A-Za-z_][^\s,#{}"=()]*)/g)), (match) =>
+    match[1].toLowerCase(),
+  );
 
 /** The parent texts `keys` reach through the window (transitively, a few levels deep). */
 function parentTexts(state: State, keys: readonly string[], depth = 0): string[] {
@@ -320,17 +367,112 @@ function parentTexts(state: State, keys: readonly string[], depth = 0): string[]
   return [...found, ...parentTexts(state, found.flatMap(references), depth + 1)];
 }
 
-/** Remembers an entry as a possible parent, dropping the oldest past the window. */
-function remember(state: State, unit: Unit): void {
+/** The macro names `names` reach through the definitions (transitively, a few levels deep). */
+function macroClosure(state: State, names: readonly string[], depth = 0): string[] {
+  if (depth > 8 || Array.isReadonlyArrayEmpty(names)) return [];
+  const wanted = HashSet.fromIterable(names);
+  const defined = state.macros.filter(([name]) => HashSet.has(wanted, name));
+  return [
+    ...names,
+    ...macroClosure(
+      state,
+      defined.flatMap(([, text]) => macroUses(text)),
+      depth + 1,
+    ),
+  ];
+}
+
+/**
+ * The context a unit needs: the macros it (or a parent it reads) uses, in
+ * definition order, then the parents it cross-references.
+ */
+function contextFor(state: State, unit: Unit): string[] {
+  const parents = Array.dedupe(parentTexts(state, references(unit.text)));
+  const used = HashSet.fromIterable(
+    macroClosure(state, [unit.text, ...parents].flatMap(macroUses)),
+  );
+  const macros = state.macros.filter(([name]) => HashSet.has(used, name)).map(([, text]) => text);
+  return Array.dedupe([...macros, ...parents]);
+}
+
+/** Remembers an entry as a possible parent, dropping the oldest past the window (by count and by length). */
+function remember(state: State, unit: Unit, cap: number): void {
   Option.map(entryKey(unit.text), (key) => {
     state.parents.push([key, unit.text]);
-    if (state.parents.length > PARENT_WINDOW) state.parents.shift();
+    state.parentLength += unit.text.length;
+    // oxlint-disable-next-line effect/imperative-loops -- evicts from the front of the window until it is within both bounds; how many go depends on their lengths.
+    while (state.parents.length > PARENT_WINDOW || state.parentLength > cap) {
+      Option.map(Option.fromUndefinedOr(state.parents.shift()), ([, text]) => {
+        state.parentLength -= text.length;
+      });
+    }
   });
 }
 
 /** True when every key an entry references has been seen. */
 const resolved = (state: State, unit: Unit): boolean =>
   references(unit.text).every((key) => state.parents.some(([parent]) => parent === key));
+
+/** One document to read: its units, the context they need, and its length so far. */
+interface Group {
+  readonly units: Unit[];
+  readonly context: string[];
+  readonly included: MutableHashSet.MutableHashSet<string>;
+  size: number;
+}
+
+/** A document of one unit and its context. */
+function single(unit: Unit, context: readonly string[]): Group {
+  return {
+    units: [unit],
+    context: [...context],
+    included: MutableHashSet.fromIterable(context),
+    size: unit.text.length + 1 + lengthOf(context.map((text) => `${text}\n`)),
+  };
+}
+
+/**
+ * Packs units into documents no longer than the input cap, each carrying
+ * the context its units need; a unit whose context would not fit is read
+ * alone without it.
+ */
+function groups(state: State, units: readonly Unit[], cap: number): Group[] {
+  const all: Group[] = [];
+  Array.forEach(units, (unit) => {
+    const context = contextFor(state, unit);
+    const last = all[all.length - 1];
+    const added = context.filter(
+      (text) => last === undefined || !MutableHashSet.has(last.included, text),
+    );
+    const grown =
+      last === undefined
+        ? Number.POSITIVE_INFINITY
+        : last.size + unit.text.length + 1 + lengthOf(added.map((text) => `${text}\n`));
+    if (last !== undefined && grown <= cap) {
+      last.units.push(unit);
+      Array.forEach(added, (text) => {
+        last.context.push(text);
+        MutableHashSet.add(last.included, text);
+      });
+      last.size = grown;
+      return;
+    }
+    const alone = single(unit, context);
+    all.push(alone.size <= cap ? alone : single(unit, []));
+  });
+  return all;
+}
+
+/** Reads one document, with its context while the stream's context budget lasts. */
+function readGroup(state: State, group: Group, options: ParseOptions, cap: number): ParseOutcome[] {
+  const length = lengthOf(group.context);
+  const affordable = state.contextSpent + length <= CONTEXT_FACTOR * (state.seen + cap);
+  if (affordable) state.contextSpent += length;
+  const context = affordable ? group.context.map((text) => `${text}\n`).join("") : "";
+  return parseUnits(context, group.units, (document) =>
+    parseBibtexDocument(document, documentOptions(options, document), state.budgets),
+  );
+}
 
 /** Reads a batch of complete BibTeX entries, holding back children whose parent has not come yet. */
 function readBibtex(
@@ -339,9 +481,16 @@ function readBibtex(
   options: ParseOptions,
   final: boolean,
 ): ParseOutcome[] {
+  const cap = inputCap(options);
   Array.forEach(units, (unit) => {
-    if (isMacro(unit.text)) state.macros.push(unit.text);
-    else remember(state, unit);
+    Option.match(macroName(unit.text), {
+      onNone: () => {
+        if (!isMacro(unit.text)) remember(state, unit, cap);
+      },
+      onSome: (name) => {
+        state.macros = [...state.macros.filter(([defined]) => defined !== name), [name, unit.text]];
+      },
+    });
   });
   const candidates = [...state.pending, ...units.filter((unit) => !isMacro(unit.text))];
   const ready = candidates.filter((unit) => final || resolved(state, unit));
@@ -354,27 +503,19 @@ function readBibtex(
     (unit) => unit.position.offset,
     Order.Number,
   );
-  if (Array.isArrayEmpty(batch)) return [];
-  const parents = Array.dedupe(
-    parentTexts(
-      state,
-      batch.flatMap((unit) => references(unit.text)),
-    ),
-  );
-  const context = [...state.macros, ...parents].map((text) => `${text}\n`).join("");
-  return parseUnits(context, batch, (document) => parseBibtex(document, batchOptions(options)));
+  return groups(state, batch, cap).flatMap((group) => readGroup(state, group, options, cap));
 }
 
 /** Reads a batch of complete RIS records. */
 const readRis = (units: readonly Unit[], options: ParseOptions): ParseOutcome[] =>
-  parseUnits("", units, (document) => parseRis(document, batchOptions(options)));
+  parseUnits("", units, (document) => parseRis(document, documentOptions(options, document)));
 
 /** Reads a batch of complete CSV rows, the first row of the input being the header. */
 function readCsv(state: State, units: readonly Unit[], options: ParseOptions): ParseOutcome[] {
   if (Option.isNone(state.header)) {
     const [header, ...rows] = units;
     if (header === undefined) return [];
-    const probe = parseCsv(header.text, batchOptions(options));
+    const probe = parseCsv(header.text, documentOptions(options, header.text));
     if (Array.isArrayNonEmpty(probe)) {
       state.done = true;
       return probe;
@@ -386,7 +527,7 @@ function readCsv(state: State, units: readonly Unit[], options: ParseOptions): P
   return parseUnits(
     state.header.value,
     rows.map((unit) => ({ ...unit, text: unit.text.replace(/\r?\n?$/, "") })),
-    (document) => parseCsv(document, batchOptions(options)),
+    (document) => parseCsv(document, documentOptions(options, document)),
   );
 }
 
@@ -408,18 +549,36 @@ function capRecords(state: State, outcomes: readonly ParseOutcome[], maxRecords:
   ];
 }
 
-/** The streamable formats' entry finders. */
-const FINDERS: Partial<Record<ImportFormat, Finder>> = {
-  bibtex: findBibtex,
-  ris: findRis,
-  csv: findCsv,
-};
+/** Each format's entry finder: BibTeX, RIS and CSV entry by entry, the rest whole. */
+const finder = (format: ImportFormat): Finder =>
+  format === "bibtex"
+    ? findBibtex
+    : format === "ris"
+      ? findRis
+      : format === "csv"
+        ? findCsv
+        : findWhole;
+
+/** Reads the complete units a step found, by format. */
+function readUnits(
+  state: State,
+  format: ImportFormat,
+  units: readonly Unit[],
+  options: ParseOptions,
+  final: boolean,
+): ParseOutcome[] {
+  const present = units.filter((unit) => String.isNonEmpty(unit.text));
+  if (format === "bibtex") return readBibtex(state, present, options, final);
+  if (format === "ris") return readRis(present, options);
+  if (format === "csv") return readCsv(state, units, options);
+  // CSL-JSON / CSL YAML: the one unit is the whole input, within the cap.
+  return present.flatMap((unit) => parseBibliographicFile(unit.text, format, options));
+}
 
 /** Feeds one chunk (or the end of the input) through the splitter and the format's reader. */
 function step(
   state: State,
   format: ImportFormat,
-  find: Finder,
   options: ParseOptions,
   chunk: string,
   final: boolean,
@@ -431,6 +590,11 @@ function step(
     state.done = true;
     return [Result.fail(tooLarge(format, cap))];
   }
+  // The shared budgets grow with the input read, as a whole-file parse's
+  // scale with its input.
+  state.seen += chunk.length;
+  state.budgets.macros.remaining += chunk.length;
+  state.budgets.decoded.remaining += DECODED_SOURCE_FACTOR * chunk.length;
   // Wait for more input until the buffer has grown by half since the last
   // attempt, so a long entry arriving in small chunks is scanned a bounded
   // number of times.
@@ -438,33 +602,21 @@ function step(
     state.buffered = { ...state.buffered, text };
     return [];
   }
-  const [units, rest] = split({ ...state.buffered, text }, find, final);
+  const [units, rest] = split({ ...state.buffered, text }, finder(format), final);
   state.buffered = rest;
+  // Parents are bounded apart (by count and length); this is the rest of
+  // what the stream holds.
   const held =
     rest.text.length +
-    state.macros.join("").length +
-    state.pending.reduce((sum, unit) => sum + unit.text.length, 0);
+    lengthOf(state.macros.map(([, definition]) => definition)) +
+    lengthOf(state.pending.map((unit) => unit.text));
   if (held > cap) {
     state.done = true;
     return [Result.fail(tooLarge(format, cap))];
   }
-  const outcomes =
-    format === "bibtex"
-      ? readBibtex(
-          state,
-          units.filter((unit) => String.isNonEmpty(unit.text)),
-          options,
-          final,
-        )
-      : format === "ris"
-        ? readRis(
-            units.filter((unit) => String.isNonEmpty(unit.text)),
-            options,
-          )
-        : readCsv(state, units, options);
   return capRecords(
     state,
-    outcomes,
+    readUnits(state, format, units, options, final),
     limitOr(Option.fromUndefinedOr(options.maxRecords), MAX_RECORDS),
   );
 }
@@ -480,14 +632,22 @@ function step(
  * - **BibTeX `@string` macros** are carried forward, so a macro applies to
  *   every entry after its definition, as in the whole-file parse.
  * - **`crossref` / `xdata`**: a child whose parent has already passed is read
- *   with it from a window of the last 1000 entries; a child whose parent is
- *   still to come waits for it (at most 1000 children wait; past that the
- *   oldest are read without their parent), so it is emitted once the
- *   parent has come, out of document order. A parent more than 1000 entries
- *   back is not found.
+ *   with it from a window of the last 1000 entries (fewer when they are
+ *   long: the window holds at most `maxInputLength` characters); a child
+ *   whose parent is still to come waits for it (at most 1000 children wait;
+ *   past that the oldest are read without their parent), so it is emitted
+ *   once the parent has come, out of document order. A parent that has left
+ *   the window is not found.
+ * - **Work is bounded across the stream**, not per chunk: macro expansion and
+ *   inherited-field decoding spend one budget for the whole stream (growing
+ *   with the input read, as the whole-file parse's scale with its input), and
+ *   the macros and parents re-read with each batch spend a context budget of
+ *   four times the input read; once it is spent, entries are read without
+ *   them. Each document the stream parses is at most `maxInputLength` long.
  * - **The input cap** (`options.maxInputLength`) bounds the text the stream
- *   holds at once (an incomplete entry, the macros, the waiting children),
- *   not the stream: over it the stream fails with {@link InputTooLarge}.
+ *   holds at once (a chunk with an incomplete entry, the macros, the waiting
+ *   children; the parents apart), not the stream: over it the stream fails
+ *   with {@link InputTooLarge}, at once, for every format.
  * - **The record cap** (`options.maxRecords`) ends the stream with one
  *   `truncated` outcome, without reading the rest.
  *
@@ -518,20 +678,6 @@ export const parseBibliographicStream = <E, R>(
   format: ImportFormat,
   options: ParseOptions = {},
 ): Stream.Stream<ParseOutcome, E | InputTooLarge, R> => {
-  const find = FINDERS[format];
-  if (find === undefined) {
-    // CSL-JSON / CSL YAML: read whole, within the input cap.
-    return Stream.unwrap(
-      Effect.map(
-        Stream.runFold(
-          chunks,
-          () => "",
-          (text: string, chunk: string) => text + chunk,
-        ),
-        (text) => Stream.fromIterableEffect(parseBibliographic(text, format, options)),
-      ),
-    );
-  }
   const initial = (): State => ({
     buffered: { text: "", position: { offset: 0, line: 1, column: 1 }, tried: 0 },
     emitted: 0,
@@ -539,14 +685,21 @@ export const parseBibliographicStream = <E, R>(
     header: Option.none(),
     macros: [],
     parents: [],
+    parentLength: 0,
     pending: [],
+    budgets: {
+      macros: { remaining: Math.max(MIN_MACRO_EXPANSION, inputCap(options)) },
+      decoded: { remaining: DECODED_SOURCE_FACTOR * inputCap(options) },
+    },
+    seen: 0,
+    contextSpent: 0,
   });
   return chunks.pipe(
     Stream.mapAccum(
       initial,
-      (state, chunk: string) => [state, step(state, format, find, options, chunk, false)] as const,
+      (state, chunk: string) => [state, step(state, format, options, chunk, false)] as const,
       {
-        onHalt: (state) => step(state, format, find, options, "", true),
+        onHalt: (state) => step(state, format, options, "", true),
       },
     ),
     Stream.mapEffect((result) => Effect.fromResult(result)),

@@ -66,8 +66,10 @@ const MAX_SOURCE_LENGTH = 64_000;
  * the input cap. Past it an inherited field decodes to nothing, so
  * thousands of children of one large `crossref` parent cannot multiply the
  * work.
+ *
+ * @since 1.0.0
  */
-const DECODED_SOURCE_FACTOR = 4;
+export const DECODED_SOURCE_FACTOR = 4;
 
 /**
  * The bounds one document is mapped under: the longest sanitised field, the
@@ -713,14 +715,15 @@ function mapEntry(entry: BibtexEntry, limits: BibtexLimits, budget: Budget): Bib
  * Maps a document's resolved BibTeX / BibLaTeX entries to the shared field
  * bag and the further record members, under the caller's limits. Every
  * field is consumed by a mapping or kept in `extra`, except `file`;
- * decoding shares one budget across the document.
+ * decoding shares one budget across the document (or the `budget` a caller
+ * shares across documents).
  *
  * @since 0.1.0
  */
 export function mapBibtexEntries(
   entries: readonly BibtexEntry[],
   limits: BibtexLimits,
+  budget: Budget = { remaining: DECODED_SOURCE_FACTOR * limits.maxInputLength },
 ): BibtexMapped[] {
-  const budget: Budget = { remaining: DECODED_SOURCE_FACTOR * limits.maxInputLength };
   return Array.map(entries, (entry) => mapEntry(entry, limits, budget));
 }
