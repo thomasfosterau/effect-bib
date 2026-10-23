@@ -13,7 +13,7 @@
  * @since 0.1.0
  */
 
-import { Parser, Token } from "@thomasfosterau/effect-parse";
+import { Compiler, Parser, Token } from "@thomasfosterau/effect-parse";
 import * as Array from "effect/Array";
 import * as HashMap from "effect/HashMap";
 import * as HashSet from "effect/HashSet";
@@ -152,28 +152,25 @@ interface BlockScan {
 }
 
 /**
- * The whole block scan: stops at the first unbalanced block or the end, and
- * keeps every `@string` and the first `keep` reference entries (it scans
- * past the cap: a `fold` cannot stop on its accumulator, effect-parse#16).
- * Compiled per scan, for the caller's cap (compiling costs microseconds).
- * The `closure` backend never calls `new Function`, so a page's Content
- * Security Policy never sees it.
+ * The whole block scan: stops at the first unbalanced block, the end, or
+ * once `keep` reference entries are in, keeping every `@string` before that
+ * point (the fold's `while` stops on the cap, so nothing past it is
+ * scanned). Compiled per scan, for the caller's cap (compiling costs
+ * microseconds). The `closure` backend never calls `new Function`, so a
+ * page's Content Security Policy never sees it.
  */
 const bibtexBlocks = (keep: number) =>
-  Parser.compile(
+  Compiler.closure(
     Parser.fold(Parser.alt(textBlockStep, blockStep), {
       init: (): BlockScan => ({ blocks: [], entries: 0 }),
       f: (scan, step) => {
         if (Option.isNone(step)) return scan;
-        if (step.value.kind === "string") scan.blocks.push(step.value);
-        else if (scan.entries < keep) {
-          scan.blocks.push(step.value);
-          scan.entries += 1;
-        }
+        scan.blocks.push(step.value);
+        if (step.value.kind !== "string") scan.entries += 1;
         return scan;
       },
+      while: (scan) => scan.entries < keep,
     }),
-    { backend: "closure" },
   );
 
 /**
@@ -235,13 +232,12 @@ const fieldMap = Parser.fold(bibtexField, {
 });
 
 /** An entry body: the citation key, then the fields. */
-const entryBody = Parser.compile(
+const entryBody = Compiler.closure(
   Parser.seq(Parser.zipLeft(Token.takeUntil(","), Token.literal(",")), fieldMap),
-  { backend: "closure" },
 );
 
 /** A `@string` body: the definitions alone. */
-const stringBody = Parser.compile(fieldMap, { backend: "closure" });
+const stringBody = Compiler.closure(fieldMap);
 
 /** Whitespace between the parts of a value. */
 const blank = Token.takeWhile(" \t\r\n");
@@ -272,11 +268,10 @@ const valuePart = Parser.delimited(
 );
 
 /** A whole value: parts joined by `#`, consuming all of it. */
-const valueGrammar = Parser.compile(
+const valueGrammar = Compiler.closure(
   Parser.allConsuming(
     Parser.seq(valuePart, Parser.repeat(Parser.preceded(Token.literal("#"), valuePart))),
   ),
-  { backend: "closure" },
 );
 
 /** The predefined month macros (`jan` … `dec`), as BibTeX's standard styles define them. */
