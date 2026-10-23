@@ -1,0 +1,51 @@
+[
+  {
+    "author": [
+      {
+        "family": "Doe",
+        "given": "John"
+      }
+    ],
+    "id": "L1",
+    "issued": {
+      "date-parts": [[1998, 4, 5]]
+    },
+    "keyword": "one|two|three",
+    "original-date": {
+      "date-parts": [[1985, 10, 30]]
+    },
+    "publisher": "Oxford",
+    "title": "Title 1",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Edwards",
+        "given": "Ellison"
+      }
+    ],
+    "id": "L2",
+    "issued": {
+      "date-parts": [[1998, 4, 5]]
+    },
+    "publisher": "Oxford",
+    "title": "Title 2",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Bluntford",
+        "given": "Bunty"
+      }
+    ],
+    "id": "L3",
+    "issued": {
+      "date-parts": [[1999, 4, 5]]
+    },
+    "publisher": "Oxford",
+    "title": "Title 3",
+    "type": "book"
+  }
+]

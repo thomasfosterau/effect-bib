@@ -1,0 +1,487 @@
+[
+  {
+    "author": [
+      {
+        "family": "AAA",
+        "given": "John"
+      }
+    ],
+    "id": "un1",
+    "issued": {
+      "date-parts": [[1994]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "AAA",
+        "given": "John"
+      }
+    ],
+    "id": "un1a",
+    "issued": {
+      "date-parts": [[1999]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "AAA",
+        "given": "J."
+      }
+    ],
+    "id": "un2",
+    "issued": {
+      "date-parts": [[1999]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "AAA",
+        "given": "K."
+      }
+    ],
+    "id": "un3",
+    "issued": {
+      "date-parts": [[1939]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "AAA",
+        "given": "Edward"
+      }
+    ],
+    "id": "un4",
+    "issued": {
+      "date-parts": [[1934]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "AAA",
+        "given": "Edward"
+      }
+    ],
+    "id": "un4a",
+    "issued": {
+      "date-parts": [[1934]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "AAA",
+        "given": "Jane"
+      }
+    ],
+    "id": "un5",
+    "issued": {
+      "date-parts": [[1983]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "AAA",
+        "given": "John"
+      },
+      {
+        "family": "BBB",
+        "given": "Mike"
+      }
+    ],
+    "id": "un6",
+    "issued": {
+      "date-parts": [[1921]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "AAA",
+        "given": "John"
+      },
+      {
+        "family": "BBB",
+        "given": "Mike"
+      }
+    ],
+    "id": "un7",
+    "issued": {
+      "date-parts": [[1921]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Smith",
+        "given": "Paul"
+      },
+      {
+        "family": "Jones",
+        "given": "Brian"
+      },
+      {
+        "family": "Brown",
+        "given": "Peter"
+      }
+    ],
+    "id": "test1",
+    "issued": {
+      "date-parts": [[1900]]
+    },
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Jones",
+        "given": "Henry"
+      }
+    ],
+    "id": "test2",
+    "issued": {
+      "date-parts": [[1903]]
+    },
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Blether",
+        "given": "John"
+      },
+      {
+        "family": "Doe",
+        "given": "John"
+      }
+    ],
+    "id": "test3",
+    "issued": {
+      "date-parts": [[2011]]
+    },
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "Blether",
+        "given": "John"
+      },
+      {
+        "family": "Doe",
+        "given": "Jane"
+      }
+    ],
+    "id": "test4",
+    "issued": {
+      "date-parts": [[2011]]
+    },
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "Blether",
+        "given": "John"
+      },
+      {
+        "family": "Doe",
+        "given": "Edward"
+      }
+    ],
+    "id": "test5",
+    "issued": {
+      "date-parts": [[2011]]
+    },
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "Alton",
+        "given": "Jeremy"
+      },
+      {
+        "family": "Rattle",
+        "given": "Alan"
+      }
+    ],
+    "id": "unt1",
+    "issued": {
+      "date-parts": [[2011]]
+    },
+    "title": "Title",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "Alton",
+        "given": "Jeremy"
+      },
+      {
+        "family": "Rattle",
+        "given": "Andrew"
+      }
+    ],
+    "id": "unt2",
+    "issued": {
+      "date-parts": [[2011]]
+    },
+    "title": "Title",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "Alton",
+        "given": "Jeremy"
+      },
+      {
+        "family": "Rattle",
+        "given": "Edward"
+      }
+    ],
+    "id": "unt3",
+    "issued": {
+      "date-parts": [[2011]]
+    },
+    "title": "Title",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "Williams",
+        "given": "Meredith"
+      }
+    ],
+    "id": "unt4",
+    "issued": {
+      "date-parts": [[2011]]
+    },
+    "title": "Title",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "Williams",
+        "given": "Michael"
+      }
+    ],
+    "id": "unt5",
+    "issued": {
+      "date-parts": [[2011]]
+    },
+    "title": "Title",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "Monocle",
+        "given": "Simon"
+      },
+      {
+        "family": "Ripple",
+        "given": "Walter"
+      }
+    ],
+    "id": "untf1",
+    "issued": {
+      "date-parts": [[2011]]
+    },
+    "title": "Title",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "Monocle",
+        "given": "Simon"
+      },
+      {
+        "family": "Ripple",
+        "given": "Walter"
+      }
+    ],
+    "id": "untf2",
+    "issued": {
+      "date-parts": [[2011]]
+    },
+    "title": "Title",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "Monocle",
+        "given": "Simon"
+      },
+      {
+        "family": "Ripple",
+        "given": "William"
+      }
+    ],
+    "id": "untf3",
+    "issued": {
+      "date-parts": [[2011]]
+    },
+    "title": "Title",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "Greaves",
+        "given": "Percy L.",
+        "suffix": "Jr."
+      }
+    ],
+    "id": "sp1",
+    "issued": {
+      "date-parts": [[2011]]
+    },
+    "title": "Title",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "Greaves",
+        "given": "Percy L.",
+        "suffix": "Jr."
+      }
+    ],
+    "id": "sp2",
+    "issued": {
+      "date-parts": [[2012]]
+    },
+    "title": "Title2",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "dropping-particle": "von",
+        "family": "Greaves",
+        "given": "Percy L.",
+        "suffix": "Jr."
+      }
+    ],
+    "id": "sp3",
+    "issued": {
+      "date-parts": [[2012]]
+    },
+    "title": "Title1",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "dropping-particle": "von",
+        "family": "Greaves",
+        "given": "Percy L.",
+        "suffix": "Jr."
+      }
+    ],
+    "id": "sp4",
+    "issued": {
+      "date-parts": [[2012]]
+    },
+    "title": "Title2",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "dropping-particle": "von",
+        "family": "Greaves",
+        "given": "Percy L.",
+        "suffix": "Jr."
+      }
+    ],
+    "id": "sp5",
+    "issued": {
+      "date-parts": [[2012]]
+    },
+    "title": "Title2",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "dropping-particle": "von",
+        "family": "Mises",
+        "given": "Percy L.",
+        "suffix": "Jr."
+      }
+    ],
+    "id": "sp6",
+    "issued": {
+      "date-parts": [[2010]]
+    },
+    "title": "Title1",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "dropping-particle": "von",
+        "family": "Mises",
+        "given": "Paul L.",
+        "suffix": "Jr."
+      }
+    ],
+    "id": "sp7",
+    "issued": {
+      "date-parts": [[2010]]
+    },
+    "title": "Title1",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "Ralley",
+        "given": "Percy L."
+      }
+    ],
+    "id": "sp8",
+    "issued": {
+      "date-parts": [[2010]]
+    },
+    "title": "Title1",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "Ralley",
+        "given": "Percy L.",
+        "suffix": "Jr."
+      }
+    ],
+    "id": "sp9",
+    "issued": {
+      "date-parts": [[2010]]
+    },
+    "title": "Title1",
+    "type": ""
+  }
+]

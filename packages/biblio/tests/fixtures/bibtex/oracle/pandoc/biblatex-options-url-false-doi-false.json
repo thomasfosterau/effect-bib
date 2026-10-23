@@ -1,0 +1,33 @@
+[
+  {
+    "author": [
+      {
+        "family": "Author",
+        "given": "Andy"
+      }
+    ],
+    "container-title": "Journal",
+    "id": "item1",
+    "issued": {
+      "date-parts": [[2012]]
+    },
+    "title": "Title, any entry type except online",
+    "type": "article-journal"
+  },
+  {
+    "URL": "http://foo.bar",
+    "author": [
+      {
+        "family": "Author",
+        "given": "Andy"
+      }
+    ],
+    "container-title": "Journal",
+    "id": "item2",
+    "issued": {
+      "date-parts": [[2012]]
+    },
+    "title": "Title, entry type online",
+    "type": "webpage"
+  }
+]

@@ -1,0 +1,40 @@
+[
+  {
+    "ISBN": "0-226-03933-1",
+    "edition": "3rd ed.",
+    "editor": [
+      {
+        "family": "Danker",
+        "given": "Frederick W."
+      },
+      {
+        "family": "Bauer",
+        "given": "Walter"
+      },
+      {
+        "family": "Arndt",
+        "given": "William"
+      },
+      {
+        "family": "Gingrich",
+        "given": "F. Wilbur"
+      }
+    ],
+    "id": "danker_greek-english_2000",
+    "issued": {
+      "date-parts": [[2000]]
+    },
+    "note": "annote: BDAG bibtex.note=annote: BDAG",
+    "publisher": "University of Chicago Press",
+    "publisher-place": "Chicago",
+    "title": "A Greek-English Lexicon of the New Testament and Other Early Christian Literature",
+    "title-short": "Greek-English Lexicon",
+    "translator": [
+      {
+        "family": "Danker",
+        "given": "Frederick W."
+      }
+    ],
+    "type": "book"
+  }
+]

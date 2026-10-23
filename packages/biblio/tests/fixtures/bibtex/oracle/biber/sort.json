@@ -1,0 +1,88 @@
+[
+  {
+    "author": [
+      {
+        "family": "Doe",
+        "given": "John"
+      }
+    ],
+    "id": "L1",
+    "issued": {
+      "date-parts": [[1995]]
+    },
+    "publisher": "A press",
+    "publisher-place": "Cambridge",
+    "title": "Algorithms for sorting",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Doe",
+        "given": "John"
+      }
+    ],
+    "id": "L2",
+    "issued": {
+      "date-parts": [[1995]]
+    },
+    "publisher": "A press",
+    "publisher-place": "Cambridge",
+    "title": "Sorting algorithms",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Doe",
+        "given": "John"
+      }
+    ],
+    "id": "L3",
+    "issued": {
+      "date-parts": [[1995]]
+    },
+    "publisher": "A press",
+    "publisher-place": "Cambridge",
+    "title": "More and more algorithms",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Doe",
+        "given": "John"
+      },
+      {
+        "literal": "others"
+      }
+    ],
+    "id": "L4",
+    "issued": {
+      "date-parts": [[1995]]
+    },
+    "publisher": "Another press",
+    "publisher-place": "Cambridge",
+    "title": "Some title about sorting",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Doe",
+        "given": "John"
+      },
+      {
+        "literal": "others"
+      }
+    ],
+    "id": "L5",
+    "issued": {
+      "date-parts": [[1995]]
+    },
+    "publisher": "Another press",
+    "publisher-place": "Cambridge",
+    "title": "Some other title about sorting",
+    "type": "book"
+  }
+]

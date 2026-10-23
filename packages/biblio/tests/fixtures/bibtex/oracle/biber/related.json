@@ -1,0 +1,139 @@
+[
+  {
+    "author": [
+      {
+        "family": "Author"
+      }
+    ],
+    "container-title": "Journal Title",
+    "id": "key1",
+    "issue": "5",
+    "issued": {
+      "date-parts": [[1998]]
+    },
+    "other-ids": "key1alias",
+    "page": "125-150",
+    "title": "Original title",
+    "type": "article-journal",
+    "volume": "12"
+  },
+  {
+    "author": [
+      {
+        "family": "Author"
+      }
+    ],
+    "container-title": "Booktitle",
+    "id": "key2",
+    "issued": {
+      "date-parts": [[2009, 2]]
+    },
+    "page": "34-60",
+    "publisher": "Publisher",
+    "publisher-place": "Location",
+    "title": "Reprint title",
+    "type": "chapter"
+  },
+  {
+    "author": [
+      {
+        "family": "Author"
+      }
+    ],
+    "container-title": "Booktitle",
+    "id": "key3",
+    "issued": {
+      "circa": true,
+      "date-parts": [[-2011, 1]]
+    },
+    "page": "33-57",
+    "publisher": "Publisher2",
+    "publisher-place": "Location",
+    "title": "Reprint title",
+    "type": "chapter"
+  },
+  {
+    "author": [
+      {
+        "family": "Author"
+      }
+    ],
+    "container-title": "Booktitle",
+    "id": "key4",
+    "issued": {
+      "date-parts": [[2011, 22]]
+    },
+    "page": "33-57",
+    "publisher": "Publisher2",
+    "publisher-place": "Location",
+    "title": "Orig language title",
+    "type": "chapter"
+  },
+  {
+    "id": "c1",
+    "type": "book"
+  },
+  {
+    "id": "c2",
+    "type": "book"
+  },
+  {
+    "id": "c3",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Author"
+      }
+    ],
+    "id": "s1",
+    "title": "Title 1",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Author"
+      }
+    ],
+    "id": "s2",
+    "title": "Title 2",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Kullback",
+        "given": "Solomon"
+      }
+    ],
+    "id": "kullback",
+    "issued": {
+      "date-parts": [[1959]]
+    },
+    "language": "en-US",
+    "publisher": "John Wiley & Sons",
+    "publisher-place": "New York",
+    "title": "Information theory and statistics",
+    "type": "book"
+  },
+  {
+    "annote": "A reprint of the kullback entry. Note the format of the related and relatedtype fields",
+    "author": [
+      {
+        "family": "Kullback",
+        "given": "Solomon"
+      }
+    ],
+    "id": "kullback:related",
+    "issued": {
+      "date-parts": [[1997]]
+    },
+    "language": "en-US",
+    "publisher": "Dover Publications",
+    "publisher-place": "New York",
+    "title": "Information theory and statistics",
+    "type": "book"
+  }
+]

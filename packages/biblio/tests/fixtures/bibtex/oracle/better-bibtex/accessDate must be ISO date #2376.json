@@ -1,0 +1,35 @@
+[
+  {
+    "URL": "http://www.netdoktor.de/",
+    "author": [
+      {
+        "family": "Brush",
+        "given": "C"
+      }
+    ],
+    "container-title": "Family Business Review",
+    "id": "r2",
+    "issued": {
+      "date-parts": [[2011]]
+    },
+    "page": "45-73",
+    "title": "Herzinfarkt symptome",
+    "type": "article-journal",
+    "volume": "29"
+  },
+  {
+    "URL": "http://www.gemconsortium.org",
+    "author": [
+      {
+        "family": "Kelley",
+        "given": "D"
+      }
+    ],
+    "id": "r42",
+    "issued": {
+      "date-parts": [[2015]]
+    },
+    "title": "Global entrepreneurship",
+    "type": ""
+  }
+]

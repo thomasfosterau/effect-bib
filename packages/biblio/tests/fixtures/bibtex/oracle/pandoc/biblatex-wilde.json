@@ -1,0 +1,21 @@
+[
+  {
+    "URL": "https://books.google.com?id=4HIWAAAAYAAJ",
+    "annote": "A book with eprint and eprinttype fields.",
+    "author": [
+      {
+        "family": "Wilde",
+        "given": "Oscar"
+      }
+    ],
+    "collection-title": "English and american drama of the nineteenth century",
+    "id": "wilde",
+    "issued": {
+      "date-parts": [[1899]]
+    },
+    "publisher": "Leonard Smithers and Company",
+    "title": "The importance of being earnest: A trivial comedy for serious people",
+    "title-short": "The importance of being earnest",
+    "type": "book"
+  }
+]

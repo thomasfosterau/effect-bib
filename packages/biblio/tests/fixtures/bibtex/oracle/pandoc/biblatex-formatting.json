@@ -1,0 +1,8 @@
+[
+  {
+    "id": "item1",
+    "title": "The title: <i>Italics</i>, <b>bold</b>, <sub>subscript</sub>, <sup>superscript</sup>, <span style=\"font-variant:small-caps;\">small-caps</span>",
+    "title-short": "The title",
+    "type": "article-journal"
+  }
+]

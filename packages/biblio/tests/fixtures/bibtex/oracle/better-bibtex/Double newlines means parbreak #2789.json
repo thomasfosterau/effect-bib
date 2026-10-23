@@ -1,0 +1,26 @@
+[
+  {
+    "DOI": "10.3389/fncom.2014.00043",
+    "URL": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3989732/",
+    "abstract": "In everyday life, humans and animals often have to base decisions on infrequent relevant stimuli with respect to frequent irrelevant ones. When research in neuroscience mimics this situation, the effect of this imbalance in stimulus classes on performance evaluation has to be considered. This is most obvious for the often used overall accuracy, because the proportion of correct responses is governed by the more frequent class. This imbalance problem has been widely debated across disciplines and out of the discussed treatments this review focusses on performance estimation. For this, a more universal view is taken: an agent performing a classification task. Commonly used performance measures are characterized when used with imbalanced classes. Metrics like Accuracy, F-Measure, Matthews Correlation Coefficient, and Mutual Information are affected by imbalance, while other metrics do not have this drawback, like AUC, d-prime, Balanced Accuracy, Weighted Accuracy and G-Mean. It is pointed out that one is not restricted to this group of metrics, but the sensitivity to the class ratio has to be kept in mind for a proper choice. Selecting an appropriate metric is critical to avoid drawing misled conclusions.Keywords: metrics, decision making, confusion matrix, oddball, imbalance, performance evaluation, classification",
+    "author": [
+      {
+        "family": "Straube",
+        "given": "Sirko"
+      },
+      {
+        "family": "Krell",
+        "given": "Mario M"
+      }
+    ],
+    "container-title": "Frontiers in computational neuroscience",
+    "id": "Straube14infreqPerfEstImbal",
+    "issued": {
+      "date-parts": [[2014]]
+    },
+    "publisher": "Frontiers Media SA",
+    "title": "How to evaluate an agent’s behavior to infrequent events??reliable performance estimation insensitive to class distribution",
+    "type": "article-journal",
+    "volume": "8"
+  }
+]

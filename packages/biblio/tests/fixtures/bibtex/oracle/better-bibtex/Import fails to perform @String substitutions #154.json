@@ -1,0 +1,15 @@
+[
+  {
+    "author": [
+      {
+        "family": "Bert",
+        "given": "R. A."
+      }
+    ],
+    "id": "Bert:2001:SQL",
+    "publisher": "Freds Publishing",
+    "publisher-place": "London, UK",
+    "title": "SQL is great",
+    "type": "book"
+  }
+]

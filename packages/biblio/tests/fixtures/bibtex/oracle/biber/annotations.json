@@ -1,0 +1,40 @@
+[
+  {
+    "author": [
+      {
+        "family": "Last1",
+        "given": "First1"
+      },
+      {
+        "family": "Last2",
+        "given": "First2"
+      },
+      {
+        "family": "Last3",
+        "given": "First3"
+      }
+    ],
+    "id": "ann1",
+    "title": "The title",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "Last1",
+        "given": "First1"
+      },
+      {
+        "family": "Last2",
+        "given": "First2"
+      },
+      {
+        "family": "Last3",
+        "given": "First3"
+      }
+    ],
+    "id": "ann2",
+    "title": "The title",
+    "type": ""
+  }
+]

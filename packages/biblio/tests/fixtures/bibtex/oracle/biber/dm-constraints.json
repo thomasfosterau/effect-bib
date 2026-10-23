@@ -1,0 +1,140 @@
+[
+  {
+    "author": [
+      {
+        "family": "Constraint",
+        "given": "Clive"
+      }
+    ],
+    "id": "c1",
+    "issued": {
+      "date-parts": [[2003, 10, 1]]
+    },
+    "title": "Limits of things",
+    "type": ""
+  },
+  {
+    "abstract": "Some text",
+    "container-title": "Some journal",
+    "id": "c2",
+    "issued": {
+      "date-parts": [[2003, 10, 1]]
+    },
+    "title": "Limits of things",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "Constraint",
+        "given": "Clive"
+      }
+    ],
+    "container-title": "Some journal",
+    "id": "c3",
+    "issued": {
+      "date-parts": [[2003]]
+    },
+    "title": "Limits of things",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "Constraint",
+        "given": "Clive"
+      }
+    ],
+    "container-title": "Some journal",
+    "id": "c4",
+    "issued": {
+      "date-parts": [[2003, 14]]
+    },
+    "title": "Limits of things",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "Constraint",
+        "given": "Clive"
+      }
+    ],
+    "container-title": "Some journal",
+    "id": "c5",
+    "issued": {
+      "date-parts": [[2004, 1, 2]]
+    },
+    "title": "Limits of things",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "Constraint",
+        "given": "Clive"
+      }
+    ],
+    "container-title": "Some journal",
+    "id": "c6",
+    "issued": {
+      "date-parts": [[2003]]
+    },
+    "title": "Limits of things",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "Constraint",
+        "given": "Clive"
+      }
+    ],
+    "container-title": "Some journal",
+    "id": "c7",
+    "issued": {
+      "date-parts": [[2003]]
+    },
+    "title": "Limits of things",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "Constraint",
+        "given": "Clive"
+      }
+    ],
+    "container-title": "Some journal",
+    "id": "c8",
+    "issued": {
+      "date-parts": [[2003]]
+    },
+    "title": "Limits of things",
+    "type": ""
+  },
+  {
+    "ISBN": "90-70002-34-5",
+    "ISSN": "0317-8471",
+    "author": [
+      {
+        "family": "Flummox",
+        "given": "Fred"
+      }
+    ],
+    "id": "c9",
+    "type": ""
+  },
+  {
+    "ISBN": "90-7002-34-5",
+    "ISSN": "0317-8470",
+    "author": [
+      {
+        "family": "Flummox",
+        "given": "Fred"
+      }
+    ],
+    "id": "c10",
+    "type": ""
+  }
+]

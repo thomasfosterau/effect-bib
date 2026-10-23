@@ -1,0 +1,96 @@
+[
+  {
+    "DOI": "10.1161/CIR.0b013e318288b4dd",
+    "ISSN": "1524-4539",
+    "author": [
+      {
+        "family": "Sasson",
+        "given": "Comilla"
+      },
+      {
+        "family": "Meischke",
+        "given": "Hendrika"
+      },
+      {
+        "family": "Abella",
+        "given": "Benjamin S"
+      },
+      {
+        "family": "Berg",
+        "given": "Robert A"
+      },
+      {
+        "family": "Bobrow",
+        "given": "Bentley J"
+      },
+      {
+        "family": "Chan",
+        "given": "Paul S"
+      },
+      {
+        "family": "Root",
+        "given": "Elisabeth Dowling"
+      },
+      {
+        "family": "Heisler",
+        "given": "Michele"
+      },
+      {
+        "family": "Levy",
+        "given": "Jerrold H"
+      },
+      {
+        "family": "Link",
+        "given": "Mark"
+      },
+      {
+        "family": "Masoudi",
+        "given": "Frederick"
+      },
+      {
+        "family": "Ong",
+        "given": "Marcus"
+      },
+      {
+        "family": "Sayre",
+        "given": "Michael R"
+      },
+      {
+        "family": "Rumsfeld",
+        "given": "John S"
+      },
+      {
+        "family": "Rea",
+        "given": "Thomas D"
+      },
+      {
+        "literal": "American Heart Association Council on Quality of Care and Outcomes Research"
+      },
+      {
+        "literal": "Emergency Cardiovascular Care Committee"
+      },
+      {
+        "literal": "Council on Cardiopulmonary, Critical Care, Perioperative and Resuscitation"
+      },
+      {
+        "literal": "Council on Clinical Cardiology"
+      },
+      {
+        "literal": "Council on Cardiovascular Surgery and Anesthesia"
+      }
+    ],
+    "container-title": "Circulation",
+    "id": "sasson_increasing_2013",
+    "issue": "12",
+    "issued": {
+      "date-parts": [[2013, 3]]
+    },
+    "keyword": "Administrative Personnel, American Heart Association, Cardiopulmonary Resuscitation, Community Health Services, Health Personnel, Heart Arrest, Humans, Leadership, Public Health, United States",
+    "note": "PMID: 23439512",
+    "page": "1342-1350",
+    "title": "Increasing cardiopulmonary resuscitation provision in communities with low bystander cardiopulmonary resuscitation rates: A science advisory from the american heart association for healthcare providers, policymakers, public health departments, and community leaders",
+    "title-short": "Increasing cardiopulmonary resuscitation provision in communities with low bystander cardiopulmonary resuscitation rates",
+    "type": "article-journal",
+    "volume": "127"
+  }
+]

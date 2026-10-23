@@ -1,0 +1,140 @@
+[
+  {
+    "DOI": "10.3390/electronics9081219",
+    "URL": "http://eprints.whiterose.ac.uk/163808/",
+    "author": [
+      {
+        "family": "Chau",
+        "given": "Arnold"
+      },
+      {
+        "family": "Dawson",
+        "given": "John"
+      },
+      {
+        "family": "Mitchell",
+        "given": "Paul"
+      },
+      {
+        "family": "Loh",
+        "given": "Tian Hong"
+      }
+    ],
+    "container-title": "Electronics",
+    "id": "Chau2020",
+    "issue": "8",
+    "issued": {
+      "date-parts": [[2020]]
+    },
+    "note": "Submitted: 8 June 2020; Revised 13 July 2020, Accepted 27 July 2020",
+    "page": "1219",
+    "title": "Virtual sensing directional hub MAC (VSDH-MAC) protocol with power control",
+    "type": "article-journal",
+    "volume": "9"
+  },
+  {
+    "DOI": "10.1109/EMCEUROPE48519.2020.9245741",
+    "URL": "http://eprints.whiterose.ac.uk/160135/",
+    "author": [
+      {
+        "family": "Marvin",
+        "given": "Andy"
+      },
+      {
+        "family": "Dawson",
+        "given": "John"
+      },
+      {
+        "family": "Dawson",
+        "given": "Linda"
+      },
+      {
+        "family": "Xie",
+        "given": "Haiyan"
+      },
+      {
+        "family": "Venkateshaiah",
+        "given": "Arunkumar"
+      }
+    ],
+    "container-title": "2020 international symposium on electromagnetic compatibility - EMC EUROPE",
+    "id": "Marvin2020",
+    "issued": {
+      "date-parts": [[2020]]
+    },
+    "note": "Submitted 6 Feb 2020, Accepted 17 April 2020,",
+    "title": "An experimental study of the variability of the shielding effectiveness of circuit board shields",
+    "type": "paper-conference"
+  },
+  {
+    "DOI": "10.1109/EMCEUROPE48519.2020.9245804",
+    "URL": "http://eprints.whiterose.ac.uk/160133/",
+    "author": [
+      {
+        "family": "Venkateshaiah",
+        "given": "Arunkumar H."
+      },
+      {
+        "family": "Xie",
+        "given": "Haiyan"
+      },
+      {
+        "family": "Dawson",
+        "given": "John F."
+      },
+      {
+        "family": "Marvin",
+        "given": "Andrew C."
+      },
+      {
+        "family": "Dawson",
+        "given": "Linda"
+      },
+      {
+        "family": "Robinson",
+        "given": "Martin P."
+      }
+    ],
+    "container-title": "2020 international symposium on electromagnetic compatibility - EMC EUROPE",
+    "id": "Venkateshaiah2020",
+    "issued": {
+      "date-parts": [[2020]]
+    },
+    "note": "Submitted 6 Feb 2020, Accepted 17 April 2020,",
+    "title": "Coupling of energy into PCB traces in a reverberant environment: Absorption cross-section and risk of susceptibility",
+    "title-short": "Coupling of energy into PCB traces in a reverberant environment",
+    "type": "paper-conference"
+  },
+  {
+    "DOI": "10.1109/TEMC.2019.2954303",
+    "URL": "http://eprints.whiterose.ac.uk/154302/",
+    "author": [
+      {
+        "family": "Xie",
+        "given": "Haiyan"
+      },
+      {
+        "family": "Dawson",
+        "given": "John F."
+      },
+      {
+        "family": "Marvin",
+        "given": "Andy C."
+      },
+      {
+        "family": "Robinson",
+        "given": "Martin P."
+      }
+    ],
+    "container-title": "Electromagnetic Compatibility, IEEE Transactions on",
+    "id": "Xie2020",
+    "issue": "4",
+    "issued": {
+      "date-parts": [[2020, 8]]
+    },
+    "page": "1128-1135",
+    "title": "Numerical and analytical analysis of stochastic electromagnetic fields coupling to a printed circuit board trace",
+    "type": "article-journal",
+    "volume": "62"
+  }
+]

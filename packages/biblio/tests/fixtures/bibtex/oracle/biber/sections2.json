@@ -1,0 +1,35 @@
+[
+  {
+    "author": [
+      {
+        "family": "Clumberton",
+        "given": "Clive"
+      }
+    ],
+    "id": "sect3",
+    "issued": {
+      "date-parts": [[1914]]
+    },
+    "publisher": "Clapp; Clopp Press",
+    "publisher-place": "Cambridge",
+    "title": "Clumsy cultural caveats: Counter-cultural concepts",
+    "title-short": "Clumsy cultural caveats",
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Johnson",
+        "given": "Jimmy"
+      }
+    ],
+    "id": "sect8",
+    "issued": {
+      "date-parts": [[1938]]
+    },
+    "publisher": "Jasper; Jiff",
+    "publisher-place": "Johannesburg",
+    "title": "Jovial jamborees",
+    "type": "article-journal"
+  }
+]

@@ -1,0 +1,22 @@
+[
+  {
+    "annote": "A plain article entry",
+    "author": [
+      {
+        "family": "Springer",
+        "given": "Otto"
+      }
+    ],
+    "container-title": "Mediaeval Studies",
+    "id": "springer",
+    "issued": {
+      "date-parts": [[1950]]
+    },
+    "language": "en-GB",
+    "page": "92-122",
+    "title": "Mediaeval pilgrim routes from Scandinavia to Rome",
+    "title-short": "Mediaeval pilgrim routes",
+    "type": "article-journal",
+    "volume": "12"
+  }
+]

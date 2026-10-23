@@ -1,0 +1,21 @@
+[
+  {
+    "annote": "A five-volume book cited as a whole. This is a book entry, note the volumes field",
+    "author": [
+      {
+        "family": "Knuth",
+        "given": "Donald E."
+      }
+    ],
+    "id": "knuth:ct",
+    "issued": {
+      "date-parts": [[1984], [1986]]
+    },
+    "language": "en-US",
+    "number-of-volumes": "5",
+    "publisher": "Addison-Wesley",
+    "publisher-place": "Reading, Mass.",
+    "title": "Computers & typesetting",
+    "type": "book"
+  }
+]

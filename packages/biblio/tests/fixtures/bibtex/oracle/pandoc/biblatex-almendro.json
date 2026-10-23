@@ -1,0 +1,32 @@
+[
+  {
+    "annote": "This is a patent entry with a location field. The number is given in the number field. Note the format of the location field in the database file. Compare laufenberg, sorace, and kowalik",
+    "author": [
+      {
+        "family": "Almendro",
+        "given": "José L."
+      },
+      {
+        "family": "Martín",
+        "given": "Jacinto"
+      },
+      {
+        "family": "Sánchez",
+        "given": "Alberto"
+      },
+      {
+        "family": "Nozal",
+        "given": "Fernando"
+      }
+    ],
+    "id": "almendro",
+    "issued": {
+      "date-parts": [[1998]]
+    },
+    "jurisdiction": "France; United Kingdom; Germany",
+    "language": "de-DE",
+    "number": "EU-29702195U",
+    "title": "Elektromagnetisches Signalhorn",
+    "type": "patent"
+  }
+]

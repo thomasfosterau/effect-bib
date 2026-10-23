@@ -1,0 +1,155 @@
+[
+  {
+    "author": [
+      {
+        "family": "Doe",
+        "given": "John"
+      }
+    ],
+    "id": "skip1",
+    "issued": {
+      "date-parts": [[1994]]
+    },
+    "publisher": "A press",
+    "publisher-place": "Cambridge",
+    "title": "Algorithms for sorting",
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Doe",
+        "given": "John"
+      }
+    ],
+    "id": "skip2",
+    "issued": {
+      "date-parts": [[1995]]
+    },
+    "publisher": "A press",
+    "publisher-place": "Cambridge",
+    "title": "Sorting algorithms",
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Doe",
+        "given": "John"
+      }
+    ],
+    "id": "skip3",
+    "issued": {
+      "date-parts": [[1934]]
+    },
+    "publisher": "A press",
+    "publisher-place": "Cambridge",
+    "title": "Sorting with algorithms",
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Doe",
+        "given": "John"
+      }
+    ],
+    "id": "skip4",
+    "issued": {
+      "date-parts": [[1932]]
+    },
+    "publisher": "A press",
+    "publisher-place": "Cambridge",
+    "title": "Algorithms which sort",
+    "type": "article-journal"
+  },
+  {
+    "id": "seta",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "Doe",
+        "given": "John"
+      }
+    ],
+    "id": "set:membera",
+    "issued": {
+      "date-parts": [[2010]]
+    },
+    "keyword": "key1, key2",
+    "title": "Set member a",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Doe",
+        "given": "John"
+      }
+    ],
+    "id": "set:memberb",
+    "issued": {
+      "date-parts": [[2010]]
+    },
+    "title": "Set member b",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Doe",
+        "given": "John"
+      }
+    ],
+    "id": "set:memberc",
+    "issued": {
+      "date-parts": [[2010]]
+    },
+    "title": "Set member c",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Doe",
+        "given": "John"
+      }
+    ],
+    "id": "noseta",
+    "issued": {
+      "date-parts": [[2010]]
+    },
+    "title": "Stand-alone a",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Doe",
+        "given": "John"
+      }
+    ],
+    "id": "nosetb",
+    "issued": {
+      "date-parts": [[2010]]
+    },
+    "title": "Stand-alone b",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Doe",
+        "given": "John"
+      }
+    ],
+    "id": "nosetc",
+    "issued": {
+      "date-parts": [[2010]]
+    },
+    "title": "Stand-alone c",
+    "type": "book"
+  }
+]

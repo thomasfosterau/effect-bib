@@ -1,0 +1,59 @@
+[
+  {
+    "author": [
+      {
+        "family": "Doe",
+        "given": "John"
+      }
+    ],
+    "id": "F1",
+    "issued": {
+      "date-parts": [[1995]]
+    },
+    "other-ids": "F1a",
+    "title": "The fullness of times",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Frill",
+        "given": "Frank"
+      }
+    ],
+    "id": "F1",
+    "issued": {
+      "date-parts": [[1997]]
+    },
+    "title": "Dresses for gentlemen",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "Else",
+        "given": "Someone"
+      }
+    ],
+    "id": "f1",
+    "issued": {
+      "date-parts": [[1996]]
+    },
+    "title": "The case of the duplicitous duplicate",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Balgreen",
+        "given": "Benny"
+      }
+    ],
+    "id": "c1",
+    "issued": {
+      "date-parts": [[1900]]
+    },
+    "title": "Names we invent",
+    "type": ""
+  }
+]

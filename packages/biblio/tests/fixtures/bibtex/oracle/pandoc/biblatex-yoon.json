@@ -1,0 +1,33 @@
+[
+  {
+    "author": [
+      {
+        "family": "Yoon",
+        "given": "Myeong S."
+      },
+      {
+        "family": "Ryu",
+        "given": "Dowook"
+      },
+      {
+        "family": "Kim",
+        "given": "Jeongryul"
+      },
+      {
+        "family": "Ahn",
+        "given": "Kyo Han"
+      }
+    ],
+    "container-title": "Organometallics",
+    "id": "yoon",
+    "issue": "10",
+    "issued": {
+      "date-parts": [[2006]]
+    },
+    "page": "2409-2411",
+    "title": "Palladium pincer complexes with reduced bond angle strain: Efficient catalysts for the Heck reaction",
+    "title-short": "Palladium pincer complexes with reduced bond angle strain",
+    "type": "article-journal",
+    "volume": "25"
+  }
+]

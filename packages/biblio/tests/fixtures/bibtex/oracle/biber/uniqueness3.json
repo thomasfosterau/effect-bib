@@ -1,0 +1,176 @@
+[
+  {
+    "author": [
+      {
+        "family": "AAA",
+        "given": "A."
+      },
+      {
+        "family": "BBB",
+        "given": "B."
+      },
+      {
+        "family": "CCC",
+        "given": "A."
+      },
+      {
+        "family": "EEE",
+        "given": "E."
+      }
+    ],
+    "id": "ey1",
+    "issued": {
+      "date-parts": [[1968]]
+    },
+    "title": "Title1",
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "AAA",
+        "given": "A."
+      },
+      {
+        "family": "BBB",
+        "given": "B."
+      },
+      {
+        "family": "CCC",
+        "given": "A."
+      },
+      {
+        "family": "EEE",
+        "given": "E."
+      }
+    ],
+    "id": "ey1a",
+    "issued": {
+      "date-parts": [[1969]]
+    },
+    "title": "Title1",
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "AAA",
+        "given": "A."
+      },
+      {
+        "family": "BBB",
+        "given": "B."
+      },
+      {
+        "family": "CCC",
+        "given": "A."
+      },
+      {
+        "family": "DDD",
+        "given": "D."
+      }
+    ],
+    "id": "ey2",
+    "issued": {
+      "date-parts": [[1968]]
+    },
+    "title": "Title2",
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "MMM",
+        "given": "A."
+      },
+      {
+        "family": "NNN",
+        "given": "B."
+      }
+    ],
+    "id": "ey3",
+    "issued": {
+      "date-parts": [[1968]]
+    },
+    "title": "Title3",
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "MMM",
+        "given": "A."
+      },
+      {
+        "family": "NNN",
+        "given": "B."
+      }
+    ],
+    "id": "ey4",
+    "issued": {
+      "date-parts": [[1968]]
+    },
+    "title": "Title4",
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "ZZZ",
+        "given": "Aaa"
+      },
+      {
+        "family": "VVV",
+        "given": "Bbb"
+      }
+    ],
+    "id": "ey5",
+    "issued": {
+      "date-parts": [[1968]]
+    },
+    "title": "Title3",
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "ZZZ",
+        "given": "Abb"
+      },
+      {
+        "family": "VVV",
+        "given": "Bbb"
+      }
+    ],
+    "id": "ey6",
+    "issued": {
+      "date-parts": [[1968]]
+    },
+    "title": "Title6",
+    "type": "article-journal"
+  },
+  {
+    "id": "ey7",
+    "issued": {
+      "date-parts": [[1968]]
+    },
+    "title": "Titlea",
+    "type": "article-journal"
+  },
+  {
+    "id": "ey8",
+    "issued": {
+      "date-parts": [[1968]]
+    },
+    "title": "Titlea",
+    "type": "article-journal"
+  },
+  {
+    "id": "ey9",
+    "issued": {
+      "date-parts": [[1968]]
+    },
+    "title": "Titleb",
+    "type": "article-journal"
+  }
+]

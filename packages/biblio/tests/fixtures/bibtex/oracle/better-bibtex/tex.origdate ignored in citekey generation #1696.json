@@ -1,0 +1,42 @@
+[
+  {
+    "URL": "http://arxiv.org/abs/1902.07120",
+    "abstract": "We show that weak solutions of general conservation laws in bounded domains conserve their generalized entropy, and other respective companion laws, if they possess a certain fractional differentiability of order 1/3 in the interior of the domain, and if the normal component of the corresponding fluxes tend to zero as one approaches the boundary. This extends various recent results of the authors.",
+    "accessed": {
+      "date-parts": [[2020, 9, 13]]
+    },
+    "author": [
+      {
+        "family": "Bardos",
+        "given": "Claude"
+      },
+      {
+        "family": "Gwiazda",
+        "given": "Piotr"
+      },
+      {
+        "family": "Świerczewska-Gwiazda",
+        "given": "Agnieszka"
+      },
+      {
+        "family": "Titi",
+        "given": "Edriss S."
+      },
+      {
+        "family": "Wiedemann",
+        "given": "Emil"
+      }
+    ],
+    "id": "bardos2019",
+    "issued": {
+      "date-parts": [[2019, 2]]
+    },
+    "keyword": "Mathematics - Analysis of PDEs",
+    "original-date": {
+      "date-parts": [[1901, 2, 3]]
+    },
+    "other-ids": "Titi_Gwiazda_conservation_entropy",
+    "title": "Onsager’s conjecture in bounded domains for the conservation of entropy and other companion laws",
+    "type": "webpage"
+  }
+]

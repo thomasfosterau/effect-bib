@@ -1,0 +1,43 @@
+[
+  {
+    "author": [
+      {
+        "family": "Abramowitz",
+        "given": "Milton"
+      },
+      {
+        "family": "Stegun",
+        "given": "Irene A."
+      }
+    ],
+    "edition": "ninth Dover printing, tenth GPO printing",
+    "id": "abramowitz+stegun",
+    "issued": {
+      "date-parts": [[1964]]
+    },
+    "publisher": "Dover",
+    "publisher-place": "New York",
+    "title": "Handbook of mathematical functions with formulas, graphs, and mathematical tables",
+    "type": "book"
+  },
+  {
+    "ISBN": "0385527403",
+    "author": [
+      {
+        "family": "Torre",
+        "given": "Joe"
+      },
+      {
+        "family": "Verducci",
+        "given": "Tom"
+      }
+    ],
+    "id": "Torre2008",
+    "issued": {
+      "date-parts": [[2008]]
+    },
+    "publisher": "Doubleday",
+    "title": "The yankee years",
+    "type": "book"
+  }
+]

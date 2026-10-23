@@ -1,0 +1,25 @@
+[
+  {
+    "DOI": "10.2830/44569",
+    "ISBN": "978-92-78-42416-9",
+    "URL": "https://op.europa.eu/o/opportal-service/download-handler?identifier=41b06a9b-e388-11eb-895a-01aa75ed71a1&format=pdf&language=en&productionSystem=cellar",
+    "abstract": "...",
+    "annote": "Catalogue number: OA-03-21-303-EN-N",
+    "author": [
+      {
+        "family": "Alexiev",
+        "given": "Vladimir"
+      }
+    ],
+    "container-title": "European Data Conference on Reference Data and Semantics (ENDORSE 2021)",
+    "id": "Alexiev-ENDORSE-2021",
+    "issued": {
+      "date-parts": [[2021, 7, 12]]
+    },
+    "keyword": "...",
+    "page": "47",
+    "publisher": "European Commission: Directorate-General for Informatics, Publications Office of the European Union, ISA2 Programme",
+    "title": "Diverse Uses of a Semantic Graph Database for Knowledge Organization and Research",
+    "type": "paper-conference"
+  }
+]

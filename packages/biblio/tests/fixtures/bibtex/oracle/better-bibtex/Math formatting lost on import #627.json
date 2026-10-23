@@ -1,0 +1,29 @@
+[
+  {
+    "DOI": "10.1103/physrevlett.109.156404",
+    "author": [
+      {
+        "family": "Bonča",
+        "given": "J"
+      },
+      {
+        "family": "Mierzejewski",
+        "given": "M"
+      },
+      {
+        "family": "Vidmar",
+        "given": "L"
+      }
+    ],
+    "container-title": "Phys. Rev. Lett.",
+    "id": "Bonca:2012in",
+    "issue": "15",
+    "issued": {
+      "date-parts": [[2012, 10]]
+    },
+    "page": "156404",
+    "title": "Nonequilibrium Propagation and Decay of a Bound Pair in Driven t-J Models",
+    "type": "article-journal",
+    "volume": "109"
+  }
+]

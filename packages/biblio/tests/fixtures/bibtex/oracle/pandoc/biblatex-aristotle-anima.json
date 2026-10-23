@@ -1,0 +1,26 @@
+[
+  {
+    "annote": "A book entry with an author and an editor",
+    "author": [
+      {
+        "family": "Aristotle"
+      }
+    ],
+    "editor": [
+      {
+        "family": "Hicks",
+        "given": "Robert Drew"
+      }
+    ],
+    "id": "aristotle:anima",
+    "issued": {
+      "date-parts": [[1907]]
+    },
+    "keyword": "primary",
+    "language": "en-GB",
+    "publisher": "Cambridge University Press",
+    "publisher-place": "Cambridge",
+    "title": "De anima",
+    "type": "book"
+  }
+]

@@ -1,0 +1,22 @@
+[
+  {
+    "ISBN": "0-816-52066-6",
+    "annote": "A collection of short stories. This is a book entry. Note the sorttitle and indextitle fields in the database file. There’s also an isbn field",
+    "author": [
+      {
+        "family": "Gonzalez",
+        "given": "Ray"
+      }
+    ],
+    "id": "gonzalez",
+    "issued": {
+      "date-parts": [[2001]]
+    },
+    "language": "en-US",
+    "publisher": "The University of Arizona Press",
+    "publisher-place": "Tucson",
+    "title": "The ghost of John Wayne and other stories",
+    "title-short": "Ghost of John Wayne",
+    "type": "book"
+  }
+]

@@ -1,0 +1,143 @@
+[
+  {
+    "annote": "This is a patent entry with a location field. The number is given in the number field. Note the format of the location field in the database file. Compare laufenberg, sorace, and kowalik",
+    "author": [
+      {
+        "family": "Almendro",
+        "given": "José L."
+      },
+      {
+        "family": "Martín",
+        "given": "Jacinto"
+      },
+      {
+        "family": "Sánchez",
+        "given": "Alberto"
+      },
+      {
+        "family": "Nozal",
+        "given": "Fernando"
+      }
+    ],
+    "id": "almendro",
+    "issued": {
+      "date-parts": [[1998]]
+    },
+    "jurisdiction": "France; United Kingdom; Germany",
+    "language": "de-DE",
+    "number": "EU-29702195U",
+    "title": "Elektromagnetisches Signalhorn",
+    "type": "patent"
+  },
+  {
+    "annote": "This is a patent entry for a French patent request with a full date. The number is given in the number field. Note the format of the type and date fields in the database file. Compare almendro, laufenberg, and sorace",
+    "author": [
+      {
+        "family": "Kowalik",
+        "given": "F."
+      },
+      {
+        "family": "Isard",
+        "given": "M."
+      }
+    ],
+    "genre": "French patent request",
+    "id": "kowalik",
+    "issued": {
+      "date-parts": [[1995, 1, 11]]
+    },
+    "language": "fr-FR",
+    "number": "9500261",
+    "title": "Estimateur d’un défaut de fonctionnement d’un modulateur en quadrature et étage de modulation l’utilisant",
+    "type": "patent"
+  },
+  {
+    "abstract": "The invention relates to an electric device comprising a generator, in particular for use in the vehicle electric system of a motor vehicle and a controller for controlling the generator voltage. The device is equipped with a control zone, in which the voltage is controlled and zones, in which the torque is controlled. The invention also relates to methods for operating a device of this type.",
+    "annote": "This is a patent entry with a holder field. Note the format of the type and location fields in the database file. Compare almendro, sorace, and kowalik",
+    "author": [
+      {
+        "family": "Laufenberg",
+        "given": "Xaver"
+      },
+      {
+        "family": "Eynius",
+        "given": "Dominique"
+      },
+      {
+        "family": "Suelzle",
+        "given": "Helmut"
+      },
+      {
+        "family": "Usbeck",
+        "given": "Stephan"
+      },
+      {
+        "family": "Spaeth",
+        "given": "Matthias"
+      },
+      {
+        "family": "Neuser-Hoffmann",
+        "given": "Miriam"
+      },
+      {
+        "family": "Myrzik",
+        "given": "Christian"
+      },
+      {
+        "family": "Schmid",
+        "given": "Manfred"
+      },
+      {
+        "family": "Nietfeld",
+        "given": "Franz"
+      },
+      {
+        "family": "Thiel",
+        "given": "Alexander"
+      },
+      {
+        "family": "Braun",
+        "given": "Harald"
+      },
+      {
+        "family": "Ebner",
+        "given": "Norbert"
+      }
+    ],
+    "genre": "European patent",
+    "id": "laufenberg",
+    "issued": {
+      "date-parts": [[2006, 9, 13]]
+    },
+    "language": "de-DE",
+    "number": "1700367",
+    "title": "Elektrische Einrichtung und Betriebsverfahren",
+    "type": "patent"
+  },
+  {
+    "annote": "This is a patent entry with a holder field. Note the format of the type and date fields in the database file. Compare almendro, laufenberg, and kowalik",
+    "author": [
+      {
+        "family": "Sorace",
+        "given": "Ronald E."
+      },
+      {
+        "family": "Reinhardt",
+        "given": "Victor S."
+      },
+      {
+        "family": "Vaughn",
+        "given": "Steven A."
+      }
+    ],
+    "genre": "U.S. patent",
+    "id": "sorace",
+    "issued": {
+      "date-parts": [[1997, 9, 16]]
+    },
+    "language": "en-US",
+    "number": "5668842",
+    "title": "High-speed digital-to-RF converter",
+    "type": "patent"
+  }
+]

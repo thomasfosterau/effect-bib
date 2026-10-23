@@ -1,0 +1,40 @@
+[
+  {
+    "author": [
+      {
+        "family": "Ditherington",
+        "given": "Derek"
+      },
+      {
+        "family": "Dumpton",
+        "given": "David"
+      }
+    ],
+    "id": "sect4",
+    "issued": {
+      "date-parts": [[2003]]
+    },
+    "note": "value2",
+    "publisher": "Dright; Drought Press",
+    "publisher-place": "Dunbar",
+    "title": "Dangerous dames: Don’t dally dude!",
+    "title-short": "Dangerous dames",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Ethoxon",
+        "given": "Edward E."
+      }
+    ],
+    "id": "sect5",
+    "issued": {
+      "date-parts": [[2007]]
+    },
+    "publisher": "Ethical Encouragement Press",
+    "publisher-place": "Edinburgh",
+    "title": "Eating evil enemies",
+    "type": "book"
+  }
+]

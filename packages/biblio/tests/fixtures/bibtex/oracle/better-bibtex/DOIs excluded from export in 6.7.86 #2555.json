@@ -1,0 +1,47 @@
+[
+  {
+    "DOI": "10.1007/3-540-45757-7_52",
+    "ISBN": "978-3-540-44190-8",
+    "URL": "http://dx.doi.org/10.1007/3-540-45757-7_52",
+    "author": [
+      {
+        "family": "Minock",
+        "given": "Michael"
+      },
+      {
+        "family": "Kraus",
+        "given": "Hansi"
+      }
+    ],
+    "collection-title": "Lecture notes in computer science",
+    "container-title": "Logics in artificial intelligence",
+    "editor": [
+      {
+        "family": "Flesca",
+        "given": "Sergio"
+      },
+      {
+        "family": "Greco",
+        "given": "Sergio"
+      },
+      {
+        "family": "Ianni",
+        "given": "Giovambattista"
+      },
+      {
+        "family": "Leone",
+        "given": "Nicola"
+      }
+    ],
+    "id": "minock-kraus-LIAI02",
+    "issued": {
+      "date-parts": [[2002]]
+    },
+    "page": "545-548",
+    "publisher": "Springer Berlin Heidelberg",
+    "title": "Z-log: Applying system-z",
+    "title-short": "Z-log",
+    "type": "chapter",
+    "volume": "2424"
+  }
+]

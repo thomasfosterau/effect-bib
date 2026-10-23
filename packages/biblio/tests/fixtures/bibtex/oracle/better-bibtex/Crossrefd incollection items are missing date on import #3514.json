@@ -1,0 +1,182 @@
+[
+  {
+    "ISBN": "ISBN 978-85-63994-24-0",
+    "author": [
+      {
+        "family": "Hauck",
+        "given": "Jan David"
+      }
+    ],
+    "container-title": "Fronteiras da integração: dimensões culturais do Mercosul — Fronteras de la integración: las dimensiones culturales del Mercosur",
+    "editor": [
+      {
+        "family": "Hauck",
+        "given": "Jan David"
+      },
+      {
+        "family": "Chiappini",
+        "given": "Ligia"
+      },
+      {
+        "family": "Timm",
+        "given": "Liana"
+      }
+    ],
+    "id": "Hauck_2011",
+    "issued": {
+      "date-parts": [[2011]]
+    },
+    "keyword": "Paraguay; bilingualism; multilingualism; Paraguay",
+    "language": "es-ES",
+    "page": "130-153",
+    "publisher": "Território das Artes",
+    "publisher-place": "Porto Alegre",
+    "title": "Lenguas, fronteras e ideología lingüística en el Paraguay",
+    "title-short": "Lenguas, fronteras e ideología lingüística en el Paraguay",
+    "type": "chapter"
+  },
+  {
+    "ISBN": "978-3-88559-089-7",
+    "URL": "http://www.brasilienkunde.de/4764.html",
+    "author": [
+      {
+        "family": "Hauck",
+        "given": "Jan David"
+      }
+    ],
+    "chapter-number": "4",
+    "container-title": "Mercosul/Mercosur: Dynamik der Grenzen und kulturelle Integration",
+    "editor": [
+      {
+        "family": "Chiappini",
+        "given": "Ligia"
+      },
+      {
+        "family": "Hauck",
+        "given": "Jan David"
+      }
+    ],
+    "id": "Hauck_2007",
+    "issued": {
+      "date-parts": [[2007]]
+    },
+    "keyword": "Guaraní (language); Paraguay; bilingualism; multilingualism; language ideologies; language planning; linguistic politics; Paraguay; bilingualism; multilingualism; identities",
+    "language": "de-DE",
+    "page": "67-90",
+    "publisher": "Brasilienkunde Verlag",
+    "publisher-place": "Mettingen, Germany",
+    "title": "Kultur, Sprache und Integration in der postkolonialen Ära: Das Guaraní und der Mercosur",
+    "title-short": "Kultur, Sprache und Integration in der postkolonialen Ära",
+    "type": "chapter"
+  },
+  {
+    "ISBN": "978-65-5434-040-3",
+    "author": [
+      {
+        "family": "Hauck",
+        "given": "Jan David"
+      }
+    ],
+    "container-title": "Cosmopolítica e linguagem",
+    "editor": [
+      {
+        "family": "Severo",
+        "given": "Cristine Gorski"
+      },
+      {
+        "family": "Buzato",
+        "given": "Marcelo"
+      }
+    ],
+    "id": "Hauck_2023j",
+    "issued": {
+      "date-parts": [[2023]]
+    },
+    "language": "pt-PT",
+    "page": "41-75",
+    "publisher": "Letraria",
+    "publisher-place": "Araraquara, SP",
+    "title": "A línguagem de outro jeito: naturezas linguísticas e o desafio ontológico",
+    "title-short": "A línguagem de outro jeito",
+    "translator": [
+      {
+        "family": "Buzato",
+        "given": "Marcelo"
+      }
+    ],
+    "type": "chapter"
+  },
+  {
+    "ISBN": "978-65-5434-040-3",
+    "editor": [
+      {
+        "family": "Severo",
+        "given": "Cristine Gorski"
+      },
+      {
+        "family": "Buzato",
+        "given": "Marcelo"
+      }
+    ],
+    "id": "Severo_Buzato_2023",
+    "issued": {
+      "date-parts": [[2023]]
+    },
+    "language": "pt-PT",
+    "publisher": "Letraria",
+    "publisher-place": "Araraquara, SP",
+    "title": "Cosmopolítica e linguagem",
+    "title-short": "Cosmopolítica e linguagem",
+    "type": "book"
+  },
+  {
+    "ISBN": "ISBN 978-85-63994-24-0",
+    "editor": [
+      {
+        "family": "Hauck",
+        "given": "Jan David"
+      },
+      {
+        "family": "Chiappini",
+        "given": "Ligia"
+      },
+      {
+        "family": "Timm",
+        "given": "Liana"
+      }
+    ],
+    "id": "Hauck_etal_2011",
+    "issued": {
+      "date-parts": [[2011]]
+    },
+    "language": "pt-PT",
+    "publisher": "Território das Artes",
+    "publisher-place": "Porto Alegre",
+    "title": "Fronteiras da integração: dimensões culturais do Mercosul — Fronteras de la integración: las dimensiones culturales del Mercosur",
+    "title-short": "Fronteiras da integração - Fronteras de la integración",
+    "type": "book"
+  },
+  {
+    "ISBN": "978-3-88559-089-7",
+    "editor": [
+      {
+        "family": "Chiappini",
+        "given": "Ligia"
+      },
+      {
+        "family": "Hauck",
+        "given": "Jan David"
+      }
+    ],
+    "id": "Chiappini_Hauck_2007",
+    "issued": {
+      "date-parts": [[2007]]
+    },
+    "language": "de-DE",
+    "publisher": "Brasilienkunde Verlag",
+    "publisher-place": "Mettingen, Germany",
+    "title": "Mercosul/Mercosur: Dynamik der Grenzen und kulturelle Integration",
+    "title-short": "Mercosul/Mercosur: Dynamik der Grenzen und kulturelle Integration",
+    "type": "book"
+  }
+]

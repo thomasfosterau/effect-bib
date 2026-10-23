@@ -1,0 +1,23 @@
+[
+  {
+    "annote": "An article entry with series, volume, and number fields. Note the format of the series which is a localization key",
+    "author": [
+      {
+        "family": "Shore",
+        "given": "Bradd"
+      }
+    ],
+    "collection-title": "New series",
+    "container-title": "American Anthropologist",
+    "id": "shore",
+    "issue": "1",
+    "issued": {
+      "date-parts": [[1991, 3]]
+    },
+    "page": "9-27",
+    "title": "Twice-born, once conceived: Meaning construction and cultural cognition",
+    "title-short": "Twice-born, once conceived",
+    "type": "article-journal",
+    "volume": "93"
+  }
+]

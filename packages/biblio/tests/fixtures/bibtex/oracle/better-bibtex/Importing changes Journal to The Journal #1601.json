@@ -1,0 +1,20 @@
+[
+  {
+    "author": [
+      {
+        "family": "Family Name",
+        "given": "First Name"
+      }
+    ],
+    "container-title": "Journal",
+    "id": "id1",
+    "issue": "2",
+    "issued": {
+      "date-parts": [[2020]]
+    },
+    "page": "3",
+    "title": "Title",
+    "type": "article-journal",
+    "volume": "1"
+  }
+]

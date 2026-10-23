@@ -1,0 +1,2715 @@
+[
+  {
+    "annote": "A cross-referenced article from a collection. This is an incollection entry with a crossref field. Note the subtitle and indextitle fields",
+    "author": [
+      {
+        "family": "Westfahl",
+        "given": "Gary"
+      }
+    ],
+    "container-title": "Space and beyond: The frontier theme in science fiction",
+    "editor": [
+      {
+        "family": "Westfahl",
+        "given": "Gary"
+      }
+    ],
+    "id": "westfahl:space",
+    "issued": {
+      "date-parts": [[2000]]
+    },
+    "language": "en-US",
+    "page": "55-65",
+    "publisher": "Greenwood",
+    "publisher-place": "Westport, Conn.; London",
+    "title": "The true frontier: Confronting and avoiding the realities of space in american science fiction films",
+    "title-short": "The true frontier",
+    "type": "chapter"
+  },
+  {
+    "annote": "A set entry with three members. Note the entryset and crossref fields. The cross-reference must point to the first member of the set",
+    "author": [
+      {
+        "family": "Herrmann",
+        "given": "Wolfgang A."
+      },
+      {
+        "family": "Öfele",
+        "given": "Karl"
+      },
+      {
+        "family": "Schneider",
+        "given": "Sabine K."
+      },
+      {
+        "family": "Herdtweck",
+        "given": "Eberhardt"
+      },
+      {
+        "family": "Hoffmann",
+        "given": "Stephan D."
+      }
+    ],
+    "container-title": "Angew. Chem. Int. Ed.",
+    "id": "set",
+    "issued": {
+      "date-parts": [[2006]]
+    },
+    "number": "23",
+    "page": "3859-3862",
+    "title": "A carbocyclic carbene as an efficient catalyst ligand for c–c coupling reactions",
+    "type": "",
+    "volume": "45"
+  },
+  {
+    "annote": "A set entry with three members discussing the standard model of particle physics.",
+    "author": [
+      {
+        "family": "Glashow",
+        "given": "Sheldon"
+      }
+    ],
+    "container-title": "Nucl. Phys.",
+    "id": "stdmodel",
+    "issued": {
+      "date-parts": [[1961]]
+    },
+    "page": "579",
+    "title": "Partial symmetries of weak interactions",
+    "type": "",
+    "volume": "22"
+  },
+  {
+    "annote": "A set entry with three members discussing the standard model of particle physics. Note the entryset and crossref fields. The cross-reference must point to the first member of the set",
+    "author": [
+      {
+        "family": "Glashow",
+        "given": "Sheldon"
+      }
+    ],
+    "container-title": "Nucl. Phys.",
+    "id": "stdmodel:ps_sc",
+    "issued": {
+      "date-parts": [[1961]]
+    },
+    "page": "579",
+    "title": "Partial symmetries of weak interactions",
+    "type": "",
+    "volume": "22"
+  },
+  {
+    "annote": "A German article in a French journal. Apart from that, a typical article entry. Note the indextitle field",
+    "author": [
+      {
+        "family": "Angenendt",
+        "given": "Arnold"
+      }
+    ],
+    "container-title": "Revue d’Histoire Ecclésiastique",
+    "id": "angenendt",
+    "issued": {
+      "date-parts": [[2002]]
+    },
+    "language": "de-DE",
+    "page": "431-456, 791-823",
+    "title": "In Honore Salvatoris – Vom Sinn und Unsinn der Patrozinienkunde",
+    "title-short": "In Honore Salvatoris",
+    "type": "article-journal",
+    "volume": "97"
+  },
+  {
+    "annote": "A German article in a French journal. Apart from that, a typical article entry. Note the indextitle field",
+    "author": [
+      {
+        "family": "Angenendt",
+        "given": "Arnold"
+      }
+    ],
+    "container-title": "Revue d’Histoire Ecclésiastique",
+    "id": "angenendtsk",
+    "issued": {
+      "date-parts": [[2002]]
+    },
+    "language": "de-DE",
+    "page": "431-456, 791-823",
+    "title": "In Honore Salvatoris – Vom Sinn und Unsinn der Patrozinienkunde",
+    "title-short": "In Honore Salvatoris",
+    "type": "article-journal",
+    "volume": "97"
+  },
+  {
+    "annote": "A German article in a French journal. Apart from that, a typical article entry. Note the indextitle field",
+    "author": [
+      {
+        "family": "Angenendt",
+        "given": "Arnold"
+      }
+    ],
+    "container-title": "Revue d’Histoire Ecclésiastique",
+    "id": "angenendtsa",
+    "issued": {
+      "date-parts": [[2002]]
+    },
+    "language": "de-DE",
+    "page": "431-456, 791-823",
+    "title": "In Honore Salvatoris – Vom Sinn und Unsinn der Patrozinienkunde",
+    "title-short": "In Honore Salvatoris",
+    "type": "article-journal",
+    "volume": "97"
+  },
+  {
+    "URL": "https://arxiv.org/abs/math/0307200v3",
+    "annote": "An article with eprint and eprinttype fields. Note that the arXiv reference is transformed into a clickable link if hyperref support has been enabled. Compare baez/online which is the same item given as an online entry",
+    "author": [
+      {
+        "family": "Baez",
+        "given": "John C."
+      },
+      {
+        "family": "Lauda",
+        "given": "Aaron D."
+      }
+    ],
+    "container-title": "Theory and Applications of Categories",
+    "id": "baez/article",
+    "issued": {
+      "date-parts": [[2004]]
+    },
+    "language": "en-US",
+    "page": "423-491",
+    "title": "Higher-dimensional algebra v: 2-groups",
+    "title-short": "Higher-dimensional algebra v",
+    "type": "article-journal",
+    "version": "3",
+    "volume": "12"
+  },
+  {
+    "annote": "An article entry with a volume and a number field",
+    "author": [
+      {
+        "family": "Bertram",
+        "given": "Aaron"
+      },
+      {
+        "family": "Wentworth",
+        "given": "Richard"
+      }
+    ],
+    "container-title": "J. Amer. Math. Soc.",
+    "id": "bertram",
+    "issue": "2",
+    "issued": {
+      "date-parts": [[1996]]
+    },
+    "language": "en-US",
+    "page": "529-571",
+    "title": "Gromov invariants for holomorphic maps on riemann surfaces",
+    "title-short": "Gromov invariants",
+    "type": "article-journal",
+    "volume": "9"
+  },
+  {
+    "annote": "An article entry with a series and a volume field. Note that format of the series field in the database file",
+    "author": [
+      {
+        "family": "Gillies",
+        "given": "Alexander"
+      }
+    ],
+    "collection-title": "New series",
+    "container-title": "Publications of the English Goethe Society",
+    "id": "gillies",
+    "issued": {
+      "date-parts": [[1933]]
+    },
+    "language": "en-GB",
+    "page": "46-67",
+    "title": "Herder and the preparation of goethe’s idea of world literature",
+    "type": "article-journal",
+    "volume": "9"
+  },
+  {
+    "DOI": "10.1063/1.2172593",
+    "abstract": "The computation of ionic solvation free energies from atomistic simulations is a surprisingly difficult problem that has found no satisfactory solution for more than 15 years. The reason is that the charging free energies evaluated from such simulations are affected by very large errors. One of these is related to the choice of a specific convention for summing up the contributions of solvent charges to the electrostatic potential in the ionic cavity, namely, on the basis of point charges within entire solvent molecules (M scheme) or on the basis of individual point charges (P scheme). The use of an inappropriate convention may lead to a charge-independent offset in the calculated potential, which depends on the details of the summation scheme, on the quadrupole-moment trace of the solvent molecule, and on the approximate form used to represent electrostatic interactions in the system. However, whether the M or P scheme (if any) represents the appropriate convention is still a matter of on-going debate. The goal of the present article is to settle this long-standing controversy by carefully analyzing (both analytically and numerically) the properties of the electrostatic potential in molecular liquids (and inside cavities within them).",
+    "annote": "An article entry with an eid and a doi field. Note that the <span style=\"font-variant:small-caps;\">doi</span> is transformed into a clickable link if hyperref support has been enabled",
+    "author": [
+      {
+        "family": "Kastenholz",
+        "given": "M. A."
+      },
+      {
+        "family": "Hünenberger",
+        "given": "Philippe H."
+      }
+    ],
+    "container-title": "J. Chem. Phys.",
+    "id": "kastenholz",
+    "issued": {
+      "date-parts": [[2006]]
+    },
+    "language": "en-US",
+    "title": "Computation of methodology-independent ionic solvation free energies from molecular simulations: I. The electrostatic potential in molecular liquids",
+    "title-short": "Computation of methodology-independent ionic solvation free energies from molecular simulations",
+    "type": "article-journal",
+    "volume": "124"
+  },
+  {
+    "annote": "An article entry with  authors. By default, long author and editor lists are automatically truncated. This is configurable",
+    "author": [
+      {
+        "family": "Hostetler",
+        "given": "Michael J."
+      },
+      {
+        "family": "Wingate",
+        "given": "Julia E."
+      },
+      {
+        "family": "Zhong",
+        "given": "Chuan-Jian"
+      },
+      {
+        "family": "Harris",
+        "given": "Jay E."
+      },
+      {
+        "family": "Vachet",
+        "given": "Richard W."
+      },
+      {
+        "family": "Clark",
+        "given": "Michael R."
+      },
+      {
+        "family": "Londono",
+        "given": "J. David"
+      },
+      {
+        "family": "Green",
+        "given": "Stephen J."
+      },
+      {
+        "family": "Stokes",
+        "given": "Jennifer J."
+      },
+      {
+        "family": "Wignall",
+        "given": "George D."
+      },
+      {
+        "family": "Glish",
+        "given": "Gary L."
+      },
+      {
+        "family": "Porter",
+        "given": "Marc D."
+      },
+      {
+        "family": "Evans",
+        "given": "Neal D."
+      },
+      {
+        "family": "Murray",
+        "given": "Royce W."
+      }
+    ],
+    "container-title": "Langmuir",
+    "id": "murray",
+    "issue": "1",
+    "issued": {
+      "date-parts": [[1998]]
+    },
+    "language": "en-US",
+    "page": "17-30",
+    "title": "Alkanethiolate gold cluster molecules with core diameters from 1.5 to 5.2 nm: Core and monolayer properties as a function of core size",
+    "title-short": "Alkanethiolate gold cluster molecules",
+    "type": "article-journal",
+    "volume": "14"
+  },
+  {
+    "annote": "An article entry with a series and a volume field. Note the format of the series. If the value of the series field is an integer, this number is printed as an ordinal and the string “series” is appended automatically",
+    "author": [
+      {
+        "family": "Reese",
+        "given": "Trevor R."
+      }
+    ],
+    "collection-title": "3rd series",
+    "container-title": "William and Mary Quarterly",
+    "id": "reese",
+    "issued": {
+      "date-parts": [[1958]]
+    },
+    "language": "en-US",
+    "page": "168-190",
+    "title": "Georgia in anglo-spanish diplomacy, 1736-1739",
+    "type": "article-journal",
+    "volume": "15"
+  },
+  {
+    "author": [
+      {
+        "family": "Aksın",
+        "given": "Özge"
+      },
+      {
+        "family": "Türkmen",
+        "given": "Hayati"
+      },
+      {
+        "family": "Artok",
+        "given": "Levent"
+      },
+      {
+        "family": "Çetinkaya",
+        "given": "Bekir"
+      },
+      {
+        "family": "Ni",
+        "given": "Chaoying"
+      },
+      {
+        "family": "Büyükgüngör",
+        "given": "Orhan"
+      },
+      {
+        "family": "Özkal",
+        "given": "Erhan"
+      }
+    ],
+    "container-title": "J. Organomet. Chem.",
+    "id": "set:aksin",
+    "issue": "13",
+    "issued": {
+      "date-parts": [[2006, 2]]
+    },
+    "page": "3027-3036",
+    "title": "Effect of immobilization on catalytic characteristics of saturated pd-n-heterocyclic carbenes in mizoroki-heck reactions",
+    "type": "article-journal",
+    "volume": "691"
+  },
+  {
+    "author": [
+      {
+        "family": "Herrmann",
+        "given": "Wolfgang A."
+      },
+      {
+        "family": "Öfele",
+        "given": "Karl"
+      },
+      {
+        "family": "Schneider",
+        "given": "Sabine K."
+      },
+      {
+        "family": "Herdtweck",
+        "given": "Eberhardt"
+      },
+      {
+        "family": "Hoffmann",
+        "given": "Stephan D."
+      }
+    ],
+    "container-title": "Angew. Chem. Int. Ed.",
+    "id": "set:herrmann",
+    "issue": "23",
+    "issued": {
+      "date-parts": [[2006]]
+    },
+    "page": "3859-3862",
+    "title": "A carbocyclic carbene as an efficient catalyst ligand for c–c coupling reactions",
+    "type": "article-journal",
+    "volume": "45"
+  },
+  {
+    "author": [
+      {
+        "family": "Yoon",
+        "given": "Myeong S."
+      },
+      {
+        "family": "Ryu",
+        "given": "Dowook"
+      },
+      {
+        "family": "Kim",
+        "given": "Jeongryul"
+      },
+      {
+        "family": "Ahn",
+        "given": "Kyo Han"
+      }
+    ],
+    "container-title": "Organometallics",
+    "id": "set:yoon",
+    "issue": "10",
+    "issued": {
+      "date-parts": [[2006]]
+    },
+    "page": "2409-2411",
+    "title": "Palladium pincer complexes with reduced bond angle strain: Efficient catalysts for the heck reaction",
+    "title-short": "Palladium pincer complexes with reduced bond angle strain",
+    "type": "article-journal",
+    "volume": "25"
+  },
+  {
+    "annote": "An article entry with series, volume, and number fields. Note the format of the series which is a localization key",
+    "author": [
+      {
+        "family": "Shore",
+        "given": "Bradd"
+      }
+    ],
+    "collection-title": "New series",
+    "container-title": "American Anthropologist",
+    "id": "shore",
+    "issue": "1",
+    "issued": {
+      "date-parts": [[1991, 3]]
+    },
+    "page": "9-27",
+    "title": "Twice-born, once conceived: Meaning construction and cultural cognition",
+    "title-short": "Twice-born, once conceived",
+    "type": "article-journal",
+    "volume": "93"
+  },
+  {
+    "DOI": "10.1002/(SICI)1096-987X(199803)19:4<377::AID-JCC1>3.0.CO;2-P",
+    "abstract": "Four methods for deriving partial atomic charges from the quantum chemical electrostatic potential (CHELP, CHELPG, Merz-Kollman, and RESP) have been compared and critically evaluated. It is shown that charges strongly depend on how and where the potential points are selected. Two alternative methods are suggested to avoid the arbitrariness in the point-selection schemes and van der Waals exclusion radii: CHELP-BOW, which also estimates the charges from the electrostatic potential, but with potential points that are Boltzmann-weighted after their occurrence in actual simulations using the energy function of the program in which the charges will be used, and CHELMO, which estimates the charges directly from the electrostatic multipole moments. Different criteria for the quality of the charges are discussed.",
+    "annote": "An article entry with volume, number, and doi fields. Note that the <span style=\"font-variant:small-caps;\">doi</span> is transformed into a clickable link if hyperref support has been enabled",
+    "author": [
+      {
+        "family": "Sigfridsson",
+        "given": "Emma"
+      },
+      {
+        "family": "Ryde",
+        "given": "Ulf"
+      }
+    ],
+    "container-title": "Journal of Computational Chemistry",
+    "id": "sigfridsson",
+    "issue": "4",
+    "issued": {
+      "date-parts": [[1998]]
+    },
+    "language": "en-US",
+    "page": "377-395",
+    "title": "Comparison of methods for deriving atomic charges from the electrostatic potential and moments",
+    "type": "article-journal",
+    "volume": "19"
+  },
+  {
+    "annote": "An article entry. Note the sorttitle and indexsorttitle fields and the markup of the quotes in the database file",
+    "author": [
+      {
+        "family": "Spiegelberg",
+        "given": "Herbert"
+      }
+    ],
+    "container-title": "Studia Philosophica",
+    "id": "spiegelberg",
+    "issued": {
+      "date-parts": [[1969]]
+    },
+    "language": "de-DE",
+    "page": "189-216",
+    "title": "“Intention” und “Intentionalität” in der Scholastik, bei Brentano und Husserl",
+    "title-short": "Intention und Intentionalität",
+    "type": "article-journal",
+    "volume": "29"
+  },
+  {
+    "annote": "A plain article entry",
+    "author": [
+      {
+        "family": "Springer",
+        "given": "Otto"
+      }
+    ],
+    "container-title": "Mediaeval Studies",
+    "id": "springer",
+    "issued": {
+      "date-parts": [[1950]]
+    },
+    "language": "en-GB",
+    "page": "92-122",
+    "title": "Mediaeval pilgrim routes from scandinavia to rome",
+    "title-short": "Mediaeval pilgrim routes",
+    "type": "article-journal",
+    "volume": "12"
+  },
+  {
+    "author": [
+      {
+        "family": "Glashow",
+        "given": "Sheldon"
+      }
+    ],
+    "container-title": "Nucl. Phys.",
+    "id": "stdmodel:glashow",
+    "issued": {
+      "date-parts": [[1961]]
+    },
+    "page": "579",
+    "title": "Partial symmetries of weak interactions",
+    "type": "article-journal",
+    "volume": "22"
+  },
+  {
+    "author": [
+      {
+        "family": "Weinberg",
+        "given": "Steven"
+      }
+    ],
+    "container-title": "Phys. Rev. Lett.",
+    "id": "stdmodel:weinberg",
+    "issued": {
+      "date-parts": [[1967]]
+    },
+    "page": "1264",
+    "title": "A model of leptons",
+    "type": "article-journal",
+    "volume": "19"
+  },
+  {
+    "annote": "A book entry with an author and an editor",
+    "author": [
+      {
+        "family": "Aristotle"
+      }
+    ],
+    "editor": [
+      {
+        "family": "Hicks",
+        "given": "Robert Drew"
+      }
+    ],
+    "id": "aristotle:anima",
+    "issued": {
+      "date-parts": [[1907]]
+    },
+    "keyword": "primary",
+    "language": "en-GB",
+    "publisher": "Cambridge University Press",
+    "publisher-place": "Cambridge",
+    "title": "De anima",
+    "type": "book"
+  },
+  {
+    "annote": "A book entry with a translator field",
+    "author": [
+      {
+        "family": "Aristotle"
+      }
+    ],
+    "id": "aristotle:physics",
+    "issued": {
+      "date-parts": [[1929]]
+    },
+    "keyword": "primary",
+    "language": "en-US",
+    "publisher": "G. P. Putnam",
+    "publisher-place": "New York",
+    "title": "Physics",
+    "title-short": "Physics",
+    "translator": [
+      {
+        "family": "Wicksteed",
+        "given": "P. H."
+      },
+      {
+        "family": "Cornford",
+        "given": "F. M."
+      }
+    ],
+    "type": "book"
+  },
+  {
+    "annote": "A book entry with an author and an editor as well as a series field",
+    "author": [
+      {
+        "family": "Aristotle"
+      }
+    ],
+    "collection-title": "Clarendon aristotle",
+    "editor": [
+      {
+        "family": "Lucas",
+        "given": "D. W."
+      }
+    ],
+    "id": "aristotle:poetics",
+    "issued": {
+      "date-parts": [[1968]]
+    },
+    "keyword": "primary",
+    "language": "en-GB",
+    "publisher": "Clarendon Press",
+    "publisher-place": "Oxford",
+    "title": "Poetics",
+    "title-short": "Poetics",
+    "type": "book"
+  },
+  {
+    "annote": "A commented edition. Note the concatenation of the editor and commentator fields as well as the volumes, sorttitle, and indextitle fields",
+    "author": [
+      {
+        "family": "Aristotle"
+      }
+    ],
+    "editor": [
+      {
+        "family": "Cope",
+        "given": "Edward Meredith"
+      }
+    ],
+    "id": "aristotle:rhetoric",
+    "issued": {
+      "date-parts": [[1877]]
+    },
+    "keyword": "primary",
+    "language": "en-GB",
+    "number-of-volumes": "3",
+    "publisher": "Cambridge University Press",
+    "title": "The rhetoric of aristotle with a commentary by the late edward meredith cope",
+    "title-short": "Rhetoric",
+    "type": "book"
+  },
+  {
+    "annote": "A plain book entry",
+    "author": [
+      {
+        "family": "Augustine",
+        "given": "Robert L."
+      }
+    ],
+    "id": "augustine",
+    "issued": {
+      "date-parts": [[1995]]
+    },
+    "language": "en-GB",
+    "publisher": "Marcel Dekker",
+    "publisher-place": "New York",
+    "title": "Heterogeneous catalysis for the synthetic chemist",
+    "title-short": "Heterogeneous catalysis",
+    "type": "book"
+  },
+  {
+    "annote": "A book entry with a series and a number. Note the concatenation of the editor and translator fields as well as the indextitle field",
+    "author": [
+      {
+        "family": "Averroes"
+      }
+    ],
+    "collection-number": "7",
+    "collection-title": "Moreshet: Studies in jewish history, literature and thought",
+    "editor": [
+      {
+        "family": "Bland",
+        "given": "Kalman P."
+      }
+    ],
+    "id": "averroes/bland",
+    "issued": {
+      "date-parts": [[1982]]
+    },
+    "keyword": "primary",
+    "language": "en-US",
+    "publisher": "Jewish Theological Seminary of America",
+    "publisher-place": "New York",
+    "title": "The epistle on the possibility of conjunction with the active intellect by ibn rushd with the commentary of moses narboni",
+    "title-short": "Possibility of conjunction",
+    "translator": [
+      {
+        "family": "Bland",
+        "given": "Kalman P."
+      }
+    ],
+    "type": "book"
+  },
+  {
+    "annote": "An annotated edition. Note the concatenation of the editor, translator, and annotator fields. Also note the shorttitle, indextitle, sorttitle, and indexsorttitle fields",
+    "author": [
+      {
+        "family": "Averroes"
+      }
+    ],
+    "editor": [
+      {
+        "family": "Hannes",
+        "given": "Ludwig"
+      }
+    ],
+    "id": "averroes/hannes",
+    "issued": {
+      "date-parts": [[1892]]
+    },
+    "keyword": "primary",
+    "language": "de-DE",
+    "publisher": "C. A. Kaemmerer",
+    "publisher-place": "Halle an der Saale",
+    "title": "Des Averroës Abhandlung: “Über die Möglichkeit der Conjunktion” oder “Über den materiellen Intellekt”",
+    "title-short": "Möglichkeit der Conjunktion",
+    "translator": [
+      {
+        "family": "Hannes",
+        "given": "Ludwig"
+      }
+    ],
+    "type": "book"
+  },
+  {
+    "annote": "A book entry. Note the concatenation of the editor and translator fields as well as the indextitle and indexsorttitle fields",
+    "author": [
+      {
+        "family": "Averroes"
+      }
+    ],
+    "editor": [
+      {
+        "family": "Hercz",
+        "given": "J."
+      }
+    ],
+    "id": "averroes/hercz",
+    "issued": {
+      "date-parts": [[1869]]
+    },
+    "keyword": "primary",
+    "language": "de-DE",
+    "publisher": "S. Hermann",
+    "publisher-place": "Berlin",
+    "title": "Drei Abhandlungen über die Conjunction des separaten Intellects mit dem Menschen: Von Averroes (Vater und Sohn), aus dem Arabischen übersetzt von Samuel Ibn Tibbon",
+    "title-short": "Drei Abhandlungen",
+    "translator": [
+      {
+        "family": "Hercz",
+        "given": "J."
+      }
+    ],
+    "type": "book"
+  },
+  {
+    "annote": "A bilingual edition of Cicero’s <i>De natura deorum</i>, with a German translation. Note the format of the language field in the database file, the concatenation of the editor and translator fields, and the afterword field",
+    "author": [
+      {
+        "family": "Cicero",
+        "given": "Marcus Tullius"
+      }
+    ],
+    "editor": [
+      {
+        "family": "Blank-Sangmeister",
+        "given": "Ursula"
+      }
+    ],
+    "id": "cicero",
+    "issued": {
+      "date-parts": [[1995]]
+    },
+    "language": "de-DE",
+    "publisher": "Reclam",
+    "publisher-place": "Stuttgart",
+    "title": "De natura deorum. Über das Wesen der Götter",
+    "title-short": "De natura deorum",
+    "translator": [
+      {
+        "family": "Blank-Sangmeister",
+        "given": "Ursula"
+      }
+    ],
+    "type": "book"
+  },
+  {
+    "annote": "One (partial) volume of a multivolume book. This is a book entry with a volume and a part field which explicitly refers to the second (physical) part of the seventh (logical) volume. Also note the series and number fields",
+    "author": [
+      {
+        "family": "Coleridge",
+        "given": "Samuel Taylor"
+      }
+    ],
+    "collection-number": "75",
+    "collection-title": "Bollingen series",
+    "editor": [
+      {
+        "family": "Coburn",
+        "given": "Kathleen"
+      },
+      {
+        "family": "Engell",
+        "given": "James"
+      },
+      {
+        "family": "Bate",
+        "given": "W. Jackson"
+      }
+    ],
+    "id": "coleridge",
+    "issued": {
+      "date-parts": [[1983]]
+    },
+    "language": "en-GB",
+    "publisher": "Routledge; Kegan Paul",
+    "publisher-place": "London",
+    "title": "The collected works of samuel taylor coleridge",
+    "type": "book",
+    "volume": "7.2",
+    "volume-title": "Biographia literaria, or biographical sketches of my literary life and opinions"
+  },
+  {
+    "annote": "A book with three authors. Note the formatting of the author list. By default, only the first name is reversed in the bibliography",
+    "author": [
+      {
+        "family": "Goossens",
+        "given": "Michel"
+      },
+      {
+        "family": "Mittelbach",
+        "given": "Frank"
+      },
+      {
+        "family": "Samarin",
+        "given": "Alexander"
+      }
+    ],
+    "edition": "1",
+    "id": "companion",
+    "issued": {
+      "date-parts": [[1994]]
+    },
+    "language": "en-US",
+    "publisher": "Addison-Wesley",
+    "publisher-place": "Reading, Mass.",
+    "title": "The LaTeX companion",
+    "title-short": "LaTeX companion",
+    "type": "book"
+  },
+  {
+    "annote": "A book entry with  authors and an edition field. By default, long author and editor lists are automatically truncated. This is configurable",
+    "author": [
+      {
+        "family": "Cotton",
+        "given": "Frank Albert"
+      },
+      {
+        "family": "Wilkinson",
+        "given": "Geoffrey"
+      },
+      {
+        "family": "Murillio",
+        "given": "Carlos A."
+      },
+      {
+        "family": "Bochmann",
+        "given": "Manfred"
+      }
+    ],
+    "edition": "6",
+    "id": "cotton",
+    "issued": {
+      "date-parts": [[1999]]
+    },
+    "language": "en-GB",
+    "publisher": "Wiley",
+    "publisher-place": "Chichester",
+    "title": "Advanced inorganic chemistry",
+    "type": "book"
+  },
+  {
+    "annote": "This is a book entry. Note the format of the location field as well as the sorttitle and indextitle fields",
+    "author": [
+      {
+        "family": "Gerhardt",
+        "given": "Michael J."
+      }
+    ],
+    "id": "gerhardt",
+    "issued": {
+      "date-parts": [[2000]]
+    },
+    "language": "en-US",
+    "publisher": "Duke University Press",
+    "publisher-place": "Durham; London",
+    "title": "The federal appointments process: A constitutional and historical analysis",
+    "title-short": "Federal appointments process",
+    "type": "book"
+  },
+  {
+    "ISBN": "0-816-52066-6",
+    "annote": "A collection of short stories. This is a book entry. Note the sorttitle and indextitle fields in the database file. There’s also an isbn field",
+    "author": [
+      {
+        "family": "Gonzalez",
+        "given": "Ray"
+      }
+    ],
+    "id": "gonzalez",
+    "issued": {
+      "date-parts": [[2001]]
+    },
+    "language": "en-US",
+    "publisher": "The University of Arizona Press",
+    "publisher-place": "Tucson",
+    "title": "The ghost of john wayne and other stories",
+    "title-short": "Ghost of john wayne",
+    "type": "book"
+  },
+  {
+    "annote": "A book entry. Note the sorttitle and indextitle fields as well as the format of the publisher field",
+    "author": [
+      {
+        "family": "Hammond",
+        "given": "Christopher"
+      }
+    ],
+    "id": "hammond",
+    "issued": {
+      "date-parts": [[1997]]
+    },
+    "language": "en-GB",
+    "publisher": "International Union of Crystallography; Oxford University Press",
+    "publisher-place": "Oxford",
+    "title": "The basics of crystallography and diffraction",
+    "title-short": "Crystallography and diffraction",
+    "type": "book"
+  },
+  {
+    "annote": "A German translation of the <i>Iliad</i>. Note the translator and introduction fields and the format of the location field in the database file. Also note the sorttitle and indextitle fields",
+    "author": [
+      {
+        "family": "Homer"
+      }
+    ],
+    "edition": "3",
+    "id": "iliad",
+    "issued": {
+      "date-parts": [[2004]]
+    },
+    "language": "de-DE",
+    "publisher": "Artemis & Winkler",
+    "publisher-place": "Düsseldorf; Zürich",
+    "title": "Die Ilias",
+    "title-short": "Ilias",
+    "translator": [
+      {
+        "family": "Schadewaldt",
+        "given": "Wolfgang"
+      }
+    ],
+    "type": "book"
+  },
+  {
+    "annote": "A five-volume book cited as a whole. This is a book entry, note the volumes field",
+    "author": [
+      {
+        "family": "Knuth",
+        "given": "Donald E."
+      }
+    ],
+    "id": "knuth:ct",
+    "issued": {
+      "date-parts": [[1984], [1986]]
+    },
+    "language": "en-US",
+    "number-of-volumes": "5",
+    "publisher": "Addison-Wesley",
+    "publisher-place": "Reading, Mass.",
+    "title": "Computers & typesetting",
+    "type": "book"
+  },
+  {
+    "annote": "The first volume of a five-volume book. Note the sorttitle field. We want this volume to be listed after the entry referring to the entire five-volume set. Also note the indextitle and indexsorttitle fields",
+    "author": [
+      {
+        "family": "Knuth",
+        "given": "Donald E."
+      }
+    ],
+    "id": "knuth:ct:a",
+    "issued": {
+      "date-parts": [[1984]]
+    },
+    "language": "en-US",
+    "publisher": "Addison-Wesley",
+    "publisher-place": "Reading, Mass.",
+    "title": "Computers & typesetting",
+    "type": "book",
+    "volume": "A",
+    "volume-title": "The TeXbook"
+  },
+  {
+    "annote": "The second volume of a five-volume book. Note the sorttitle field. Also note the indexsorttitle field",
+    "author": [
+      {
+        "family": "Knuth",
+        "given": "Donald E."
+      }
+    ],
+    "id": "knuth:ct:b",
+    "issued": {
+      "date-parts": [[1986]]
+    },
+    "language": "en-US",
+    "publisher": "Addison-Wesley",
+    "publisher-place": "Reading, Mass.",
+    "title": "Computers & typesetting",
+    "title-short": "TeX",
+    "type": "book",
+    "volume": "B",
+    "volume-title": "TeX: The program"
+  },
+  {
+    "annote": "The third volume of a five-volume book. Note the sorttitle and indextitle field",
+    "author": [
+      {
+        "family": "Knuth",
+        "given": "Donald E."
+      }
+    ],
+    "id": "knuth:ct:c",
+    "issued": {
+      "date-parts": [[1986]]
+    },
+    "language": "en-US",
+    "publisher": "Addison-Wesley",
+    "publisher-place": "Reading, Mass.",
+    "title": "Computers & typesetting",
+    "type": "book",
+    "volume": "C",
+    "volume-title": "The METAFONTbook"
+  },
+  {
+    "annote": "The fourth volume of a five-volume book. Note the sorttitle field",
+    "author": [
+      {
+        "family": "Knuth",
+        "given": "Donald E."
+      }
+    ],
+    "id": "knuth:ct:d",
+    "issued": {
+      "date-parts": [[1986]]
+    },
+    "language": "en-US",
+    "publisher": "Addison-Wesley",
+    "publisher-place": "Reading, Mass.",
+    "title": "Computers & typesetting",
+    "title-short": "METAFONT",
+    "type": "book",
+    "volume": "D",
+    "volume-title": "METAFONT: The program"
+  },
+  {
+    "annote": "The fifth volume of a five-volume book. Note the sorttitle field",
+    "author": [
+      {
+        "family": "Knuth",
+        "given": "Donald E."
+      }
+    ],
+    "id": "knuth:ct:e",
+    "issued": {
+      "date-parts": [[1986]]
+    },
+    "language": "en-US",
+    "publisher": "Addison-Wesley",
+    "publisher-place": "Reading, Mass.",
+    "title": "Computers & typesetting",
+    "type": "book",
+    "volume": "E",
+    "volume-title": "Computer modern typefaces"
+  },
+  {
+    "annote": "This is a book entry. Note the format of the publisher and edition fields as well as the subtitle field",
+    "author": [
+      {
+        "family": "Malinowski",
+        "given": "Bronisław"
+      }
+    ],
+    "edition": "8",
+    "id": "malinowski",
+    "issued": {
+      "date-parts": [[1972]]
+    },
+    "language": "en-GB",
+    "publisher": "Routledge; Kegan Paul",
+    "publisher-place": "London",
+    "title": "Argonauts of the western pacific: An account of native enterprise and adventure in the archipelagoes of melanesian new guinea",
+    "title-short": "Argonauts",
+    "type": "book"
+  },
+  {
+    "annote": "An English translation of a German novel with a French title. In other words: a book entry with a translator field. Note the origlanguage field which is concatenated with the translator",
+    "author": [
+      {
+        "family": "Maron",
+        "given": "Monika"
+      }
+    ],
+    "id": "maron",
+    "issued": {
+      "date-parts": [[2000]]
+    },
+    "language": "en-US",
+    "publisher": "University of Nebraska Press",
+    "publisher-place": "Lincoln",
+    "title": "Animal triste",
+    "title-short": "Animal triste",
+    "translator": [
+      {
+        "family": "Goldstein",
+        "given": "Brigitte"
+      }
+    ],
+    "type": "book"
+  },
+  {
+    "annote": "A book entry with an edition field",
+    "author": [
+      {
+        "family": "Massa",
+        "given": "Werner"
+      }
+    ],
+    "edition": "2",
+    "id": "massa",
+    "issued": {
+      "date-parts": [[2004]]
+    },
+    "language": "en-GB",
+    "publisher": "Spinger",
+    "publisher-place": "Berlin",
+    "title": "Crystal structure determination",
+    "type": "book"
+  },
+  {
+    "annote": "The critical edition of Nietzsche’s works. This is a book entry referring to a 15-volume work as a whole. Note the volumes field and the format of the publisher and location fields in the database file. Also note the sorttitle field which is used to fine-tune the sorting order of the bibliography. We want this item listed first in the bibliography",
+    "author": [
+      {
+        "family": "Nietzsche",
+        "given": "Friedrich"
+      }
+    ],
+    "edition": "2",
+    "editor": [
+      {
+        "family": "Colli",
+        "given": "Giorgio"
+      },
+      {
+        "family": "Montinari",
+        "given": "Mazzino"
+      }
+    ],
+    "id": "nietzsche:ksa",
+    "issued": {
+      "date-parts": [[1988]]
+    },
+    "language": "de-DE",
+    "number-of-volumes": "15",
+    "publisher": "Deutscher Taschenbuch-Verlag; Walter de Gruyter",
+    "publisher-place": "München; Berlin; New York",
+    "title": "Sämtliche Werke: Kritische Studienausgabe",
+    "title-short": "Sämtliche Werke",
+    "type": "book"
+  },
+  {
+    "annote": "A single volume from the critical edition of Nietzsche’s works. This book entry explicitly refers to the first volume only. Note the title and maintitle fields. Also note the sorttitle field. We want this entry to be listed after the entry referring to the entire edition",
+    "author": [
+      {
+        "family": "Nietzsche",
+        "given": "Friedrich"
+      }
+    ],
+    "container-author": [
+      {
+        "family": "Nietzsche",
+        "given": "Friedrich"
+      }
+    ],
+    "edition": "2",
+    "editor": [
+      {
+        "family": "Colli",
+        "given": "Giorgio"
+      },
+      {
+        "family": "Montinari",
+        "given": "Mazzino"
+      }
+    ],
+    "id": "nietzsche:ksa1",
+    "issued": {
+      "date-parts": [[1988]]
+    },
+    "language": "de-DE",
+    "publisher": "Deutscher Taschenbuch-Verlag; Walter de Gruyter",
+    "publisher-place": "München; Berlin; New York",
+    "title": "Sämtliche Werke: Kritische Studienausgabe",
+    "type": "book",
+    "volume": "1",
+    "volume-title": "Die Geburt der Tragödie. Unzeitgemäße Betrachtungen I–IV. Nachgelassene Schriften 1870–1973"
+  },
+  {
+    "annote": "A book entry. Note the sorttitle and indexsorttitle fields and the markup of the quotes in the database file",
+    "author": [
+      {
+        "family": "Nussbaum",
+        "given": "Martha"
+      }
+    ],
+    "id": "nussbaum",
+    "issued": {
+      "date-parts": [[1978]]
+    },
+    "keyword": "secondary",
+    "language": "en-US",
+    "publisher": "Princeton University Press",
+    "publisher-place": "Princeton",
+    "title": "Aristotle’s “De Motu Animalium”",
+    "type": "book"
+  },
+  {
+    "annote": "This is a book entry. Note the format of the location field in the database file",
+    "author": [
+      {
+        "family": "Piccato",
+        "given": "Pablo"
+      }
+    ],
+    "id": "piccato",
+    "issued": {
+      "date-parts": [[2001]]
+    },
+    "language": "en-US",
+    "publisher": "Duke University Press",
+    "publisher-place": "Durham; London",
+    "title": "City of suspects: Crime in mexico city, 1900–1931",
+    "title-short": "City of suspects",
+    "type": "book"
+  },
+  {
+    "annote": "A book entry. Note the format of the printed name and compare the useprefix option in the options field as well as brandt and geer",
+    "author": [
+      {
+        "family": "Gennep",
+        "given": "Arnold",
+        "non-dropping-particle": "van"
+      }
+    ],
+    "id": "vangennep",
+    "issued": {
+      "date-parts": [[1909]]
+    },
+    "language": "fr-FR",
+    "publisher": "Nourry",
+    "publisher-place": "Paris",
+    "title": "Les rites de passage",
+    "title-short": "Rites de passage",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "dropping-particle": "van",
+        "family": "Gennep",
+        "given": "Jean"
+      }
+    ],
+    "id": "vangennepx",
+    "issued": {
+      "date-parts": [[1999]]
+    },
+    "language": "fr-FR",
+    "publisher": "Alhambra",
+    "publisher-place": "Montréal",
+    "title": "Il a neigé à Port-au-Prince",
+    "type": "book"
+  },
+  {
+    "annote": "A multivolume book cited as a whole. This is a book entry with volumes, note, sorttitle, and indextitle fields",
+    "author": [
+      {
+        "family": "Vázques de Parga",
+        "given": "Luis"
+      },
+      {
+        "family": "Lacarra",
+        "given": "José María"
+      },
+      {
+        "family": "Uría Ríu",
+        "given": "Juan"
+      }
+    ],
+    "id": "vazques-de-parga",
+    "issued": {
+      "date-parts": [[1993]]
+    },
+    "language": "es-ES",
+    "note": "Ed. facs. de la realizada en 1948–49",
+    "number-of-volumes": "3",
+    "publisher": "Iberdrola",
+    "publisher-place": "Pamplona",
+    "title": "Las Peregrinaciones a Santiago de Compostela",
+    "title-short": "Peregrinaciones",
+    "type": "book"
+  },
+  {
+    "annote": "A book entry. Note the sorttitle and indextitle fields",
+    "author": [
+      {
+        "family": "Worman",
+        "given": "Nancy"
+      }
+    ],
+    "id": "worman",
+    "issued": {
+      "date-parts": [[2002]]
+    },
+    "language": "en-US",
+    "publisher": "University of Texas Press",
+    "publisher-place": "Austin",
+    "title": "The cast of character: Style in greek literature",
+    "title-short": "Cast of character",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Worman",
+        "given": "Nana"
+      }
+    ],
+    "id": "wormanx",
+    "issued": {
+      "date-parts": [[2009]]
+    },
+    "language": "en-US",
+    "publisher": "University of Nowhere Press",
+    "publisher-place": "Somewhere",
+    "title": "Someone did it again",
+    "type": "book"
+  },
+  {
+    "annote": "This is a collection entry for an encyclopedia. Note the useeditor option in the options field as well as the sorttitle field. We want this entry to be cited and alphabetized by title even though there is an editor. In addition to that, we want the title to be alphabetized under “E” rather than “T”. Also note the label field which is provided for author-year citation styles",
+    "edition": "15",
+    "editor": [
+      {
+        "family": "Preece",
+        "given": "Warren E."
+      }
+    ],
+    "id": "britannica",
+    "issued": {
+      "date-parts": [[2003]]
+    },
+    "language": "en-GB",
+    "number-of-volumes": "32",
+    "publisher": "Encyclopædia Britannica",
+    "publisher-place": "Chicago, Ill.",
+    "title": "The new encyclopædia britannica",
+    "title-short": "Encyclopædia britannica",
+    "type": "book"
+  },
+  {
+    "ISBN": "0-822-32714-7",
+    "annote": "This is a collection entry. Note the format of the location field in the database file as well as the isbn field",
+    "editor": [
+      {
+        "family": "Gaonkar",
+        "given": "Dilip Parameshwar"
+      }
+    ],
+    "id": "gaonkar",
+    "issued": {
+      "date-parts": [[2001]]
+    },
+    "language": "en-US",
+    "publisher": "Duke University Press",
+    "publisher-place": "Durham; London",
+    "title": "Alternative modernities",
+    "type": "book"
+  },
+  {
+    "annote": "A collection entry with edition and volumes fields. Note the editortype field handling the redactor",
+    "edition": "2",
+    "editor": [
+      {
+        "family": "Jaffé",
+        "given": "Philipp"
+      }
+    ],
+    "id": "jaffe",
+    "issued": {
+      "date-parts": [[1885], [1888]]
+    },
+    "number-of-volumes": "2",
+    "publisher-place": "Leipzig",
+    "title": "Regesta pontificum romanorum ab condita ecclesia ad annum post christum natum <span style=\"font-variant:small-caps;\">mcxcviii</span>",
+    "title-short": "Regesta pontificum romanorum",
+    "type": "book"
+  },
+  {
+    "annote": "This is a collection entry. Note the format of the location field as well as the subtitle and booksubtitle fields",
+    "editor": [
+      {
+        "family": "Westfahl",
+        "given": "Gary"
+      }
+    ],
+    "id": "westfahl:frontier",
+    "issued": {
+      "date-parts": [[2000]]
+    },
+    "language": "en-US",
+    "publisher": "Greenwood",
+    "publisher-place": "Westport, Conn.; London",
+    "title": "Space and beyond: The frontier theme in science fiction",
+    "title-short": "Space and beyond",
+    "type": "book"
+  },
+  {
+    "annote": "An edition of Kant’s <i>Collected Works</i>, volume five. This is an inbook entry which explicitly refers to the <i>Critique of Practical Reason</i> only, not to the entire fifth volume. Note the author and bookauthor fields in the database file. By default, the bookauthor is omitted if the values of the author and bookauthor fields are identical",
+    "author": [
+      {
+        "family": "Kant",
+        "given": "Immanuel"
+      }
+    ],
+    "container-author": [
+      {
+        "family": "Kant",
+        "given": "Immanuel"
+      }
+    ],
+    "container-title": "Kants Werke. Akademie Textausgabe",
+    "id": "kant:kpv",
+    "issued": {
+      "date-parts": [[1968]]
+    },
+    "language": "de-DE",
+    "page": "1-163",
+    "publisher": "Walter de Gruyter",
+    "publisher-place": "Berlin",
+    "title": "Kritik der praktischen Vernunft",
+    "title-short": "Kritik der praktischen Vernunft",
+    "type": "chapter",
+    "volume": "5",
+    "volume-title": "Kritik der praktischen Vernunft. Kritik der Urtheilskraft"
+  },
+  {
+    "annote": "An edition of Kant’s <i>Collected Works</i>, volume five. This is an inbook entry which explicitly refers to the <i>Critique of Judgment</i> only, not to the entire fifth volume",
+    "author": [
+      {
+        "family": "Kant",
+        "given": "Immanuel"
+      }
+    ],
+    "container-author": [
+      {
+        "family": "Kant",
+        "given": "Immanuel"
+      }
+    ],
+    "container-title": "Kants Werke. Akademie Textausgabe",
+    "id": "kant:ku",
+    "issued": {
+      "date-parts": [[1968]]
+    },
+    "language": "de-DE",
+    "page": "165-485",
+    "publisher": "Walter de Gruyter",
+    "publisher-place": "Berlin",
+    "title": "Kritik der Urtheilskraft",
+    "type": "chapter",
+    "volume": "5",
+    "volume-title": "Kritik der praktischen Vernunft. Kritik der Urtheilskraft"
+  },
+  {
+    "annote": "A single essay from the critical edition of Nietzsche’s works. This inbook entry explicitly refers to an essay found in the first volume. Note the title, booktitle, and maintitle fields. Also note the sorttitle field. We want this entry to be listed after the entry referring to the entire first volume",
+    "author": [
+      {
+        "family": "Nietzsche",
+        "given": "Friedrich"
+      }
+    ],
+    "container-author": [
+      {
+        "family": "Nietzsche",
+        "given": "Friedrich"
+      }
+    ],
+    "container-title": "Sämtliche Werke: Kritische Studienausgabe",
+    "editor": [
+      {
+        "family": "Colli",
+        "given": "Giorgio"
+      },
+      {
+        "family": "Montinari",
+        "given": "Mazzino"
+      }
+    ],
+    "id": "nietzsche:historie",
+    "issued": {
+      "date-parts": [[1988]]
+    },
+    "language": "de-DE",
+    "page": "243-334",
+    "publisher": "Deutscher Taschenbuch-Verlag; Walter de Gruyter",
+    "publisher-place": "München; Berlin; New York",
+    "title": "Unzeitgemässe Betrachtungen. Zweites Stück: Vom Nutzen und Nachtheil der Historie für das Leben",
+    "title-short": "Vom Nutzen und Nachtheil der Historie",
+    "type": "chapter",
+    "volume": "1",
+    "volume-title": "Die Geburt der Tragödie. Unzeitgemäße Betrachtungen I–IV. Nachgelassene Schriften 1870–1973"
+  },
+  {
+    "annote": "An incollection entry with a series and a number. Note the format of the printed name and compare the useprefix option in the options field as well as vangennep. Also note the indextitle, and indexsorttitle fields",
+    "author": [
+      {
+        "dropping-particle": "von",
+        "family": "Brandt",
+        "given": "Ahasver"
+      },
+      {
+        "family": "Hoffmann",
+        "given": "Erich"
+      }
+    ],
+    "collection-number": "2",
+    "collection-title": "Handbuch der europäischen Geschichte",
+    "container-title": "Europa im Hoch- und Spätmittelalter",
+    "editor": [
+      {
+        "family": "Seibt",
+        "given": "Ferdinand"
+      }
+    ],
+    "id": "brandt",
+    "issued": {
+      "date-parts": [[1987]]
+    },
+    "language": "de-DE",
+    "page": "884-917",
+    "publisher": "Klett-Cotta",
+    "publisher-place": "Stuttgart",
+    "title": "Die nordischen Länder von der Mitte des 11. Jahrhunderts bis 1448",
+    "title-short": "Die nordischen Länder",
+    "type": "chapter"
+  },
+  {
+    "annote": "An incollection entry with a series and number field",
+    "author": [
+      {
+        "family": "Hyman",
+        "given": "Arthur"
+      }
+    ],
+    "collection-number": "9",
+    "collection-title": "Studies in philosophy and the history of philosophy",
+    "container-title": "Studies in aristotle",
+    "editor": [
+      {
+        "family": "O’Meara",
+        "given": "Dominic J."
+      }
+    ],
+    "id": "hyman",
+    "issued": {
+      "date-parts": [[1981]]
+    },
+    "keyword": "secondary",
+    "language": "en-US",
+    "page": "161-191",
+    "publisher": "The Catholic University of America Press",
+    "publisher-place": "Washington, D.C.",
+    "title": "Aristotle’s theory of the intellect and its interpretation by averroes",
+    "title-short": "Aristotle’s theory of the intellect",
+    "type": "chapter"
+  },
+  {
+    "annote": "A typical incollection entry. Note the indextitle field",
+    "author": [
+      {
+        "family": "Pines",
+        "given": "Shlomo"
+      }
+    ],
+    "container-title": "Studies in medieval jewish history and literature",
+    "editor": [
+      {
+        "family": "Twersky",
+        "given": "Isadore"
+      }
+    ],
+    "id": "pines",
+    "issued": {
+      "date-parts": [[1979]]
+    },
+    "keyword": "secondary",
+    "language": "en-US",
+    "page": "82-109",
+    "publisher": "Harvard University Press",
+    "publisher-place": "Cambridge, Mass.",
+    "title": "The limitations of human knowledge according to al-farabi, ibn bajja, and maimonides",
+    "title-short": "Limitations of human knowledge",
+    "type": "chapter"
+  },
+  {
+    "URL": "http://some/thing",
+    "accessed": {
+      "date-parts": [
+        [1979, 3, 3],
+        [1979, 3, 4]
+      ]
+    },
+    "annote": "This is a typical inproceedings entry. Note the booksubtitle, shorttitle, indextitle, and indexsorttitle fields",
+    "author": [
+      {
+        "family": "Moraux",
+        "given": "Paul"
+      }
+    ],
+    "container-title": "Aristotle on Mind and the Senses. Proceedings of the Seventh Symposium Aristotelicum (1975)",
+    "editor": [
+      {
+        "family": "Lloyd",
+        "given": "G. E. R."
+      },
+      {
+        "family": "Owen",
+        "given": "G. E. L."
+      }
+    ],
+    "event-date": {
+      "date-parts": [
+        [1924, 2, 3],
+        [1924, 2, 5]
+      ]
+    },
+    "id": "moraux",
+    "issued": {
+      "date-parts": [
+        [1979, 1, 2],
+        [1980, 4, 8]
+      ]
+    },
+    "keyword": "secondary",
+    "language": "fr-FR",
+    "original-date": {
+      "date-parts": [
+        [1924, 6, 7],
+        [1924, 7, 9]
+      ]
+    },
+    "page": "281-324",
+    "publisher": "Cambridge University Press",
+    "publisher-place": "Cambridge",
+    "title": "Le <i>De Anima</i> dans la tradition grècque: Quelques aspects de l’interpretation du traité, de Theophraste à Themistius",
+    "title-short": "<i>De Anima</i> dans la tradition grècque",
+    "type": "paper-conference"
+  },
+  {
+    "author": [
+      {
+        "family": "Salam",
+        "given": "Abdus"
+      }
+    ],
+    "container-title": "Elementary particle theory: Relativistic groups and analyticity. Proceedings of the eighth nobel symposium, may 19–25, 1968",
+    "editor": [
+      {
+        "family": "Svartholm",
+        "given": "Nils"
+      }
+    ],
+    "event-place": "Aspenäsgarden, Lerum",
+    "id": "stdmodel:salam",
+    "issued": {
+      "date-parts": [[1968]]
+    },
+    "page": "367",
+    "publisher": "Almquist & Wiksell",
+    "publisher-place": "Stockholm",
+    "title": "Weak and electromagnetic interactions",
+    "type": "paper-conference"
+  },
+  {
+    "ISBN": "0-226-10403-6",
+    "annote": "This is a manual entry without an author or editor. Note the label field in the database file which is provided for author-year citation styles. Also note the sorttitle and indextitle fields. By default, all entries without an author or editor are alphabetized by title but we want this entry to be alphabetized under “C” rather than “T”. There’s also an isbn field",
+    "edition": "15",
+    "id": "cms",
+    "issued": {
+      "date-parts": [[2003]]
+    },
+    "language": "en-US",
+    "publisher": "University of Chicago Press",
+    "publisher-place": "Chicago, Ill.",
+    "title": "The chicago manual of style: The essential guide for writers, editors, and publishers",
+    "title-short": "Chicago manual of style",
+    "type": "book"
+  },
+  {
+    "URL": "https://arxiv.org/abs/math/0307200v3",
+    "annote": "An online reference from arXiv. Note the eprint and eprinttype fields. Also note that the arXiv reference is transformed into a clickable link if hyperref support has been enabled. Compare baez/article which is the same item given as an article entry with eprint information",
+    "author": [
+      {
+        "family": "Baez",
+        "given": "John C."
+      },
+      {
+        "family": "Lauda",
+        "given": "Aaron D."
+      }
+    ],
+    "id": "baez/online",
+    "issued": {
+      "date-parts": [[2004, 10, 27]]
+    },
+    "language": "en-US",
+    "title": "Higher-dimensional algebra v: 2-groups",
+    "title-short": "Higher-dimensional algebra v",
+    "type": "webpage",
+    "version": "3"
+  },
+  {
+    "URL": "http://www.ctan.org",
+    "accessed": {
+      "date-parts": [[2006, 10, 1]]
+    },
+    "annote": "This is an online entry. The <span style=\"font-variant:small-caps;\">url</span>, which is given in the url field, is transformed into a clickable link if hyperref support has been enabled. Note the format of the urldate field (yyyy-mm-dd) in the database file. It is also possible to use the fields urlday/urlmonth/urlyear instead. Also note the label field which may be used as a fallback by citation styles which need an author and/or a year",
+    "id": "ctan",
+    "issued": {
+      "date-parts": [[2006]]
+    },
+    "language": "en-US",
+    "title": "CTAN: The comprehensive TeX archive network",
+    "title-short": "CTAN",
+    "type": "webpage"
+  },
+  {
+    "URL": "https://arxiv.org/abs/hep-th/9603067",
+    "abstract": "We discuss the limitations of ’t Hooft’s proposal for the black hole S-matrix. We find that the validity of the S-matrix implies violation of the semi-classical approximation at scales large compared to the Planck scale. We also show that the effect of the centrifugal barrier on the S-matrix is crucial even for large transverse distances.",
+    "annote": "An online reference from arXiv. Note the eprint and eprinttype fields. Also note that the arXiv reference is transformed into a clickable link if hyperref support has been enabled",
+    "author": [
+      {
+        "family": "Itzhaki",
+        "given": "Nissan"
+      }
+    ],
+    "id": "itzhaki",
+    "issued": {
+      "date-parts": [[1996, 3, 11]]
+    },
+    "language": "en-US",
+    "title": "Some remarks on ’t hooft’s s-matrix for black holes",
+    "type": "webpage",
+    "version": "1"
+  },
+  {
+    "URL": "http://tug.ctan.org/tex-archive/info/bibtex/tamethebeast/ttb_en.pdf",
+    "accessed": {
+      "date-parts": [[2006, 10, 1]]
+    },
+    "annote": "An online entry for a tutorial. Note the format of the date field (yyyy-mm-dd) in the database file. It is also possible to use the fields day/month/year instead.",
+    "author": [
+      {
+        "family": "Markey",
+        "given": "Nicolas"
+      }
+    ],
+    "id": "markey",
+    "language": "en-US",
+    "title": "Tame the BeaST: The b to x of BibTeX",
+    "title-short": "Tame the BeaST",
+    "type": "webpage",
+    "version": "1.3"
+  },
+  {
+    "annote": "This is a patent entry with a location field. The number is given in the number field. Note the format of the location field in the database file. Compare laufenberg, sorace, and kowalik",
+    "author": [
+      {
+        "family": "Almendro",
+        "given": "José L."
+      },
+      {
+        "family": "Martín",
+        "given": "Jacinto"
+      },
+      {
+        "family": "Sánchez",
+        "given": "Alberto"
+      },
+      {
+        "family": "Nozal",
+        "given": "Fernando"
+      }
+    ],
+    "id": "almendro",
+    "issued": {
+      "date-parts": [[1998]]
+    },
+    "jurisdiction": "countryes; France; United Kingdom; Germany",
+    "language": "de-DE",
+    "number": "EU-29702195U",
+    "title": "Elektromagnetisches Signalhorn",
+    "type": "patent"
+  },
+  {
+    "annote": "This is a patent entry for a French patent request with a full date. The number is given in the number field. Note the format of the type and date fields in the database file. Compare almendro, laufenberg, and sorace",
+    "author": [
+      {
+        "family": "Kowalik",
+        "given": "F."
+      },
+      {
+        "family": "Isard",
+        "given": "M."
+      }
+    ],
+    "genre": "French patent request",
+    "id": "kowalik",
+    "issued": {
+      "date-parts": [[1995, 1, 11]]
+    },
+    "language": "fr-FR",
+    "number": "9500261",
+    "title": "Estimateur d’un défaut de fonctionnement d’un modulateur en quadrature et étage de modulation l’utilisant",
+    "type": "patent"
+  },
+  {
+    "abstract": "The invention relates to an electric device comprising a generator, in particular for use in the vehicle electric system of a motor vehicle and a controller for controlling the generator voltage. The device is equipped with a control zone, in which the voltage is controlled and zones, in which the torque is controlled. The invention also relates to methods for operating a device of this type.",
+    "annote": "This is a patent entry with a holder field. Note the format of the type and location fields in the database file. Compare almendro, sorace, and kowalik",
+    "author": [
+      {
+        "family": "Laufenberg",
+        "given": "Xaver"
+      },
+      {
+        "family": "Eynius",
+        "given": "Dominique"
+      },
+      {
+        "family": "Suelzle",
+        "given": "Helmut"
+      },
+      {
+        "family": "Usbeck",
+        "given": "Stephan"
+      },
+      {
+        "family": "Spaeth",
+        "given": "Matthias"
+      },
+      {
+        "family": "Neuser-Hoffmann",
+        "given": "Miriam"
+      },
+      {
+        "family": "Myrzik",
+        "given": "Christian"
+      },
+      {
+        "family": "Schmid",
+        "given": "Manfred"
+      },
+      {
+        "family": "Nietfeld",
+        "given": "Franz"
+      },
+      {
+        "family": "Thiel",
+        "given": "Alexander"
+      },
+      {
+        "family": "Braun",
+        "given": "Harald"
+      },
+      {
+        "family": "Ebner",
+        "given": "Norbert"
+      }
+    ],
+    "genre": "European patent",
+    "id": "laufenberg",
+    "issued": {
+      "date-parts": [[2006, 9, 13]]
+    },
+    "jurisdiction": "Germany; countrywo",
+    "language": "de-DE",
+    "number": "1700367",
+    "title": "Elektrische Einrichtung und Betriebsverfahren",
+    "type": "patent"
+  },
+  {
+    "annote": "This is a patent entry with a holder field. Note the format of the type and date fields in the database file. Compare almendro, laufenberg, and kowalik",
+    "author": [
+      {
+        "family": "Sorace",
+        "given": "Ronald E."
+      },
+      {
+        "family": "Reinhardt",
+        "given": "Victor S."
+      },
+      {
+        "family": "Vaughn",
+        "given": "Steven A."
+      }
+    ],
+    "genre": "U.S. patent",
+    "id": "sorace",
+    "issued": {
+      "date-parts": [[1997, 9, 16]]
+    },
+    "language": "en-US",
+    "number": "5668842",
+    "title": "High-speed digital-to-RF converter",
+    "type": "patent"
+  },
+  {
+    "annote": "This is a report entry for a research report. Note the format of the type field in the database file which uses a localization key. The number of the report is given in the number field. Also note the sorttitle and indextitle fields",
+    "author": [
+      {
+        "family": "Chiu",
+        "given": "Willy W."
+      },
+      {
+        "family": "Chow",
+        "given": "We Min"
+      }
+    ],
+    "genre": "research report",
+    "id": "chiu",
+    "issued": {
+      "date-parts": [[1978]]
+    },
+    "language": "en-US",
+    "number": "RC-6947",
+    "publisher": "IBM; HP; Sun; Sony",
+    "title": "A hybrid hierarchical model of a multiple virtual storage (MVS) operating system",
+    "type": "report"
+  },
+  {
+    "abstract": "The steady state performance of a bulk transfer TCP flow (i.e. a flow with a large amount of data to send, such as FTP transfers) may be characterized by three quantities. The first is the send rate, which is the amount of data sent by the sender in unit time. The second is the throughput, which is the amount of data received by the receiver in unit time. Note that the throughput will always be less than or equal to the send rate due to losses. Finally, the number of non-duplicate packets received by the receiver in unit time gives us the goodput of the connection. The goodput is always less than or equal to the throughput, since the receiver may receive two copies of the same packet due to retransmissions by the sender. In a previous paper, we presented a simple model for predicting the steady state send rate of a bulk transfer TCP flow as a function of loss rate and round trip time. In this paper, we extend that work in two ways. First, we analyze the performance of bulk transfer TCP flows using more precise, stochastic analysis. Second, we build upon the previous analysis to provide both an approximate formula as well as a more accurate stochastic model for the steady state throughput of a bulk transfer TCP flow.",
+    "annote": "This is a report entry for a technical report. Note the format of the type field in the database file which uses a localization key. The number of the report is given in the number field. Also note the sorttitle and indextitle fields",
+    "author": [
+      {
+        "family": "Padhye",
+        "given": "Jitendra"
+      },
+      {
+        "family": "Firoiu",
+        "given": "Victor"
+      },
+      {
+        "family": "Towsley",
+        "given": "Don"
+      }
+    ],
+    "genre": "technical report",
+    "id": "padhye",
+    "issued": {
+      "date-parts": [[1999]]
+    },
+    "language": "en-US",
+    "number": "99-02",
+    "publisher": "University of Massachusetts",
+    "publisher-place": "Amherst, Mass.",
+    "title": "A stochastic model of TCP reno congestion avoidance and control",
+    "type": "report"
+  },
+  {
+    "annote": "This is a typical thesis entry for a PhD thesis. Note the type field in the database file which uses a localization key. Also note the format of the printed name and compare the useprefix option in the options field as well as vangennep",
+    "author": [
+      {
+        "dropping-particle": "de",
+        "family": "Geer",
+        "given": "Ingrid"
+      }
+    ],
+    "genre": "PhD thesis",
+    "id": "geer",
+    "issued": {
+      "date-parts": [[1985]]
+    },
+    "language": "en-GB",
+    "publisher": "Uppsala Universitet",
+    "publisher-place": "Uppsala",
+    "title": "Earl, saint, bishop, skald – and music: The orkney earldom of the twelfth century. A musicological study",
+    "title-short": "Earl, saint, bishop, skald – and music",
+    "type": "thesis"
+  },
+  {
+    "annote": "This is a typical thesis entry for an MA thesis. Note the type field in the database file which uses a localization key",
+    "author": [
+      {
+        "family": "Loh",
+        "given": "Nin C."
+      }
+    ],
+    "genre": "Master’s thesis",
+    "id": "loh",
+    "issued": {
+      "date-parts": [[1992]]
+    },
+    "language": "en-US",
+    "publisher": "Massachusetts Institute of Technology",
+    "publisher-place": "Cambridge, Mass.",
+    "title": "High-resolution micromachined interferometric accelerometer",
+    "type": "thesis"
+  },
+  {
+    "author": [
+      {
+        "family": "Pimentel",
+        "given": "Joseph J.",
+        "suffix": "Jr."
+      }
+    ],
+    "id": "Pimentel00",
+    "issued": {
+      "date-parts": [[2000]]
+    },
+    "publisher": "University of Michigan",
+    "title": "Sociolinguistic reflections of privatization and globalization: The Arabic of Egyptian newspaper advertisements",
+    "title-short": "Sociolinguistic reflections of privatization and globalization",
+    "type": "thesis"
+  },
+  {
+    "author": [
+      {
+        "family": "Luzzatto",
+        "given": "Moshe Ḥayyim"
+      }
+    ],
+    "id": "luzzatto",
+    "issued": {
+      "date-parts": [[2000]]
+    },
+    "publisher": "Makhon Ramḥal",
+    "publisher-place": "Yerushalayim",
+    "title": "Ha-lashon la-ramḥal: U-vo sheloshah ḥiburim",
+    "title-short": "Ha-lashon la-ramḥal",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Hasan",
+        "given": "ʿAlī",
+        "non-dropping-particle": "al-"
+      }
+    ],
+    "editor": [
+      {
+        "family": "Hasan",
+        "given": "ʿAlī",
+        "non-dropping-particle": "al-"
+      }
+    ],
+    "id": "hasan",
+    "issued": {
+      "date-parts": [[2000]]
+    },
+    "publisher": "Some press",
+    "title": "Some title",
+    "translator": [
+      {
+        "family": "Hasan",
+        "given": "ʿAlī",
+        "non-dropping-particle": "al-"
+      }
+    ],
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Brown",
+        "given": "Bill"
+      }
+    ],
+    "id": "t1",
+    "issued": {
+      "date-parts": [[1992]]
+    },
+    "keyword": "primary, something,somethingelse",
+    "page": "100-",
+    "title": "10% of [100] and 90",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "Brown",
+        "given": "Bill"
+      }
+    ],
+    "id": "t2",
+    "issued": {
+      "date-parts": [[1994]]
+    },
+    "page": "100-108",
+    "title": "Signs of w\\frac{o}{a}nder",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "dropping-particle": "von",
+        "family": "Bobble",
+        "given": "Terrence"
+      }
+    ],
+    "id": "tvonb",
+    "issued": {
+      "date-parts": [[1997]]
+    },
+    "title": "Things",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "dropping-particle": "von",
+        "family": "Animal",
+        "given": "Alan"
+      }
+    ],
+    "id": "avona",
+    "issued": {
+      "date-parts": [[1998]]
+    },
+    "title": "Things",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "dropping-particle": "von",
+        "family": "Rabble",
+        "given": "Richard"
+      }
+    ],
+    "id": "rvonr",
+    "issued": {
+      "date-parts": [[1998]]
+    },
+    "title": "Things",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "AnonymousX"
+      }
+    ],
+    "id": "anon1",
+    "issued": {
+      "date-parts": [[1835]]
+    },
+    "keyword": "arc",
+    "language": "en-US",
+    "page": "111-118",
+    "title": "Title1",
+    "title-short": "Shorttitle",
+    "type": "manuscript"
+  },
+  {
+    "author": [
+      {
+        "family": "AnonymousY"
+      }
+    ],
+    "id": "anon2",
+    "issued": {
+      "date-parts": [[1839]]
+    },
+    "keyword": "arc",
+    "language": "en",
+    "page": "1176-1276",
+    "title": "Title2",
+    "title-short": "Shorttitle",
+    "type": "manuscript"
+  },
+  {
+    "author": [
+      {
+        "family": "AAA"
+      },
+      {
+        "family": "BBB"
+      },
+      {
+        "family": "CCC"
+      },
+      {
+        "family": "DDD"
+      }
+    ],
+    "id": "u1",
+    "issued": {
+      "date-parts": [[2000]]
+    },
+    "note": "0",
+    "title": "A title",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "AAA"
+      },
+      {
+        "family": "BBB"
+      },
+      {
+        "family": "CCC"
+      },
+      {
+        "family": "DDD"
+      },
+      {
+        "family": "EEE"
+      }
+    ],
+    "id": "u2",
+    "issued": {
+      "date-parts": [[2003]]
+    },
+    "title": "A title",
+    "type": ""
+  },
+  {
+    "abstract": "Some abstract",
+    "author": [
+      {
+        "family": "AAA"
+      },
+      {
+        "family": "BBB"
+      },
+      {
+        "family": "CCC"
+      },
+      {
+        "family": "DDD"
+      },
+      {
+        "family": "EEE"
+      }
+    ],
+    "id": "i1",
+    "issued": {
+      "date-parts": [[2003]]
+    },
+    "title": "A title",
+    "type": "manuscript"
+  },
+  {
+    "author": [
+      {
+        "family": "AAA"
+      },
+      {
+        "family": "BBB"
+      },
+      {
+        "family": "CCC"
+      }
+    ],
+    "id": "i2",
+    "issued": {
+      "date-parts": [[2005]]
+    },
+    "title": "A title",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "AAA"
+      },
+      {
+        "family": "BBB"
+      },
+      {
+        "family": "CCC"
+      }
+    ],
+    "id": "tmn1",
+    "issued": {
+      "date-parts": [[2005]]
+    },
+    "publisher": "A; B; C",
+    "title": "A title",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "AAA"
+      },
+      {
+        "family": "BBB"
+      },
+      {
+        "family": "CCC"
+      }
+    ],
+    "id": "tmn2",
+    "issued": {
+      "date-parts": [[2005]]
+    },
+    "title": "A title",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "AAA"
+      },
+      {
+        "family": "BBB"
+      },
+      {
+        "family": "CCC"
+      }
+    ],
+    "id": "tmn3",
+    "issued": {
+      "date-parts": [[2005]]
+    },
+    "publisher": "A; B; C",
+    "title": "A title",
+    "type": "manuscript"
+  },
+  {
+    "author": [
+      {
+        "family": "AAA"
+      },
+      {
+        "family": "BBB"
+      },
+      {
+        "family": "CCC"
+      }
+    ],
+    "id": "tmn4",
+    "issued": {
+      "date-parts": [[2005]]
+    },
+    "title": "A title",
+    "type": "manuscript"
+  },
+  {
+    "author": [
+      {
+        "family": "ZZZ"
+      }
+    ],
+    "id": "tmn4",
+    "type": "manuscript"
+  },
+  {
+    "author": [
+      {
+        "family": "AAA"
+      },
+      {
+        "family": "BBB"
+      },
+      {
+        "family": "CCC"
+      }
+    ],
+    "id": "lne1",
+    "issued": {
+      "date-parts": [[2005]]
+    },
+    "title": "A title",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "Alias",
+        "given": "Alan"
+      }
+    ],
+    "id": "alias1",
+    "issued": {
+      "date-parts": [[2005]]
+    },
+    "other-ids": "alias2, alias3",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "Alias",
+        "given": "Alan"
+      }
+    ],
+    "id": "alias2",
+    "issued": {
+      "date-parts": [[2005]]
+    },
+    "other-ids": "alias4",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "Alias",
+        "given": "Alan"
+      }
+    ],
+    "id": "alias5",
+    "issued": {
+      "date-parts": [[2005]]
+    },
+    "other-ids": "alias6",
+    "type": ""
+  },
+  {
+    "URL": "http://www.something.com/q=áŠ",
+    "author": [
+      {
+        "family": "Alias",
+        "given": "Alan"
+      }
+    ],
+    "id": "url1",
+    "issued": {
+      "date-parts": [[2005]]
+    },
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "Online",
+        "given": "Oliver"
+      }
+    ],
+    "id": "ol1",
+    "note": "A note",
+    "title": "Online1",
+    "type": "webpage"
+  },
+  {
+    "id": "pages1",
+    "page": "23-24",
+    "type": ""
+  },
+  {
+    "id": "pages2",
+    "page": "23",
+    "type": ""
+  },
+  {
+    "id": "pages3",
+    "page": "I-II—III-IV",
+    "type": ""
+  },
+  {
+    "id": "pages4",
+    "page": "3 - 5",
+    "type": ""
+  },
+  {
+    "id": "pages5",
+    "page": "42-",
+    "type": ""
+  },
+  {
+    "id": "pages6",
+    "page": "number 42",
+    "type": ""
+  },
+  {
+    "id": "pages7",
+    "page": "number 42, 3 — 6, I-II-5",
+    "type": ""
+  },
+  {
+    "id": "pages8",
+    "page": "10-15, ⅥⅠ-ⅻ",
+    "type": ""
+  },
+  {
+    "id": "pages9",
+    "page": "M-1-M-4",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "Test"
+      }
+    ],
+    "id": "us1",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "AAA"
+      },
+      {
+        "family": "BBB"
+      },
+      {
+        "family": "CCC"
+      }
+    ],
+    "id": "labelstest",
+    "issued": {
+      "date-parts": [[2005, 3, 2]]
+    },
+    "title": "A title",
+    "type": "book"
+  },
+  {
+    "id": "list1",
+    "publisher-place": "ÁAA; BBB; others",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "AAA"
+      }
+    ],
+    "id": "sn1",
+    "type": "book"
+  },
+  {
+    "ISBN": "0816520666",
+    "author": [
+      {
+        "family": "Flummox",
+        "given": "Fred"
+      }
+    ],
+    "id": "isbn1",
+    "type": ""
+  },
+  {
+    "ISBN": "9780816520664",
+    "author": [
+      {
+        "family": "Flummox",
+        "given": "Fred"
+      }
+    ],
+    "id": "isbn2",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "dropping-particle": "von",
+        "family": "Doe",
+        "given": "John",
+        "suffix": "Jr"
+      }
+    ],
+    "id": "snk1",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Smith",
+        "given": "Simon"
+      },
+      {
+        "dropping-particle": "de",
+        "family": "Brown",
+        "given": "Brian"
+      }
+    ],
+    "id": "ent1",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Allright",
+        "given": "Arthur"
+      }
+    ],
+    "id": "verb1",
+    "type": "book"
+  },
+  {
+    "id": "over1",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Gauck",
+        "given": "Joachim"
+      }
+    ],
+    "id": "others1",
+    "title": "Title a",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Gauck",
+        "given": "Joachim"
+      },
+      {
+        "literal": "others"
+      }
+    ],
+    "id": "others2",
+    "title": "Title b",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Roberts",
+        "given": "Reginald"
+      }
+    ],
+    "id": "recurse1",
+    "other-ids": "recurse1",
+    "type": "book"
+  },
+  {
+    "id": "final",
+    "note": "foo",
+    "type": "book"
+  },
+  {
+    "id": "matches1",
+    "note": "test1",
+    "type": "report"
+  },
+  {
+    "id": "matches2",
+    "note": "test2",
+    "type": "report"
+  },
+  {
+    "id": "matches3",
+    "note": "test3",
+    "type": "report"
+  }
+]

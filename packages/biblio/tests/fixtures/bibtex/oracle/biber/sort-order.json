@@ -1,0 +1,183 @@
+[
+  {
+    "author": [
+      {
+        "family": "Adamson",
+        "given": "Aaron"
+      }
+    ],
+    "id": "L1",
+    "issued": {
+      "date-parts": [[1995]]
+    },
+    "publisher": "Aardvark Press",
+    "publisher-place": "Arlington",
+    "title": "Artificial advice",
+    "type": "article-journal",
+    "volume": "4"
+  },
+  {
+    "author": [
+      {
+        "family": "Adamson",
+        "given": "Aaron"
+      }
+    ],
+    "id": "L1A",
+    "issued": {
+      "date-parts": [[1995]]
+    },
+    "publisher": "Aardvark Press",
+    "publisher-place": "Arlington",
+    "title": "Anarchic ambidexstrous anomalies",
+    "type": "article-journal",
+    "volume": "40"
+  },
+  {
+    "author": [
+      {
+        "family": "Adazki",
+        "given": "Aaron"
+      }
+    ],
+    "id": "L1B",
+    "issued": {
+      "date-parts": [[1984]]
+    },
+    "publisher": "Aardvark Press",
+    "publisher-place": "Arlington",
+    "title": "Average attitudes are awful",
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Britherthwaite",
+        "given": "Brian"
+      }
+    ],
+    "id": "L2",
+    "issued": {
+      "date-parts": [[2004]]
+    },
+    "publisher": "British Bulldog Press",
+    "publisher-place": "Bridlington",
+    "title": "Best barnacled boat bottoms",
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Clumberton",
+        "given": "Clive"
+      }
+    ],
+    "id": "L3",
+    "issued": {
+      "date-parts": [[1914]]
+    },
+    "publisher": "Clapp; Clopp Press",
+    "publisher-place": "Cambridge",
+    "title": "Clumsy cultural caveats: Counter-cultural concepts",
+    "title-short": "Clumsy cultural caveats",
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Ditherington",
+        "given": "Derek"
+      },
+      {
+        "family": "Dumpton",
+        "given": "David"
+      }
+    ],
+    "id": "L4",
+    "issued": {
+      "date-parts": [[2003]]
+    },
+    "publisher": "Dright; Drought Press",
+    "publisher-place": "Dunbar",
+    "title": "Dangerous dames: Don’t dally dude!",
+    "title-short": "Dangerous dames",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Ethoxon",
+        "given": "Edward E."
+      }
+    ],
+    "id": "L5",
+    "issued": {
+      "date-parts": [[2007]]
+    },
+    "publisher": "Ethical Encouragement Press",
+    "publisher-place": "Edinburgh",
+    "title": "Eating evil enemies",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Rank",
+        "given": "Richard F."
+      }
+    ],
+    "id": "L6",
+    "issued": {
+      "date-parts": [[2011]]
+    },
+    "publisher": "Red, Raw; Raucous",
+    "publisher-place": "edinburgh",
+    "title": "Ruminating on rhubarb",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Pettigrew",
+        "given": "Peter"
+      }
+    ],
+    "id": "L7",
+    "issued": {
+      "date-parts": [[2010]]
+    },
+    "publisher": "Nut Press",
+    "publisher-place": "Edinburgh",
+    "title": "The pretending peanuts pout",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Langour",
+        "given": "Lawrence"
+      }
+    ],
+    "id": "L8",
+    "issued": {
+      "date-parts": [[2009]]
+    },
+    "publisher": "Nut Press",
+    "publisher-place": "Edinburgh",
+    "title": "Why walnuts won’t",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Sensible",
+        "given": "Steven"
+      }
+    ],
+    "id": "L9",
+    "publisher": "Yolk Enterprises",
+    "publisher-place": "London",
+    "title": "Sorting sucks eggs",
+    "type": "book"
+  }
+]

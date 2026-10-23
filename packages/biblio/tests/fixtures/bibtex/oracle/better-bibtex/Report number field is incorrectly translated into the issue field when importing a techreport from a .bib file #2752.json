@@ -1,0 +1,18 @@
+[
+  {
+    "author": [
+      {
+        "literal": "A very well-known and serious institution"
+      }
+    ],
+    "id": "techreport",
+    "issued": {
+      "date-parts": [[1995, 1]]
+    },
+    "language": "en-US",
+    "number": "my_precious_report_number",
+    "page": "6",
+    "title": "What a great report",
+    "type": "report"
+  }
+]

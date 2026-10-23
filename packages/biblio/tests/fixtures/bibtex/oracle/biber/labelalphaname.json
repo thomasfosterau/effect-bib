@@ -1,0 +1,70 @@
+[
+  {
+    "author": [
+      {
+        "family": "Smith",
+        "given": "Arthur"
+      }
+    ],
+    "id": "lant1",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Smith",
+        "given": "Arthur"
+      }
+    ],
+    "id": "lant2",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Smith",
+        "given": "Arthur"
+      }
+    ],
+    "id": "lant3",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Smith",
+        "given": "Arthur"
+      }
+    ],
+    "id": "lant4",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Galatius",
+        "given": "Smith"
+      },
+      {
+        "family": "Randal Williams",
+        "given": "Oscar"
+      }
+    ],
+    "id": "lant5",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Galatius",
+        "given": "Smith"
+      },
+      {
+        "family": "Randal-Williams",
+        "given": "Oscar"
+      }
+    ],
+    "id": "lant6",
+    "type": "book"
+  }
+]

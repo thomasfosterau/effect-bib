@@ -1,0 +1,50 @@
+[
+  {
+    "author": [
+      {
+        "family": "Doe",
+        "given": "John"
+      }
+    ],
+    "id": "Doe-2017",
+    "issued": {
+      "date-parts": [[2017]]
+    },
+    "title": "The paper in my-subgroup-3",
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Other",
+        "given": "I."
+      }
+    ],
+    "id": "Other-",
+    "title": "The article in my-other-subgroup-3",
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Unkonw",
+        "given": "I"
+      }
+    ],
+    "id": "Unkonw-",
+    "title": "The paper in my-subgroup-3 and my-other-subgroup-3",
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Unkonw",
+        "given": "I"
+      }
+    ],
+    "id": "Unkonw",
+    "title": "JR3: Paper not in a group",
+    "title-short": "JR3",
+    "type": "article-journal"
+  }
+]

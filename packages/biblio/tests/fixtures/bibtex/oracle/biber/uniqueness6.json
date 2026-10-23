@@ -1,0 +1,152 @@
+[
+  {
+    "author": [
+      {
+        "family": "Smith"
+      },
+      {
+        "family": "Johnson"
+      },
+      {
+        "family": "Doe"
+      }
+    ],
+    "id": "entry1a",
+    "issued": {
+      "date-parts": [[2005]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Smith"
+      },
+      {
+        "family": "Johnson"
+      },
+      {
+        "family": "Doe"
+      }
+    ],
+    "id": "entry1b",
+    "issued": {
+      "date-parts": [[2005]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Smith"
+      },
+      {
+        "family": "Koe"
+      },
+      {
+        "family": "Edwards"
+      }
+    ],
+    "id": "entry2a",
+    "issued": {
+      "date-parts": [[2005]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Smith"
+      },
+      {
+        "family": "Koe"
+      },
+      {
+        "family": "Edwards"
+      }
+    ],
+    "id": "entry2b",
+    "issued": {
+      "date-parts": [[2005]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "A"
+      },
+      {
+        "family": "B"
+      },
+      {
+        "family": "C"
+      },
+      {
+        "family": "D"
+      },
+      {
+        "family": "E"
+      },
+      {
+        "family": "F"
+      },
+      {
+        "family": "G"
+      }
+    ],
+    "id": "A",
+    "issued": {
+      "date-parts": [[2007]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "A"
+      },
+      {
+        "family": "X"
+      },
+      {
+        "family": "Y"
+      }
+    ],
+    "id": "B",
+    "issued": {
+      "date-parts": [[2008]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "A"
+      },
+      {
+        "family": "B"
+      },
+      {
+        "family": "C"
+      },
+      {
+        "family": "D"
+      },
+      {
+        "family": "E"
+      },
+      {
+        "family": "F"
+      },
+      {
+        "family": "G"
+      }
+    ],
+    "id": "C",
+    "issued": {
+      "date-parts": [[2009]]
+    },
+    "type": "article-journal"
+  }
+]

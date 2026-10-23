@@ -1,0 +1,291 @@
+[
+  {
+    "author": [
+      {
+        "family": "Adler",
+        "given": "Alfred"
+      }
+    ],
+    "id": "L1",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Bull",
+        "given": "Bertie B."
+      }
+    ],
+    "id": "L2",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Crop",
+        "given": "C. Z."
+      }
+    ],
+    "id": "L3",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Decket",
+        "given": "Derek D"
+      }
+    ],
+    "id": "L4",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "dropping-particle": "von",
+        "family": "Eel",
+        "given": "Egbert"
+      }
+    ],
+    "id": "L5",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "dropping-particle": "van der valt",
+        "family": "Frome",
+        "given": "Francis"
+      }
+    ],
+    "id": "L6",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "dropping-particle": "van",
+        "family": "Gloom",
+        "given": "Gregory R."
+      }
+    ],
+    "id": "L7",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "dropping-particle": "van",
+        "family": "Henkel",
+        "given": "Henry F."
+      }
+    ],
+    "id": "L8",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Iliad Ipswich",
+        "given": "Ian"
+      }
+    ],
+    "id": "L9",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Jolly",
+        "given": "James",
+        "suffix": "III"
+      }
+    ],
+    "id": "L10",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Pimentel",
+        "given": "Joseph J.",
+        "suffix": "Jr."
+      }
+    ],
+    "id": "L10a",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "dropping-particle": "van",
+        "family": "Kluster",
+        "given": "Kevin",
+        "suffix": "Jr."
+      }
+    ],
+    "id": "L11",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "dropping-particle": "de la",
+        "family": "Vallée Poussin",
+        "given": "Charles Louis Xavier Joseph"
+      }
+    ],
+    "id": "L12",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Van de Graaff",
+        "given": "R. J."
+      }
+    ],
+    "id": "L13",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "St John-Mollusc",
+        "given": "Oliver"
+      }
+    ],
+    "id": "L14",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "dropping-particle": "van",
+        "family": "Gompel",
+        "given": "Roger P. G."
+      }
+    ],
+    "id": "L15",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "dropping-particle": "van",
+        "family": "Gompel",
+        "given": "Roger P. G."
+      }
+    ],
+    "id": "L16",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Lovecraft",
+        "given": "Bill H. P."
+      }
+    ],
+    "id": "L17",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Lovecraft",
+        "given": "Bill H. P."
+      }
+    ],
+    "id": "L18",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Mustermann",
+        "given": "Klaus-Peter"
+      }
+    ],
+    "id": "L19",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Lam",
+        "given": "Ho-Pun"
+      }
+    ],
+    "id": "L19a",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Ford",
+        "given": "John Henry"
+      }
+    ],
+    "id": "L20",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "dropping-particle": "Šomeone",
+        "family": "Smith"
+      }
+    ],
+    "id": "L21",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Šmith",
+        "given": "Someone"
+      }
+    ],
+    "id": "L22",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Smith",
+        "given": "Šomeone"
+      }
+    ],
+    "id": "L23",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Šmith",
+        "given": "Someone"
+      }
+    ],
+    "id": "L24",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "literal": "American Psychological Association, Task Force on the Sexualization of Girls"
+      }
+    ],
+    "id": "L25",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "literal": "Sci-Art Publishers"
+      }
+    ],
+    "id": "L26",
+    "type": "book"
+  }
+]

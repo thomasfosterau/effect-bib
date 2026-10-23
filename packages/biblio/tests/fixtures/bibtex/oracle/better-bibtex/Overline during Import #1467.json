@@ -1,0 +1,322 @@
+[
+  {
+    "DOI": "10.1142/S0218625X98001274",
+    "author": [
+      {
+        "family": "Held",
+        "given": "R."
+      },
+      {
+        "family": "Crawford",
+        "given": "D. E."
+      },
+      {
+        "family": "Johnston",
+        "given": "A. M."
+      },
+      {
+        "family": "Dabiran",
+        "given": "A. M."
+      },
+      {
+        "family": "Cohen",
+        "given": "P. I."
+      }
+    ],
+    "container-title": "Surf. Rev. Lett.",
+    "id": "Held_1998",
+    "issue": "03n04",
+    "issued": {
+      "date-parts": [[1998, 6]]
+    },
+    "page": "913-934",
+    "title": "N-Limited Versus Ga-Limited Growth on {\\rm GaN}(000\\bar{1}) by MBE Using NH<sup>3</sup>",
+    "type": "article-journal",
+    "volume": "05"
+  },
+  {
+    "DOI": "10.1088/0268-1242/29/11/113001",
+    "author": [
+      {
+        "family": "Keller",
+        "given": "Stacia"
+      },
+      {
+        "family": "Li",
+        "given": "Haoran"
+      },
+      {
+        "family": "Laurent",
+        "given": "Matthew"
+      },
+      {
+        "family": "Hu",
+        "given": "Yanling"
+      },
+      {
+        "family": "Pfaff",
+        "given": "Nathan"
+      },
+      {
+        "family": "Lu",
+        "given": "Jing"
+      },
+      {
+        "family": "Brown",
+        "given": "David F"
+      },
+      {
+        "family": "Fichtenbaum",
+        "given": "Nicholas A"
+      },
+      {
+        "family": "Speck",
+        "given": "James S"
+      },
+      {
+        "family": "DenBaars",
+        "given": "Steven P"
+      },
+      {
+        "family": "Mishra",
+        "given": "Umesh K"
+      }
+    ],
+    "container-title": "Semicond. Sci. Technol.",
+    "id": "Keller_2014",
+    "issue": "11",
+    "issued": {
+      "date-parts": [[2014, 11]]
+    },
+    "page": "113001",
+    "title": "Recent progress in metal-organic chemical vapor deposition of \\left( 000\\bar{1} \\right) N-polar group-III nitrides",
+    "type": "article-journal",
+    "volume": "29"
+  },
+  {
+    "DOI": "10.1016/j.jcrysgro.2011.12.035",
+    "author": [
+      {
+        "family": "Leung",
+        "given": "Benjamin"
+      },
+      {
+        "family": "Sun",
+        "given": "Qian"
+      },
+      {
+        "family": "Yerino",
+        "given": "Christopher"
+      },
+      {
+        "family": "Zhang",
+        "given": "Yu"
+      },
+      {
+        "family": "Han",
+        "given": "Jung"
+      },
+      {
+        "family": "Hyun Kong",
+        "given": "Bo"
+      },
+      {
+        "family": "Koun Cho",
+        "given": "Hyung"
+      },
+      {
+        "family": "Liao",
+        "given": "Kuan-Yung"
+      },
+      {
+        "family": "Li",
+        "given": "Yun-Li"
+      }
+    ],
+    "container-title": "Journal of Crystal Growth",
+    "id": "Leung_2012",
+    "issue": "1",
+    "issued": {
+      "date-parts": [[2012, 2]]
+    },
+    "page": "27-33",
+    "title": "Growth evolution and microstructural characterization of semipolar (112̄2) GaN selectively grown on etched r-plane sapphire",
+    "type": "article-journal",
+    "volume": "341"
+  },
+  {
+    "DOI": "10.1063/1.4914102",
+    "author": [
+      {
+        "family": "Niehle",
+        "given": "M."
+      },
+      {
+        "family": "Trampert",
+        "given": "A."
+      },
+      {
+        "family": "Albert",
+        "given": "S."
+      },
+      {
+        "family": "Bengoechea-Encabo",
+        "given": "A."
+      },
+      {
+        "family": "Calleja",
+        "given": "E."
+      }
+    ],
+    "container-title": "APL Materials",
+    "id": "Niehle_2015",
+    "issue": "3",
+    "issued": {
+      "date-parts": [[2015, 3]]
+    },
+    "page": "036102",
+    "title": "Electron tomography of (In,Ga)N insertions in GaN nanocolumns grown on semi-polar (112̄2) GaN templates",
+    "type": "article-journal",
+    "volume": "3"
+  },
+  {
+    "DOI": "10.7567/APEX.8.061005",
+    "author": [
+      {
+        "family": "Shojiki",
+        "given": "Kanako"
+      },
+      {
+        "family": "Tanikawa",
+        "given": "Tomoyuki"
+      },
+      {
+        "family": "Choi",
+        "given": "Jung-Hun"
+      },
+      {
+        "family": "Kuboya",
+        "given": "Shigeyuki"
+      },
+      {
+        "family": "Hanada",
+        "given": "Takashi"
+      },
+      {
+        "family": "Katayama",
+        "given": "Ryuji"
+      },
+      {
+        "family": "Matsuoka",
+        "given": "Takashi"
+      }
+    ],
+    "container-title": "Appl. Phys. Express",
+    "id": "Shojiki_2015",
+    "issue": "6",
+    "issued": {
+      "date-parts": [[2015, 6]]
+    },
+    "page": "061005",
+    "title": "Red to blue wavelength emission of N-polar (000\\bar{1}) InGaN light-emitting diodes grown by metalorganic vapor phase epitaxy",
+    "type": "article-journal",
+    "volume": "8"
+  },
+  {
+    "DOI": "10.1021/cg500229r",
+    "author": [
+      {
+        "family": "Song",
+        "given": "Jie"
+      },
+      {
+        "family": "Yuan",
+        "given": "Ge"
+      },
+      {
+        "family": "Xiong",
+        "given": "Kanglin"
+      },
+      {
+        "family": "Leung",
+        "given": "Benjamin"
+      },
+      {
+        "family": "Han",
+        "given": "Jung"
+      }
+    ],
+    "container-title": "Crystal Growth & Design",
+    "id": "Song_2014",
+    "issue": "5",
+    "issued": {
+      "date-parts": [[2014, 5]]
+    },
+    "page": "2510-2515",
+    "title": "Epitaxial lateral overgrowth of nitrogen-polar (000\\overline{1}) GaN by metalorganic chemical vapor deposition",
+    "type": "article-journal",
+    "volume": "14"
+  },
+  {
+    "DOI": "10.1021/am506162z",
+    "author": [
+      {
+        "family": "Song",
+        "given": "Jie"
+      },
+      {
+        "family": "Chang",
+        "given": "Shih-Pang"
+      },
+      {
+        "family": "Zhang",
+        "given": "Cheng"
+      },
+      {
+        "family": "Hsu",
+        "given": "Ta-Cheng"
+      },
+      {
+        "family": "Han",
+        "given": "Jung"
+      }
+    ],
+    "container-title": "ACS Appl. Mater. Interfaces",
+    "id": "Song_2015",
+    "issue": "1",
+    "issued": {
+      "date-parts": [[2015, 1]]
+    },
+    "page": "273-278",
+    "title": "Significantly improved luminescence properties of nitrogen-polar (000\\overline{1}) InGaN multiple quantum wells grown by pulsed metalorganic chemical vapor deposition",
+    "type": "article-journal",
+    "volume": "7"
+  },
+  {
+    "DOI": "10.1063/1.121909",
+    "author": [
+      {
+        "family": "Zywietz",
+        "given": "Tosja"
+      },
+      {
+        "family": "Neugebauer",
+        "given": "Jörg"
+      },
+      {
+        "family": "Scheffler",
+        "given": "Matthias"
+      }
+    ],
+    "container-title": "Appl. Phys. Lett.",
+    "id": "Zywietz_1998",
+    "issue": "4",
+    "issued": {
+      "date-parts": [[1998, 7]]
+    },
+    "page": "487-489",
+    "title": "Adatom diffusion at GaN (0001) and (0001̄) surfaces",
+    "type": "article-journal",
+    "volume": "73"
+  }
+]

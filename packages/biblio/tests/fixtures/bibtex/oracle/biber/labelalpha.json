@@ -1,0 +1,916 @@
+[
+  {
+    "author": [
+      {
+        "family": "Doe",
+        "given": "John"
+      }
+    ],
+    "id": "L1",
+    "issued": {
+      "date-parts": [[1995]]
+    },
+    "publisher": "Oxford",
+    "title": "Title 1",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Doe",
+        "given": "John"
+      },
+      {
+        "family": "Abrahams",
+        "given": "Albert"
+      }
+    ],
+    "id": "L2",
+    "issued": {
+      "date-parts": [[1995]]
+    },
+    "publisher": "Oxford",
+    "title": "Title 2",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Doe",
+        "given": "John"
+      },
+      {
+        "family": "Abrahams",
+        "given": "Albert"
+      }
+    ],
+    "id": "L3",
+    "issued": {
+      "date-parts": [[1995]]
+    },
+    "publisher": "Oxford",
+    "title": "Title 3",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Doe",
+        "given": "John"
+      },
+      {
+        "family": "Abrahams",
+        "given": "Albert"
+      },
+      {
+        "family": "Edwards",
+        "given": "Ernie"
+      }
+    ],
+    "id": "L4",
+    "issued": {
+      "date-parts": [[1995]]
+    },
+    "publisher": "Oxford",
+    "title": "Title 4",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Doe",
+        "given": "John"
+      },
+      {
+        "family": "Abrahams",
+        "given": "Albert"
+      },
+      {
+        "family": "Edwards",
+        "given": "Ernie"
+      }
+    ],
+    "id": "L5",
+    "issued": {
+      "date-parts": [[1995]]
+    },
+    "publisher": "Oxford",
+    "title": "Title 5",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Doe",
+        "given": "John"
+      },
+      {
+        "family": "Smith",
+        "given": "Simon"
+      },
+      {
+        "family": "Edwards",
+        "given": "Ernie"
+      }
+    ],
+    "id": "L6",
+    "issued": {
+      "date-parts": [[1995]]
+    },
+    "publisher": "Oxford",
+    "title": "Title 6",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Doe",
+        "given": "John"
+      },
+      {
+        "family": "Smith",
+        "given": "Simon"
+      },
+      {
+        "family": "Jones",
+        "given": "James"
+      }
+    ],
+    "id": "L7",
+    "issued": {
+      "date-parts": [[1995]]
+    },
+    "publisher": "Oxford",
+    "title": "Title 7",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Shakespeare",
+        "given": "Bill"
+      }
+    ],
+    "id": "L8",
+    "issued": {
+      "date-parts": [[1985], [1992]]
+    },
+    "publisher": "Oxford",
+    "title": "Works",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Smiley",
+        "given": "Sam"
+      }
+    ],
+    "id": "L9",
+    "issued": {
+      "date-parts": [[1922]]
+    },
+    "publisher": "Oxford",
+    "title": "Works",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Smiley",
+        "given": "Sam"
+      }
+    ],
+    "id": "L10",
+    "issued": {
+      "date-parts": [[1922]]
+    },
+    "publisher": "Oxford",
+    "title": "UnWorks",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "dropping-particle": "von",
+        "family": "Rancour",
+        "given": "Carl"
+      }
+    ],
+    "id": "L11",
+    "issued": {
+      "date-parts": [[1922]]
+    },
+    "title": "UnWorks",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "dropping-particle": "von",
+        "family": "Rancour",
+        "given": "Carl"
+      },
+      {
+        "dropping-particle": "von",
+        "family": "Bile",
+        "given": "Russel"
+      }
+    ],
+    "id": "L12",
+    "original-date": {
+      "date-parts": [[1922, 3, 21]]
+    },
+    "title": "UnWorks",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "dropping-particle": "von",
+        "family": "Rancour",
+        "given": "Carl"
+      },
+      {
+        "dropping-particle": "von",
+        "family": "Bile",
+        "given": "Russel"
+      }
+    ],
+    "id": "L13",
+    "issued": {
+      "date-parts": [[1987]]
+    },
+    "title": "UnVorks",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "dropping-particle": "von",
+        "family": "Rancour",
+        "given": "Carl"
+      },
+      {
+        "dropping-particle": "von",
+        "family": "Bile",
+        "given": "Russel"
+      }
+    ],
+    "id": "L14",
+    "issued": {
+      "date-parts": [[1989]]
+    },
+    "title": "UnWorks",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "Acckerman",
+        "given": "Alan"
+      },
+      {
+        "family": "Briff",
+        "given": "Bert"
+      },
+      {
+        "family": "Climben",
+        "given": "Clive"
+      }
+    ],
+    "id": "L15",
+    "issued": {
+      "date-parts": [[1989]]
+    },
+    "title": "Title",
+    "type": "manuscript"
+  },
+  {
+    "author": [
+      {
+        "family": "Acckerman",
+        "given": "Alan"
+      },
+      {
+        "family": "Baff",
+        "given": "Bert"
+      },
+      {
+        "family": "Climbi",
+        "given": "Clive"
+      }
+    ],
+    "id": "L16",
+    "issued": {
+      "date-parts": [[1990]]
+    },
+    "title": "Title",
+    "type": "pamphlet"
+  },
+  {
+    "author": [
+      {
+        "family": "Acckerman",
+        "given": "Alan"
+      },
+      {
+        "family": "Baff",
+        "given": "Bert"
+      },
+      {
+        "family": "Climbi",
+        "given": "Clive"
+      }
+    ],
+    "id": "L16a",
+    "issued": {
+      "date-parts": [[1990]]
+    },
+    "title": "Title2",
+    "type": "pamphlet"
+  },
+  {
+    "author": [
+      {
+        "family": "Ackkerman",
+        "given": "Alan"
+      },
+      {
+        "family": "Baff",
+        "given": "Bert"
+      },
+      {
+        "family": "Climbi",
+        "given": "Clive"
+      }
+    ],
+    "id": "L17",
+    "issued": {
+      "date-parts": [[1911]]
+    },
+    "title": "Title",
+    "type": "report"
+  },
+  {
+    "author": [
+      {
+        "family": "Ackkerman",
+        "given": "Alan"
+      },
+      {
+        "family": "Baff",
+        "given": "Bert"
+      },
+      {
+        "family": "Climbi",
+        "given": "Clive"
+      }
+    ],
+    "id": "L17a",
+    "issued": {
+      "date-parts": [[1911]]
+    },
+    "title": "Title2",
+    "type": "report"
+  },
+  {
+    "author": [
+      {
+        "family": "Agassi"
+      },
+      {
+        "family": "Chang"
+      },
+      {
+        "family": "Laver"
+      }
+    ],
+    "id": "L18",
+    "issued": {
+      "date-parts": [[1911]]
+    },
+    "title": "Title",
+    "type": "manuscript"
+  },
+  {
+    "author": [
+      {
+        "family": "Agassi"
+      },
+      {
+        "family": "Connors"
+      },
+      {
+        "family": "Lendl"
+      }
+    ],
+    "id": "L19",
+    "issued": {
+      "date-parts": [[1911]]
+    },
+    "title": "Title",
+    "type": "manuscript"
+  },
+  {
+    "author": [
+      {
+        "family": "Agassi"
+      },
+      {
+        "family": "Courier"
+      },
+      {
+        "family": "Laver"
+      }
+    ],
+    "id": "L20",
+    "issued": {
+      "date-parts": [[1911]]
+    },
+    "title": "Title",
+    "type": "manuscript"
+  },
+  {
+    "author": [
+      {
+        "family": "Borg"
+      },
+      {
+        "family": "Connors"
+      },
+      {
+        "family": "Edberg"
+      }
+    ],
+    "id": "L21",
+    "issued": {
+      "date-parts": [[1911]]
+    },
+    "title": "Title",
+    "type": "manuscript"
+  },
+  {
+    "author": [
+      {
+        "family": "Borg"
+      },
+      {
+        "family": "Connors"
+      },
+      {
+        "family": "Emerson"
+      }
+    ],
+    "id": "L22",
+    "issued": {
+      "date-parts": [[1911]]
+    },
+    "title": "Title",
+    "type": "manuscript"
+  },
+  {
+    "author": [
+      {
+        "family": "Sanchez-Vicario",
+        "given": "Bill"
+      }
+    ],
+    "id": "L23",
+    "issued": {
+      "date-parts": [[1900]]
+    },
+    "title": "Title",
+    "type": "manuscript"
+  },
+  {
+    "author": [
+      {
+        "family": "Zaa"
+      }
+    ],
+    "id": "L24",
+    "issued": {
+      "date-parts": [[1900]]
+    },
+    "title": "Title",
+    "type": "manuscript"
+  },
+  {
+    "author": [
+      {
+        "family": "Zoo"
+      },
+      {
+        "family": "Xaa"
+      }
+    ],
+    "id": "L25",
+    "issued": {
+      "date-parts": [[1900]]
+    },
+    "title": "Title",
+    "type": "manuscript"
+  },
+  {
+    "author": [
+      {
+        "family": "Zoo"
+      },
+      {
+        "family": "Xaa"
+      }
+    ],
+    "id": "L26",
+    "issued": {
+      "date-parts": [[1901]]
+    },
+    "title": "Title",
+    "type": "manuscript"
+  },
+  {
+    "author": [
+      {
+        "family": "Vela",
+        "given": "Luis"
+      },
+      {
+        "family": "Ura Ru",
+        "given": "Juan"
+      }
+    ],
+    "id": "LDN1",
+    "issued": {
+      "date-parts": [[1889]]
+    },
+    "title": "Title",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Vela",
+        "given": "Luis"
+      },
+      {
+        "family": "Ura Ru",
+        "given": "Juan"
+      }
+    ],
+    "id": "LDN2",
+    "issued": {
+      "date-parts": [[1845]]
+    },
+    "title": "Title",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "Vela",
+        "given": "Luis"
+      },
+      {
+        "dropping-particle": "von",
+        "family": "Juan",
+        "given": "Ura Ru",
+        "suffix": "Sr"
+      }
+    ],
+    "id": "LDN3",
+    "issued": {
+      "date-parts": [[1845]]
+    },
+    "title": "Title",
+    "type": ""
+  },
+  {
+    "annote": "A five-volume book cited as a whole. This is a book entry, note the volumes field",
+    "author": [
+      {
+        "family": "Knuth",
+        "given": "Donald E."
+      }
+    ],
+    "id": "knuth:ct",
+    "issued": {
+      "date-parts": [[1984], [1986]]
+    },
+    "language": "en-US",
+    "number-of-volumes": "5",
+    "publisher": "Addison-Wesley",
+    "publisher-place": "Reading, Mass.",
+    "title": "Computers & typesetting",
+    "type": "book"
+  },
+  {
+    "annote": "The first volume of a five-volume book. Note the sorttitle and sortyear fields. We want this volume to be listed after the entry referring to the entire five-volume set. Also note the indextitle and indexsorttitle fields",
+    "author": [
+      {
+        "family": "Knuth",
+        "given": "Donald E."
+      }
+    ],
+    "id": "knuth:ct:a",
+    "issued": {
+      "date-parts": [[1984]]
+    },
+    "language": "en-US",
+    "publisher": "Addison-Wesley",
+    "publisher-place": "Reading, Mass.",
+    "title": "Computers & typesetting",
+    "type": "book",
+    "volume": "A",
+    "volume-title": "The TeXbook"
+  },
+  {
+    "annote": "The second volume of a five-volume book. Note the sorttitle and sortyear fields. Also note the indexsorttitle field",
+    "author": [
+      {
+        "family": "Knuth",
+        "given": "Donald E."
+      }
+    ],
+    "id": "knuth:ct:b",
+    "issued": {
+      "date-parts": [[1986]]
+    },
+    "language": "en-US",
+    "publisher": "Addison-Wesley",
+    "publisher-place": "Reading, Mass.",
+    "title": "Computers & typesetting",
+    "title-short": "TeX",
+    "type": "book",
+    "volume": "B",
+    "volume-title": "TeX: The program"
+  },
+  {
+    "annote": "The third volume of a five-volume book. Note the sorttitle and sortyear fields as well as the indextitle field",
+    "author": [
+      {
+        "family": "Knuth",
+        "given": "Donald E."
+      }
+    ],
+    "id": "knuth:ct:c",
+    "issued": {
+      "date-parts": [[1986]]
+    },
+    "language": "en-US",
+    "publisher": "Addison-Wesley",
+    "publisher-place": "Reading, Mass.",
+    "title": "Computers & typesetting",
+    "type": "book",
+    "volume": "C",
+    "volume-title": "The METAFONTbook"
+  },
+  {
+    "author": [
+      {
+        "family": "Schmidt",
+        "given": "C."
+      }
+    ],
+    "genre": "PhD thesis",
+    "id": "Schmidt2007a",
+    "issued": {
+      "date-parts": [[2007]]
+    },
+    "type": "thesis"
+  },
+  {
+    "author": [
+      {
+        "family": "Schmidt",
+        "given": "C."
+      },
+      {
+        "family": "XXX"
+      },
+      {
+        "family": "YYY"
+      },
+      {
+        "family": "ZZZ"
+      }
+    ],
+    "id": "Schmidt2007",
+    "issued": {
+      "date-parts": [[2007]]
+    },
+    "type": "paper-conference"
+  },
+  {
+    "author": [
+      {
+        "family": "Schnee",
+        "given": "D."
+      }
+    ],
+    "genre": "PhD thesis",
+    "id": "Schnee2007a",
+    "issued": {
+      "date-parts": [[2007]]
+    },
+    "type": "thesis"
+  },
+  {
+    "author": [
+      {
+        "family": "Schnee",
+        "given": "D."
+      },
+      {
+        "family": "XXX"
+      },
+      {
+        "family": "YYY"
+      },
+      {
+        "family": "ZZZ"
+      }
+    ],
+    "id": "Schnee2007",
+    "issued": {
+      "date-parts": [[2007]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Schnee",
+        "given": "D."
+      },
+      {
+        "family": "XXX"
+      },
+      {
+        "family": "YYY"
+      },
+      {
+        "family": "ZZZ"
+      }
+    ],
+    "id": "title1",
+    "issued": {
+      "date-parts": [[2007]]
+    },
+    "title": "Tïtle in Braces with char",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "AAA"
+      },
+      {
+        "family": "BBB"
+      },
+      {
+        "family": "CCC"
+      }
+    ],
+    "id": "labelstest",
+    "issued": {
+      "date-parts": [[2005, 3, 2]]
+    },
+    "title": "A title",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Al",
+        "given": "Alan"
+      }
+    ],
+    "id": "padtest",
+    "issued": {
+      "date-parts": [[2007]]
+    },
+    "title": "T",
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "O’Toole",
+        "given": "Alexander"
+      }
+    ],
+    "id": "ignore1",
+    "issued": {
+      "date-parts": [[2007]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "De Long",
+        "given": "Alexander"
+      }
+    ],
+    "id": "ignore2",
+    "issued": {
+      "date-parts": [[2007]]
+    },
+    "type": ""
+  },
+  {
+    "author": [
+      {
+        "family": "O’Toole",
+        "given": "Henry"
+      }
+    ],
+    "id": "skipwidthtest1",
+    "issued": {
+      "date-parts": [[2007]]
+    },
+    "title": "O’toole",
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "dropping-particle": "van der",
+        "family": "Vaar",
+        "given": "Alan"
+      }
+    ],
+    "id": "prefix1",
+    "issued": {
+      "date-parts": [[1999]]
+    },
+    "title": "Thing",
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "VA"
+      },
+      {
+        "family": "WA"
+      },
+      {
+        "family": "XA"
+      },
+      {
+        "family": "YA"
+      },
+      {
+        "family": "ZA"
+      }
+    ],
+    "editor": [
+      {
+        "family": "VE"
+      },
+      {
+        "family": "WE"
+      },
+      {
+        "family": "XE"
+      },
+      {
+        "family": "YE"
+      },
+      {
+        "family": "ZE"
+      }
+    ],
+    "id": "rangetest1",
+    "translator": [
+      {
+        "family": "VT"
+      },
+      {
+        "family": "WT"
+      },
+      {
+        "family": "XT"
+      },
+      {
+        "family": "YT"
+      },
+      {
+        "family": "ZT"
+      }
+    ],
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Fake",
+        "given": "Frank"
+      }
+    ],
+    "id": "m1",
+    "title": "Film title 1",
+    "type": "motion_picture"
+  }
+]

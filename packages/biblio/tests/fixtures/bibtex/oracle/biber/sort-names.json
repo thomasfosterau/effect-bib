@@ -1,0 +1,43 @@
+[
+  {
+    "author": [
+      {
+        "family": "Smith",
+        "given": "Z."
+      }
+    ],
+    "id": "N1",
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Smith de Jones",
+        "given": "Z."
+      }
+    ],
+    "id": "N2",
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "family": "Smith-Jones",
+        "given": "Z."
+      }
+    ],
+    "id": "N3",
+    "type": "article-journal"
+  },
+  {
+    "author": [
+      {
+        "dropping-particle": "de",
+        "family": "Smith",
+        "given": "Z."
+      }
+    ],
+    "id": "N4",
+    "type": "article-journal"
+  }
+]

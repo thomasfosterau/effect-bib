@@ -1,0 +1,39 @@
+[
+  {
+    "author": [
+      {
+        "family": "Kühne",
+        "given": "Thomas"
+      }
+    ],
+    "container-title": "Software and Systems Modeling",
+    "id": "kuhne2006matters",
+    "issue": "4",
+    "issued": {
+      "date-parts": [[2006]]
+    },
+    "keyword": "MLM;ontological versus linguistic",
+    "page": "369-385",
+    "publisher": "Springer",
+    "title": "Matters of (meta-) modeling",
+    "type": "article-journal",
+    "volume": "5"
+  },
+  {
+    "author": [
+      {
+        "family": "Gödel",
+        "given": "Kurt"
+      }
+    ],
+    "container-title": "Collected works",
+    "id": "godel1933present",
+    "issued": {
+      "date-parts": [[1933]]
+    },
+    "page": "45-53",
+    "title": "The present situation in the foundations of mathematics",
+    "type": "chapter",
+    "volume": "3"
+  }
+]

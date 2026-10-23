@@ -1,0 +1,21 @@
+[
+  {
+    "DOI": "10.1023/B:LOGI.0000021744.10237.d0",
+    "author": [
+      {
+        "family": "Zach",
+        "given": "Richard"
+      }
+    ],
+    "container-title": "Journal of Philosophical Logic",
+    "id": "Zach2004a",
+    "issued": {
+      "date-parts": [[2004]]
+    },
+    "keyword": "article",
+    "page": "155-164",
+    "title": "Decidability of quantified propositional intuitionistic logic and S4 on trees of height and arity \\le\\omega",
+    "type": "article-journal",
+    "volume": "33"
+  }
+]

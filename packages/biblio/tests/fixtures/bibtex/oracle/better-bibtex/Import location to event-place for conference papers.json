@@ -1,0 +1,29 @@
+[
+  {
+    "DOI": "10.1145/1596655.1596682",
+    "ISBN": "978-1-60558-598-7",
+    "URL": "http://doi.acm.org/10.1145/1596655.1596682",
+    "author": [
+      {
+        "family": "Mostafa",
+        "given": "Nagy"
+      },
+      {
+        "family": "Krintz",
+        "given": "Chandra"
+      }
+    ],
+    "collection-title": "PPPJ ’09",
+    "container-title": "Proceedings of the 7th international conference on principles and practice of programming in java",
+    "id": "Mostafa:2009:TPA:1596655.1596682",
+    "issued": {
+      "date-parts": [[2009]]
+    },
+    "keyword": "calling context tree, performance-aware revision control, profiling",
+    "page": "162-171",
+    "publisher": "ACM",
+    "publisher-place": "New York, NY, USA",
+    "title": "Tracking performance across software revisions",
+    "type": "paper-conference"
+  }
+]

@@ -1,0 +1,93 @@
+[
+  {
+    "author": [
+      {
+        "family": "Schiffer",
+        "given": "S."
+      }
+    ],
+    "container-title": "Eine auswahl von techniken und beispielen",
+    "id": "schiffer2005a",
+    "issued": {
+      "date-parts": [[2005]]
+    },
+    "publisher": "Ergon",
+    "publisher-place": "Würzburg",
+    "title": "Die darstellung des islams in der presse: Sprache, bilder, suggestionen",
+    "title-short": "Die darstellung des islams in der presse",
+    "type": "chapter"
+  },
+  {
+    "author": [
+      {
+        "family": "Albrecht",
+        "given": "C."
+      }
+    ],
+    "container-title": "Religion und medien: Vom kultbild zum internetritual",
+    "editor": [
+      {
+        "family": "Malik",
+        "given": "J./Rüpke"
+      },
+      {
+        "family": "J./Wobbe",
+        "given": "T."
+      }
+    ],
+    "id": "albrecht2007a",
+    "issued": {
+      "date-parts": [[2007]]
+    },
+    "page": "153 - 163",
+    "publisher": "Aschendorff",
+    "publisher-place": "Münster",
+    "title": "Evangelische publizistik",
+    "type": "chapter"
+  },
+  {
+    "author": [
+      {
+        "family": "Gärtner",
+        "given": "C."
+      }
+    ],
+    "container-title": "Religion heute – öffentlich und politisch: Provokationen, kontroversen, perspektiven",
+    "editor": [
+      {
+        "family": "Gabriel",
+        "given": "K./Höhn"
+      },
+      {
+        "family": "H.-J."
+      }
+    ],
+    "id": "gaertner2008a",
+    "issued": {
+      "date-parts": [[2008]]
+    },
+    "page": "93 - 108",
+    "publisher": "Schöningh",
+    "publisher-place": "Paderborn",
+    "title": "Die rückkehr der religionen in der politischen und medialen öffent­ lichkeit",
+    "type": "chapter"
+  },
+  {
+    "author": [
+      {
+        "family": "Schiffer",
+        "given": "S."
+      }
+    ],
+    "container-title": "Eine auswahl von techniken und beispielen",
+    "id": "schiffer2005a",
+    "issued": {
+      "date-parts": [[2005]]
+    },
+    "publisher": "Ergon",
+    "publisher-place": "Würzburg",
+    "title": "Die darstellung des islams in der presse: Sprache, bilder, suggestionen",
+    "title-short": "Die darstellung des islams in der presse",
+    "type": "chapter"
+  }
+]

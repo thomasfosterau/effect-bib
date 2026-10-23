@@ -1,0 +1,21 @@
+[
+  {
+    "annote": "This is a collection entry. Note the format of the location field as well as the subtitle and booksubtitle fields",
+    "editor": [
+      {
+        "family": "Westfahl",
+        "given": "Gary"
+      }
+    ],
+    "id": "westfahl:frontier",
+    "issued": {
+      "date-parts": [[2000]]
+    },
+    "language": "en-US",
+    "publisher": "Greenwood",
+    "publisher-place": "Westport, Conn.; London",
+    "title": "Space and beyond: The frontier theme in science fiction",
+    "title-short": "Space and beyond",
+    "type": "book"
+  }
+]

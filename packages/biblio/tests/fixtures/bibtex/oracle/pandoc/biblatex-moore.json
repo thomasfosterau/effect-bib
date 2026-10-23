@@ -1,0 +1,21 @@
+[
+  {
+    "author": [
+      {
+        "family": "Moore",
+        "given": "Gordon E."
+      }
+    ],
+    "container-title": "Electronics",
+    "id": "moore",
+    "issue": "8",
+    "issued": {
+      "date-parts": [[1965]]
+    },
+    "language": "en-US",
+    "page": "114-117",
+    "title": "Cramming more components onto integrated circuits",
+    "type": "article-journal",
+    "volume": "38"
+  }
+]

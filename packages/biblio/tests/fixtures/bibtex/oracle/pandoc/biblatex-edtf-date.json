@@ -1,0 +1,102 @@
+[
+  {
+    "id": "item3-3",
+    "issued": {
+      "date-parts": [[1998], [0]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "id": "item3-4",
+    "issued": {
+      "date-parts": [[1999], [0]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "id": "item3-10",
+    "issued": {
+      "date-parts": [[2004, 4, 5]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "id": "item5-1",
+    "issued": {
+      "date-parts": [[0]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "id": "item5-2",
+    "issued": {
+      "date-parts": [[-877]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "id": "item5-3",
+    "issued": {
+      "date-parts": [[-878], [-867]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "id": "item5-5",
+    "issued": {
+      "date-parts": [[-344, 2]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "id": "item5-8",
+    "issued": {
+      "circa": true,
+      "date-parts": [[1723]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "id": "item5-9",
+    "issued": {
+      "date-parts": [[1723]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "id": "item5-10",
+    "issued": {
+      "circa": true,
+      "date-parts": [[1723]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "id": "item5-11",
+    "issued": {
+      "date-parts": [[2004, 22]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "id": "item5-12",
+    "issued": {
+      "date-parts": [[2004, 24]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "id": "item5-13",
+    "issued": {
+      "date-parts": [[2000], [2099]]
+    },
+    "type": "article-journal"
+  },
+  {
+    "id": "item5-14",
+    "issued": {
+      "date-parts": [[-123456790]]
+    },
+    "type": "article-journal"
+  }
+]

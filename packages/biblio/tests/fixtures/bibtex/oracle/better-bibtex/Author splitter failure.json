@@ -1,0 +1,32 @@
+[
+  {
+    "DOI": "10.1002/pssa.2210930226",
+    "author": [
+      {
+        "family": "Abu-Zeid",
+        "given": "M. E."
+      },
+      {
+        "family": "Rakhshani",
+        "given": "A. E."
+      },
+      {
+        "family": "Al-Jassar",
+        "given": "A. A."
+      },
+      {
+        "family": "Youssef",
+        "given": "Y. A."
+      }
+    ],
+    "container-title": "Physica Status Solidi (a)",
+    "id": "Abu-Zeid_1986",
+    "issued": {
+      "date-parts": [[1986]]
+    },
+    "page": "613-620",
+    "title": "Determination of the thickness and refractive index of Cu_2O thin film using thermal and optical interferometry",
+    "type": "article-journal",
+    "volume": "93"
+  }
+]

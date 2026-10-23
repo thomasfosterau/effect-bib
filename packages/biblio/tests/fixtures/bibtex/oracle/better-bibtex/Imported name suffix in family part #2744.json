@@ -1,0 +1,20 @@
+[
+  {
+    "author": [
+      {
+        "family": "Costa",
+        "given": "P. T.",
+        "suffix": "Jr."
+      },
+      {
+        "family": "McCrae",
+        "given": "R. R."
+      }
+    ],
+    "id": "apa-test.9.46:8",
+    "issued": {
+      "date-parts": [[2013]]
+    },
+    "type": "book"
+  }
+]

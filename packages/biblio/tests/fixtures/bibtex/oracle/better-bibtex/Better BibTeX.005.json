@@ -1,0 +1,20 @@
+[
+  {
+    "author": [
+      {
+        "family": "Oliveira",
+        "given": "A"
+      }
+    ],
+    "container-title": "Oil & Gas Journal",
+    "id": "Oliveira_2009",
+    "issue": "29",
+    "issued": {
+      "date-parts": [[2009]]
+    },
+    "page": "29",
+    "title": "USGS monitoring ecological impacts",
+    "type": "article-journal",
+    "volume": "107"
+  }
+]

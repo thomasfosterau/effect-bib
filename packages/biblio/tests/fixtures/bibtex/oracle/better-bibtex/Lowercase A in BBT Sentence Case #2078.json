@@ -1,0 +1,36 @@
+[
+  {
+    "DOI": "10.21105/joss.01412",
+    "ISSN": "2475-9066",
+    "URL": "http://joss.theoj.org/papers/10.21105/joss.01412",
+    "accessed": {
+      "date-parts": [[2022, 3, 23]]
+    },
+    "author": [
+      {
+        "family": "Lüdecke",
+        "given": "Daniel"
+      },
+      {
+        "family": "Waggoner",
+        "given": "Philip"
+      },
+      {
+        "family": "Makowski",
+        "given": "Dominique"
+      }
+    ],
+    "container-title": "Journal of Open Source Software",
+    "container-title-short": "JOSS",
+    "id": "ludeckeInsightUnifiedInterface2019",
+    "issue": "38",
+    "issued": {
+      "date-parts": [[2019, 6, 25]]
+    },
+    "page": "1412",
+    "title": "Insight: A unified interface to access information from model objects in R",
+    "title-short": "Insight",
+    "type": "article-journal",
+    "volume": "4"
+  }
+]

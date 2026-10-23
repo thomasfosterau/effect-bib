@@ -1,0 +1,66 @@
+[
+  {
+    "director": [
+      {
+        "family": "Forman",
+        "given": "Miloš"
+      }
+    ],
+    "id": "formanOneFlewCuckoo1975",
+    "issued": {
+      "date-parts": [[1975]]
+    },
+    "keyword": "Drama,Mentally illQMentally ill",
+    "publisher": "United Artists",
+    "title": "One flew over the cuckoo’s nest",
+    "type": "motion_picture"
+  },
+  {
+    "director": [
+      {
+        "family": "Forman",
+        "given": "Miloš"
+      }
+    ],
+    "id": "formanOneFlewCuckoo1975-film",
+    "issued": {
+      "date-parts": [[1975]]
+    },
+    "keyword": "Drama,Mentally illQMentally ill",
+    "publisher": "United Artists",
+    "title": "One flew over the cuckoo’s nest",
+    "type": "motion_picture"
+  },
+  {
+    "director": [
+      {
+        "family": "Forman",
+        "given": "Miloš"
+      }
+    ],
+    "id": "formanOneFlewCuckoo1975-tv",
+    "issued": {
+      "date-parts": [[1975]]
+    },
+    "keyword": "Drama,Mentally illQMentally ill",
+    "publisher": "United Artists",
+    "title": "One flew over the cuckoo’s nest",
+    "type": "motion_picture"
+  },
+  {
+    "director": [
+      {
+        "family": "Forman",
+        "given": "Miloš"
+      }
+    ],
+    "id": "formanOneFlewCuckoo1975-epi",
+    "issued": {
+      "date-parts": [[1975]]
+    },
+    "keyword": "Drama,Mentally illQMentally ill",
+    "publisher": "United Artists",
+    "title": "One flew over the cuckoo’s nest",
+    "type": "motion_picture"
+  }
+]

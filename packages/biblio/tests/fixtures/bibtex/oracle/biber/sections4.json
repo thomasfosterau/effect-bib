@@ -1,0 +1,38 @@
+[
+  {
+    "author": [
+      {
+        "family": "Mumford",
+        "given": "Michael"
+      },
+      {
+        "family": "Mutherington",
+        "given": "Millie"
+      }
+    ],
+    "id": "sect6",
+    "issued": {
+      "date-parts": [[2003]]
+    },
+    "publisher": "Ming; Mink Press",
+    "publisher-place": "Manchester",
+    "title": "Malodourous muffins",
+    "type": "book"
+  },
+  {
+    "author": [
+      {
+        "family": "Pilkington",
+        "given": "Percy"
+      }
+    ],
+    "id": "sect7",
+    "issued": {
+      "date-parts": [[2007]]
+    },
+    "publisher": "Possible Prattle Press",
+    "publisher-place": "Pimlico",
+    "title": "Perhaps penguins prance",
+    "type": "book"
+  }
+]

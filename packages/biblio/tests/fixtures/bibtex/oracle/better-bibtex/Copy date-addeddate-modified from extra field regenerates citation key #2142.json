@@ -1,0 +1,40 @@
+[
+  {
+    "DOI": "10.1017/S0022381608081152",
+    "ISSN": "1468-2508",
+    "URL": "http://journals.cambridge.org/article_S0022381608081152",
+    "abstract": "Existing research on power and war contends that the distribution of power exerts an independent effect on the chances of armed conflict. However, theories of bargaining indicate that power’s influence on war depends on the ex ante distribution of benefits and has a specific functional form. We test that claim, showing that the effect of power on war rests heavily on the distribution of benefits. Our findings strongly suggest bargaining explanations may subsume other arguments about power and war both theoretically and empirically.",
+    "accessed": {
+      "date-parts": [[2015, 7, 25]]
+    },
+    "author": [
+      {
+        "family": "Reed",
+        "given": "William"
+      },
+      {
+        "family": "Clark",
+        "given": "David H."
+      },
+      {
+        "family": "Nordstrom",
+        "given": "Timothy"
+      },
+      {
+        "family": "Hwang",
+        "given": "Wonjae"
+      }
+    ],
+    "container-title": "The Journal of Politics",
+    "id": "ReedClark2008War-Power",
+    "issue": "4",
+    "issued": {
+      "date-parts": [[2008]]
+    },
+    "keyword": "War/Bargain",
+    "page": "1203-1216",
+    "title": "War, Power, and Bargaining",
+    "type": "article-journal",
+    "volume": "70"
+  }
+]

@@ -1,0 +1,24 @@
+[
+  {
+    "annote": "A translated work from vangennep. Note the format of the related and relatedtype fields",
+    "id": "vizedom:related",
+    "issued": {
+      "date-parts": [[1960]]
+    },
+    "language": "en-US",
+    "publisher": "University of Chicago Press",
+    "title": "The rites of passage",
+    "title-short": "Rites of passage",
+    "translator": [
+      {
+        "family": "Vizedom",
+        "given": "Monika B."
+      },
+      {
+        "family": "Caffee",
+        "given": "Gabrielle L."
+      }
+    ],
+    "type": "book"
+  }
+]

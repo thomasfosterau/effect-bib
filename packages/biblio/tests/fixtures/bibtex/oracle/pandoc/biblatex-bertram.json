@@ -1,0 +1,27 @@
+[
+  {
+    "annote": "An article entry with a volume and a number field",
+    "author": [
+      {
+        "family": "Bertram",
+        "given": "Aaron"
+      },
+      {
+        "family": "Wentworth",
+        "given": "Richard"
+      }
+    ],
+    "container-title": "J. Amer. Math. Soc.",
+    "id": "bertram",
+    "issue": "2",
+    "issued": {
+      "date-parts": [[1996]]
+    },
+    "language": "en-US",
+    "page": "529-571",
+    "title": "Gromov invariants for holomorphic maps on Riemann surfaces",
+    "title-short": "Gromov invariants",
+    "type": "article-journal",
+    "volume": "9"
+  }
+]
