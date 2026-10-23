@@ -1103,7 +1103,13 @@ function readCslIdentifiers(
   strings: Partial<Record<CslStringVar, string>>,
 ): RecordIdentifiers {
   const identifiers: Types.Mutable<RecordIdentifiers> = {};
-  const isbn = Option.flatMap(decodeString(obj.ISBN), decodeIsbn);
+  // Zotero writes several ISBNs as one space / comma separated list: the
+  // first checksum-valid one is the record's.
+  const isbn = Option.flatMap(decodeString(obj.ISBN), (value) =>
+    Option.orElse(decodeIsbn(value), () =>
+      Array.findFirst(value.split(/[\s,;]+/), (token) => decodeIsbn(token)),
+    ),
+  );
   if (Option.isSome(isbn)) identifiers.isbn = isbn.value;
   const doi = Option.flatMap(decodeString(obj.DOI), decodeDoi);
   if (Option.isSome(doi)) identifiers.doi = doi.value;

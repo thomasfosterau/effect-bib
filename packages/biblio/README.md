@@ -1,6 +1,6 @@
 # `@thomasfosterau/biblio`
 
-Bibliographic toolkit on Effect: CSL-JSON records as Effect Schema, checksummed ISBN / DOI / ISSN / ORCID identifiers, BibTeX / RIS / CSV / CSL-JSON parsing, same-work dedup scoring, APA / Vancouver rendering, and Crossref / OpenAlex / OpenLibrary lookup over Effect's `HttpClient`.
+Bibliographic toolkit on Effect: CSL-JSON records as Effect Schema, checksummed ISBN / DOI / ISSN / ORCID identifiers, BibTeX / RIS / CSV / CSL-JSON / CSL YAML parsing and BibTeX / BibLaTeX / RIS / CSL YAML writing, same-work dedup scoring, APA / Vancouver rendering, and Crossref / OpenAlex / OpenLibrary lookup over Effect's `HttpClient`.
 
 **Disclaimer:** This repository and package have been created using Claude Code. The package's API and functionality is in flux, so expect churn and breaking changes.
 
@@ -16,7 +16,7 @@ pnpm add @thomasfosterau/biblio effect
 
 | Subpath | Imports | Contents |
 | --- | --- | --- |
-| `.` | `effect` only | `BiblioRecord` and the CSL-JSON interop, the identifier brands and decoders, the file parsers, dedup scoring, the render engine and the two built-in styles |
+| `.` | `effect` only | `BiblioRecord` and the CSL-JSON interop, the identifier brands and decoders, the file parsers and writers, dedup scoring, the render engine and the two built-in styles |
 | `./sources` | `effect/http` | The `BiblioLookup` service and its layers, the per-source lookup functions and response schemas, the typed error channel |
 
 The split is a packaging commitment, not a convention: the root entry resolves none of the modules that were under `effect/unstable/*` before rc.118 (`effect/http`, `effect/sql`, …; see [the forbidden-module list](https://github.com/thomasfosterau/effect-bib/blob/trunk/packages/biblio/tests/fixtures/forbidden-effect-modules.mjs)) and no `sources/` module, so a browser bundle that imports it never loads the HTTP clients. [`tests/entry-points.test.ts`](https://github.com/thomasfosterau/effect-bib/blob/trunk/packages/biblio/tests/entry-points.test.ts) walks the real import graph of both the sources and the built artifact.
@@ -128,9 +128,9 @@ assert.strictEqual(Option.getOrNull(decodeArxiv("arXiv:2101.01234v2")), "2101.01
 
 ### Parsing — `.`
 
-**`parseBibliographicFile(content, format, options?): ParseOutcome[]`** — `format` is `ImportFormat` (`"bibtex" | "zotero-json" | "csv" | "ris"`); the per-format parsers `parseBibtex`, `parseZoteroJson`, `parseCsv`, `parseRis` (each `(content, options?)`) are exported too. Pure and network-free; the BibTeX scanner is a grammar in [`@thomasfosterau/effect-parse`](https://github.com/thomasfosterau/effect-parse) combinators, with brace nesting capped at 32 levels (deeper nesting stops the scan like an unbalanced tail). One `ParseOutcome` per source entry: `{ outcome: "parsed", record, position? }` or `{ outcome: "skipped", reason: SkipReason, position? }`, where `position` is the entry's `SourcePosition` (`{ offset, line, column }` of a BibTeX entry's `@`, an RIS `TY` line or a CSV row; CSL-JSON has none). An entry's key (BibTeX's citation key, RIS `ID`, a CSV `key` / `citation key` / `id` column, CSL-JSON `id` / `citation-key`) is the record's `id` and `citation-key`.
+**`parseBibliographicFile(content, format, options?): ParseOutcome[]`** — `format` is `ImportFormat` (`"bibtex" | "zotero-json" | "csl-yaml" | "csv" | "ris"`); the per-format parsers `parseBibtex`, `parseZoteroJson`, `parseCslYaml`, `parseCsv`, `parseRis` (each `(content, options?)`) are exported too, and **`detectFormat(content): Option<ImportFormat>`** guesses the format from the content. Pure and network-free; the BibTeX scanner is a grammar in [`@thomasfosterau/effect-parse`](https://github.com/thomasfosterau/effect-parse) combinators, with brace nesting capped at 32 levels (deeper nesting stops the scan like an unbalanced tail). One `ParseOutcome` per source entry: `{ outcome: "parsed", record, position? }` or `{ outcome: "skipped", reason: SkipReason, position? }`, where `position` is the entry's `SourcePosition` (`{ offset, line, column }` of a BibTeX entry's `@`, an RIS `TY` line or a CSV row; CSL-JSON has none). An entry's key (BibTeX's citation key, RIS `ID`, a CSV `key` / `citation key` / `id` column, CSL-JSON `id` / `citation-key`) is the record's `id` and `citation-key`.
 
-`options` is a `ParseOptions`: `mode` (`ParseMode`) and the bounds. In the default `"import"` mode a record needs a title and at least one dedup identifier (ISBN or DOI), else it is skipped (`"no-title"` / `"no-identifier"`); in `"lenient"` mode every entry the format admits is a record, as a document's bibliography needs, and CSL-JSON items are read in full with `fromCslJson`. `maxRecords` (default `MAX_RECORDS`, 5000), `maxInputLength` (default `MAX_INPUT_LENGTH`, 8,000,000 code units), `maxFieldLength` and `maxAuthors` set the bounds; input over the input cap is one `"too-large"` outcome, and entries past the record cap one trailing `"truncated"` outcome. `"malformed"` marks an entry (or a whole JSON or CSV file) that could not be read.
+`options` is a `ParseOptions`: `mode` (`ParseMode`) and the bounds. In the default `"import"` mode a record needs a title and at least one dedup identifier (ISBN or DOI), else it is skipped (`"no-title"` / `"no-identifier"`); in `"lenient"` mode every entry the format admits is a record, as a document's bibliography needs. CSL-JSON and CSL YAML items are read in full with `fromCslJson` in either mode (an item with no `type` takes one from its identifier in `"import"` mode). `maxRecords` (default `MAX_RECORDS`, 5000), `maxInputLength` (default `MAX_INPUT_LENGTH`, 8,000,000 code units), `maxFieldLength` and `maxAuthors` set the bounds; input over the input cap is one `"too-large"` outcome, and entries past the record cap one trailing `"truncated"` outcome. `"malformed"` marks an entry (or a whole JSON or CSV file) that could not be read.
 
 ```ts
 const outcomes = parseBibliographicFile(bibtex, "bibtex");
@@ -161,6 +161,26 @@ const [thesis] = parseBibtex(
 );
 assert.strictEqual(thesis.outcome === "parsed" ? thesis.record.genre : undefined, "PhD thesis");
 ```
+
+**`parseCslYaml(content)`** reads CSL YAML: a Pandoc bibliography file, or a Markdown document's front matter, holding `references:` (or a bare list of items). It reads the YAML subset bibliographies are written in (block mappings and lists, one-line flow lists, plain, quoted and block scalars, comments); anything else (anchors, aliases, tags) is one `"malformed"` outcome rather than a misreading.
+
+### Writing — `.`
+
+**`toBibtex(records, { dialect? }): string`** writes a `.bib` document, the inverse of `parseBibtex`. `dialect` is `"biblatex"` (the default: BibLaTeX's entry types and fields, ISO 8601 / EDTF `date`, UTF-8 text) or `"bibtex"` (the classic entry types, `year` / `month` / `day`, `journal`, `address`, and ASCII text with accent commands, `ö` → `{\"o}`). CSL markup becomes LaTeX (`<i>` → `\emph{…}`, a `nocase` span → a case-protecting `{…}` group), the specials are escaped, and the `tex.<field>` passthrough `parseBibtex` kept is written back. Each entry's key is the record's own `citation-key` (or string `id`), cleaned of characters a key cannot hold, else a generated `authorYEARword` key; a key already used gets a letter suffix (`darwin1859origin`, `darwin1859origina`). What BibTeX cannot hold (ORCIDs, `categories`, the CSL variables with no BibLaTeX field) is left out.
+
+```ts
+const bib = toBibtex([record]);
+assert.strictEqual(bib.split("\n")[0], "@article{berg2004dna,");
+assert.ok(bib.includes("  title = {The {DNA} of Schön},"));
+assert.ok(bib.includes("  date = {2004-03},"));
+
+// Classic BibTeX: ASCII, with accent commands and `year` / `month`.
+const classic = toBibtex([record], { dialect: "bibtex" });
+assert.ok(classic.includes('  title = {The {DNA} of Sch{\\"o}n},'));
+assert.ok(classic.includes("  month = mar,"));
+```
+
+**`toRis(records): string`** writes RIS (CRLF line ends, `Last, First, Suffix` names, `PY` / `DA` dates, `SP` / `EP` pages, plain text), and **`toCslYaml(records): string`** writes CSL YAML: a `references:` list between `---` and `...`, both a Pandoc bibliography file and a front-matter block. For each format, `parse(write(records))` keeps every field the format models.
 
 ### Dedup — `.`
 

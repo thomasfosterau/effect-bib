@@ -154,8 +154,13 @@ const CONTAINED_KINDS = HashSet.make(
 /** Entry types whose `number` is an issue number. */
 const SERIAL_KINDS = HashSet.make("article", "periodical", "suppperiodical");
 
-/** BibLaTeX's `type` keys → their English genre; any other `type` is kept as written. */
-const GENRES = HashMap.fromIterable<string, string>([
+/**
+ * BibLaTeX's `type` keys → their English genre; any other `type` is kept as
+ * written. The BibTeX writer reads it in reverse.
+ *
+ * @since 1.0.0
+ */
+export const GENRES = HashMap.fromIterable<string, string>([
   ["phdthesis", "PhD thesis"],
   ["mathesis", "Master's thesis"],
   ["mastersthesis", "Master's thesis"],
@@ -173,8 +178,13 @@ const DEFAULT_GENRES = HashMap.fromIterable<string, string>([
   ["mastersthesis", "Master's thesis"],
 ]);
 
-/** Babel / polyglossia language names → BCP 47 tags. */
-const LANGUAGES = HashMap.fromIterable<string, string>([
+/**
+ * Babel / polyglossia language names → BCP 47 tags. The BibTeX writer reads
+ * it in reverse.
+ *
+ * @since 1.0.0
+ */
+export const LANGUAGES = HashMap.fromIterable<string, string>([
   ["english", "en-US"],
   ["american", "en-US"],
   ["usenglish", "en-US"],
