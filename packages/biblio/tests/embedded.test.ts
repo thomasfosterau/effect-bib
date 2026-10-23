@@ -337,6 +337,81 @@ describe("partial values", () => {
   });
 });
 
+describe("links", () => {
+  it.each([
+    ["javascript:alert(1)"],
+    ["data:text/html,<script>alert(1)</script>"],
+    ["vbscript:msgbox"],
+    ["http://[bad"],
+  ])("drops a %j URL from every source, falling back to the page URL", (bad) => {
+    const ld = encodeJson({ "@type": "Book", name: "LD", url: bad });
+    const { page: record, coins } = readEmbeddedMetadata(
+      page(
+        `<meta name="citation_title" content="T"><meta name="citation_abstract_html_url" content="${bad.replace(/"/g, "&quot;")}">` +
+          `<script type="application/ld+json">${ld}</script>`,
+        `<span class="Z3988" title="rft.title=C&amp;rft_id=${encodeURIComponent(bad)}"></span>`,
+      ),
+      { url: "https://example.org/page" },
+    );
+    expect(expectSome(record).URL).toBe("https://example.org/page");
+    expect(coins[0].URL).toBeUndefined();
+  });
+
+  it("takes a later source's safe URL over an unsafe one, and resolves relative links against the page", () => {
+    const { page: record } = readEmbeddedMetadata(
+      page(
+        `<meta name="citation_title" content="T"><meta name="citation_public_url" content="javascript:x">` +
+          `<script type="application/ld+json">{"@type": "Book", "name": "LD", "url": "/books/1"}</script>`,
+      ),
+      { url: "https://example.org/page" },
+    );
+    expect(expectSome(record).URL).toBe("https://example.org/books/1");
+  });
+
+  it("ignores a page URL that is not http(s), and keeps a relative link without one out", () => {
+    const { page: record } = readEmbeddedMetadata(
+      page(
+        `<meta name="citation_title" content="T"><meta name="citation_public_url" content="/rel">`,
+      ),
+      { url: "javascript:alert(1)" },
+    );
+    expect(expectSome(record).URL).toBeUndefined();
+  });
+});
+
+describe("linear scanning", () => {
+  /** Milliseconds `run` takes. */
+  const time = (run: () => void): number => {
+    const start = performance.now();
+    run();
+    return performance.now() - start;
+  };
+
+  it.each([
+    ["unclosed script tags", "<script>".repeat(400_000)],
+    ["script openers with no '>'", "<script ".repeat(400_000)],
+    ["meta openers with no '>'", "<meta ".repeat(500_000)],
+    ["span openers with one far '>'", `${"<span ".repeat(500_000)}>`],
+    [
+      "an unterminated attribute value",
+      `<meta ${"a".repeat(60_000)}="${"b".repeat(5_000)}>`.repeat(50),
+    ],
+  ])("reads a page of %s in linear time", (_, html) => {
+    expect(time(() => readEmbeddedMetadata(html))).toBeLessThan(5_000);
+  });
+
+  it("skips a <script inside an earlier script's text, and an over-long tag", () => {
+    const { page: record } = readEmbeddedMetadata(
+      page(
+        `<script>var s = "<script type='application/ld+json'>{}";</script>` +
+          `<meta name="citation_title" content="${"x".repeat(70_000)}">` +
+          `<script type="application/ld+json">{"@type": "Book", "name": "Real"}</script>`,
+      ),
+    );
+    expect(expectSome(record).title).toBe("Real");
+  });
+});
+
 describe("bounds", () => {
   it("reads nothing from a page with no metadata, or one over the input cap", () => {
     expect(readEmbeddedMetadata(page("<title>Plain</title>"))).toEqual({
