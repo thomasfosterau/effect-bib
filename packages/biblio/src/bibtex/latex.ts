@@ -14,7 +14,7 @@
  * @since 0.1.0
  */
 
-import { Parser, Token } from "@thomasfosterau/effect-parse";
+import { Compiler, Parser, Token } from "@thomasfosterau/effect-parse";
 import * as HashMap from "effect/HashMap";
 import * as Option from "effect/Option";
 import * as Record from "effect/Record";
@@ -242,7 +242,7 @@ const piece = Parser.alt(
 );
 
 /** The whole decoder: every piece, concatenated. */
-const decoder = Parser.compile(
+const decoder = Compiler.closure(
   Parser.fold(piece, {
     init: (): string[] => [],
     f: (pieces, text) => {
@@ -250,7 +250,6 @@ const decoder = Parser.compile(
       return pieces;
     },
   }),
-  { backend: "closure" },
 );
 
 /**

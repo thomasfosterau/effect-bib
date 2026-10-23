@@ -10,7 +10,7 @@
  * @since 0.1.0
  */
 
-import { Parser, Token } from "@thomasfosterau/effect-parse";
+import { Compiler, Parser, Token } from "@thomasfosterau/effect-parse";
 import * as Array from "effect/Array";
 import * as Option from "effect/Option";
 import * as Result from "effect/Result";
@@ -41,7 +41,7 @@ const word = Parser.taken(
 );
 
 /** A name list's tokens: its words and its top-level commas, in order. */
-const tokens = Parser.compile(
+const tokens = Compiler.closure(
   Parser.fold(Parser.preceded(blank, Parser.alt(Token.literal(","), word)), {
     init: (): string[] => [],
     f: (all, token) => {
@@ -49,7 +49,6 @@ const tokens = Parser.compile(
       return all;
     },
   }),
-  { backend: "closure" },
 );
 
 /** Splits a token list at every token `isSeparator` accepts. */
@@ -63,7 +62,7 @@ function splitOn(list: readonly string[], isSeparator: (token: string) => boolea
 }
 
 /** A whole word that is one brace group (`{World Health Organization}`). */
-const wholeGroup = Parser.compile(Parser.allConsuming(braced), { backend: "closure" });
+const wholeGroup = Compiler.closure(Parser.allConsuming(braced));
 
 /** True when a word is a single brace group that is not a special character (`{\"o}`). */
 function isProtectedWord(token: string): boolean {
