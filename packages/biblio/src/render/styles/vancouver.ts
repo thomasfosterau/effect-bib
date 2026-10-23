@@ -10,6 +10,10 @@
  * editor-role terms (`"editor"` / `"editors"`) are the style's own English
  * labels rather than locale terms, since they differ from APA's `"Ed."`.
  *
+ * Output is rich text, as APA's is: a title's CSL markup (a chemical
+ * formula's `<sub>`, an exponent's `<sup>`, a species name's `<i>`) reaches
+ * the HTML and Markdown output, and the plain-text output is unchanged.
+ *
  * @copyright Thomas Foster
  * @module biblio/render/styles/vancouver
  * @since 0.1.0
@@ -22,16 +26,14 @@ import * as Option from "effect/Option";
 import * as String from "effect/String";
 import type { BiblioRecord } from "../../record.ts";
 import {
-  dispatchReference,
+  dispatchRich,
   formatNameList,
   issuedYearText,
-  joinParts,
   type NameListOptions,
-  plainField,
+  richField,
   terminate,
-  terminatedField,
 } from "../format.ts";
-import { stripCslMarkup } from "../markup.ts";
+import { concat, joinRich, type RichText, terminateRich, text, toPlainText } from "../rich.ts";
 import type { CitationStyle, RenderContext } from "../types.ts";
 
 /** The editor role labels (style-local; distinct from APA's `"Ed."`). */
@@ -53,117 +55,119 @@ function authorNames(ctx: RenderContext): NameListOptions {
   };
 }
 
-/** `"Smith JR, Doe AB."` — the author head, or `""` when unauthored. */
-function head(record: BiblioRecord, ctx: RenderContext): string {
+/** `"Smith JR, Doe AB."` — the author head, or empty when unauthored. */
+function head(record: BiblioRecord, ctx: RenderContext): RichText {
   const names = formatNameList(record.author ?? [], authorNames(ctx));
-  return String.isNonEmpty(names) ? terminate(names) : "";
+  return text(String.isNonEmpty(names) ? terminate(names) : "");
 }
 
+/** A field followed by a period, when present. */
+const terminated = (value: Option.Option<RichText>): Option.Option<RichText> =>
+  Option.map(value, terminateRich);
+
+/** Plain text as an always-present part. */
+const part = (value: string): Option.Option<RichText> => Option.some(text(value));
+
 /** `"2nd ed."` when an edition is present, else `None`. */
-function editionSegment(record: BiblioRecord, ctx: RenderContext): Option.Option<string> {
+function editionSegment(record: BiblioRecord, ctx: RenderContext): Option.Option<RichText> {
   return record.edition !== undefined
-    ? Option.some(`${record.edition} ${ctx.locale.edition}`)
+    ? Option.some(text(`${record.edition} ${ctx.locale.edition}`))
     : Option.none();
 }
 
+/** The issued year (or the no-date term). */
+const year = (record: BiblioRecord, ctx: RenderContext): string =>
+  issuedYearText(Option.fromNullishOr(record.issued), ctx.locale);
+
 /** `"London: Penguin; 2020"` — place/publisher/year imprint tail. */
-function imprint(record: BiblioRecord, ctx: RenderContext): string {
-  const place = joinParts(
-    [plainField(record, "publisher-place"), plainField(record, "publisher")],
+function imprint(record: BiblioRecord, ctx: RenderContext): RichText {
+  const place = joinRich(
+    [richField(record, "publisher-place"), richField(record, "publisher")],
     ": ",
   );
-  return joinParts(
-    [
-      Option.some(place),
-      Option.some(issuedYearText(Option.fromNullishOr(record.issued), ctx.locale)),
-    ],
-    "; ",
-  );
+  return joinRich([Option.some(place), part(year(record, ctx))], "; ");
 }
 
-function book(record: BiblioRecord, ctx: RenderContext): string {
-  return joinParts(
+function book(record: BiblioRecord, ctx: RenderContext): RichText {
+  return joinRich(
     [
-      terminatedField(plainField(record, "title")),
-      terminatedField(editionSegment(record, ctx)),
-      Option.some(terminate(imprint(record, ctx))),
+      terminated(richField(record, "title")),
+      terminated(editionSegment(record, ctx)),
+      Option.some(terminateRich(imprint(record, ctx))),
     ],
     " ",
   );
 }
 
-function chapter(record: BiblioRecord, ctx: RenderContext): string {
+function chapter(record: BiblioRecord, ctx: RenderContext): RichText {
   const editors = formatNameList(record.editor ?? [], authorNames(ctx));
   const label = (record.editor?.length ?? 0) > 1 ? EDITORS : EDITOR;
   const inClause = String.isNonEmpty(editors)
-    ? Option.some(`${ctx.locale.in}: ${editors}, ${label}.`)
-    : Option.none<string>();
+    ? part(`${ctx.locale.in}: ${editors}, ${label}.`)
+    : Option.none<RichText>();
   const pages =
-    record.page !== undefined
-      ? Option.some(`${ctx.locale.page} ${record.page}`)
-      : Option.none<string>();
-  return joinParts(
+    record.page !== undefined ? part(`${ctx.locale.page} ${record.page}`) : Option.none<RichText>();
+  return joinRich(
     [
-      terminatedField(plainField(record, "title")),
+      terminated(richField(record, "title")),
       inClause,
-      terminatedField(plainField(record, "container-title")),
-      Option.some(terminate(imprint(record, ctx))),
-      terminatedField(pages),
+      terminated(richField(record, "container-title")),
+      Option.some(terminateRich(imprint(record, ctx))),
+      terminated(pages),
     ],
     " ",
   );
 }
 
-function article(record: BiblioRecord, ctx: RenderContext): string {
+function article(record: BiblioRecord, ctx: RenderContext): RichText {
   const volIssue =
     record.volume !== undefined
       ? `${record.volume}${record.issue !== undefined ? `(${record.issue})` : ""}`
       : "";
   const page = record.page !== undefined ? `:${record.page}` : "";
-  const detail = `${issuedYearText(Option.fromNullishOr(record.issued), ctx.locale)}${String.isNonEmpty(volIssue) ? `;${volIssue}` : ""}${page}`;
-  return joinParts(
+  const detail = `${year(record, ctx)}${String.isNonEmpty(volIssue) ? `;${volIssue}` : ""}${page}`;
+  return joinRich(
     [
-      terminatedField(plainField(record, "title")),
-      terminatedField(plainField(record, "container-title")),
-      Option.some(terminate(detail)),
+      terminated(richField(record, "title")),
+      terminated(richField(record, "container-title")),
+      part(terminate(detail)),
     ],
     " ",
   );
 }
 
-function webpage(record: BiblioRecord, ctx: RenderContext): string {
-  const titleInternet =
-    record.title !== undefined
-      ? Option.some(`${stripCslMarkup(record.title)} [${ctx.locale.internet}]`)
-      : Option.none<string>();
+function webpage(record: BiblioRecord, ctx: RenderContext): RichText {
+  const titleInternet = Option.map(richField(record, "title"), (title) =>
+    concat(title, text(` [${ctx.locale.internet}]`)),
+  );
   const available =
     record.URL !== undefined
-      ? Option.some(`${ctx.locale.availableFrom} ${record.URL}`)
-      : Option.none<string>();
-  return joinParts(
+      ? part(`${ctx.locale.availableFrom} ${record.URL}`)
+      : Option.none<RichText>();
+  return joinRich(
     [
-      terminatedField(titleInternet),
-      terminatedField(plainField(record, "container-title")),
-      Option.some(terminate(issuedYearText(Option.fromNullishOr(record.issued), ctx.locale))),
+      terminated(titleInternet),
+      terminated(richField(record, "container-title")),
+      part(terminate(year(record, ctx))),
       available,
     ],
     " ",
   );
 }
 
-function generic(record: BiblioRecord, ctx: RenderContext): string {
-  return joinParts(
+function generic(record: BiblioRecord, ctx: RenderContext): RichText {
+  return joinRich(
     [
-      terminatedField(plainField(record, "title")),
-      terminatedField(plainField(record, "container-title")),
-      terminatedField(plainField(record, "publisher")),
-      Option.some(terminate(issuedYearText(Option.fromNullishOr(record.issued), ctx.locale))),
+      terminated(richField(record, "title")),
+      terminated(richField(record, "container-title")),
+      terminated(richField(record, "publisher")),
+      part(terminate(year(record, ctx))),
     ],
     " ",
   );
 }
 
-const renderReference = dispatchReference(head, {
+const reference = dispatchRich(head, {
   book,
   chapter,
   article,
@@ -185,6 +189,7 @@ export const vancouverStyle: CitationStyle = {
   id: "vancouver",
   title: "Vancouver",
   category: "numeric",
-  renderReference,
+  renderReference: (record, ctx) => toPlainText(reference(record, ctx)),
+  reference,
   sortKey,
 };

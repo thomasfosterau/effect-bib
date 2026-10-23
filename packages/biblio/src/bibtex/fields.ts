@@ -33,7 +33,7 @@ import {
 } from "../record.ts";
 import { type Budget, spend } from "./budget.ts";
 import { dateFromParts, readBibtexDate, readDay, readMonth } from "./dates.ts";
-import { decodeLatex } from "./latex.ts";
+import { decodeLatex, decodeLatexMarkup } from "./latex.ts";
 import { parseBibtexNames } from "./names.ts";
 import type { BibtexEntry } from "./scan.ts";
 
@@ -72,7 +72,8 @@ const DECODED_SOURCE_FACTOR = 4;
 /**
  * The bounds one document is mapped under: the longest sanitised field, the
  * most names per name variable, and the input cap the decoding budget
- * scales with.
+ * scales with; and whether text fields keep their LaTeX formatting as CSL
+ * markup.
  *
  * @since 1.0.0
  */
@@ -80,6 +81,7 @@ export interface BibtexLimits {
   readonly maxFieldLength: number;
   readonly maxAuthors: number;
   readonly maxInputLength: number;
+  readonly cslMarkup: boolean;
 }
 
 /** BibTeX / BibLaTeX entry type → CSL item type; an unlisted type is `document`. */
@@ -259,7 +261,10 @@ const decodeText =
   (reader: Reader, key: string) =>
   (source: string): Option.Option<string> =>
     Option.flatMap(budgeted(reader, key, source), (clamped) =>
-      sanitiseText(decodeLatex(clamped), reader.limits.maxFieldLength),
+      sanitiseText(
+        reader.limits.cslMarkup ? decodeLatexMarkup(clamped) : decodeLatex(clamped),
+        reader.limits.maxFieldLength,
+      ),
     );
 
 /** Sanitises a verbatim field, unescaping `\_`, `\%`, `\#`, `\&`, `\$` and `\~`. */

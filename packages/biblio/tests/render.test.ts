@@ -581,7 +581,7 @@ describe("CSL markup in text variables", () => {
 
   it("keeps the markup in rich output", () => {
     expect(toHtml(renderReferenceRich(marked, { style: apaStyle }))).toBe(
-      "Doe, J. (2001–2003). <i>On <i>Homo sapiens</i> and CO<sub>2</sub></i>. Harper.",
+      'Doe, J. (2001–2003). <i>On <span style="font-style:normal;">Homo sapiens</span> and CO<sub>2</sub></i>. Harper.',
     );
   });
 
