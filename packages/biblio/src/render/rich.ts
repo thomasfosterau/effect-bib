@@ -225,26 +225,47 @@ const HTML_TAGS: Readonly<Record<Styled["_tag"], readonly [string, string]>> = {
  * Renders rich text as HTML, the markup citeproc-js emits: `<i>`, `<b>`,
  * small caps as a `font-variant` span, `<sup>`, `<sub>`, `<a href>`, and a
  * `div.csl-<display>` per display region. Text and URLs are escaped; a link
- * whose URL is not `http(s)` or `mailto` renders as its text alone.
+ * whose URL is not `http(s)` or `mailto` renders as its text alone. Italics
+ * flip-flop, as in citeproc-js: italic text inside italic text (a species
+ * name in a book title a style italicises) renders upright, as a
+ * `font-style:normal` span.
+ *
+ * @example
+ * ```ts
+ * import * as assert from "node:assert"
+ * import { concat, italic, text, toHtml, toMarkdown } from "@thomasfosterau/biblio"
+ *
+ * const title = italic(concat(text("The voyage of the "), italic(text("Beagle"))))
+ * assert.strictEqual(toHtml(title), '<i>The voyage of the <span style="font-style:normal;">Beagle</span></i>')
+ * assert.strictEqual(toMarkdown(title), "*The voyage of the* Beagle")
+ * ```
  *
  * @since 0.1.0
  */
 export function toHtml(rich: RichText): string {
-  return rich.map(htmlNode).join("");
+  return htmlNodes(rich, false);
 }
 
-function htmlNode(node: Inline): string {
+/** Rich text as HTML, inside italics or not. */
+const htmlNodes = (rich: RichText, inItalic: boolean): string =>
+  rich.map((node) => htmlNode(node, inItalic)).join("");
+
+function htmlNode(node: Inline, inItalic: boolean): string {
   if (Predicate.isTagged(node, "Text")) return escapeHtml(node.text);
   if (Predicate.isTagged(node, "Link")) {
     return isSafeUrl(node.url)
-      ? `<a href="${escapeHtml(node.url.trim())}">${toHtml(node.children)}</a>`
-      : toHtml(node.children);
+      ? `<a href="${escapeHtml(node.url.trim())}">${htmlNodes(node.children, inItalic)}</a>`
+      : htmlNodes(node.children, inItalic);
   }
   if (Predicate.isTagged(node, "Display")) {
-    return `<div class="csl-${node.display}">${toHtml(node.children)}</div>`;
+    return `<div class="csl-${node.display}">${htmlNodes(node.children, inItalic)}</div>`;
+  }
+  if (Predicate.isTagged(node, "Italic")) {
+    const children = htmlNodes(node.children, !inItalic);
+    return inItalic ? `<span style="font-style:normal;">${children}</span>` : `<i>${children}</i>`;
   }
   const [open, close] = HTML_TAGS[node._tag];
-  return `${open}${toHtml(node.children)}${close}`;
+  return `${open}${htmlNodes(node.children, inItalic)}${close}`;
 }
 
 /** The Markdown delimiters of each styled span; those without Markdown syntax are inline HTML. */
@@ -261,24 +282,64 @@ const escapeMarkdown = (value: string): string => value.replace(/([\\`*_[\]<>~|]
  * Renders rich text as CommonMark: `*italic*`, `**bold**`, `[text](url)`;
  * small caps, superscript and subscript have no Markdown syntax and render
  * as inline HTML. Text is escaped; an unsafe link renders as its text alone,
- * and a display region as its text.
+ * and a display region as its text. Italics flip-flop as in {@link toHtml}:
+ * italic text inside italic text closes the emphasis around it, and the
+ * spaces at an emphasis's edges sit outside its `*`, as CommonMark needs.
  *
  * @since 0.1.0
  */
 export function toMarkdown(rich: RichText): string {
-  return rich.map(markdownNode).join("");
+  return markdownNodes(rich, false);
 }
 
-function markdownNode(node: Inline): string {
+/** Rich text as Markdown, inside italics or not. */
+const markdownNodes = (rich: RichText, inItalic: boolean): string =>
+  rich.map((node) => markdownNode(node, inItalic)).join("");
+
+/** `*text*`, with the text's edge whitespace moved outside the delimiters; nothing for blank text. */
+function emphasis(inner: string): string {
+  const match = /^(\s*)([\s\S]*?)(\s*)$/.exec(inner);
+  const [, lead, core, trail] = match ?? ["", "", inner, ""];
+  return String.isEmpty(core) ? inner : `${lead}*${core}*${trail}`;
+}
+
+/**
+ * An italic span as Markdown: its runs of text emphasised, and any italic
+ * nested in it written upright between them (the flip-flop).
+ */
+function markdownItalic(children: RichText): string {
+  const none: Array<{ upright: boolean; nodes: Inline[] }> = [];
+  const runs = Array.reduce(children, none, (acc, node) => {
+    const upright = Predicate.isTagged(node, "Italic");
+    const last = acc[acc.length - 1];
+    if (last !== undefined && last.upright === upright && !upright) last.nodes.push(node);
+    else acc.push({ upright, nodes: [node] });
+    return acc;
+  });
+  return runs
+    .map((run) =>
+      run.upright
+        ? run.nodes
+            .map((node) =>
+              Predicate.isTagged(node, "Italic") ? markdownNodes(node.children, false) : "",
+            )
+            .join("")
+        : emphasis(markdownNodes(run.nodes, true)),
+    )
+    .join("");
+}
+
+function markdownNode(node: Inline, inItalic: boolean): string {
   if (Predicate.isTagged(node, "Text")) return escapeMarkdown(node.text);
   if (Predicate.isTagged(node, "Link")) {
     return isSafeUrl(node.url)
-      ? `[${toMarkdown(node.children)}](${node.url.trim().replace(/[()\s<>]/g, encodeURIComponent)})`
-      : toMarkdown(node.children);
+      ? `[${markdownNodes(node.children, inItalic)}](${node.url.trim().replace(/[()\s<>]/g, encodeURIComponent)})`
+      : markdownNodes(node.children, inItalic);
   }
-  if (Predicate.isTagged(node, "Display")) return toMarkdown(node.children);
+  if (Predicate.isTagged(node, "Display")) return markdownNodes(node.children, inItalic);
+  if (Predicate.isTagged(node, "Italic")) return markdownItalic(node.children);
   const [open, close] = MARKDOWN_TAGS[node._tag];
-  return `${open}${toMarkdown(node.children)}${close}`;
+  return `${open}${markdownNodes(node.children, inItalic)}${close}`;
 }
 
 /** Removes leading whitespace, and any node left empty by it. */

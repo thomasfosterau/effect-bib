@@ -4,10 +4,12 @@
  * escaped specials (`\&`, `\%`), dashes and quotes (`--`, `---`, ` `` `),
  * ties (`~`), and the common text commands (`\emph`, `\textbf`, `\url`,
  * `\href`, `\enquote`), whose formatting is dropped and whose text is kept.
+ * Grouping braces are removed, so BibTeX's case protection (`{DNA}`) is not
+ * kept.
  *
- * Grouping braces are removed. They also carry BibTeX's case protection
- * (`{DNA}`); the record has no rich-text field to keep it in yet, and no
- * renderer changes a title's case, so nothing reads it today.
+ * {@link decodeLatexMarkup} is the opt-in alternative (`bibtexMarkup` in the
+ * parse options): the same decoding, with the formatting commands and the
+ * case-protecting groups kept as CSL rich-text markup.
  *
  * @copyright Thomas Foster
  * @module biblio/bibtex/latex
@@ -263,4 +265,148 @@ export function decodeLatex(source: string): string {
   // A `fold` with no minimum always succeeds.
   const decoded = Parser.parsePeek(decoder, source);
   return Result.isSuccess(decoded) ? decoded.success[1].join("") : source;
+}
+
+// ── CSL markup ─────────────────────────────────────────────────────────
+
+/** The formatting commands kept as CSL markup, and the markup each becomes. */
+const FORMATTING: ReadonlyArray<readonly [string, string, string]> = [
+  ["emph", "<i>", "</i>"],
+  ["textit", "<i>", "</i>"],
+  ["textbf", "<b>", "</b>"],
+  ["textsc", '<span style="font-variant:small-caps;">', "</span>"],
+  ["textsuperscript", "<sup>", "</sup>"],
+  ["textsubscript", "<sub>", "</sub>"],
+];
+
+/**
+ * A literal `<` in the source, which CSL markup cannot escape: it is wrapped
+ * in a `nocase` span, so `a <i> b` cannot read back as markup. Every CSL
+ * processor reads the span as its text.
+ */
+const LITERAL_LT = '<span class="nocase"><</span>';
+
+/** Text with every `<` made literal for CSL markup. */
+const literal = (text: string): string => text.replace(/</g, LITERAL_LT);
+
+/**
+ * The CSL-markup decoder's pieces: as the plain decoder's, with the
+ * formatting commands as markup, a case-protecting `{…}` group as a
+ * `nocase` span (one level: inside it, groups are plain), and `<` literal.
+ */
+function markupPieces(inNoCase: boolean): Parser.Parser<string> {
+  const decode = (inner: string): string =>
+    inNoCase ? decodeNoCaseMarkup(inner) : decodeLatexMarkup(inner);
+  const words = Record.fromEntries([
+    ...Array.from(
+      SYMBOL_WORDS,
+      ([name, symbol]) => [name, Parser.succeed(literal(symbol))] as const,
+    ),
+    ["url", withGroup(literal)],
+    // `\href{url}{text}`: the URL is dropped and the text is the link's, not
+    // a case-protecting group.
+    [
+      "href",
+      Parser.orElseSucceed(
+        Parser.map(Parser.preceded(groupText, Parser.preceded(blank, groupText)), decode),
+        () => "",
+      ),
+    ],
+    ["enquote", withGroup((inner) => `“${decode(inner)}”`)],
+    ...FORMATTING.map(
+      ([name, open, close]) =>
+        [
+          name,
+          withGroup((inner) => {
+            const decoded = decode(inner);
+            return decoded === "" ? "" : `${open}${decoded}${close}`;
+          }),
+        ] as const,
+    ),
+    ...Array.from(WORD_ACCENTS, ([name, mark]) => [name, accented(mark)] as const),
+  ]);
+  const markupCommand = Parser.preceded(
+    Token.literal("\\"),
+    Parser.alt(
+      Parser.dispatch(
+        Parser.zipLeft(Token.takeWhile(isLetter, { min: 1 }), blank),
+        words,
+        droppedCommand,
+      ),
+      Parser.map(Parser.dispatch(Token.any, controlSymbols), literal),
+      Parser.map(Token.any, literal),
+      Parser.succeed(""),
+    ),
+  );
+  const group = Parser.map(groupText, (inner) => {
+    // A group that opens with a command is a special character (`{\"o}`),
+    // not case protection; inside a nocase span, groups add nothing.
+    if (inNoCase || inner.trimStart().startsWith("\\")) return decode(inner);
+    const decoded = decodeNoCaseMarkup(inner);
+    return decoded === "" ? "" : `<span class="nocase">${decoded}</span>`;
+  });
+  return Parser.alt(
+    Parser.map(Token.takeTill("\\{}-~`'$", { min: 1 }), literal),
+    markupCommand,
+    group,
+    Parser.as(Token.oneOf("{}$"), ""),
+    Parser.as(Token.literal("---"), "—"),
+    Parser.as(Token.literal("--"), "–"),
+    Token.literal("-"),
+    Parser.as(Token.literal("~"), " "),
+    Parser.as(Token.literal("``"), "“"),
+    Parser.as(Token.literal("''"), "”"),
+    Parser.as(Token.literal("`"), "‘"),
+    Token.literal("'"),
+  );
+}
+
+/** A decoder over `pieces`, built once. */
+const compile = (pieces: Parser.Parser<string>) =>
+  Compiler.closure(
+    Parser.fold(pieces, {
+      init: (): string[] => [],
+      f: (all, text) => {
+        all.push(text);
+        return all;
+      },
+    }),
+  );
+
+/** The two markup decoders (top level, and inside a nocase span), built on first use. */
+const markupDecoders = {
+  top: Option.none<ReturnType<typeof compile>>(),
+  noCase: Option.none<ReturnType<typeof compile>>(),
+};
+
+/** Runs a markup decoder, building it on first use (the pieces refer to each other). */
+function runMarkup(inNoCase: boolean, source: string): string {
+  const key = inNoCase ? "noCase" : "top";
+  const decoder = Option.getOrElse(markupDecoders[key], () => {
+    const built = compile(markupPieces(inNoCase));
+    markupDecoders[key] = Option.some(built);
+    return built;
+  });
+  const decoded = Parser.parsePeek(decoder, source);
+  return Result.isSuccess(decoded) ? decoded.success[1].join("") : literal(source);
+}
+
+/** Decodes source inside a `nocase` span. */
+const decodeNoCaseMarkup = (source: string): string => runMarkup(true, source);
+
+/**
+ * Decodes a LaTeX field value to text with CSL rich-text markup: as
+ * {@link decodeLatex}, but `\emph{…}` / `\textit{…}` become `<i>…</i>`,
+ * `\textbf{…}` `<b>…</b>`, `\textsc{…}` a small-caps span,
+ * `\textsuperscript{…}` / `\textsubscript{…}` `<sup>` / `<sub>`, and a
+ * case-protecting group (`{DNA}`, a group that does not open with a command)
+ * a `<span class="nocase">`. CSL markup has no escape, so a literal `<` in
+ * the source is written as a `nocase` span holding it
+ * (`<span class="nocase"><</span>`), which reads back as the `<` it is.
+ * Total.
+ *
+ * @since 1.0.0
+ */
+export function decodeLatexMarkup(source: string): string {
+  return runMarkup(false, source);
 }

@@ -196,12 +196,24 @@ export type ParseMode = "import" | "lenient";
  * per record, `maxFieldLength` and `maxAuthors` ({@link RecordLimits}). A
  * non-positive or non-integer bound falls back to its default.
  *
+ * `bibtexMarkup` (default `false`) keeps BibTeX's formatting as CSL
+ * rich-text markup in text fields, where by default it is dropped:
+ * `\emph{…}` / `\textit{…}` → `<i>…</i>`, `\textbf{…}` → `<b>…</b>`,
+ * `\textsc{…}` → `<span style="font-variant:small-caps;">…</span>`,
+ * `\textsuperscript{…}` / `\textsubscript{…}` → `<sup>` / `<sub>`, and a
+ * case-protecting group, `{DNA}`, → `<span class="nocase">DNA</span>`. CSL
+ * markup has no escape, so with it on a literal `<` in the BibTeX text is
+ * written as `<span class="nocase"><</span>`: it reads back (with
+ * {@link parseCslMarkup}, or any CSL processor) as the `<` it is, never as a
+ * tag. Names, dates and identifiers are not affected.
+ *
  * @since 1.0.0
  */
 export interface ParseOptions extends RecordLimits {
   readonly mode?: ParseMode;
   readonly maxRecords?: number;
   readonly maxInputLength?: number;
+  readonly bibtexMarkup?: boolean;
 }
 
 /** {@link ParseOptions} with every default applied. */
@@ -211,6 +223,7 @@ interface Settings {
   readonly maxInputLength: number;
   readonly maxFieldLength: number;
   readonly maxAuthors: number;
+  readonly cslMarkup: boolean;
 }
 
 /** Applies the defaults to a caller's options. */
@@ -221,6 +234,7 @@ function settings(options: ParseOptions): Settings {
     maxInputLength: limitOr(Option.fromUndefinedOr(options.maxInputLength), MAX_INPUT_LENGTH),
     maxFieldLength: limitOr(Option.fromUndefinedOr(options.maxFieldLength), MAX_TEXT_FIELD_LENGTH),
     maxAuthors: limitOr(Option.fromUndefinedOr(options.maxAuthors), MAX_AUTHORS),
+    cslMarkup: options.bibtexMarkup === true,
   };
 }
 
