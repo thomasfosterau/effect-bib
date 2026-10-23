@@ -295,6 +295,72 @@ describe("parseBibliographicStream's bounds", () => {
     expect(inherited.filter((value) => value === true).length).toBeGreaterThan(0);
     expect(inherited[inherited.length - 1]).toBe(false);
   });
+
+  /** Milliseconds `run` takes. */
+  const elapsed = async (run: () => Promise<void>): Promise<number> => {
+    const start = performance.now();
+    await run();
+    return performance.now() - start;
+  };
+
+  it("finds context by name, so many macros and many entries stay linear", async () => {
+    const macros = Array.makeBy(60_000, (index) => `@string{m${index} = "Value ${index}"}`).join(
+      "\n",
+    );
+    const entries = Array.makeBy(
+      15_000,
+      (index) => `@misc{k${index}, title = {T}, publisher = m${index % 7}}`,
+    ).join("\n");
+    const text = `${macros}\n${entries}\n`;
+    let outcomes: readonly ParseOutcome[] = [];
+    const ms = await elapsed(async () => {
+      outcomes = await streamed(text, 65_536, "bibtex", { mode: "lenient", maxRecords: 100_000 });
+    });
+    // Before context was found by name this took about six minutes.
+    expect(ms).toBeLessThan(20_000);
+    expect(outcomes).toHaveLength(15_000);
+    const last = outcomes[outcomes.length - 1];
+    expect(last.outcome === "parsed" ? last.record.publisher : undefined).toBe("Value 5");
+  });
+
+  it("finds a large parent's context once per batch, not once per child", async () => {
+    const parent = `@book{parent, title = {Parent}, note = {${"n word ".repeat(150_000)}}}\n`;
+    const children = Array.makeBy(
+      20_000,
+      (index) => `@inbook{c${index}, crossref = {parent}, title = {C}}`,
+    ).join("\n");
+    let outcomes: readonly ParseOutcome[] = [];
+    const ms = await elapsed(async () => {
+      outcomes = await streamed(`${parent}${children}\n`, 65_536, "bibtex", {
+        mode: "lenient",
+        maxRecords: 100_000,
+      });
+    });
+    expect(ms).toBeLessThan(20_000);
+    expect(outcomes).toHaveLength(20_001);
+  });
+
+  it("uses a macro's latest definition, and keeps a key's latest parent when an older one leaves the window", async () => {
+    // The window holds 1000 entries: the child and these push out the old `p` but not the new one.
+    const fillers = Array.makeBy(998, (index) => `@misc{f${index}, title = {F}}`);
+    const parts = [
+      '@string{pub = "First"}',
+      '@string{inner = "Inner"}',
+      '@string{pub = inner # " Second"}',
+      "@book{p, title = {Old Parent}}",
+      "@book{p, title = {New Parent}}",
+      ...fillers,
+      "@inbook{child, crossref = {p}, publisher = pub, note = undefinedmacro}",
+    ].map((part) => `${part}\n`);
+    const outcomes = await fromParts(parts, "bibtex", { mode: "lenient" });
+    const child = outcomes.find(
+      (outcome) => outcome.outcome === "parsed" && outcome.record.id === "child",
+    );
+    expect(child?.outcome === "parsed" ? child.record.publisher : undefined).toBe("Inner Second");
+    expect(child?.outcome === "parsed" ? child.record["container-title"] : undefined).toBe(
+      "New Parent",
+    );
+  });
 });
 
 describe("parseBibliographic", () => {
