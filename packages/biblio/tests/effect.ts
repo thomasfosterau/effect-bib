@@ -22,6 +22,10 @@ import * as Option from "effect/Option";
 export const runTest = <A, E>(effect: Effect.Effect<A, E, never>): Promise<A> =>
   Effect.runPromise(effect);
 
+/** Run a fully-provided Effect to a Promise of its `Exit`, failure included. */
+export const runTestExit = <A, E>(effect: Effect.Effect<A, E, never>): Promise<Exit.Exit<A, E>> =>
+  Effect.runPromiseExit(effect);
+
 /**
  * Run a fully-provided Effect expected to fail with an instance of the
  * given error class; returns the failure so callers can assert on its

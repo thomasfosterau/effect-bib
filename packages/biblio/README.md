@@ -164,6 +164,22 @@ assert.strictEqual(thesis.outcome === "parsed" ? thesis.record.genre : undefined
 
 **`parseCslYaml(content)`** reads CSL YAML: a Pandoc bibliography file, or a Markdown document's front matter, holding `references:` (or a bare list of items). It reads the YAML subset bibliographies are written in (block mappings and lists, one-line flow lists, plain, quoted and block scalars, comments); anything else (anchors, aliases, tags) is one `"malformed"` outcome rather than a misreading.
 
+**`parseBibliographic(content, format, options?): Effect<ParseOutcome[], InputTooLarge>`** is the same parse as an `Effect`, failing with the typed `InputTooLarge` error (`{ format, maxInputLength, message }`) where the pure parser yields a `"too-large"` outcome. **`parseBibliographicStream(chunks, format, options?): Stream<ParseOutcome, E | InputTooLarge, R>`** reads a large file as a `Stream` of text chunks and emits each entry's outcome as soon as the entry is complete, so the file never has to be in memory at once: BibTeX, RIS and CSV stream entry by entry with the whole-file parse's outcomes and positions (BibTeX `@string` macros carried forward; a `crossref` / `xdata` child read with its parent from a window of the last 1000 entries, or held back until a later parent arrives); CSL-JSON and CSL YAML are read whole at the end. In a stream, `maxInputLength` bounds the text held at once (an unfinished entry, the macros, the waiting children), not the whole stream, and the record cap ends the stream with one `"truncated"` outcome.
+
+```ts
+const chunks = Stream.fromIterable([
+  '@string{ups = "Oxford Univ',
+  'ersity Press"}\n@book{a, title = {First}, publisher = ups, isbn = {9780199695836}}\n@bo',
+  "ok{b, title = {Second}, isbn = {9780062316097}}",
+]);
+const outcomes = Effect.runSync(Stream.runCollect(parseBibliographicStream(chunks, "bibtex")));
+assert.strictEqual(
+  outcomes[0].outcome === "parsed" ? outcomes[0].record.publisher : undefined,
+  "Oxford University Press",
+);
+assert.deepStrictEqual(outcomes[1].position, { offset: 108, line: 3, column: 1 });
+```
+
 ### Writing — `.`
 
 **`toBibtex(records, { dialect? }): string`** writes a `.bib` document, the inverse of `parseBibtex`. `dialect` is `"biblatex"` (the default: BibLaTeX's entry types and fields, ISO 8601 / EDTF `date`, UTF-8 text) or `"bibtex"` (the classic entry types, `year` / `month` / `day`, `journal`, `address`, and ASCII text with accent commands, `ö` → `{\"o}`). CSL markup becomes LaTeX (`<i>` → `\emph{…}`, a `nocase` span → a case-protecting `{…}` group), the specials are escaped, and the `tex.<field>` passthrough `parseBibtex` kept is written back. Each entry's key is the record's own `citation-key` (or string `id`), cleaned of characters a key cannot hold, else a generated `authorYEARword` key; a key already used gets a letter suffix (`darwin1859origin`, `darwin1859origina`). What BibTeX cannot hold (ORCIDs, `categories`, the CSL variables with no BibLaTeX field) is left out.

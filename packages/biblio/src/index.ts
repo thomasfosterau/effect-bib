@@ -17,4 +17,5 @@ export * from "./identifiers.ts";
 export * from "./parse.ts";
 export * from "./record.ts";
 export * from "./render/index.ts";
+export * from "./streaming.ts";
 export * from "./write/index.ts";
