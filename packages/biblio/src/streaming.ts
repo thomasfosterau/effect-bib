@@ -14,6 +14,7 @@
 import * as Array from "effect/Array";
 import * as Effect from "effect/Effect";
 import * as HashSet from "effect/HashSet";
+import * as MutableHashMap from "effect/MutableHashMap";
 import * as MutableHashSet from "effect/MutableHashSet";
 import * as Option from "effect/Option";
 import * as Order from "effect/Order";
@@ -253,6 +254,23 @@ const MAX_PENDING = 1000;
  */
 const CONTEXT_FACTOR = 4;
 
+/** A BibTeX `@string` definition the stream carries forward. */
+interface Macro {
+  readonly text: string;
+  /** Its place in definition order (a redefinition takes a new one). */
+  readonly order: number;
+  /** The macro names its value may use, deduplicated. */
+  readonly uses: readonly string[];
+}
+
+/** A BibTeX entry kept for children that cross-reference it. */
+interface Parent {
+  readonly key: string;
+  readonly text: string;
+  /** Its place in the window, so an eviction can tell whether it is still the latest for its key. */
+  readonly seq: number;
+}
+
 /** The stream's state between chunks. */
 interface State {
   buffered: Buffered;
@@ -261,10 +279,16 @@ interface State {
   done: boolean;
   /** CSV: the header row, once read. */
   header: Option.Option<string>;
-  /** BibTeX: the `@string` definitions seen so far, by macro name, in definition order. */
-  macros: Array<readonly [string, string]>;
-  /** BibTeX: recent entries by key, oldest first, for children that cross-reference them. */
-  parents: Array<readonly [string, string]>;
+  /** BibTeX: the `@string` definitions seen so far, by macro name. */
+  readonly macros: MutableHashMap.MutableHashMap<string, Macro>;
+  /** BibTeX: the definitions' total length, and how many have been read. */
+  macroLength: number;
+  macroCount: number;
+  /** BibTeX: recent entries, oldest first, for children that cross-reference them. */
+  parents: Parent[];
+  /** BibTeX: the latest entry in the window under each key. */
+  readonly parentIndex: MutableHashMap.MutableHashMap<string, Parent>;
+  parentCount: number;
   /** BibTeX: the parents' total length. */
   parentLength: number;
   /** BibTeX: children waiting for a parent not yet seen. */
@@ -274,6 +298,8 @@ interface State {
   /** The input read so far, and the context parsed so far (both in characters). */
   seen: number;
   contextSpent: number;
+  /** BibTeX: the context found for units so far (charged whether or not it is read). */
+  discovered: number;
 }
 
 /** The total length of some texts. */
@@ -352,58 +378,121 @@ const macroUses = (text: string): string[] =>
     match[1].toLowerCase(),
   );
 
-/** The parent texts `keys` reach through the window (transitively, a few levels deep). */
-function parentTexts(state: State, keys: readonly string[], depth = 0): string[] {
-  if (depth > 8 || Array.isReadonlyArrayEmpty(keys)) return [];
-  const found = Array.filterMap(keys, (key): Result.Result<string, void> =>
-    Result.fromOption(
-      Option.map(
-        Array.findLast(state.parents, ([parent]) => parent === key),
-        ([, text]) => text,
-      ),
+/** How much context a BibTeX stream may parse, and separately find, by now. */
+const contextBudget = (state: State, cap: number): number => CONTEXT_FACTOR * (state.seen + cap);
+
+/**
+ * The parent texts `keys` reach through the window (transitively, a few
+ * levels deep), each key looked up once.
+ */
+function parentTexts(
+  state: State,
+  keys: readonly string[],
+  visited: MutableHashSet.MutableHashSet<string>,
+  depth = 0,
+): string[] {
+  if (depth > 8) return [];
+  const found = Array.filterMap(keys, (key): Result.Result<string, void> => {
+    if (MutableHashSet.has(visited, key)) return Result.failVoid;
+    MutableHashSet.add(visited, key);
+    return Result.fromOption(
+      Option.map(MutableHashMap.get(state.parentIndex, key), (parent) => parent.text),
       () => undefined,
-    ),
-  );
-  return [...found, ...parentTexts(state, found.flatMap(references), depth + 1)];
+    );
+  });
+  return Array.isReadonlyArrayEmpty(found)
+    ? found
+    : [...found, ...parentTexts(state, found.flatMap(references), visited, depth + 1)];
 }
 
-/** The macro names `names` reach through the definitions (transitively, a few levels deep). */
-function macroClosure(state: State, names: readonly string[], depth = 0): string[] {
-  if (depth > 8 || Array.isReadonlyArrayEmpty(names)) return [];
-  const wanted = HashSet.fromIterable(names);
-  const defined = state.macros.filter(([name]) => HashSet.has(wanted, name));
-  return [
-    ...names,
-    ...macroClosure(
-      state,
-      defined.flatMap(([, text]) => macroUses(text)),
-      depth + 1,
-    ),
-  ];
+/**
+ * The definitions `names` reach (transitively, a few levels deep), in
+ * definition order: each name looked up once, by name, so the work is the
+ * macros reached, not every macro defined.
+ */
+function macrosUsed(state: State, names: readonly string[]): Macro[] {
+  const visited = MutableHashSet.empty<string>();
+  const found: Macro[] = [];
+  const visit = (level: readonly string[], depth: number): void => {
+    const next = Array.flatMap(level, (name) => {
+      if (MutableHashSet.has(visited, name)) return [];
+      MutableHashSet.add(visited, name);
+      return Option.match(MutableHashMap.get(state.macros, name), {
+        onNone: () => [],
+        onSome: (macro) => {
+          found.push(macro);
+          return macro.uses;
+        },
+      });
+    });
+    if (depth < 8 && Array.isReadonlyArrayNonEmpty(next)) visit(next, depth + 1);
+  };
+  visit(names, 0);
+  return Array.sortWith(found, (macro) => macro.order, Order.Number);
 }
 
 /**
  * The context a unit needs: the macros it (or a parent it reads) uses, in
- * definition order, then the parents it cross-references.
+ * definition order, then the parents it cross-references. It depends only on
+ * the keys the unit references and the macro names it uses, so a batch
+ * finds it once per distinct pair (`found`). Finding it costs about as much
+ * as the context it finds, so that is charged to the stream's context
+ * budget; once the budget is spent, units get no context and none is looked
+ * for.
  */
-function contextFor(state: State, unit: Unit): string[] {
-  const parents = Array.dedupe(parentTexts(state, references(unit.text)));
-  const used = HashSet.fromIterable(
-    macroClosure(state, [unit.text, ...parents].flatMap(macroUses)),
-  );
-  const macros = state.macros.filter(([name]) => HashSet.has(used, name)).map(([, text]) => text);
-  return Array.dedupe([...macros, ...parents]);
+function contextFor(
+  state: State,
+  unit: Unit,
+  cap: number,
+  found: MutableHashMap.MutableHashMap<string, string[]>,
+): string[] {
+  const keys = references(unit.text);
+  const uses = macroUses(unit.text);
+  const signature = `${keys.join(",")}|${uses.join(",")}`;
+  return Option.getOrElse(MutableHashMap.get(found, signature), () => {
+    if (state.discovered > contextBudget(state, cap)) return [];
+    const parents = parentTexts(state, keys, MutableHashSet.empty());
+    const macros = macrosUsed(state, [...uses, ...parents.flatMap(macroUses)]);
+    const context = [...macros.map((macro) => macro.text), ...parents];
+    state.discovered += lengthOf(context);
+    MutableHashMap.set(found, signature, context);
+    return context;
+  });
+}
+
+/** Records an `@string` definition, replacing an earlier one of the same name. */
+function define(state: State, name: string, text: string): void {
+  Option.map(MutableHashMap.get(state.macros, name), (old) => {
+    state.macroLength -= old.text.length;
+  });
+  MutableHashMap.set(state.macros, name, {
+    text,
+    order: state.macroCount,
+    uses: Array.fromIterable(HashSet.fromIterable(macroUses(text))),
+  });
+  state.macroCount += 1;
+  state.macroLength += text.length;
 }
 
 /** Remembers an entry as a possible parent, dropping the oldest past the window (by count and by length). */
 function remember(state: State, unit: Unit, cap: number): void {
   Option.map(entryKey(unit.text), (key) => {
-    state.parents.push([key, unit.text]);
+    const parent: Parent = { key, text: unit.text, seq: state.parentCount };
+    state.parentCount += 1;
+    state.parents.push(parent);
+    MutableHashMap.set(state.parentIndex, key, parent);
     state.parentLength += unit.text.length;
     // oxlint-disable-next-line effect/imperative-loops -- evicts from the front of the window until it is within both bounds; how many go depends on their lengths.
     while (state.parents.length > PARENT_WINDOW || state.parentLength > cap) {
-      Option.map(Option.fromUndefinedOr(state.parents.shift()), ([, text]) => {
-        state.parentLength -= text.length;
+      Option.map(Option.fromUndefinedOr(state.parents.shift()), (evicted) => {
+        state.parentLength -= evicted.text.length;
+        if (
+          Option.exists(
+            MutableHashMap.get(state.parentIndex, evicted.key),
+            (latest) => latest.seq === evicted.seq,
+          )
+        )
+          MutableHashMap.remove(state.parentIndex, evicted.key);
       });
     }
   });
@@ -411,7 +500,7 @@ function remember(state: State, unit: Unit, cap: number): void {
 
 /** True when every key an entry references has been seen. */
 const resolved = (state: State, unit: Unit): boolean =>
-  references(unit.text).every((key) => state.parents.some(([parent]) => parent === key));
+  references(unit.text).every((key) => MutableHashMap.has(state.parentIndex, key));
 
 /** One document to read: its units, the context they need, and its length so far. */
 interface Group {
@@ -438,8 +527,9 @@ function single(unit: Unit, context: readonly string[]): Group {
  */
 function groups(state: State, units: readonly Unit[], cap: number): Group[] {
   const all: Group[] = [];
+  const found = MutableHashMap.empty<string, string[]>();
   Array.forEach(units, (unit) => {
-    const context = contextFor(state, unit);
+    const context = contextFor(state, unit, cap, found);
     const last = all[all.length - 1];
     const added = context.filter(
       (text) => last === undefined || !MutableHashSet.has(last.included, text),
@@ -466,7 +556,7 @@ function groups(state: State, units: readonly Unit[], cap: number): Group[] {
 /** Reads one document, with its context while the stream's context budget lasts. */
 function readGroup(state: State, group: Group, options: ParseOptions, cap: number): ParseOutcome[] {
   const length = lengthOf(group.context);
-  const affordable = state.contextSpent + length <= CONTEXT_FACTOR * (state.seen + cap);
+  const affordable = state.contextSpent + length <= contextBudget(state, cap);
   if (affordable) state.contextSpent += length;
   const context = affordable ? group.context.map((text) => `${text}\n`).join("") : "";
   return parseUnits(context, group.units, (document) =>
@@ -487,9 +577,7 @@ function readBibtex(
       onNone: () => {
         if (!isMacro(unit.text)) remember(state, unit, cap);
       },
-      onSome: (name) => {
-        state.macros = [...state.macros.filter(([defined]) => defined !== name), [name, unit.text]];
-      },
+      onSome: (name) => define(state, name, unit.text),
     });
   });
   const candidates = [...state.pending, ...units.filter((unit) => !isMacro(unit.text))];
@@ -607,9 +695,7 @@ function step(
   // Parents are bounded apart (by count and length); this is the rest of
   // what the stream holds.
   const held =
-    rest.text.length +
-    lengthOf(state.macros.map(([, definition]) => definition)) +
-    lengthOf(state.pending.map((unit) => unit.text));
+    rest.text.length + state.macroLength + lengthOf(state.pending.map((unit) => unit.text));
   if (held > cap) {
     state.done = true;
     return [Result.fail(tooLarge(format, cap))];
@@ -683,8 +769,12 @@ export const parseBibliographicStream = <E, R>(
     emitted: 0,
     done: false,
     header: Option.none(),
-    macros: [],
+    macros: MutableHashMap.empty(),
+    macroLength: 0,
+    macroCount: 0,
     parents: [],
+    parentIndex: MutableHashMap.empty(),
+    parentCount: 0,
     parentLength: 0,
     pending: [],
     budgets: {
@@ -693,6 +783,7 @@ export const parseBibliographicStream = <E, R>(
     },
     seen: 0,
     contextSpent: 0,
+    discovered: 0,
   });
   return chunks.pipe(
     Stream.mapAccum(
