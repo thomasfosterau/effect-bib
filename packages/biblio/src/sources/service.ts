@@ -36,6 +36,7 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import { FetchHttpClient, HttpClient, HttpClientRequest } from "effect/http";
 import { decodeDoi, decodeIsbn } from "../identifiers.ts";
+import { type EmbeddedMetadata } from "../embedded.ts";
 import { type BiblioRecord } from "../record.ts";
 import { type LookupContact } from "./contact.ts";
 import { InvalidIdentifier, type LookupError } from "./errors.ts";
@@ -43,6 +44,8 @@ import { lookupCrossrefByDoi } from "./crossref.ts";
 import { lookupDoiCsl } from "./doi.ts";
 import { lookupOpenLibraryByIsbn } from "./openlibrary.ts";
 import { searchOpenAlexByTitle } from "./openalex.ts";
+import { type ResolveAddresses } from "./fetch-policy.ts";
+import { lookupWebPage } from "./web.ts";
 
 /**
  * The polite User-Agent for a contact: `product (mailto:email)`. Crossref's
@@ -60,8 +63,19 @@ const userAgent = (contact: LookupContact): string =>
  * @since 0.1.0
  */
 export interface BiblioLookupOptions {
-  /** Who is making the lookups; sent with every upstream request. */
+  /**
+   * Who is making the lookups; sent with every upstream request (only
+   * `product`, without the email address, to the arbitrary hosts `byUrl`
+   * reaches).
+   */
   readonly contact: LookupContact;
+  /**
+   * Resolves a host to its addresses, so `byUrl` refuses a public name that
+   * points at a private, loopback or link-local address. Supply it where the
+   * runtime can resolve DNS (Node); a Worker cannot, and without it only the
+   * URL itself is checked. Added in 1.0.0.
+   */
+  readonly resolveAddresses?: ResolveAddresses;
 }
 
 /**
@@ -99,6 +113,7 @@ export interface BiblioLookupOptions {
  *   byDoiRecord: () => Effect.succeed(Option.none()),
  *   byDoiCsl: () => Effect.succeed(Option.none()),
  *   byTitle: () => Effect.succeed([]),
+ *   byUrl: () => Effect.succeed(Option.none()),
  * })
  * const found = await Effect.runPromise(program.pipe(Effect.provide(stub)))
  * assert.strictEqual(Option.isNone(found), true)
@@ -122,6 +137,14 @@ export class BiblioLookup extends Context.Service<
     readonly byDoiCsl: (doi: string) => Effect.Effect<Option.Option<BiblioRecord>, LookupError>;
     /** CSL-native title search via OpenAlex, ranked by upstream relevance. */
     readonly byTitle: (query: string) => Effect.Effect<readonly BiblioRecord[], LookupError>;
+    /**
+     * A publisher page's embedded citation metadata (the page record and its
+     * COinS records), fetched under the library's request policy: a URL it
+     * refuses (a private or local host, credentials, a non-default port, a
+     * non-http(s) scheme) fails with `RefusedUrl` before any request. Added
+     * in 1.0.0.
+     */
+    readonly byUrl: (url: string) => Effect.Effect<Option.Option<EmbeddedMetadata>, LookupError>;
   }
 >()("@thomasfosterau/biblio/BiblioLookup") {}
 
@@ -133,8 +156,16 @@ export class BiblioLookup extends Context.Service<
  */
 // Kept local: the package depends on nothing but `effect`.
 // fallow-ignore-next-line code-duplication
-const makeBiblioLookup = Effect.fnUntraced(function* ({ contact }: BiblioLookupOptions) {
+const makeBiblioLookup = Effect.fnUntraced(function* ({
+  contact,
+  resolveAddresses,
+}: BiblioLookupOptions) {
   const baseClient = yield* HttpClient.HttpClient;
+  // `byUrl` reaches hosts the caller names, so it sends the product alone,
+  // never the contact email, and reads every status itself.
+  const pageClient = baseClient.pipe(
+    HttpClient.mapRequest(HttpClientRequest.setHeader("user-agent", contact.product)),
+  );
   const client = baseClient.pipe(
     HttpClient.mapRequest((request) =>
       request.pipe(
@@ -174,7 +205,15 @@ const makeBiblioLookup = Effect.fnUntraced(function* ({ contact }: BiblioLookupO
     return yield* searchOpenAlexByTitle(client, query, contact);
   });
 
-  return { byIsbnRecord, byDoiRecord, byDoiCsl, byTitle } as const;
+  const byUrl = Effect.fn("BiblioLookup.byUrl")(function* (url: string) {
+    return yield* lookupWebPage(
+      pageClient,
+      url,
+      resolveAddresses === undefined ? {} : { resolveAddresses },
+    );
+  });
+
+  return { byIsbnRecord, byDoiRecord, byDoiCsl, byTitle, byUrl } as const;
 });
 
 /**
