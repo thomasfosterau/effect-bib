@@ -15,6 +15,10 @@ import { FetchHttpClient, HttpClient } from "effect/http";
 export interface StubRoute {
   readonly status: number;
   readonly body: unknown;
+  /** A `Location` header, for a redirect. */
+  readonly location?: string;
+  /** A body sent as written instead of `body` as JSON. */
+  readonly raw?: string;
 }
 
 /**
@@ -36,6 +40,8 @@ export interface StubRouter {
   readonly urls: string[];
   readonly userAgents: string[];
   readonly accepts: string[];
+  /** Each request's `redirect` mode (`"follow"`, fetch's default, when unset). */
+  readonly redirects: string[];
   readonly fetch: typeof globalThis.fetch;
   readonly layer: Layer.Layer<HttpClient.HttpClient>;
 }
@@ -55,12 +61,14 @@ export function stubRouter(routes: Record<string, StubRoute>): StubRouter {
   const urls: string[] = [];
   const userAgents: string[] = [];
   const accepts: string[] = [];
+  const redirects: string[] = [];
   const toJsonText = Schema.encodeSync(Schema.fromJsonString(Schema.Unknown));
   const fetch: typeof globalThis.fetch = async (input, init) => {
     const request = new Request(input, init);
     urls.push(request.url);
     userAgents.push(request.headers.get("user-agent") ?? "");
     accepts.push(request.headers.get("accept") ?? "");
+    redirects.push(init?.redirect ?? "follow");
     const route = routes[request.url];
     if (!route) {
       return new Response(toJsonText({ error: "not found" }), {
@@ -68,13 +76,12 @@ export function stubRouter(routes: Record<string, StubRoute>): StubRouter {
         headers: { "content-type": "application/json" },
       });
     }
-    return new Response(toJsonText(route.body), {
-      status: route.status,
-      headers: { "content-type": "application/json" },
-    });
+    const headers = new Headers({ "content-type": "application/json" });
+    if (route.location !== undefined) headers.set("location", route.location);
+    return new Response(route.raw ?? toJsonText(route.body), { status: route.status, headers });
   };
   const layer = FetchHttpClient.layer.pipe(
     Layer.provide(Layer.succeed(FetchHttpClient.Fetch, fetch)),
   );
-  return { urls, userAgents, accepts, fetch, layer };
+  return { urls, userAgents, accepts, redirects, fetch, layer };
 }
