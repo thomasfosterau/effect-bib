@@ -54,7 +54,7 @@ catalog:
   # `effect` can fail `vite.config.ts` loading (#39, #63).
   "@mpsuesser/oxlint-plugin-effect": ^0.6.0
   # The BibTeX scanner's parser combinators (#72). Peers `effect ^4.0.0`.
-  "@thomasfosterau/effect-parse": 0.2.0
+  "@thomasfosterau/effect-parse": 0.3.0
   "@types/node": ^26.6.5
   # The coverage provider must equal the `vitest` that vite-plus bundles (see
   # the vite-plus note below), so it moves with vite-plus, by hand: vite-plus
