@@ -35,7 +35,7 @@ import { LookupFailed, type LookupSource } from "./errors.ts";
  *
  * @since 1.0.0
  */
-export const MAX_REDIRECTS = 5;
+const MAX_REDIRECTS = 5;
 
 /**
  * The time allowed for one guarded exchange, every redirect and the body
@@ -43,7 +43,7 @@ export const MAX_REDIRECTS = 5;
  *
  * @since 1.0.0
  */
-export const FETCH_TIMEOUT = "10 seconds";
+const FETCH_TIMEOUT = "10 seconds";
 
 /**
  * Resolves a host name to the addresses it would connect to (IPv4 dotted
@@ -140,25 +140,43 @@ function parse6(text: string): Option.Option<readonly number[]> {
 /** The IPv4 address held in two 16-bit groups. */
 const embedded4 = (high: number, low: number): number => ((high << 16) | low) >>> 0;
 
+/** Reads the 16-bit group at an index of an IPv6 address. */
+type Group = (index: number) => number;
+
+/** The first `count` groups are all zero. */
+const zeros = (at: Group, count: number): boolean =>
+  Array.every(Array.range(0, count - 1), (index) => at(index) === 0);
+
+/** The IPv4 address held in two groups is refused. */
+const refusedEmbedded = (at: Group, high: number): boolean =>
+  refused4(embedded4(at(high), at(high + 1)));
+
+/** One test per refused IPv6 range; an address is refused when any holds. */
+const REFUSED_V6: readonly ((at: Group) => boolean)[] = [
+  // Unspecified, loopback, IPv4-compatible.
+  (at) => zeros(at, 6),
+  // IPv4-mapped.
+  (at) => zeros(at, 5) && at(5) === 0xffff && refusedEmbedded(at, 6),
+  // Unique-local, link-local, site-local, multicast.
+  (at) => (at(0) & 0xfe00) === 0xfc00,
+  (at) => (at(0) & 0xffc0) === 0xfe80 || (at(0) & 0xffc0) === 0xfec0,
+  (at) => (at(0) & 0xff00) === 0xff00,
+  // Documentation, Teredo, discard.
+  (at) => at(0) === 0x2001 && (at(1) === 0x0db8 || at(1) === 0),
+  (at) => at(0) === 0x0100 && zeros((index) => at(index + 1), 3),
+  // NAT64 (local-use always; well-known when it embeds a refused address), 6to4.
+  (at) => at(0) === 0x0064 && at(1) === 0xff9b && (at(2) !== 0 || refusedEmbedded(at, 6)),
+  (at) => at(0) === 0x2002 && refusedEmbedded(at, 1),
+];
+
 /**
  * True for an IPv6 address that is unspecified, loopback or IPv4-compatible,
  * unique-local, link-local, site-local, multicast, documentation, discard
  * or Teredo, or that embeds a refused IPv4 address (IPv4-mapped, NAT64,
  * 6to4).
  */
-function refused6(g: readonly number[]): boolean {
-  const at = (index: number): number => g[index] ?? 0;
-  const first = at(0);
-  if (Array.every(g.slice(0, 6), (group) => group === 0)) return true;
-  if (Array.every(g.slice(0, 5), (group) => group === 0) && at(5) === 0xffff)
-    return refused4(embedded4(at(6), at(7)));
-  if ((first & 0xfe00) === 0xfc00 || (first & 0xffc0) === 0xfe80) return true;
-  if ((first & 0xffc0) === 0xfec0 || (first & 0xff00) === 0xff00) return true;
-  if (first === 0x2001 && (at(1) === 0x0db8 || at(1) === 0)) return true;
-  if (first === 0x0100 && at(1) === 0 && at(2) === 0 && at(3) === 0) return true;
-  if (first === 0x0064 && at(1) === 0xff9b) return at(2) !== 0 || refused4(embedded4(at(6), at(7)));
-  if (first === 0x2002) return refused4(embedded4(at(1), at(2)));
-  return false;
+function refused6(groups: readonly number[]): boolean {
+  return Array.some(REFUSED_V6, (rule) => rule((index) => groups[index] ?? 0));
 }
 
 /**
@@ -203,7 +221,7 @@ const isIpLiteral = (hostname: string): boolean =>
  *
  * @since 1.0.0
  */
-export function urlRefusal(url: URL): Option.Option<string> {
+function urlRefusal(url: URL): Option.Option<string> {
   if (url.protocol !== "https:" && url.protocol !== "http:")
     return Option.some(`the ${url.protocol} scheme`);
   if (url.username !== "" || url.password !== "") return Option.some("embedded credentials");
