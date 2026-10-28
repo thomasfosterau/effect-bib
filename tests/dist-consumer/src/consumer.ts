@@ -15,6 +15,7 @@ import {
   apaStyle,
   type Arxiv,
   type BiblioRecord,
+  type EmbeddedMetadata,
   bestConfidentMatch,
   type CslItemType,
   type CslName,
@@ -57,6 +58,8 @@ import {
   type LookupError,
   LookupFailed,
   lookupCrossrefByDoi,
+  RefusedUrl,
+  type ResolveAddresses,
 } from "@thomasfosterau/biblio/sources";
 
 /** A compile-time assertion: `T` must be exactly `true`. */
@@ -119,8 +122,11 @@ export const recovered = provided.pipe(
   Effect.catchTags({
     InvalidIdentifier: (error: InvalidIdentifier) => Effect.succeed(error.value),
     LookupFailed: (error: LookupFailed) => Effect.succeed(error.description),
+    RefusedUrl: (error: RefusedUrl) => Effect.succeed(error.reason),
   }),
 );
+
+export const page = BiblioLookup.use((lookup) => lookup.byUrl("https://example.org/paper"));
 
 /**
  * Every compile-time assertion, exported so `noUnusedLocals` keeps them and a
@@ -193,6 +199,16 @@ export type Checks = [
   /** _contactFields */ Assert<
     Equals<LookupContact, { readonly product: string; readonly email: string }>
   >,
-  /** _errorTags */ Assert<Equals<LookupError["_tag"], "InvalidIdentifier" | "LookupFailed">>,
+  /** _errorTags */ Assert<
+    Equals<LookupError["_tag"], "InvalidIdentifier" | "LookupFailed" | "RefusedUrl">
+  >,
+  /** _pageSucceedsWithEmbeddedMetadata */ Assert<
+    Equals<Effect.Success<typeof page>, Option.Option<EmbeddedMetadata>>
+  >,
+  /** _pageFailsOnTheTypedChannel */ Assert<Equals<Effect.Error<typeof page>, LookupError>>,
+  /** _resolverIsOptional */ Assert<
+    // oxlint-disable-next-line effect/prefer-option-over-null -- asserts an optional option's shape
+    Equals<BiblioLookupOptions["resolveAddresses"], ResolveAddresses | undefined>
+  >,
   /** _recoveredNeverFails */ Assert<Equals<Effect.Error<typeof recovered>, never>>,
 ];

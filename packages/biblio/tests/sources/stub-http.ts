@@ -19,6 +19,10 @@ export interface StubRoute {
   readonly location?: string;
   /** A body sent as written instead of `body` as JSON. */
   readonly raw?: string;
+  /** The `Content-Type` sent (`application/json` when absent; `""` sends none). */
+  readonly contentType?: string;
+  /** Extra response headers (a `Content-Length` that lies, say). */
+  readonly headers?: Readonly<Record<string, string>>;
 }
 
 /**
@@ -76,7 +80,9 @@ export function stubRouter(routes: Record<string, StubRoute>): StubRouter {
         headers: { "content-type": "application/json" },
       });
     }
-    const headers = new Headers({ "content-type": "application/json" });
+    const headers = new Headers(route.headers);
+    const contentType = route.contentType ?? "application/json";
+    if (contentType !== "") headers.set("content-type", contentType);
     if (route.location !== undefined) headers.set("location", route.location);
     return new Response(route.raw ?? toJsonText(route.body), { status: route.status, headers });
   };
