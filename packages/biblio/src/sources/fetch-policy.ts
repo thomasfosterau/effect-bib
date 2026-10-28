@@ -322,19 +322,22 @@ function follow(
  * Fetches `url` under the policy: every hop (the first included) is checked
  * with {@link urlRefusal}, the policy's `allowHop` and its resolver before
  * it is sent; redirects are followed by hand, at most
- * {@link MAX_REDIRECTS}; the exchange is bounded by {@link FETCH_TIMEOUT}.
- * Succeeds with the first non-3xx response, whatever its status. A refused
- * first URL is a {@link RefusedUrl}; a refused redirect, a transport fault
- * or a timeout is a {@link LookupFailed}.
+ * {@link MAX_REDIRECTS}. `read` handles the first non-3xx response,
+ * whatever its status, and runs inside the same {@link FETCH_TIMEOUT} as
+ * the hops, so a slow body is bounded too. A refused first URL is a
+ * {@link RefusedUrl}; a refused redirect, a transport fault or a timeout is
+ * a {@link LookupFailed}.
  *
  * @since 1.0.0
  */
-export const fetchGuarded = (
+export const fetchGuarded = <A, E>(
   client: HttpClient.HttpClient,
   url: URL,
   policy: FetchPolicy,
-): Effect.Effect<GuardedResponse, LookupFailed | RefusedUrl> =>
+  read: (answer: GuardedResponse) => Effect.Effect<A, E>,
+): Effect.Effect<A, E | LookupFailed | RefusedUrl> =>
   follow(client, url, policy, 0).pipe(
+    Effect.flatMap(read),
     Effect.timeoutOrElse({
       duration: FETCH_TIMEOUT,
       orElse: () =>

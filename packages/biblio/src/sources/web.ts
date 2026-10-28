@@ -11,6 +11,7 @@
  * @since 1.0.0
  */
 
+import * as Array from "effect/Array";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Result from "effect/Result";
@@ -21,6 +22,7 @@ import { LookupFailed, RefusedUrl } from "./errors.ts";
 import {
   checkUrl,
   fetchGuarded,
+  type GuardedResponse,
   mediaType,
   readBoundedText,
   type ResolveAddresses,
@@ -47,6 +49,22 @@ export interface WebPageOptions {
 const failed = (description: string): LookupFailed =>
   new LookupFailed({ source: "web", description });
 
+/** Reads the final response: `None` on a 404, the page's embedded metadata from an HTML 2xx. */
+function readPage({
+  url,
+  response,
+}: GuardedResponse): Effect.Effect<Option.Option<EmbeddedMetadata>, LookupFailed> {
+  if (response.status === 404) return Effect.succeed(Option.none());
+  if (response.status < 200 || response.status >= 300)
+    return Effect.fail(failed(`upstream returned HTTP ${response.status}`));
+  const type = mediaType(response);
+  if (!Array.contains(HTML_TYPES, type))
+    return Effect.fail(failed(`not an HTML page (${type === "" ? "no content type" : type})`));
+  return readBoundedText(response, MAX_INPUT_LENGTH, "web").pipe(
+    Effect.map((html) => Option.some(readEmbeddedMetadata(html, { url: url.href }))),
+  );
+}
+
 /**
  * Fetches the page at `url` and reads its embedded citation metadata, the
  * page record's URL being the one that finally answered. `Option.none()` on
@@ -62,6 +80,13 @@ const failed = (description: string): LookupFailed =>
  * read as UTF-8. `client` is expected to carry the User-Agent; the request
  * asks for HTML whatever `Accept` the client sets.
  *
+ * **Host names are checked as written unless you pass a resolver.** Without
+ * `options.resolveAddresses` (a Worker cannot resolve DNS), a public-looking
+ * name that resolves to a private or loopback address is fetched: the
+ * policy is fail-open for host names. With a resolver, every address is
+ * checked, but the connection is not pinned to the checked address, so DNS
+ * rebinding between the check and the connect is still possible.
+ *
  * @since 1.0.0
  */
 export const lookupWebPage: (
@@ -73,7 +98,7 @@ export const lookupWebPage: (
 )(function* (client: HttpClient.HttpClient, url: string, options: WebPageOptions = {}) {
   const start = checkUrl(url);
   if (Result.isFailure(start)) return yield* new RefusedUrl({ url, reason: start.failure });
-  const { url: answered, response } = yield* fetchGuarded(
+  return yield* fetchGuarded(
     client.pipe(HttpClient.mapRequest(HttpClientRequest.setHeader("accept", ACCEPT_HTML))),
     start.success,
     {
@@ -81,13 +106,6 @@ export const lookupWebPage: (
       allowHop: Option.none(),
       resolveAddresses: Option.fromUndefinedOr(options.resolveAddresses),
     },
+    readPage,
   );
-  if (response.status === 404) return Option.none();
-  if (response.status < 200 || response.status >= 300)
-    return yield* failed(`upstream returned HTTP ${response.status}`);
-  const type = mediaType(response);
-  if (!HTML_TYPES.includes(type))
-    return yield* failed(`not an HTML page (${type === "" ? "no content type" : type})`);
-  const html = yield* readBoundedText(response, MAX_INPUT_LENGTH, "web");
-  return Option.some(readEmbeddedMetadata(html, { url: answered.href }));
 });

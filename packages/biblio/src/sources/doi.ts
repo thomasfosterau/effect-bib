@@ -59,14 +59,11 @@ function negotiate(
   client: HttpClient.HttpClient,
   url: string,
 ): Effect.Effect<Option.Option<Schema.Json>, LookupFailed> {
-  return fetchGuarded(client, new URL(url), {
-    source: "doi",
-    allowHop: Option.some(isAgencyHop),
-    resolveAddresses: Option.none(),
-  }).pipe(
-    // The first hop is always `doi.org`, so only a redirect can be refused.
-    Effect.catchTag("RefusedUrl", (refused) => Effect.fail(failed(refused.reason))),
-    Effect.flatMap(({ response }) => {
+  return fetchGuarded(
+    client,
+    new URL(url),
+    { source: "doi", allowHop: Option.some(isAgencyHop), resolveAddresses: Option.none() },
+    ({ response }): Effect.Effect<Option.Option<Schema.Json>, LookupFailed> => {
       if (response.status === 404) return Effect.succeed(Option.none());
       if (response.status < 200 || response.status >= 300)
         return Effect.fail(failed(`upstream returned HTTP ${response.status}`));
@@ -78,7 +75,10 @@ function negotiate(
         ),
         Effect.map(Option.some),
       );
-    }),
+    },
+  ).pipe(
+    // The first hop is always `doi.org`, so only a redirect can be refused.
+    Effect.catchTag("RefusedUrl", (refused) => Effect.fail(failed(refused.reason))),
   );
 }
 
