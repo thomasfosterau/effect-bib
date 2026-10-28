@@ -20,7 +20,7 @@ import type { Doi } from "../identifiers.ts";
 import { type BiblioRecord, fromCslJson } from "../record.ts";
 import { MAX_INPUT_LENGTH } from "../parse.ts";
 import { LookupFailed } from "./errors.ts";
-import { fetchGuarded, readBoundedText } from "./fetch-policy.ts";
+import { fetchGuarded, readBoundedText, withFetchTimeout } from "./fetch-policy.ts";
 
 /** The DOI resolver. */
 const DOI_BASE = "https://doi.org";
@@ -59,7 +59,7 @@ function negotiate(
   client: HttpClient.HttpClient,
   url: string,
 ): Effect.Effect<Option.Option<Schema.Json>, LookupFailed> {
-  return fetchGuarded(
+  const exchange = fetchGuarded(
     client,
     new URL(url),
     { source: "doi", allowHop: Option.some(isAgencyHop), resolveAddresses: Option.none() },
@@ -76,10 +76,9 @@ function negotiate(
         Effect.map(Option.some),
       );
     },
-  ).pipe(
-    // The first hop is always `doi.org`, so only a redirect can be refused.
-    Effect.catchTag("RefusedUrl", (refused) => Effect.fail(failed(refused.reason))),
   );
+  // The first hop is the fixed resolver, so only its redirects need checking.
+  return withFetchTimeout(exchange, "doi");
 }
 
 /**

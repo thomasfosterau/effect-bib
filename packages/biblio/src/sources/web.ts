@@ -22,10 +22,13 @@ import { LookupFailed, RefusedUrl } from "./errors.ts";
 import {
   checkUrl,
   fetchGuarded,
+  type FetchPolicy,
   type GuardedResponse,
+  hopRefusal,
   mediaType,
   readBoundedText,
   type ResolveAddresses,
+  withFetchTimeout,
 } from "./fetch-policy.ts";
 
 /** The media types read as a page. */
@@ -98,14 +101,22 @@ export const lookupWebPage: (
 )(function* (client: HttpClient.HttpClient, url: string, options: WebPageOptions = {}) {
   const start = checkUrl(url);
   if (Result.isFailure(start)) return yield* new RefusedUrl({ url, reason: start.failure });
-  return yield* fetchGuarded(
-    client.pipe(HttpClient.mapRequest(HttpClientRequest.setHeader("accept", ACCEPT_HTML))),
-    start.success,
-    {
-      source: "web",
-      allowHop: Option.none(),
-      resolveAddresses: Option.fromUndefinedOr(options.resolveAddresses),
-    },
-    readPage,
+  const policy: FetchPolicy = {
+    source: "web",
+    allowHop: Option.none(),
+    resolveAddresses: Option.fromUndefinedOr(options.resolveAddresses),
+  };
+  const page = client.pipe(
+    HttpClient.mapRequest(HttpClientRequest.setHeader("accept", ACCEPT_HTML)),
+  );
+  return yield* withFetchTimeout(
+    Effect.flatMap(
+      hopRefusal(start.success, policy),
+      (refusal): Effect.Effect<Option.Option<EmbeddedMetadata>, LookupFailed | RefusedUrl> =>
+        Option.isSome(refusal)
+          ? Effect.fail(new RefusedUrl({ url, reason: refusal.value }))
+          : fetchGuarded(page, start.success, policy, readPage),
+    ),
+    "web",
   );
 });

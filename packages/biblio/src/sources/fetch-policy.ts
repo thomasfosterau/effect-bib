@@ -13,7 +13,7 @@
  * without one (a Worker cannot resolve DNS) only the URL itself is checked.
  * Redirects are never followed by `fetch`: each one is re-checked against
  * the policy and followed by hand, at most {@link MAX_REDIRECTS} deep. The
- * whole exchange is bounded by {@link FETCH_TIMEOUT} and the body read by
+ * whole exchange is bounded by {@link withFetchTimeout} and the body read by
  * {@link readBoundedText} is capped.
  *
  * @copyright Thomas Foster
@@ -28,7 +28,7 @@ import * as Result from "effect/Result";
 import * as Stream from "effect/Stream";
 import * as String from "effect/String";
 import { FetchHttpClient, Headers, type HttpClient, type HttpClientResponse } from "effect/http";
-import { LookupFailed, type LookupSource, RefusedUrl } from "./errors.ts";
+import { LookupFailed, type LookupSource } from "./errors.ts";
 
 /**
  * The most redirects followed from the first URL.
@@ -233,8 +233,14 @@ export function checkUrl(location: string, base?: string): Result.Result<URL, st
 
 // ── Guarded exchange ─────────────────────────────────────────────────
 
-/** The full policy check of one hop: the URL, the extra hop test and, when there is a resolver, every resolved address. */
-function hopRefusal(url: URL, policy: FetchPolicy): Effect.Effect<Option.Option<string>> {
+/**
+ * The full policy check of one hop: {@link urlRefusal}, the policy's
+ * `allowHop` and, when there is a resolver, every resolved address. `None`
+ * when the hop may be fetched, else why not.
+ *
+ * @since 1.0.0
+ */
+export function hopRefusal(url: URL, policy: FetchPolicy): Effect.Effect<Option.Option<string>> {
   const syntactic = urlRefusal(url);
   if (Option.isSome(syntactic)) return Effect.succeed(syntactic);
   if (Option.isSome(policy.allowHop) && !policy.allowHop.value(url))
@@ -281,7 +287,12 @@ function send(
   );
 }
 
-/** The final (non-redirect) response of a guarded exchange, and the URL that gave it. */
+/**
+ * The final (non-redirect) response of a guarded exchange, and the URL that
+ * gave it.
+ *
+ * @since 1.0.0
+ */
 export interface GuardedResponse {
   readonly url: URL;
   readonly response: HttpClientResponse.HttpClientResponse;
@@ -293,13 +304,12 @@ function follow(
   url: URL,
   policy: FetchPolicy,
   hops: number,
-): Effect.Effect<GuardedResponse, LookupFailed | RefusedUrl> {
+): Effect.Effect<GuardedResponse, LookupFailed> {
   const failed = (description: string) => new LookupFailed({ source: policy.source, description });
-  return Effect.flatMap(hopRefusal(url, policy), (refusal) => {
+  const checked = hops === 0 ? Effect.succeed(Option.none<string>()) : hopRefusal(url, policy);
+  return Effect.flatMap(checked, (refusal) => {
     if (Option.isSome(refusal))
-      return hops === 0
-        ? Effect.fail(new RefusedUrl({ url: url.href, reason: refusal.value }))
-        : Effect.fail(failed(`refused a redirect to ${refusal.value}`));
+      return Effect.fail(failed(`refused a redirect to ${refusal.value}`));
     return Effect.flatMap(send(client, url.href, policy.source), (response) => {
       if (response.status < 300 || response.status >= 400) return Effect.succeed({ url, response });
       if (hops >= MAX_REDIRECTS) return Effect.fail(failed("too many redirects"));
@@ -319,14 +329,30 @@ function follow(
 }
 
 /**
- * Fetches `url` under the policy: every hop (the first included) is checked
- * with {@link urlRefusal}, the policy's `allowHop` and its resolver before
- * it is sent; redirects are followed by hand, at most
- * {@link MAX_REDIRECTS}. `read` handles the first non-3xx response,
- * whatever its status, and runs inside the same {@link FETCH_TIMEOUT} as
- * the hops, so a slow body is bounded too. A refused first URL is a
- * {@link RefusedUrl}; a refused redirect, a transport fault or a timeout is
- * a {@link LookupFailed}.
+ * Bounds an exchange (its hops and its body read) by {@link FETCH_TIMEOUT},
+ * failing with a {@link LookupFailed} when the time runs out.
+ *
+ * @since 1.0.0
+ */
+export const withFetchTimeout = <A, E>(
+  exchange: Effect.Effect<A, E>,
+  source: LookupSource,
+): Effect.Effect<A, E | LookupFailed> =>
+  exchange.pipe(
+    Effect.timeoutOrElse({
+      duration: FETCH_TIMEOUT,
+      orElse: () => Effect.fail(new LookupFailed({ source, description: "timed out" })),
+    }),
+  );
+
+/**
+ * Fetches `url` under the policy and hands the first non-3xx response,
+ * whatever its status, to `read`. The caller has already checked `url`
+ * itself (with {@link hopRefusal}, or because it is a fixed endpoint); every
+ * redirect is checked with {@link hopRefusal} before it is sent and followed
+ * by hand, at most {@link MAX_REDIRECTS}. A refused redirect or a transport
+ * fault is a {@link LookupFailed}. Wrap the whole exchange, `read`
+ * included, in {@link withFetchTimeout}.
  *
  * @since 1.0.0
  */
@@ -335,15 +361,7 @@ export const fetchGuarded = <A, E>(
   url: URL,
   policy: FetchPolicy,
   read: (answer: GuardedResponse) => Effect.Effect<A, E>,
-): Effect.Effect<A, E | LookupFailed | RefusedUrl> =>
-  follow(client, url, policy, 0).pipe(
-    Effect.flatMap(read),
-    Effect.timeoutOrElse({
-      duration: FETCH_TIMEOUT,
-      orElse: () =>
-        Effect.fail(new LookupFailed({ source: policy.source, description: "timed out" })),
-    }),
-  );
+): Effect.Effect<A, E | LookupFailed> => Effect.flatMap(follow(client, url, policy, 0), read);
 
 /** A body over the cap, raised while it streams in. */
 const tooLarge = (source: LookupSource, maxBytes: number): LookupFailed =>

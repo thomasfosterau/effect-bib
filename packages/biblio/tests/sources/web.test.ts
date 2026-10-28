@@ -170,7 +170,7 @@ describe("BiblioLookup.byUrl", () => {
   ])("refuses a %s response", async (_, contentType) => {
     const { layer } = stubRouter({ [START]: html(PAGE, contentType) });
     const failure = await expectFailureInstanceOf(byUrl(layer, START), LookupFailed);
-    expect(failure.description).toContain("not an HTML page");
+    expect(failure).toMatchObject({ description: expect.stringContaining("not an HTML page") });
   });
 
   it("fails on an upstream 5xx", async () => {
@@ -183,13 +183,13 @@ describe("BiblioLookup.byUrl", () => {
       [START]: { ...html(), headers: { "content-length": String(MAX_INPUT_LENGTH + 1) } },
     });
     const failure = await expectFailureInstanceOf(byUrl(layer, START), LookupFailed);
-    expect(failure.description).toContain("larger than");
+    expect(failure).toMatchObject({ description: expect.stringContaining("larger than") });
   });
 
   it("stops reading a body that streams past the cap", async () => {
     const { layer } = stubRouter({ [START]: html("x".repeat(MAX_INPUT_LENGTH + 1)) });
     const failure = await expectFailureInstanceOf(byUrl(layer, START), LookupFailed);
-    expect(failure.description).toContain("larger than");
+    expect(failure).toMatchObject({ description: expect.stringContaining("larger than") });
   });
 
   describe("with a resolver", () => {
@@ -280,6 +280,34 @@ describe("BiblioLookup.byUrl", () => {
       expect(failure).toBeInstanceOf(LookupFailed);
       expect(failure).toMatchObject({ description: "timed out" });
     });
+  });
+});
+
+describe("BiblioLookup.byUrl over a raw response", () => {
+  /** A layer whose fetch answers every request with `respond()`. */
+  const answering = (respond: () => Response): Layer.Layer<HttpClient.HttpClient> =>
+    FetchHttpClient.layer.pipe(
+      Layer.provide(Layer.succeed(FetchHttpClient.Fetch, () => Promise.resolve(respond()))),
+    );
+
+  it("refuses a response with no content type", async () => {
+    const layer = answering(() => new Response(null, { status: 200 }));
+    const failure = await expectFailureInstanceOf(byUrl(layer, START), LookupFailed);
+    expect(failure).toMatchObject({ description: expect.stringContaining("no content type") });
+  });
+
+  it("fails when the body stream errors part-way", async () => {
+    const layer = answering(
+      () =>
+        new Response(
+          new ReadableStream<Uint8Array>({
+            pull: (controller) => controller.error(new TypeError("connection reset")),
+          }),
+          { status: 200, headers: { "content-type": "text/html" } },
+        ),
+    );
+    const failure = await expectFailureInstanceOf(byUrl(layer, START), LookupFailed);
+    expect(failure).toMatchObject({ description: "failed to read the response" });
   });
 });
 

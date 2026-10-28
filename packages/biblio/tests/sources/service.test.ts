@@ -248,7 +248,7 @@ describe("BiblioLookup.byDoiCsl", () => {
       withLookup(layer, (lookup) => lookup.byDoiCsl(doi)),
       LookupFailed,
     );
-    expect(failure.description).toContain("larger than");
+    expect(failure).toMatchObject({ description: expect.stringContaining("larger than") });
   });
 
   it("fails with InvalidIdentifier for a malformed DOI, before any request", async () => {
