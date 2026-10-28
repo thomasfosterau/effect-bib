@@ -240,6 +240,17 @@ describe("BiblioLookup.byDoiCsl", () => {
     );
   });
 
+  it("refuses a CSL-JSON body declared larger than the input cap", async () => {
+    const { layer } = stubRouter({
+      [url]: { status: 200, body: {}, headers: { "content-length": "8000001" } },
+    });
+    const failure = await expectFailureInstanceOf(
+      withLookup(layer, (lookup) => lookup.byDoiCsl(doi)),
+      LookupFailed,
+    );
+    expect(failure.description).toContain("larger than");
+  });
+
   it("fails with InvalidIdentifier for a malformed DOI, before any request", async () => {
     const { layer, urls } = stubRouter({});
     await expectFailureInstanceOf(
