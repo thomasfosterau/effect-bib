@@ -76,6 +76,21 @@ describe("BiblioLookup.byUrl", () => {
     expect(redirects).toEqual(["manual"]);
   });
 
+  it("names the URL that answered, not the URL the page claims, and leaves COinS alone", async () => {
+    const next = "https://www.example.com/articles/1";
+    const claims = `<html><head>
+  <meta name="citation_title" content="Structure of Scientific Revolutions">
+  <meta name="citation_abstract_html_url" content="https://mirror.example.net/kuhn">
+</head><body>
+  <span class="Z3988" title="ctx_ver=Z39.88-2004&amp;rft.btitle=Sapiens&amp;rft_id=https%3A%2F%2Fexample.net%2Fsapiens"></span>
+</body></html>`;
+    const { layer } = stubRouter({ [START]: redirect(next), [next]: html(claims) });
+    const found = expectSome(await runTest(byUrl(layer, START)), "page metadata");
+    expect(expectSome(found.page, "a page record").URL).toBe(next);
+    expect(found.coins).toHaveLength(1);
+    expect(found.coins[0]?.URL).not.toBe(next);
+  });
+
   it("accepts application/xhtml+xml", async () => {
     const { layer } = stubRouter({ [START]: html(PAGE, "application/xhtml+xml") });
     const found = expectSome(await runTest(byUrl(layer, START)), "page metadata");
@@ -125,6 +140,8 @@ describe("BiblioLookup.byUrl", () => {
     ["IPv6 unique-local", "http://[fd12:3456::1]/"],
     ["NAT64 of a private address", "http://[64:ff9b::a00:1]/"],
     ["6to4 of loopback", "http://[2002:7f00:1::1]/"],
+    ["IPv6 benchmarking", "http://[2001:2::1]/"],
+    ["IPv6 documentation (3fff::/20)", "http://[3fff::1]/"],
     ["localhost", "http://localhost/"],
     ["localhost with a trailing dot", "http://localhost./"],
     ["a .localhost name", "http://app.localhost/"],
@@ -200,7 +217,9 @@ describe("BiblioLookup.byUrl", () => {
 
     it("fetches a host that resolves only to public addresses", async () => {
       const { layer, urls } = stubRouter({ [START]: html() });
-      const resolveAddresses = resolving({ "example.org": ["93.184.215.14", "2606:2800::1"] });
+      const resolveAddresses = resolving({
+        "example.org": ["93.184.215.14", "2606:2800::1", "::ffff:8.8.8.8"],
+      });
       await runTest(byUrl(layer, START, { resolveAddresses }));
       expect(urls).toEqual([START]);
     });
@@ -312,12 +331,18 @@ describe("BiblioLookup.byUrl over a raw response", () => {
 });
 
 describe("addressRefusal", () => {
-  it.each(["8.8.8.8", "93.184.215.14", "2606:4700:4700::1111", "2a00:1450::1"])(
-    "accepts the public address %s",
-    (address) => {
-      expect(Option.isNone(addressRefusal(address))).toBe(true);
-    },
-  );
+  it.each([
+    "8.8.8.8",
+    "93.184.215.14",
+    "2606:4700:4700::1111",
+    "2a00:1450::1",
+    "::ffff:8.8.8.8",
+    "::FFFF:8.8.4.4",
+    "3fff:1000::1",
+    "2001:2:1::1",
+  ])("accepts the public address %s", (address) => {
+    expect(Option.isNone(addressRefusal(address))).toBe(true);
+  });
 
   it.each([
     "127.0.0.1",
@@ -330,6 +355,13 @@ describe("addressRefusal", () => {
     "100::1",
     "::ffff:a9fe:a9fe",
     "64:ff9b:1::1",
+    "::ffff:10.0.0.1",
+    "::ffff:169.254.169.254",
+    "64:ff9b::127.0.0.1",
+    "2001:2::1",
+    "3fff::1",
+    "3fff:fff::1",
+    "::ffff:1.2.3.999",
     "1.2.3",
     "256.1.1.1",
     "1::2::3",

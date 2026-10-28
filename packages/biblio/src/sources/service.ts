@@ -200,7 +200,11 @@ const makeBiblioLookup = Effect.fnUntraced(function* ({
   const byDoiCsl = Effect.fn("BiblioLookup.byDoiCsl")(function* (raw: string) {
     const doi = decodeDoi(raw);
     if (Option.isNone(doi)) return yield* new InvalidIdentifier({ kind: "doi", value: raw });
-    return yield* lookupDoiCsl(client, doi.value);
+    return yield* lookupDoiCsl(
+      client,
+      doi.value,
+      resolveAddresses === undefined ? {} : { resolveAddresses },
+    );
   });
 
   const byTitle = Effect.fn("BiblioLookup.byTitle")(function* (query: string) {

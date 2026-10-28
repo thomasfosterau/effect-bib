@@ -64,7 +64,14 @@ function readPage({
   if (!Array.contains(HTML_TYPES, type))
     return Effect.fail(failed(`not an HTML page (${type === "" ? "no content type" : type})`));
   return readBoundedText(response, MAX_INPUT_LENGTH, "web").pipe(
-    Effect.map((html) => Option.some(readEmbeddedMetadata(html, { url: url.href }))),
+    Effect.map((html) => {
+      const found = readEmbeddedMetadata(html, { url: url.href });
+      // The page record names the URL that answered, whatever URL the page claims.
+      return Option.some({
+        ...found,
+        page: Option.map(found.page, (record) => ({ ...record, URL: url.href })),
+      });
+    }),
   );
 }
 

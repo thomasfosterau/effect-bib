@@ -240,6 +240,31 @@ describe("BiblioLookup.byDoiCsl", () => {
     );
   });
 
+  it("holds a redirect to an agency host to the configured resolver", async () => {
+    const agency = "https://api.crossref.org/v1/works/10.5281%2Fzenodo.1234567/transform";
+    const { layer, urls } = stubRouter({
+      [url]: { status: 302, body: {}, location: agency },
+      [agency]: { status: 200, body: { type: "dataset", title: "Rebound" } },
+    });
+    const resolving = (answer: string) =>
+      biblioLookupClientLayer({
+        contact: CONTACT,
+        resolveAddresses: () => Effect.succeed([answer]),
+      });
+    const refused = Effect.gen(function* () {
+      const lookup = yield* BiblioLookup;
+      return yield* lookup.byDoiCsl(doi);
+    }).pipe(Effect.provide(resolving("127.0.0.1").pipe(Layer.provide(layer))));
+    const failure = await expectFailureInstanceOf(refused, LookupFailed);
+    expect(failure).toMatchObject({ source: "doi" });
+    expect(urls).toEqual([url]);
+    const allowed = Effect.gen(function* () {
+      const lookup = yield* BiblioLookup;
+      return yield* lookup.byDoiCsl(doi);
+    }).pipe(Effect.provide(resolving("104.18.0.1").pipe(Layer.provide(layer))));
+    expect(expectSome(await runTest(allowed), "a record").title).toBe("Rebound");
+  });
+
   it("refuses a CSL-JSON body declared larger than the input cap", async () => {
     const { layer } = stubRouter({
       [url]: { status: 200, body: {}, headers: { "content-length": "8000001" } },

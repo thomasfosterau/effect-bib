@@ -20,7 +20,23 @@ import type { Doi } from "../identifiers.ts";
 import { type BiblioRecord, fromCslJson } from "../record.ts";
 import { MAX_INPUT_LENGTH } from "../parse.ts";
 import { LookupFailed } from "./errors.ts";
-import { fetchGuarded, readBoundedText, withFetchTimeout } from "./fetch-policy.ts";
+import {
+  fetchGuarded,
+  readBoundedText,
+  type ResolveAddresses,
+  withFetchTimeout,
+} from "./fetch-policy.ts";
+
+/**
+ * How {@link lookupDoiCsl} follows redirects: an optional resolver that
+ * holds every address a redirect host resolves to to the request policy, on
+ * top of the agency allow-list.
+ *
+ * @since 1.0.0
+ */
+export interface DoiCslOptions {
+  readonly resolveAddresses?: ResolveAddresses;
+}
 
 /** The DOI resolver. */
 const DOI_BASE = "https://doi.org";
@@ -58,11 +74,12 @@ const isAgencyHop = (url: URL): boolean =>
 function negotiate(
   client: HttpClient.HttpClient,
   url: string,
+  resolveAddresses: Option.Option<ResolveAddresses>,
 ): Effect.Effect<Option.Option<Schema.Json>, LookupFailed> {
   const exchange = fetchGuarded(
     client,
     new URL(url),
-    { source: "doi", allowHop: Option.some(isAgencyHop), resolveAddresses: Option.none() },
+    { source: "doi", allowHop: Option.some(isAgencyHop), resolveAddresses },
     ({ response }): Effect.Effect<Option.Option<Schema.Json>, LookupFailed> => {
       if (response.status === 404) return Effect.succeed(Option.none());
       if (response.status < 200 || response.status >= 300)
@@ -90,6 +107,8 @@ function negotiate(
  * is followed by hand, only over `https` to a known agency host and at most
  * five deep, and any other redirect fails with {@link LookupFailed} rather
  * than being followed (the fetch itself is told not to follow redirects).
+ * With `options.resolveAddresses`, every address a redirect host resolves
+ * to must be public too.
  * The exchange is bounded by the shared request policy: ten seconds in all,
  * and a body of at most `MAX_INPUT_LENGTH` bytes.
  * `client` is expected to carry the polite User-Agent; the request asks for
@@ -100,13 +119,18 @@ function negotiate(
 export const lookupDoiCsl: (
   client: HttpClient.HttpClient,
   doi: Doi,
+  options?: DoiCslOptions,
 ) => Effect.Effect<Option.Option<BiblioRecord>, LookupFailed> = Effect.fn("lookupDoiCsl")(
-  function* (client: HttpClient.HttpClient, doi: Doi) {
+  function* (client: HttpClient.HttpClient, doi: Doi, options: DoiCslOptions = {}) {
     const negotiating = client.pipe(HttpClient.mapRequest(HttpClientRequest.accept(CSL_JSON)));
     // Each path segment percent-encoded: a DOI suffix may hold `#`, `?` or
     // `%`, which must not end the path upstream.
     const path = doi.split("/").map(encodeURIComponent).join("/");
-    const item = yield* negotiate(negotiating, `${DOI_BASE}/${path}`);
+    const item = yield* negotiate(
+      negotiating,
+      `${DOI_BASE}/${path}`,
+      Option.fromUndefinedOr(options.resolveAddresses),
+    );
     return Option.map(item, (body) => ({
       ...fromCslJson(body),
       provenance: {

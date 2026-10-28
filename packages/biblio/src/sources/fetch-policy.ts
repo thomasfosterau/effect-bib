@@ -124,6 +124,15 @@ function groups6(side: string): Option.Option<readonly number[]> {
 
 /** An IPv6 address (no brackets, no zone) as its eight 16-bit groups. */
 function parse6(text: string): Option.Option<readonly number[]> {
+  const dotted = /^(.*:)(\d{1,3}(?:\.\d{1,3}){3})$/.exec(text);
+  if (dotted !== null) {
+    // An IPv4 tail (`::ffff:8.8.8.8`) stands for the last two groups.
+    return Option.flatMap(parse4(dotted[2] ?? ""), (v4) => {
+      const head = dotted[1] ?? "";
+      const tail = `${(v4 >>> 16).toString(16)}:${(v4 & 0xffff).toString(16)}`;
+      return parse6(`${head}${tail}`);
+    });
+  }
   const halves = text.split("::");
   if (halves.length > 2) return Option.none();
   return Option.flatMap(groups6(halves[0] ?? ""), (head) =>
@@ -163,6 +172,9 @@ const REFUSED_V6: readonly ((at: Group) => boolean)[] = [
   (at) => (at(0) & 0xff00) === 0xff00,
   // Documentation, Teredo, discard.
   (at) => at(0) === 0x2001 && (at(1) === 0x0db8 || at(1) === 0),
+  (at) => at(0) === 0x3fff && (at(1) & 0xf000) === 0,
+  // Benchmarking (2001:2::/48).
+  (at) => at(0) === 0x2001 && at(1) === 0x0002 && at(2) === 0,
   (at) => at(0) === 0x0100 && zeros((index) => at(index + 1), 3),
   // NAT64 (local-use always; well-known when it embeds a refused address), 6to4.
   (at) => at(0) === 0x0064 && at(1) === 0xff9b && (at(2) !== 0 || refusedEmbedded(at, 6)),
