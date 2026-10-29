@@ -175,6 +175,10 @@ function closing(text: string, open: number): Option.Option<number> {
   return state.at < 0 ? Option.none() : Option.some(state.at);
 }
 
+/** No entry in the buffer: at the end, the rest is consumed (an empty span past it); before it, wait. */
+const nothingLeft = (buffer: string, final: boolean): Option.Option<readonly [number, number]> =>
+  final && String.isNonEmpty(buffer) ? Option.some([buffer.length, buffer.length]) : Option.none();
+
 /** An entry head: `@type` and its opening delimiter. */
 const ENTRY_HEAD = /@\s*[A-Za-z]+\s*[{(]/g;
 
@@ -182,10 +186,7 @@ const ENTRY_HEAD = /@\s*[A-Za-z]+\s*[{(]/g;
 const findBibtex: Finder = (buffer, final) => {
   ENTRY_HEAD.lastIndex = 0;
   const head = ENTRY_HEAD.exec(buffer);
-  if (head === null)
-    return final && String.isNonEmpty(buffer)
-      ? Option.some([buffer.length, buffer.length])
-      : Option.none();
+  if (head === null) return nothingLeft(buffer, final);
   const open = head.index + head[0].length - 1;
   return Option.match(closing(buffer, open), {
     onNone: () => (final ? Option.some([head.index, buffer.length] as const) : Option.none()),
@@ -196,10 +197,7 @@ const findBibtex: Finder = (buffer, final) => {
 /** An RIS record: from its `TY` line to the end of its `ER` line, or to the next `TY`. */
 const findRis: Finder = (buffer, final) => {
   const start = /^TY {2}-/m.exec(buffer);
-  if (start === null)
-    return final && String.isNonEmpty(buffer)
-      ? Option.some([buffer.length, buffer.length])
-      : Option.none();
+  if (start === null) return nothingLeft(buffer, final);
   const after = /^(?:ER {2}-[^\r\n]*(?:\r\n?|\n)|TY {2}-)/gm;
   after.lastIndex = start.index + 1;
   const end = after.exec(buffer);
@@ -209,6 +207,23 @@ const findRis: Finder = (buffer, final) => {
     start.index,
     end[0].startsWith("TY") ? end.index : end.index + end[0].length,
   ] as const);
+};
+
+/**
+ * A paragraph of a tagged-line format (MEDLINE, Refer): from its first
+ * non-blank line to the line break that ends its last, so units joined with
+ * a line break stay paragraphs. Complete once a blank line follows it.
+ */
+const findParagraph: Finder = (buffer, final) => {
+  const start = /\S/.exec(buffer);
+  if (start === null) return nothingLeft(buffer, final);
+  const lineStart = buffer.lastIndexOf("\n", start.index) + 1;
+  // The line break before a blank line ends the paragraph.
+  const blank = /\r?\n[^\S\r\n]*\r?\n/g;
+  blank.lastIndex = start.index;
+  const end = blank.exec(buffer);
+  if (end === null) return final ? Option.some([lineStart, buffer.length] as const) : Option.none();
+  return Option.some([lineStart, end.index + (end[0].startsWith("\r") ? 2 : 1)] as const);
 };
 
 /** The end of the CSV row starting at `from` (past its line break), quotes spanning lines; `None` when open. */
@@ -648,7 +663,7 @@ function capRecords(state: State, outcomes: readonly ParseOutcome[], maxRecords:
   ];
 }
 
-/** Each format's entry finder: BibTeX, RIS and CSV entry by entry, the rest whole. */
+/** Each format's entry finder: BibTeX, RIS, CSV, MEDLINE and Refer entry by entry, the rest whole. */
 const finder = (format: ImportFormat): Finder =>
   format === "bibtex"
     ? findBibtex
@@ -656,7 +671,9 @@ const finder = (format: ImportFormat): Finder =>
       ? findRis
       : format === "csv"
         ? findCsv
-        : findWhole;
+        : format === "medline" || format === "refer"
+          ? findParagraph
+          : findWhole;
 
 /** Reads the complete units a step found, by format. */
 function readUnits(
@@ -669,6 +686,10 @@ function readUnits(
   const present = units.filter((unit) => String.isNonEmpty(unit.text));
   if (format === "bibtex") return readBibtex(state, present, options, final);
   if (format === "ris") return readRis(present, options);
+  if (format === "medline" || format === "refer")
+    return parseUnits("", present, (document) =>
+      parseBibliographicFile(document, format, documentOptions(options, document)),
+    );
   if (format === "csv") return readCsv(state, units, options);
   // CSL-JSON / CSL YAML: the one unit is the whole input, within the cap.
   return present.flatMap((unit) => parseBibliographicFile(unit.text, format, options));

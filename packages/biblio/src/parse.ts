@@ -94,11 +94,19 @@ import { scanBibtex } from "./bibtex/scan.ts";
 // ── Public surface ────────────────────────────────────────────────────
 
 /**
- * The file formats this module can parse. `csl-yaml` was added in 1.0.0.
+ * The file formats this module can parse. `csl-yaml`, `medline` (PubMed's
+ * `.nbib`) and `refer` (Refer / EndNote tagged) were added in 1.0.0.
  *
  * @since 0.1.0
  */
-export type ImportFormat = "bibtex" | "zotero-json" | "csl-yaml" | "csv" | "ris";
+export type ImportFormat =
+  | "bibtex"
+  | "zotero-json"
+  | "csl-yaml"
+  | "csv"
+  | "ris"
+  | "medline"
+  | "refer";
 
 /**
  * Why a source entry produced no importable record. `too-large` and
@@ -344,6 +352,8 @@ export function parseBibliographicFile(
     Match.when("csl-yaml", () => parseCslYaml(content, options)),
     Match.when("csv", () => parseCsv(content, options)),
     Match.when("ris", () => parseRis(content, options)),
+    Match.when("medline", () => parseMedline(content, options)),
+    Match.when("refer", () => parseRefer(content, options)),
     Match.exhaustive,
   );
 }
@@ -957,21 +967,16 @@ interface RisScan {
 }
 
 /** One RIS record: each two-character tag mapped to its values, in order, and the offset of its `TY` line. */
-interface RisRecord {
-  readonly tags: MutableHashMap.MutableHashMap<string, string[]>;
-  readonly offset: number;
-}
+type RisRecord = TaggedRecord;
 
 /** Appends a tag value to an RIS record's multimap. */
 function addRisTag(record: RisRecord, tag: string, value: string): void {
-  const existing = MutableHashMap.get(record.tags, tag);
-  if (Option.isNone(existing)) MutableHashMap.set(record.tags, tag, [value]);
-  else existing.value.push(value);
+  addTagged(record, tag, value);
 }
 
 /** The first value of an RIS tag, or `None`. */
 function risFirst(record: RisRecord, tag: string): Option.Option<string> {
-  return Option.flatMap(MutableHashMap.get(record.tags, tag), Array.head);
+  return taggedFirst(record, tag);
 }
 
 /** All values across a set of RIS tags, in order. */
@@ -981,7 +986,7 @@ function risAll(record: RisRecord, tags: readonly string[]): string[] {
 
 /** All values recorded for one RIS tag, in order. */
 function risValues(record: RisRecord, tag: string): readonly string[] {
-  return Option.getOrElse(MutableHashMap.get(record.tags, tag), (): string[] => []);
+  return taggedValues(record, tag);
 }
 
 /** RIS `TY` → CSL item type; unlisted types fall back to `document`. */
@@ -1117,4 +1122,308 @@ export function parseRis(content: string, options: ParseOptions = {}): ParseOutc
       truncated,
     );
   });
+}
+
+// ── Tagged paragraphs (MEDLINE, Refer) ─────────────────────────────────
+
+/** One record of a tagged-line format: its tags' values, in order, and the offset of its first line. */
+interface TaggedRecord {
+  readonly tags: MutableHashMap.MutableHashMap<string, string[]>;
+  readonly offset: number;
+}
+
+/** A tag line of a tagged-line format: the tag and the value, or `None` for a continuation. */
+type TagLine = (line: string) => Option.Option<readonly [tag: string, value: string]>;
+
+/**
+ * Splits a tagged-line document into records: each record a paragraph (a
+ * run of non-blank lines), each tag line read by `tagLine`, and any other
+ * line continuing the previous value (joined with a space). A paragraph with
+ * no tag line is skipped. Stops one past the record cap.
+ */
+function splitTaggedRecords(content: string, tagLine: TagLine, maxRecords: number): TaggedRecord[] {
+  const records: TaggedRecord[] = [];
+  const paragraphs = Array.fromIterable(
+    content.matchAll(/(?:^|(?<=\n))(?:[^\S\r\n]*\S[^\r\n]*(?:\r?\n|$))+/g),
+  );
+  Array.forEach(paragraphs.slice(0, maxRecords + 1), (paragraph) => {
+    const record: TaggedRecord = { tags: MutableHashMap.empty(), offset: paragraph.index };
+    const last = Array.reduce(
+      paragraph[0].split(/\r?\n/),
+      Option.none<string>(),
+      (previous, line): Option.Option<string> =>
+        Option.match(tagLine(line), {
+          onSome: ([tag, value]) => {
+            addTagged(record, tag, value.trim());
+            return Option.some(tag);
+          },
+          onNone: () => {
+            Option.map(previous, (tag) => continueTagged(record, tag, line.trim()));
+            return previous;
+          },
+        }),
+    );
+    if (Option.isSome(last)) records.push(record);
+  });
+  return records;
+}
+
+/** Appends a value to a record's tag. */
+function addTagged(record: TaggedRecord, tag: string, value: string): void {
+  const existing = MutableHashMap.get(record.tags, tag);
+  if (Option.isNone(existing)) MutableHashMap.set(record.tags, tag, [value]);
+  else existing.value.push(value);
+}
+
+/** Continues the last value of a record's tag with a wrapped line. */
+function continueTagged(record: TaggedRecord, tag: string, text: string): void {
+  Option.map(MutableHashMap.get(record.tags, tag), (values) => {
+    if (String.isNonEmpty(text)) values[values.length - 1] = `${values[values.length - 1]} ${text}`;
+  });
+}
+
+/** The first value of a tag, or `None`. */
+function taggedFirst(record: TaggedRecord, tag: string): Option.Option<string> {
+  return Option.flatMap(MutableHashMap.get(record.tags, tag), Array.head);
+}
+
+/** Every value of a tag, in order. */
+function taggedValues(record: TaggedRecord, tag: string): readonly string[] {
+  return Option.getOrElse(MutableHashMap.get(record.tags, tag), (): string[] => []);
+}
+
+/** Parses a tagged-line document with a per-record mapping, keeping each record's position. */
+function parseTagged(
+  content: string,
+  options: ParseOptions,
+  tagLine: TagLine,
+  outcome: (record: TaggedRecord, config: Settings) => ParseOutcome,
+): ParseOutcome[] {
+  return withinInputCap(content, settings(options), (input, config) => {
+    const position = locator(input);
+    const [records, truncated] = capped(
+      splitTaggedRecords(input, tagLine, config.maxRecords),
+      config,
+    );
+    return endOutcomes(
+      Array.map(records, (record) => at(outcome(record, config), position(record.offset))),
+      truncated,
+    );
+  });
+}
+
+/** The first value of `values` that `decode` accepts. */
+const firstDecoded = (
+  values: readonly string[],
+  decode: (value: string) => Option.Option<unknown>,
+): Option.Option<string> => Array.findFirst(values, (value) => Option.isSome(decode(value)));
+
+// ── PubMed / MEDLINE ──────────────────────────────────────────────────
+
+/** A {@link TagLine} reading the tag and the value from a pattern's first two groups. */
+const tagLineOf =
+  (pattern: RegExp): TagLine =>
+  (line) => {
+    const match = pattern.exec(line);
+    return match === null ? Option.none() : Option.some([match[1] ?? "", match[2] ?? ""] as const);
+  };
+
+/** A MEDLINE tag line: a tag of up to four characters, padded, then `- ` (`TI  - …`, `PMID- …`). */
+const medlineTag = tagLineOf(/^([A-Z][A-Z0-9]{0,3}) *- ?(.*)$/);
+
+/** A MEDLINE `AID` / `LID` value of one kind (`10.1000/x [doi]`), without its bracket. */
+const medlineArticleId = (record: TaggedRecord, kind: string): Option.Option<string> =>
+  Array.findFirst(
+    [...taggedValues(record, "LID"), ...taggedValues(record, "AID")],
+    (value): Option.Option<string> => {
+      const match = /^(.*?)\s*\[([a-z]+)\]$/.exec(value.trim());
+      return match !== null && match[2] === kind ? Option.some(match[1] ?? "") : Option.none();
+    },
+  );
+
+/** A MEDLINE record's CSL type: a journal article, else a chapter (a title in a book), else a book. */
+function medlineType(record: TaggedRecord): CslItemType {
+  if (Option.isSome(taggedFirst(record, "JT")) || Option.isSome(taggedFirst(record, "TA")))
+    return "article-journal";
+  const inBook = Option.isSome(taggedFirst(record, "BTI"));
+  if (inBook && Option.isSome(taggedFirst(record, "TI"))) return "chapter";
+  return inBook ? "book" : "document";
+}
+
+/**
+ * A MEDLINE short name (`AU` / `ED`): the family name, then the initials
+ * (`Doe JA`, `van der Berg A`). Anything else is read as a display name.
+ */
+function medlineShortName(value: string): Option.Option<CslName> {
+  const match = /^(.+?)\s+([A-Z]{1,4})$/.exec(value.trim());
+  return match === null
+    ? Option.fromNullishOr(parsePersonName(value))
+    : readCslName({ family: match[1], given: match[2] });
+}
+
+/** MEDLINE names: the full forms (`FAU` / `FED`, `Family, Given`) when present, else the short ones. */
+function medlineNames(
+  record: TaggedRecord,
+  full: string,
+  short: string,
+  maxAuthors: number,
+): CslName[] {
+  const people = taggedValues(record, full);
+  const named = Array.isReadonlyArrayNonEmpty(people)
+    ? Array.filterMap(people, (value): Result.Result<CslName, void> =>
+        Result.fromOption(Option.fromNullishOr(parsePersonName(value)), () => undefined),
+      )
+    : Array.filterMap(taggedValues(record, short), (value): Result.Result<CslName, void> =>
+        Result.fromOption(medlineShortName(value), () => undefined),
+      );
+  return named.slice(0, maxAuthors);
+}
+
+/** Maps one MEDLINE record to a {@link ParseOutcome}. */
+function medlineOutcome(record: TaggedRecord, config: Settings): ParseOutcome {
+  const type = medlineType(record);
+  const corporate = taggedValues(record, "CN");
+  const pmid = taggedFirst(record, "PMID");
+  return toOutcome(
+    {
+      type: Option.some(type),
+      title: Option.firstSomeOf([taggedFirst(record, "TI"), taggedFirst(record, "BTI")]),
+      subtitle: Option.none(),
+      year: Option.flatMap(taggedFirst(record, "DP"), (date) =>
+        Option.fromNullishOr(/\d{4}/.exec(date)?.[0]),
+      ),
+      publisher: taggedFirst(record, "PB"),
+      containerTitle:
+        type === "chapter"
+          ? taggedFirst(record, "BTI")
+          : Option.firstSomeOf([taggedFirst(record, "JT"), taggedFirst(record, "TA")]),
+      volume: taggedFirst(record, "VI"),
+      issue: taggedFirst(record, "IP"),
+      page: taggedFirst(record, "PG"),
+      isbn: firstDecoded(taggedValues(record, "ISBN"), decodeIsbn),
+      issn: firstDecoded(
+        taggedValues(record, "IS").map((value) => value.split(/\s/)[0] ?? ""),
+        decodeIssn,
+      ),
+      doi: medlineArticleId(record, "doi"),
+      pmid,
+      pmcid: taggedFirst(record, "PMC"),
+      arxiv: Option.none(),
+      id: pmid,
+      citationKey: Option.none(),
+      names: [
+        ...medlineNames(record, "FAU", "AU", config.maxAuthors),
+        ...Array.filterMap(corporate, (name): Result.Result<CslName, void> =>
+          Result.fromOption(readCslName({ literal: name }), () => undefined),
+        ),
+      ].slice(0, config.maxAuthors),
+      editors: medlineNames(record, "FED", "ED", config.maxAuthors),
+    },
+    "medline",
+    config,
+  );
+}
+
+/**
+ * Parses a PubMed / MEDLINE file (`.nbib`, PubMed's "Citation manager"
+ * export) into per-record {@link ParseOutcome}s. A record is a paragraph of
+ * `TAG - value` lines (a tag of up to four letters, padded to four), a value
+ * continuing on lines indented six spaces. It maps `TI` (or a book's `BTI`)
+ * to the title, `FAU` / `AU` and `CN` to authors, `FED` / `ED` to editors,
+ * `JT` (or `TA`) to the journal, `VI`, `IP`, `PG`, the year of `DP`, `PB`,
+ * the `[doi]` of `LID` / `AID` to the DOI, `IS` and `ISBN` to the ISSN and
+ * ISBN, and `PMID` / `PMC` to the record's `id` and identifiers. Each outcome
+ * carries the position of its record's first line; records are stamped
+ * `provenance.source: "medline"`.
+ *
+ * @since 1.0.0
+ */
+export function parseMedline(content: string, options: ParseOptions = {}): ParseOutcome[] {
+  return parseTagged(content, options, medlineTag, medlineOutcome);
+}
+
+// ── Refer / EndNote tagged ────────────────────────────────────────────
+
+/** A Refer tag line: `%` and one character (`%A`, `%0`, `%@`), a space, the value. */
+const referTag = tagLineOf(/^%(\S)(?: (.*))?$/);
+
+/** EndNote's `%0` reference types → CSL item types. */
+const REFER_TYPES = HashMap.fromIterable<string, CslItemType>([
+  ["journal article", "article-journal"],
+  ["magazine article", "article-magazine"],
+  ["newspaper article", "article-newspaper"],
+  ["book", "book"],
+  ["edited book", "book"],
+  ["electronic book", "book"],
+  ["book section", "chapter"],
+  ["conference paper", "paper-conference"],
+  ["conference proceedings", "paper-conference"],
+  ["thesis", "thesis"],
+  ["report", "report"],
+  ["web page", "webpage"],
+  ["dataset", "dataset"],
+  ["encyclopedia", "entry-encyclopedia"],
+  ["dictionary", "entry-dictionary"],
+  ["patent", "patent"],
+]);
+
+/** A Refer record's CSL type: its `%0` when known, else a journal article for a `%J`, a chapter for a `%B`, else from its identifier. */
+function referType(record: TaggedRecord): Option.Option<CslItemType> {
+  return Option.firstSomeOf([
+    Option.flatMap(taggedFirst(record, "0"), (type) =>
+      HashMap.get(REFER_TYPES, type.trim().toLowerCase()),
+    ),
+    Option.as(taggedFirst(record, "J"), "article-journal" as const),
+    Option.as(taggedFirst(record, "B"), "chapter" as const),
+  ]);
+}
+
+/** Maps one Refer record to a {@link ParseOutcome}. */
+function referOutcome(record: TaggedRecord, config: Settings): ParseOutcome {
+  const key = Option.firstSomeOf([taggedFirst(record, "F"), taggedFirst(record, "L")]);
+  const serials = taggedValues(record, "@").flatMap((value) => value.split(/[\s,;]+/));
+  return toOutcome(
+    {
+      type: referType(record),
+      title: taggedFirst(record, "T"),
+      subtitle: Option.none(),
+      year: Option.flatMap(taggedFirst(record, "D"), (date) =>
+        Option.fromNullishOr(/\d{4}/.exec(date)?.[0]),
+      ),
+      publisher: taggedFirst(record, "I"),
+      containerTitle: Option.firstSomeOf([taggedFirst(record, "J"), taggedFirst(record, "B")]),
+      volume: taggedFirst(record, "V"),
+      issue: taggedFirst(record, "N"),
+      page: taggedFirst(record, "P"),
+      isbn: firstDecoded(serials, decodeIsbn),
+      issn: firstDecoded(serials, decodeIssn),
+      doi: taggedFirst(record, "R"),
+      pmid: Option.none(),
+      pmcid: Option.none(),
+      arxiv: Option.none(),
+      id: key,
+      citationKey: key,
+      names: risNames(taggedValues(record, "A"), config.maxAuthors),
+      editors: risNames(taggedValues(record, "E"), config.maxAuthors),
+    },
+    "refer",
+    config,
+  );
+}
+
+/**
+ * Parses a Refer / EndNote tagged file into per-record {@link ParseOutcome}s.
+ * A record is a paragraph of `%X value` lines; a line without a tag
+ * continues the previous value. It maps `%0` (EndNote's reference type) to
+ * the CSL type, `%T` to the title, `%A` / `%E` to authors and editors, `%J`
+ * (or `%B`, a book's title) to the container, `%V`, `%N`, `%P`, the year of
+ * `%D`, `%I`, `%@` to the ISBN and ISSN, `%R` to the DOI, and `%F` (or
+ * `%L`) to the record's `id` and `citation-key`. Each outcome carries the
+ * position of its record's first line; records are stamped
+ * `provenance.source: "refer"`.
+ *
+ * @since 1.0.0
+ */
+export function parseRefer(content: string, options: ParseOptions = {}): ParseOutcome[] {
+  return parseTagged(content, options, referTag, referOutcome);
 }

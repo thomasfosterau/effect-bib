@@ -278,7 +278,8 @@ export type RecordIdentifiers = typeof RecordIdentifiers.Type;
 
 /**
  * The external authority (or channel) a record came from. `html` (citation
- * metadata embedded in a web page) was added in 1.0.0.
+ * metadata embedded in a web page), `medline` (a PubMed / MEDLINE file) and
+ * `refer` (a Refer / EndNote tagged file) were added in 1.0.0.
  *
  * @since 0.1.0
  */
@@ -291,6 +292,8 @@ export const ProvenanceSource = Schema.Literals([
   "ris",
   "csv",
   "html",
+  "medline",
+  "refer",
   "manual",
 ]);
 /**

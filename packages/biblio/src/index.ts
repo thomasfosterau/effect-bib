@@ -29,6 +29,8 @@ export {
   type ParseMode,
   type ParseOptions,
   type ParseOutcome,
+  parseMedline,
+  parseRefer,
   parseRis,
   parseZoteroJson,
   type SkippedEntry,
