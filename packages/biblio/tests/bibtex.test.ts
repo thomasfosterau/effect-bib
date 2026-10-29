@@ -225,6 +225,108 @@ describe("names", () => {
   });
 });
 
+describe("BibLaTeX field semantics, as Pandoc reads them", () => {
+  it("splits list fields at each top-level `and` and joins them with `; `", () => {
+    const record = parseEntry(
+      "book",
+      "title = {T}, publisher = {Routledge and {Clapp and Clopp} Press}, location = {Westport, Conn. and London}",
+    );
+    expect(record.publisher).toBe("Routledge; Clapp and Clopp Press");
+    expect(record["publisher-place"]).toBe("Westport, Conn.; London");
+  });
+
+  it("joins every publisher-like field present, school first", () => {
+    const record = parseEntry(
+      "thesis",
+      "title = {T}, school = {University of West Grantham}, institution = {University of East Grantham}",
+    );
+    expect(record.publisher).toBe("University of West Grantham; University of East Grantham");
+  });
+
+  it("makes a multi-volume book's maintitle its title and its own title the volume title", () => {
+    const record = parseEntry(
+      "book",
+      "maintitle = {The Collected Works}, mainsubtitle = {Volume Seven}, title = {Biographia Literaria}, volume = {7}, part = {2}",
+    );
+    expect(record.title).toBe("The Collected Works: Volume Seven");
+    expect(record["volume-title"]).toBe("Biographia Literaria");
+    expect(record.volume).toBe("7.2");
+    expect(record["collection-title"]).toBeUndefined();
+  });
+
+  it("makes a contained entry's maintitle its container and its booktitle the volume title", () => {
+    const record = parseEntry(
+      "inbook",
+      "title = {Kritik der Urtheilskraft}, maintitle = {Kants Werke}, booktitle = {Band 5}, series = {Akademie}",
+    );
+    expect(record.title).toBe("Kritik der Urtheilskraft");
+    expect(record["container-title"]).toBe("Kants Werke");
+    expect(record["volume-title"]).toBe("Band 5");
+    expect(record["collection-title"]).toBe("Akademie");
+  });
+
+  it("keeps the booktitle as the container of a contained entry without a maintitle", () => {
+    const record = parseEntry("incollection", "title = {Chapter}, booktitle = {The Book}");
+    expect(record["container-title"]).toBe("The Book");
+    expect(record["volume-title"]).toBeUndefined();
+  });
+
+  it("spells out BibLaTeX's localisation keys", () => {
+    const record = parseEntry(
+      "patent",
+      "title = {T}, type = {patentus}, pubstate = {inpress}, series = {newseries}",
+    );
+    expect(record.genre).toBe("U.S. patent");
+    expect(record.status).toBe("in press");
+    expect(record["collection-title"]).toBe("new series");
+    expect(parseEntry("article", "title = {T}, series = {3}")["collection-title"]).toBe(
+      "3rd series",
+    );
+    expect(parseEntry("article", "title = {T}, series = {12}")["collection-title"]).toBe(
+      "12th series",
+    );
+    expect(parseEntry("article", "title = {T}, series = {22}")["collection-title"]).toBe(
+      "22nd series",
+    );
+  });
+
+  it("reads the language from hyphenation, with a langidopts variant", () => {
+    expect(parseEntry("book", "title = {T}, hyphenation = {german}").language).toBe("de-DE");
+    expect(
+      parseEntry("book", "title = {T}, langid = {english}, langidopts = {variant=british}")
+        .language,
+    ).toBe("en-GB");
+    expect(
+      parseEntry("book", "title = {T}, langid = {en}, langidopts = {variant=american}").language,
+    ).toBe("en");
+  });
+
+  it("keeps a volume without a part, and a pubstate that is not a key, as written", () => {
+    const record = parseEntry(
+      "book",
+      "title = {T}, volume = {7}, part = {}, pubstate = {under review}",
+    );
+    expect(record.volume).toBe("7");
+    expect(record.status).toBe("under review");
+  });
+
+  it("quotes \\mkbibquote and italicises \\mkbibemph under CSL markup", () => {
+    const [outcome] = parseBibtex(
+      "@article{k, title = {Blah \\mkbibemph{this} and \\mkbibquote{that}}, doi = {10.1000/x}}",
+      { bibtexMarkup: true },
+    );
+    expect(expectParsed(outcome).title).toBe("Blah <i>this</i> and “that”");
+  });
+
+  it("decodes \\hyphen and \\mkbibquote", () => {
+    const record = parseEntry(
+      "article",
+      "title = {Methodology\\hyphen{}independent \\mkbibquote{energies}}",
+    );
+    expect(record.title).toBe("Methodology-independent “energies”");
+  });
+});
+
 describe("crossref and xdata", () => {
   it("inherits a parent book's title as an inbook's container, with its publisher and author", () => {
     const outcomes = parseBibtex(`

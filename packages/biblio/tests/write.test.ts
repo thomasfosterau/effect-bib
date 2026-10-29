@@ -199,6 +199,25 @@ const BIBLATEX_KEYS = [
 ];
 
 describe("toBibtex", () => {
+  it("writes a volume of a multi-volume work as a maintitle, and reads it back", () => {
+    const source = [
+      "@book{knuth, maintitle = {Computers & Typesetting}, title = {The TeXbook}, volume = {A}}",
+      "@inbook{kant, title = {Kritik}, maintitle = {Kants Werke}, booktitle = {Band 5}}",
+    ].join("\n");
+    const read = records(parseBibtex(source, { mode: "lenient" }));
+    const written = toBibtex(read);
+    expect(written).toContain("maintitle = {Computers \\& Typesetting},\n  title = {The TeXbook},");
+    expect(written).toContain("maintitle = {Kants Werke},\n  booktitle = {Band 5},");
+    const again = records(parseBibtex(written, { mode: "lenient" }));
+    expect(
+      again.map((record) => [record.title, record["volume-title"], record["container-title"]]),
+    ).toEqual([
+      ["Computers & Typesetting", "The TeXbook", undefined],
+      ["Kritik", "Band 5", "Kants Werke"],
+    ]);
+    expect(toBibtex(read, { dialect: "bibtex" })).not.toContain("maintitle");
+  });
+
   it("writes a BibLaTeX entry", () => {
     expect(toBibtex([corpus[0]])).toBe(
       [
