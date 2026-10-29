@@ -358,7 +358,52 @@ describe("parseBibliographicStream's bounds", () => {
     expect(outcomes).toHaveLength(20_001);
   });
 
-  it("uses a macro's latest definition, and keeps a key's latest parent when an older one leaves the window", async () => {
+  it("reads the first of two parents with one key, as the whole-file parse does, for every chunk size", async () => {
+    const text = [
+      "@book{p, title = {Old Parent}}",
+      "@book{p, title = {New Parent}}",
+      "@inbook{child, crossref = {p}}",
+    ].join("\n");
+    const whole = parseBibliographicFile(text, "bibtex", { mode: "lenient" });
+    const child = whole.find(
+      (outcome) => outcome.outcome === "parsed" && outcome.record.id === "child",
+    );
+    expect(child?.outcome === "parsed" ? child.record["container-title"] : undefined).toBe(
+      "Old Parent",
+    );
+    const sizes = [1, 2, 7, 64, text.length];
+    const results = await Promise.all(
+      sizes.map((size) => streamed(text, size, "bibtex", { mode: "lenient" })),
+    );
+    Array.forEach(results, (result, index) => {
+      expect(result, `chunks of ${sizes[index]}`).toEqual(whole);
+    });
+  });
+
+  it("falls back to a key's next parent in the window when the first leaves it, then forgets the key", async () => {
+    // A window of 1000: `p` (Old) is pushed out by the entries after it; `p` (New) is still in.
+    const fillers = Array.makeBy(997, (index) => `@misc{f${index}, title = {F}}`);
+    const parts = [
+      "@book{p, title = {Old Parent}}",
+      "@book{p, title = {New Parent}}",
+      ...fillers,
+      "@misc{g, title = {G}}",
+      "@inbook{child, crossref = {p}}",
+      ...Array.makeBy(1000, (index) => `@misc{h${index}, title = {H}}`),
+      "@inbook{orphan, crossref = {p}}",
+    ].map((part) => `${part}\n`);
+    const outcomes = await fromParts(parts, "bibtex", { mode: "lenient" });
+    const container = (id: string) => {
+      const found = outcomes.find(
+        (outcome) => outcome.outcome === "parsed" && outcome.record.id === id,
+      );
+      return found?.outcome === "parsed" ? found.record["container-title"] : "missing";
+    };
+    expect(container("child")).toBe("New Parent");
+    expect(container("orphan")).toBeUndefined();
+  });
+
+  it("uses a macro's latest definition, and a key's newer parent once the older one leaves the window", async () => {
     // The window holds 1000 entries: the child and these push out the old `p` but not the new one.
     const fillers = Array.makeBy(998, (index) => `@misc{f${index}, title = {F}}`);
     const parts = [

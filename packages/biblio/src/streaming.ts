@@ -267,7 +267,7 @@ interface Macro {
 interface Parent {
   readonly key: string;
   readonly text: string;
-  /** Its place in the window, so an eviction can tell whether it is still the latest for its key. */
+  /** Its place in the window, so an eviction can tell whether it is the one indexed for its key. */
   readonly seq: number;
 }
 
@@ -286,7 +286,10 @@ interface State {
   macroCount: number;
   /** BibTeX: recent entries, oldest first, for children that cross-reference them. */
   parents: Parent[];
-  /** BibTeX: the latest entry in the window under each key. */
+  /**
+   * BibTeX: the entry each key resolves to, the first in the window under
+   * that key, as the whole-file parse takes the first entry with a key.
+   */
   readonly parentIndex: MutableHashMap.MutableHashMap<string, Parent>;
   parentCount: number;
   /** BibTeX: the parents' total length. */
@@ -480,7 +483,8 @@ function remember(state: State, unit: Unit, cap: number): void {
     const parent: Parent = { key, text: unit.text, seq: state.parentCount };
     state.parentCount += 1;
     state.parents.push(parent);
-    MutableHashMap.set(state.parentIndex, key, parent);
+    if (!MutableHashMap.has(state.parentIndex, key))
+      MutableHashMap.set(state.parentIndex, key, parent);
     state.parentLength += unit.text.length;
     // oxlint-disable-next-line effect/imperative-loops -- evicts from the front of the window until it is within both bounds; how many go depends on their lengths.
     while (state.parents.length > PARENT_WINDOW || state.parentLength > cap) {
@@ -489,10 +493,17 @@ function remember(state: State, unit: Unit, cap: number): void {
         if (
           Option.exists(
             MutableHashMap.get(state.parentIndex, evicted.key),
-            (latest) => latest.seq === evicted.seq,
+            (indexed) => indexed.seq === evicted.seq,
           )
         )
-          MutableHashMap.remove(state.parentIndex, evicted.key);
+          // The key falls back to its next entry still in the window (a scan of at most the window).
+          Option.match(
+            Array.findFirst(state.parents, (parent) => parent.key === evicted.key),
+            {
+              onNone: () => MutableHashMap.remove(state.parentIndex, evicted.key),
+              onSome: (next) => MutableHashMap.set(state.parentIndex, evicted.key, next),
+            },
+          );
       });
     }
   });
@@ -723,7 +734,9 @@ function step(
  *   whose parent is still to come waits for it (at most 1000 children wait;
  *   past that the oldest are read without their parent), so it is emitted
  *   once the parent has come, out of document order. A parent that has left
- *   the window is not found.
+ *   the window is not found. Of several entries with the child's key, the
+ *   first still in the window is the parent, as the whole-file parse takes
+ *   the first.
  * - **Work is bounded across the stream**, not per chunk: macro expansion and
  *   inherited-field decoding spend one budget for the whole stream (growing
  *   with the input read, as the whole-file parse's scale with its input), and
