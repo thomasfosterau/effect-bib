@@ -89,6 +89,8 @@ const SYMBOL_WORDS = HashMap.fromIterable<string, string>([
   ["dots", "…"],
   ["textellipsis", "…"],
   ["textendash", "–"],
+  // BibLaTeX's breakable hyphen.
+  ["hyphen", "-"],
   ["textemdash", "—"],
   ["textquoteleft", "‘"],
   ["textquoteright", "’"],
@@ -188,8 +190,8 @@ const withGroup = (f: (inner: string) => string): Parser.Parser<string> =>
 /**
  * What follows a control word, by name. Accents take an argument; `\url`
  * keeps its group verbatim (a URL's `~`, `_` and `--` are not markup);
- * `\href` drops its URL group and keeps the link text; `\enquote` quotes its
- * group; a symbol word is its character. Built once: a record of cases, not a
+ * `\href` drops its URL group and keeps the link text; `\enquote` and
+ * BibLaTeX's `\mkbibquote` quote their group; a symbol word is its character. Built once: a record of cases, not a
  * function, so a command's parser is not rebuilt each time it occurs.
  * Later entries win, so an accent takes precedence over a symbol word.
  */
@@ -198,6 +200,7 @@ const controlWords = Record.fromEntries([
   ["url", withGroup((inner) => inner)],
   ["href", withGroup(() => "")],
   ["enquote", withGroup((inner) => `“${decodeLatex(inner)}”`)],
+  ["mkbibquote", withGroup((inner) => `“${decodeLatex(inner)}”`)],
   ...Array.from(WORD_ACCENTS, ([name, mark]) => [name, accented(mark)] as const),
 ]);
 
@@ -272,6 +275,7 @@ export function decodeLatex(source: string): string {
 /** The formatting commands kept as CSL markup, and the markup each becomes. */
 const FORMATTING: ReadonlyArray<readonly [string, string, string]> = [
   ["emph", "<i>", "</i>"],
+  ["mkbibemph", "<i>", "</i>"],
   ["textit", "<i>", "</i>"],
   ["textbf", "<b>", "</b>"],
   ["textsc", '<span style="font-variant:small-caps;">', "</span>"],
@@ -313,6 +317,7 @@ function markupPieces(inNoCase: boolean): Parser.Parser<string> {
       ),
     ],
     ["enquote", withGroup((inner) => `“${decode(inner)}”`)],
+    ["mkbibquote", withGroup((inner) => `“${decode(inner)}”`)],
     ...FORMATTING.map(
       ([name, open, close]) =>
         [

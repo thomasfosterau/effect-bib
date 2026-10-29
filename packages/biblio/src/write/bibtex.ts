@@ -295,6 +295,42 @@ function issuedFields(writer: Writer): Field[] {
   ];
 }
 
+/** Entry types whose container is a book, for which a volume title is the `booktitle`. */
+const CONTAINED_KINDS = HashSet.make("inbook", "incollection", "inproceedings", "inreference");
+
+/**
+ * The title fields. A record with a `volume-title` is a volume of a
+ * multi-volume work, written as BibLaTeX's `maintitle` (the reader's
+ * mapping in reverse): in a contained entry, the container is the
+ * `maintitle` and the volume the `booktitle`; otherwise the title is the
+ * `maintitle` and the volume the entry's `title`. BibTeX has no
+ * `maintitle`, so it writes the title and the container as they are.
+ */
+function titleFields(writer: Writer): Option.Option<Field>[] {
+  const { record } = writer;
+  const volume = Option.fromUndefinedOr(record["volume-title"]);
+  if (
+    writer.dialect !== "biblatex" ||
+    Option.isNone(volume) ||
+    HashSet.has(SERIAL_KINDS, writer.kind)
+  )
+    return [
+      textField(writer, "title", Option.fromUndefinedOr(record.title)),
+      containerField(writer),
+    ];
+  if (HashSet.has(CONTAINED_KINDS, writer.kind))
+    return [
+      textField(writer, "title", Option.fromUndefinedOr(record.title)),
+      textField(writer, "maintitle", Option.fromUndefinedOr(record["container-title"])),
+      textField(writer, "booktitle", volume),
+    ];
+  return [
+    textField(writer, "maintitle", Option.fromUndefinedOr(record.title)),
+    textField(writer, "title", volume),
+    containerField(writer),
+  ];
+}
+
 /** The container title's field: a journal for an article, else the book. */
 function containerField(writer: Writer): Option.Option<Field> {
   const name = HashSet.has(SERIAL_KINDS, writer.kind)
@@ -424,9 +460,8 @@ function entryFields(writer: Writer): Field[] {
     namesField(writer, "editor", Option.fromUndefinedOr(record.editor)),
     namesField(writer, "translator", Option.fromUndefinedOr(record.translator)),
     namesField(writer, "bookauthor", Option.fromUndefinedOr(record["container-author"])),
-    textField(writer, "title", Option.fromUndefinedOr(record.title)),
+    ...titleFields(writer),
     textField(writer, "shorttitle", Option.fromUndefinedOr(record["title-short"])),
-    containerField(writer),
     textField(writer, "shortjournal", Option.fromUndefinedOr(record["container-title-short"])),
     textField(writer, "edition", Option.fromUndefinedOr(record.edition)),
     textField(writer, "volume", Option.fromUndefinedOr(record.volume)),

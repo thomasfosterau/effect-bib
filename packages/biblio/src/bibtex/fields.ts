@@ -174,6 +174,27 @@ export const GENRES = HashMap.fromIterable<string, string>([
   ["software", "Computer software"],
   ["datacd", "CD-ROM"],
   ["audiocd", "Audio CD"],
+  ["patent", "patent"],
+  ["patentde", "German patent"],
+  ["patenteu", "European patent"],
+  ["patentfr", "French patent"],
+  ["patentuk", "British patent"],
+  ["patentus", "U.S. patent"],
+  ["patreq", "patent request"],
+  ["patreqde", "German patent request"],
+  ["patreqeu", "European patent request"],
+  ["patreqfr", "French patent request"],
+  ["patrequk", "British patent request"],
+  ["patrequs", "U.S. patent request"],
+]);
+
+/** BibLaTeX's `pubstate` localisation keys → their English text. */
+const PUBSTATES = HashMap.fromIterable<string, string>([
+  ["inpreparation", "in preparation"],
+  ["submitted", "submitted"],
+  ["forthcoming", "forthcoming"],
+  ["inpress", "in press"],
+  ["prepublished", "pre-published"],
 ]);
 
 /** The genre an entry type implies when it has no `type` field. */
@@ -343,10 +364,15 @@ function splitList(source: string): string[] {
   );
   const cuts = [
     0,
-    ...Array.flatMap(separators, (match) => [match.index ?? 0, (match.index ?? 0) + match[0].length]),
+    ...Array.flatMap(separators, (match) => [
+      match.index ?? 0,
+      (match.index ?? 0) + match[0].length,
+    ]),
     source.length,
   ];
-  return Array.makeBy(cuts.length / 2, (index) => source.slice(cuts[index * 2], cuts[index * 2 + 1]));
+  return Array.makeBy(cuts.length / 2, (index) =>
+    source.slice(cuts[index * 2], cuts[index * 2 + 1]),
+  );
 }
 
 /**
@@ -415,42 +441,93 @@ const titleGroup = (reader: Reader, prefix: string): Option.Option<string> =>
       )
     : Option.none();
 
-/** The title, container and collection titles of an entry. */
+/** The title, volume title, container and collection titles of an entry. */
 interface Titles {
   readonly title: Option.Option<string>;
+  readonly volumeTitle: Option.Option<string>;
   readonly containerTitle: Option.Option<string>;
   readonly collectionTitle: Option.Option<string>;
 }
 
+/** The journal title (`journaltitle` or `journal`, with `journalsubtitle`). */
+const journalTitle = (reader: Reader): Option.Option<string> =>
+  Option.isSome(
+    Array.findFirst(["journaltitle", "journal"], (key) => HashMap.has(reader.fields, key)),
+  )
+    ? joinTitle(
+        firstText(reader, ["journaltitle", "journal"]),
+        text(reader, "journalsubtitle"),
+        Option.none(),
+      )
+    : Option.none();
+
 /**
- * Reads the titles. The container is the journal, else the book (`booktitle`),
- * else, for a contained entry, the multi-volume work (`maintitle`). A
- * `maintitle` that is not the container is the collection title when there
- * is no `series`.
+ * Reads the titles as Pandoc does. For a contained entry (an `@inbook`,
+ * `@incollection`, …) the container is the multi-volume work (`maintitle`),
+ * else the book (`booktitle`), else the journal; with a `maintitle`, the
+ * `booktitle` is the volume title. For any other entry with a `maintitle`
+ * (a volume of a multi-volume `@book`), the `maintitle` is the title and the
+ * entry's own title the volume title. The container of an uncontained entry
+ * is its journal. The collection title is the `series` alone.
  */
 function readTitles(reader: Reader): Titles {
-  const title = titleGroup(reader, "");
-  const journal = Option.orElse(
-    Option.isSome(
-      Array.findFirst(["journaltitle", "journal"], (key) => HashMap.has(reader.fields, key)),
-    )
-      ? joinTitle(
-          firstText(reader, ["journaltitle", "journal"]),
-          text(reader, "journalsubtitle"),
-          Option.none(),
-        )
-      : Option.none(),
-    () => titleGroup(reader, "book"),
-  );
-  const mainIsContainer = Option.isNone(journal) && HashSet.has(CONTAINED_KINDS, reader.kind);
-  const series = text(reader, "series");
-  const main =
-    mainIsContainer || Option.isNone(series) ? titleGroup(reader, "main") : Option.none<string>();
+  const contained = HashSet.has(CONTAINED_KINDS, reader.kind);
+  const multiVolume = Option.isSome(peek(reader, "maintitle"));
+  const series = Option.map(text(reader, "series"), seriesTitle);
+  if (contained) {
+    const main = titleGroup(reader, "main");
+    const book = titleGroup(reader, "book");
+    return {
+      title: titleGroup(reader, ""),
+      volumeTitle: multiVolume ? book : Option.none(),
+      containerTitle: Option.firstSomeOf([
+        main,
+        multiVolume ? Option.none() : book,
+        journalTitle(reader),
+      ]),
+      collectionTitle: series,
+    };
+  }
   return {
-    title,
-    containerTitle: mainIsContainer ? Option.orElse(journal, () => main) : journal,
-    collectionTitle: Option.orElse(series, () => (mainIsContainer ? Option.none() : main)),
+    title: multiVolume ? titleGroup(reader, "main") : titleGroup(reader, ""),
+    volumeTitle: multiVolume ? titleGroup(reader, "") : Option.none(),
+    containerTitle: journalTitle(reader),
+    collectionTitle: series,
   };
+}
+
+/** The volume, with a `part` of it as Pandoc writes them (`volume = 7`, `part = 2` → `7.2`). */
+function readVolume(reader: Reader): Option.Option<string> {
+  const volume = text(reader, "volume");
+  if (Option.isNone(volume) || Option.isNone(peek(reader, "part"))) return volume;
+  return Option.match(text(reader, "part"), {
+    onNone: () => volume,
+    onSome: (part) => Option.some(`${volume.value}.${part}`),
+  });
+}
+
+/** BibLaTeX's `series` localisation keys → their English text. */
+const SERIES_KEYS = HashMap.fromIterable<string, string>([
+  ["newseries", "new series"],
+  ["oldseries", "old series"],
+]);
+
+/**
+ * A `series` value: a localisation key in English (`newseries` → `new
+ * series`), and a bare number as the series of a journal (`3` → `3rd
+ * series`), as BibLaTeX and Pandoc print them.
+ */
+function seriesTitle(value: string): string {
+  const clean = value.trim();
+  if (/^\d+$/.test(clean)) return `${ordinal(Number(clean))} series`;
+  return Option.getOrElse(HashMap.get(SERIES_KEYS, clean.toLowerCase()), () => value);
+}
+
+/** An English ordinal (`1st`, `2nd`, `3rd`, `11th`, `22nd`). */
+function ordinal(n: number): string {
+  const teen = n % 100 >= 11 && n % 100 <= 13;
+  const suffix = teen ? "th" : (["th", "st", "nd", "rd"][n % 10] ?? "th");
+  return `${n}${suffix}`;
 }
 
 /** An entry's `number` and `issue`, placed by its type. */
@@ -553,14 +630,58 @@ function readIssued(reader: Reader): Option.Option<CslDate> {
 const dateField = (reader: Reader, key: string): Option.Option<CslDate> =>
   Option.flatMap(take(reader, key), readBibtexDate);
 
-/** The language as a BCP 47 tag: a Babel name mapped, a tag kept; any other value stays in `extra`. */
+/** Babel / polyglossia `variant` options → the region they select. */
+const VARIANTS = HashMap.fromIterable<string, string>([
+  ["american", "US"],
+  ["us", "US"],
+  ["british", "GB"],
+  ["uk", "GB"],
+  ["australian", "AU"],
+  ["canadian", "CA"],
+  ["newzealand", "NZ"],
+  ["german", "DE"],
+  ["austrian", "AT"],
+  ["swiss", "CH"],
+  ["brazilian", "BR"],
+  ["portuguese", "PT"],
+]);
+
+/**
+ * The language as a BCP 47 tag: `langid`, else the legacy `hyphenation`
+ * (its alias), else `language`, the first whose value is a Babel name or a
+ * tag; any other value stays in `extra`. A `langidopts` `variant`
+ * (`variant=british`) sets the region of a `langid` or `hyphenation`
+ * written as a Babel name (`english` → `en-GB`), as Pandoc reads it; a
+ * tag is kept as written.
+ */
 function readLanguage(reader: Reader): Option.Option<string> {
   return Option.flatMap(
-    Array.findFirst(["langid", "language"], (key) =>
+    Array.findFirst(["langid", "hyphenation", "language"], (key) =>
       Option.exists(peek(reader, key), (value) => Option.isSome(languageTag(value))),
     ),
-    (key) => Option.flatMap(take(reader, key), languageTag),
+    (key) =>
+      Option.flatMap(take(reader, key), (value) =>
+        Option.map(languageTag(value), (tag) =>
+          key === "language" || !HashMap.has(LANGUAGES, value.trim().toLowerCase())
+            ? tag
+            : withVariant(tag, take(reader, "langidopts")),
+        ),
+      ),
   );
+}
+
+/** A tag with its region replaced by a `langidopts` `variant`, when there is a known one. */
+function withVariant(tag: string, options: Option.Option<string>): string {
+  const region = Option.flatMap(
+    Option.flatMap(options, (value) =>
+      Option.fromNullishOr(/(?:^|,)\s*variant\s*=\s*([A-Za-z]+)/.exec(value)?.[1]),
+    ),
+    (variant) => HashMap.get(VARIANTS, variant.toLowerCase()),
+  );
+  return Option.match(region, {
+    onNone: () => tag,
+    onSome: (code) => `${tag.split("-")[0]}-${code}`,
+  });
 }
 
 /** A language value as a BCP 47 tag, or `None`. */
@@ -669,7 +790,12 @@ function cslVariables(reader: Reader, genre: Option.Option<string>, numbering: N
     ["original-title", text(reader, "origtitle")],
     ["original-publisher", text(reader, "origpublisher")],
     ["original-publisher-place", text(reader, "origlocation")],
-    ["status", text(reader, "pubstate")],
+    [
+      "status",
+      Option.map(text(reader, "pubstate"), (value) =>
+        Option.getOrElse(HashMap.get(PUBSTATES, value.trim().toLowerCase()), () => value),
+      ),
+    ],
     ["annote", firstText(reader, ["annotation", "annote"])],
   ] as const;
 }
@@ -719,6 +845,7 @@ function readAdditions(
     additions["container-author"] = containerAuthor;
   assignAll(additions, [
     ["collection-title", titles.collectionTitle],
+    ["volume-title", titles.volumeTitle],
     ["number", Option.orElse(numbering.number, () => Option.map(arxiv, (id) => `arXiv:${id}`))],
     ["publisher-place", firstList(reader, ["location", "address"])],
     ["edition", text(reader, "edition")],
@@ -776,7 +903,7 @@ function mapEntry(entry: BibtexEntry, limits: BibtexLimits, budget: Budget): Bib
     year: Option.none(),
     publisher: readPublisher(reader),
     containerTitle: titles.containerTitle,
-    volume: text(reader, "volume"),
+    volume: readVolume(reader),
     issue: numbering.issue,
     page: Option.flatMap(take(reader, "pages"), (pages) =>
       decodeText(reader, "pages")(pages.replace(/-{2,3}/g, "-")),
