@@ -11,7 +11,13 @@
 
 import * as Record from "effect/Record";
 import { describe, expect, it } from "vite-plus/test";
-import { MAX_INPUT_LENGTH, parseBibtex, type ParseOutcome } from "@thomasfosterau/biblio";
+import {
+  MAX_AUTHORS,
+  MAX_INPUT_LENGTH,
+  MAX_TEXT_FIELD_LENGTH,
+  parseBibtex,
+  type ParseOutcome,
+} from "@thomasfosterau/biblio";
 
 /** Narrows a `ParseOutcome` to its parsed record, failing the test otherwise. */
 function expectParsed(outcome: ParseOutcome) {
@@ -233,6 +239,26 @@ describe("BibLaTeX field semantics, as Pandoc reads them", () => {
     );
     expect(record.publisher).toBe("Routledge; Clapp and Clopp Press");
     expect(record["publisher-place"]).toBe("Westport, Conn.; London");
+  });
+
+  it("bounds a huge list field: clamped once, items capped, linear in its length", () => {
+    const started = performance.now();
+    const huge = parseEntry(
+      "book",
+      `title = {T}, publisher = {${"x".repeat(4_000_000)} and Y}, location = {${"A and ".repeat(500_000)}B}`,
+    );
+    expect(huge.publisher?.length).toBeLessThanOrEqual(MAX_TEXT_FIELD_LENGTH);
+    expect(huge["publisher-place"]?.split("; ").length).toBeLessThanOrEqual(MAX_AUTHORS);
+    // Long blank runs, before and around an `and`, cannot make the splitter backtrack.
+    const spaced = parseEntry(
+      "book",
+      `title = {T}, location = {a${" ".repeat(30_000)}b${" \t".repeat(10_000)}and${" ".repeat(10_000)}c}`,
+    );
+    expect(spaced["publisher-place"]).toBe("a b; c");
+    expect(
+      parseEntry("book", `title = {T}, location = {a${" ".repeat(3_000_000)}b}`)["publisher-place"],
+    ).toBe("a");
+    expect(performance.now() - started).toBeLessThan(15_000);
   });
 
   it("joins every publisher-like field present, school first", () => {

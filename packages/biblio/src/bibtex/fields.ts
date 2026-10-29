@@ -279,16 +279,18 @@ function budgeted(reader: Reader, key: string, source: string): Option.Option<st
   return covered ? Option.some(clamped) : Option.none();
 }
 
+/** Decodes LaTeX source that is already clamped and charged to the budget, to sanitised text. */
+const decodeClamped = (reader: Reader, clamped: string): Option.Option<string> =>
+  sanitiseText(
+    reader.limits.cslMarkup ? decodeLatexMarkup(clamped) : decodeLatex(clamped),
+    reader.limits.maxFieldLength,
+  );
+
 /** Decodes LaTeX field source to sanitised text. */
 const decodeText =
   (reader: Reader, key: string) =>
   (source: string): Option.Option<string> =>
-    Option.flatMap(budgeted(reader, key, source), (clamped) =>
-      sanitiseText(
-        reader.limits.cslMarkup ? decodeLatexMarkup(clamped) : decodeLatex(clamped),
-        reader.limits.maxFieldLength,
-      ),
-    );
+    Option.flatMap(budgeted(reader, key, source), (clamped) => decodeClamped(reader, clamped));
 
 /**
  * A verbatim value without the brace groups that wrap all of it
@@ -347,44 +349,53 @@ const firstText = (reader: Reader, keys: readonly string[]): Option.Option<strin
 
 /**
  * Splits a BibLaTeX list field at each top-level `and` (one inside braces
- * is text: `{Clapp and Clopp} Press`).
+ * is text: `{Clapp and Clopp} Press`). One linear pass: the field is cut
+ * into maximal runs of braces, blanks and other text (disjoint classes, so
+ * the pattern cannot backtrack), and an `and` run at brace depth 0 with
+ * blanks on both sides separates two items.
  */
 function splitList(source: string): string[] {
-  const separators = Array.filter(
-    Array.fromIterable(source.matchAll(/[{}]|\s+and\s+/gi)),
-    (() => {
-      let depth = 0;
-      return (match: RegExpMatchArray): boolean => {
-        if (match[0] === "{") depth += 1;
-        else if (match[0] === "}") depth = Math.max(0, depth - 1);
-        else return depth === 0;
-        return false;
-      };
-    })(),
+  const runs = Array.map(
+    Array.fromIterable(source.matchAll(/[{}]|\s+|[^{}\s]+/g)),
+    (match) => match[0],
   );
-  const cuts = [
-    0,
-    ...Array.flatMap(separators, (match) => [
-      match.index ?? 0,
-      (match.index ?? 0) + match[0].length,
-    ]),
-    source.length,
-  ];
-  return Array.makeBy(cuts.length / 2, (index) =>
-    source.slice(cuts[index * 2], cuts[index * 2 + 1]),
+  const depths = Array.scan(runs, 0, (depth, run) =>
+    run === "{" ? depth + 1 : run === "}" ? Math.max(0, depth - 1) : depth,
   );
+  const isSeparator = (index: number): boolean =>
+    depths[index] === 0 &&
+    runs[index]?.toLowerCase() === "and" &&
+    /^\s/.test(runs[index - 1] ?? "") &&
+    /^\s/.test(runs[index + 1] ?? "");
+  return Array.reduce(runs, [""], (items, run, index) => {
+    if (isSeparator(index)) items.push("");
+    else if (!isSeparator(index - 1) && !isSeparator(index + 1))
+      items[items.length - 1] = `${items[items.length - 1]}${run}`;
+    return items;
+  });
 }
 
 /**
  * A BibLaTeX list field (`publisher`, `location`, `institution`,
  * `organization`) as text: its `and`-separated items decoded and joined
- * with `; `, as Pandoc writes them. Marks the field used.
+ * with `; `, as Pandoc writes them. The field is clamped and charged to the
+ * decoding budget once, as a whole, before it is split; at most
+ * `maxAuthors` items are kept, and the joined text is clamped to the field
+ * length. Marks the field used.
  */
 const listText = (reader: Reader, key: string): Option.Option<string> =>
-  Option.flatMap(take(reader, key), (source) => {
-    const items = Array.getSomes(Array.map(splitList(source), decodeText(reader, key)));
-    return Array.isReadonlyArrayNonEmpty(items) ? Option.some(items.join("; ")) : Option.none();
-  });
+  Option.flatMap(take(reader, key), (source) =>
+    Option.flatMap(budgeted(reader, key, source), (clamped) => {
+      const items = Array.getSomes(
+        Array.map(splitList(clamped).slice(0, reader.limits.maxAuthors), (item) =>
+          decodeClamped(reader, item),
+        ),
+      );
+      return Array.isReadonlyArrayNonEmpty(items)
+        ? sanitiseText(items.join("; "), reader.limits.maxFieldLength)
+        : Option.none();
+    }),
+  );
 
 /** The first present list field of `keys`, as {@link listText}; only that field is marked used. */
 const firstList = (reader: Reader, keys: readonly string[]): Option.Option<string> =>
