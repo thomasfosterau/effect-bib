@@ -102,6 +102,36 @@ describe("LaTeX decoding", () => {
   });
 });
 
+describe("verbatim fields wrapped in a brace group", () => {
+  it("keeps the identifier of a doubly braced DOI, ISSN and URL", () => {
+    const record = expectParsed(
+      parseBibtex(
+        "@article{k, title = {T}, doi = {{10.1016/j.buildenv.2018.07.033}}, issn = {{0360-1323}}, url = {{https://example.org/a}}}",
+      )[0],
+    );
+    expect(record.identifiers.doi).toBe("10.1016/j.buildenv.2018.07.033");
+    expect(record.identifiers.issn).toBe("0360-1323");
+    expect(record.URL).toBe("https://example.org/a");
+  });
+
+  it("removes every group that wraps the whole value, and only those", () => {
+    const url = (value: string) =>
+      expectParsed(parseBibtex(`@misc{k, title = {T}, doi = {10.1000/x}, url = ${value}}`)[0]).URL;
+    expect(url("{{{https://example.org/deep}}}")).toBe("https://example.org/deep");
+    expect(url("{ {https://example.org/spaced} }")).toBe("https://example.org/spaced");
+    expect(url("{{a}{b}}")).toBe("{a}{b}");
+    expect(url("{{a}x{b}}")).toBe("{a}x{b}");
+    expect(url('"{https://example.org/quoted}"')).toBe("https://example.org/quoted");
+  });
+
+  it("removes as many wrapping groups as the scanner accepts", () => {
+    // The scanner caps brace nesting at 32, so 30 groups inside the field's own braces is the deepest value.
+    const deep = `${"{".repeat(30)}10.1000/deep${"}".repeat(30)}`;
+    const record = expectParsed(parseBibtex(`@misc{k, title = {T}, doi = {${deep}}}`)[0]);
+    expect(record.identifiers.doi).toBe("10.1000/deep");
+  });
+});
+
 describe("names", () => {
   it("reads the three BibTeX name forms and particles", () => {
     const record = parseEntry(

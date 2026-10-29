@@ -269,12 +269,37 @@ const decodeText =
       ),
     );
 
-/** Sanitises a verbatim field, unescaping `\_`, `\%`, `\#`, `\&`, `\$` and `\~`. */
+/**
+ * A verbatim value without the brace groups that wrap all of it
+ * (`{10.1000/x}` → `10.1000/x`), as exporters write `doi = {{…}}`. Only
+ * groups that span the whole value are removed: `{a}{b}` stays as it is. One
+ * pass over the value whatever the nesting.
+ */
+function ungroup(value: string): string {
+  const trimmed = value.trim();
+  const wrapped = Math.min(
+    /^\{*/.exec(trimmed)?.[0].length ?? 0,
+    /\}*$/.exec(trimmed)?.[0].length ?? 0,
+  );
+  if (wrapped === 0 || wrapped * 2 > trimmed.length) return trimmed;
+  const inner = trimmed.slice(wrapped, trimmed.length - wrapped);
+  const lowest = Array.reduce(inner, { depth: 0, lowest: 0 }, (state, char) => {
+    const depth = char === "{" ? state.depth + 1 : char === "}" ? state.depth - 1 : state.depth;
+    return { depth, lowest: Math.min(state.lowest, depth) };
+  }).lowest;
+  const layers = wrapped + Math.max(lowest, -wrapped);
+  return layers === 0 ? trimmed : trimmed.slice(layers, trimmed.length - layers).trim();
+}
+
+/**
+ * Sanitises a verbatim field: the brace groups that wrap the whole value
+ * removed, and `\_`, `\%`, `\#`, `\&`, `\$` and `\~` unescaped.
+ */
 const decodeVerbatim =
   (reader: Reader, key: string) =>
   (source: string): Option.Option<string> =>
     Option.flatMap(budgeted(reader, key, source), (clamped) =>
-      sanitiseText(clamped.replace(/\\([_%#&$~])/g, "$1"), reader.limits.maxFieldLength),
+      sanitiseText(ungroup(clamped).replace(/\\([_%#&$~])/g, "$1"), reader.limits.maxFieldLength),
     );
 
 /** A field's source, without marking it used. */
