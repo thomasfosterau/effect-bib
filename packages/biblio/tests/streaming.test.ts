@@ -88,6 +88,24 @@ describe("parseBibliographicStream", () => {
     },
   );
 
+  it("yields the whole-file outcomes for parenthesised entries, for every chunk size", async () => {
+    const text = [
+      '@string(ups = "Oxford University Press")',
+      "@book(oxford, title = {The (Oxford) Handbook}, publisher = ups, isbn = {9780199695836})",
+      "@comment(an aside)",
+      "@article{kuhn, title = {The Structure}, doi = {10.1037/0003-066X.59.1.29}}",
+    ].join("\n");
+    const whole = parseBibliographicFile(text, "bibtex", { mode: "lenient" });
+    expect(whole.map((outcome) => outcome.outcome)).toEqual(["parsed", "parsed"]);
+    const sizes = [1, 2, 7, 64, text.length];
+    const results = await Promise.all(
+      sizes.map((size) => streamed(text, size, "bibtex", { mode: "lenient" })),
+    );
+    Array.forEach(results, (result, index) => {
+      expect(result, `chunks of ${sizes[index]}`).toEqual(whole);
+    });
+  });
+
   it("reads a child with a parent that came before, and one whose parent comes after", async () => {
     const bibtex = [
       "@book{parent, title = {The Book}, publisher = {Pub}, isbn = {9780199695836}}",
