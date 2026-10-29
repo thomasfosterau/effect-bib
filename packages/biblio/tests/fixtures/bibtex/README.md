@@ -26,7 +26,7 @@ Pandoc's cases are GPL, so they are used as an oracle only: their inputs are rea
 
 **Gaps in `parseBibtex`**, each an issue (fixing one shrinks the list):
 
-- BibLaTeX list fields, localisation keys, `hyphenation` / `langidopts`, multi-volume books (`maintitle`, `volume` + `part`), `\hyphen` / `\mkbibquote`: #102. Most of the `publisher`, `publisher-place`, `language`, `genre`, `status`, `collection-title`, `container-title`, `volume` and `title` entries.
+- BibLaTeX's field semantics (#102) now follow Pandoc's reading. What remains of the `language`, `publisher`, `genre` and title entries is listed below or is a separate gap: an unmapped `langid` (`sanskrit`), which Pandoc keeps as written and we keep in `extra`; a `language` field, which we read as the language and Pandoc ignores; BibLaTeX's country keys in `location`; and the braces Pandoc keeps in some values.
 - BibLaTeX's extended name format (`family=…, given=…`): #103. Most `author` / `editor` entries.
 - Dates beyond EDTF level 0 (era years, times, open starts, unspecified digits): #104. Most `issued`, `accessed`, `original-date`, `event-date` entries.
 - A doubly-braced verbatim field (`doi = {{…}}`) loses its identifier: #105.
@@ -34,7 +34,7 @@ Pandoc's cases are GPL, so they are used as an oracle only: their inputs are rea
 
 **Deliberate differences** (stay listed):
 
-- `title-short`: Pandoc derives one from a title with a subtitle when there is no `shorttitle`; we keep only a declared one (#102 tracks the decision).
+- `title-short`: Pandoc derives one from a title with a subtitle when there is no `shorttitle`; we keep only a declared one, since a derived short title is a guess (#102).
 - `number`: we write an arXiv `eprint` as `number: "arXiv:<id>"` (as Zotero does); Pandoc writes no number.
 - `@set` entries yield no record (ours), where Pandoc reads them: the `(missing)` entries in biber's `sets.bib`, `skips.bib` and `examples.bib`.
 - `issue`: an `@article` with both `number` and `issue` takes `number` as its issue; Pandoc joins them (`number, issue`).
