@@ -38,39 +38,59 @@ interface DatePoint {
  * (`0000` is 1 BC, `-0379` is 380 BC), while CSL has no year 0 and a
  * negative year counts back from 1 BC, so an astronomical year `y <= 0` is
  * `y - 1` in CSL (`-0379` → `-380`, as Pandoc reads it). A positive year is
- * held to the publication-year range.
+ * held to the publication-year range; unspecified digits (`19XX`) read as
+ * zeros, and an era year cannot have them.
  */
 function cslYear(sign: string, digits: string): Option.Option<number> {
-  if (sign === "") return sanitiseYear(Number(digits.replaceAll("X", "0")));
-  return Option.some(-Number(digits) - 1);
+  if (sign === "-" || /^0+$/.test(digits))
+    return digits.includes("X") ? Option.none() : Option.some(-Number(digits) - 1);
+  return sanitiseYear(Number(digits.replaceAll("X", "0")));
+}
+
+/** A day of a month (`XX` unspecified, `""` absent), refining `parts`; `None` when out of range. */
+function withDay(
+  parts: readonly number[],
+  rawDay: string,
+  qualifier: string,
+  unspecified: boolean,
+): Option.Option<DatePoint> {
+  if (rawDay === "" || rawDay === "XX")
+    return Option.some(point(parts, qualifier, unspecified || rawDay === "XX"));
+  const day = Number(rawDay);
+  return day >= 1 && day <= 31
+    ? Option.some(point([...parts, day], qualifier, unspecified))
+    : Option.none();
+}
+
+/** A month (`XX` unspecified, a season 21–24, `""` absent) and day after `year`; `None` when out of range. */
+function withMonth(
+  year: number,
+  rawMonth: string,
+  rawDay: string,
+  qualifier: string,
+  unspecified: boolean,
+): Option.Option<DatePoint> {
+  if (rawMonth === "" || rawMonth === "XX")
+    return Option.some(point([year], qualifier, unspecified || rawMonth === "XX"));
+  const month = Number(rawMonth);
+  if (month >= 21 && month <= 24 && rawDay === "")
+    return Option.some({
+      ...point([year], qualifier, unspecified),
+      season: Option.some(month - 20),
+    });
+  return month >= 1 && month <= 12
+    ? withDay([year, month], rawDay, qualifier, unspecified)
+    : Option.none();
 }
 
 /** Reads one EDTF date point, or `None` when its year, month or day is out of range. */
 function readPoint(text: string): Option.Option<DatePoint> {
   const match = EDTF_DATE.exec(text.trim());
   if (match === null) return Option.none();
-  const [, sign = "", rawYear = "", rawMonth, rawDay, , qualifier = ""] = match;
-  if (sign === "-" && rawYear.includes("X")) return Option.none();
-  if (rawYear === "0000" && sign === "") return Option.some(point([-1], qualifier, false));
-  const year = cslYear(sign, rawYear);
-  if (Option.isNone(year)) return Option.none();
-  const unspecified = rawYear.includes("X");
-  if (rawMonth === undefined || rawMonth === "XX")
-    return Option.some(point([year.value], qualifier, unspecified || rawMonth === "XX"));
-  const month = Number(rawMonth);
-  if (month >= 21 && month <= 24 && rawDay === undefined) {
-    return Option.some({
-      parts: [year.value],
-      season: Option.some(month - 20),
-      circa: String.isNonEmpty(qualifier),
-    });
-  }
-  if (month < 1 || month > 12) return Option.none();
-  if (rawDay === undefined || rawDay === "XX")
-    return Option.some(point([year.value, month], qualifier, rawDay === "XX"));
-  const day = Number(rawDay);
-  if (day < 1 || day > 31) return Option.none();
-  return Option.some(point([year.value, month, day], qualifier, false));
+  const [, sign = "", rawYear = "", rawMonth = "", rawDay = "", , qualifier = ""] = match;
+  return Option.flatMap(cslYear(sign, rawYear), (year) =>
+    withMonth(year, rawMonth, rawDay, qualifier, rawYear.includes("X")),
+  );
 }
 
 /** A date point without a season; approximate when qualified or when digits were unspecified. */
