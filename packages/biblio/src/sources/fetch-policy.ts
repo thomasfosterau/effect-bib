@@ -49,7 +49,10 @@ const FETCH_TIMEOUT = "10 seconds";
  * Resolves a host name to the addresses it would connect to (IPv4 dotted
  * quads or IPv6 text, without brackets). Supplied by a caller whose runtime
  * can resolve DNS (Node's `dns.promises.lookup`, say); a failure or an empty
- * answer refuses the host.
+ * answer refuses the host. It is a best-effort pre-check: the connection
+ * resolves the name again, so it does not stop DNS rebinding. Pinning the
+ * connection is the caller's transport's job (a dispatcher that checks the
+ * address at connect time).
  *
  * @since 1.0.0
  */
