@@ -25,6 +25,44 @@ function expectParsed(outcome: ParseOutcome) {
 const parseEntry = (kind: string, fields: string) =>
   expectParsed(parseBibtex(`@${kind}{key, ${fields}, doi = {10.1000/x}}`)[0]);
 
+describe("entry delimiters", () => {
+  it("reads a parenthesised entry as it reads the braced one", () => {
+    const fields = "title = {Title}, doi = {10.1000/xyz123}";
+    const [braced] = parseBibtex(`@article{k, ${fields}}`, { mode: "lenient" });
+    const [parens] = parseBibtex(`@article(k, ${fields})`, { mode: "lenient" });
+    const record = expectParsed(parens);
+    expect(record.type).toBe("article-journal");
+    expect(record["citation-key"]).toBe("k");
+    expect(record.title).toBe("Title");
+    expect(record.identifiers.doi).toBe("10.1000/xyz123");
+    expect(parens).toEqual(braced);
+  });
+
+  it("ends a parenthesised entry at the first `)` outside a brace group", () => {
+    const outcomes = parseBibtex(
+      "@article(a, title = {One (with parens)}, doi = {10.1000/a})\n@book{b, title = {Two}, isbn = {9780062316097}}",
+    );
+    expect(outcomes.map((outcome) => expectParsed(outcome).title)).toEqual([
+      "One (with parens)",
+      "Two",
+    ]);
+  });
+
+  it("reads @string and @comment blocks in parentheses", () => {
+    const [outcome, ...rest] = parseBibtex(
+      '@comment(skipped) @string(j = "Journal") @article(k, title = {T}, journal = j, doi = {10.1000/x})',
+    );
+    expect(rest).toEqual([]);
+    expect(expectParsed(outcome)["container-title"]).toBe("Journal");
+  });
+
+  it("treats an unclosed parenthesised entry like an unclosed braced one", () => {
+    expect(parseBibtex("@article(k, title = {T}, doi = {10.1000/x}", { mode: "lenient" })).toEqual(
+      parseBibtex("@article{k, title = {T}, doi = {10.1000/x}", { mode: "lenient" }),
+    );
+  });
+});
+
 describe("@string macros", () => {
   it("expands macros and `#` concatenation into later values", () => {
     const record = expectParsed(

@@ -106,15 +106,31 @@ function bracedTo(depth: number): Parser.Parser<void> {
  */
 export const braced: Parser.Parser<void> = bracedTo(MAX_BRACE_DEPTH);
 
+/**
+ * A `(…)` entry body, as BibTeX and biber accept in place of `{…}`: it ends
+ * at the first `)` outside any brace group, the rule the stream's entry
+ * splitter applies too.
+ */
+const parenthesised: Parser.Parser<void> = Parser.asVoid(
+  Parser.delimited(
+    Token.literal("("),
+    skipMany(Parser.alt(Token.takeTill("{})", { min: 1 }), braced)),
+    Token.literal(")"),
+  ),
+);
+
+/** An entry's type, up to its opening `{` or `(`. */
+const entryKind = Parser.map(Token.takeTill("{("), (kind) => kind.trim().toLowerCase());
+
+/** An entry's opening delimiter. */
+const opening = Parser.alt(Token.literal("{"), Token.literal("("));
+
 /** `@comment` and `@preamble` heads, whose bodies are scanned as text. */
 const isTextBlockKind = (kind: string): boolean =>
   kind === "comment" || kind === "preamble" || kind === "";
 
-/** An entry head: skips to the next `@` and reads its type up to the `{`. */
-const entryHead = Parser.preceded(
-  Parser.seq(Token.takeUntil("@"), Token.literal("@")),
-  Parser.map(Token.takeUntil("{"), (kind) => kind.trim().toLowerCase()),
-);
+/** An entry head: skips to the next `@` and reads its type up to the `{` or `(`. */
+const entryHead = Parser.preceded(Parser.seq(Token.takeUntil("@"), Token.literal("@")), entryKind);
 
 /** One scanned block: its `@type`, its `{ ... }` body, and the offset of its `@`. */
 interface RawBlock {
@@ -125,21 +141,18 @@ interface RawBlock {
 
 /** A text block's head steps past its `{` only: its body is scanned as text. */
 const textBlockStep = Parser.as(
-  Parser.zipLeft(Parser.filter(entryHead, isTextBlockKind), Token.literal("{")),
+  Parser.zipLeft(Parser.filter(entryHead, isTextBlockKind), opening),
   Option.none<RawBlock>(),
 );
 
-/** An entry or `@string` block: its head, its brace-balanced `{ ... }` body, and where its `@` is. */
+/** An entry or `@string` block: its head, its balanced `{ ... }` or `( ... )` body, and where its `@` is. */
 const blockStep = Parser.map(
   Parser.preceded(
     Token.takeUntil("@"),
     Parser.withSpan(
       Parser.seq(
-        Parser.preceded(
-          Token.literal("@"),
-          Parser.map(Token.takeUntil("{"), (kind) => kind.trim().toLowerCase()),
-        ),
-        Parser.taken(braced),
+        Parser.preceded(Token.literal("@"), entryKind),
+        Parser.taken(Parser.alt(braced, parenthesised)),
       ),
     ),
   ),
