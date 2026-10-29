@@ -1220,11 +1220,16 @@ const firstDecoded = (
 
 // ── PubMed / MEDLINE ──────────────────────────────────────────────────
 
+/** A {@link TagLine} reading the tag and the value from a pattern's first two groups. */
+const tagLineOf =
+  (pattern: RegExp): TagLine =>
+  (line) => {
+    const match = pattern.exec(line);
+    return match === null ? Option.none() : Option.some([match[1] ?? "", match[2] ?? ""] as const);
+  };
+
 /** A MEDLINE tag line: a tag of up to four characters, padded, then `- ` (`TI  - …`, `PMID- …`). */
-const medlineTag: TagLine = (line) => {
-  const match = /^([A-Z][A-Z0-9]{0,3}) *- ?(.*)$/.exec(line);
-  return match === null ? Option.none() : Option.some([match[1] ?? "", match[2] ?? ""] as const);
-};
+const medlineTag = tagLineOf(/^([A-Z][A-Z0-9]{0,3}) *- ?(.*)$/);
 
 /** A MEDLINE `AID` / `LID` value of one kind (`10.1000/x [doi]`), without its bracket. */
 const medlineArticleId = (record: TaggedRecord, kind: string): Option.Option<string> =>
@@ -1340,10 +1345,7 @@ export function parseMedline(content: string, options: ParseOptions = {}): Parse
 // ── Refer / EndNote tagged ────────────────────────────────────────────
 
 /** A Refer tag line: `%` and one character (`%A`, `%0`, `%@`), a space, the value. */
-const referTag: TagLine = (line) => {
-  const match = /^%(\S)(?: (.*))?$/.exec(line);
-  return match === null ? Option.none() : Option.some([match[1] ?? "", match[2] ?? ""] as const);
-};
+const referTag = tagLineOf(/^%(\S)(?: (.*))?$/);
 
 /** EndNote's `%0` reference types → CSL item types. */
 const REFER_TYPES = HashMap.fromIterable<string, CslItemType>([
