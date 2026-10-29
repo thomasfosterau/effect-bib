@@ -211,6 +211,26 @@ const findRis: Finder = (buffer, final) => {
   ] as const);
 };
 
+/**
+ * A paragraph of a tagged-line format (MEDLINE, Refer): from its first
+ * non-blank line to the line break that ends its last, so units joined with
+ * a line break stay paragraphs. Complete once a blank line follows it.
+ */
+const findParagraph: Finder = (buffer, final) => {
+  const start = /\S/.exec(buffer);
+  if (start === null)
+    return final && String.isNonEmpty(buffer)
+      ? Option.some([buffer.length, buffer.length])
+      : Option.none();
+  const lineStart = buffer.lastIndexOf("\n", start.index) + 1;
+  // The line break before a blank line ends the paragraph.
+  const blank = /\r?\n[^\S\r\n]*\r?\n/g;
+  blank.lastIndex = start.index;
+  const end = blank.exec(buffer);
+  if (end === null) return final ? Option.some([lineStart, buffer.length] as const) : Option.none();
+  return Option.some([lineStart, end.index + (end[0].startsWith("\r") ? 2 : 1)] as const);
+};
+
 /** The end of the CSV row starting at `from` (past its line break), quotes spanning lines; `None` when open. */
 function rowEnd(text: string, from: number): Option.Option<number> {
   const state = { quoted: false, at: -1 };
@@ -648,7 +668,7 @@ function capRecords(state: State, outcomes: readonly ParseOutcome[], maxRecords:
   ];
 }
 
-/** Each format's entry finder: BibTeX, RIS and CSV entry by entry, the rest whole. */
+/** Each format's entry finder: BibTeX, RIS, CSV, MEDLINE and Refer entry by entry, the rest whole. */
 const finder = (format: ImportFormat): Finder =>
   format === "bibtex"
     ? findBibtex
@@ -656,7 +676,9 @@ const finder = (format: ImportFormat): Finder =>
       ? findRis
       : format === "csv"
         ? findCsv
-        : findWhole;
+        : format === "medline" || format === "refer"
+          ? findParagraph
+          : findWhole;
 
 /** Reads the complete units a step found, by format. */
 function readUnits(
@@ -669,6 +691,10 @@ function readUnits(
   const present = units.filter((unit) => String.isNonEmpty(unit.text));
   if (format === "bibtex") return readBibtex(state, present, options, final);
   if (format === "ris") return readRis(present, options);
+  if (format === "medline" || format === "refer")
+    return parseUnits("", present, (document) =>
+      parseBibliographicFile(document, format, documentOptions(options, document)),
+    );
   if (format === "csv") return readCsv(state, units, options);
   // CSL-JSON / CSL YAML: the one unit is the whole input, within the cap.
   return present.flatMap((unit) => parseBibliographicFile(unit.text, format, options));

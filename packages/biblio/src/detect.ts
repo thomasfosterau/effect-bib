@@ -23,10 +23,11 @@ const CSV_TITLE_HEADER = /^(?:[^\n,]*,)*\s*"?(?:title|name)"?\s*(?:,|$)/i;
 /**
  * Guesses the {@link ImportFormat} of a bibliographic file from its
  * content: CSL-JSON (`zotero-json`) when it is a JSON array or object, RIS
- * when a line is a `TY  - ` tag, CSL YAML when it holds a `references:` key
- * (a bibliography file or Markdown front matter), BibTeX when a line opens
- * an `@type{` entry, and CSV when its first line is a header with a `title`
- * column. `Option.none()` when it is none of them. Reads at most the first
+ * when a line is a `TY  - ` tag, MEDLINE (`medline`) when a line is a
+ * `PMID- ` tag, CSL YAML when it holds a `references:` key (a bibliography
+ * file or Markdown front matter), BibTeX when a line opens an `@type{`
+ * entry, Refer (`refer`) when at least two lines are `%X value` tags, and
+ * CSV when its first line is a header with a `title` column. `Option.none()` when it is none of them. Reads at most the first
  * 64 000 characters (all of a JSON document); pure and total.
  *
  * @example
@@ -37,6 +38,8 @@ const CSV_TITLE_HEADER = /^(?:[^\n,]*,)*\s*"?(?:title|name)"?\s*(?:,|$)/i;
  *
  * assert.deepStrictEqual(detectFormat("% my library\n@article{key, title = {T}}"), Option.some("bibtex"))
  * assert.deepStrictEqual(detectFormat("TY  - JOUR\nTI  - T\nER  - "), Option.some("ris"))
+ * assert.deepStrictEqual(detectFormat("PMID- 31452104\nTI  - T"), Option.some("medline"))
+ * assert.deepStrictEqual(detectFormat("%0 Book\n%T Sapiens"), Option.some("refer"))
  * assert.deepStrictEqual(detectFormat('[{"type": "book", "title": "T"}]'), Option.some("zotero-json"))
  * assert.deepStrictEqual(detectFormat("---\nreferences:\n- id: a\n"), Option.some("csl-yaml"))
  * assert.deepStrictEqual(detectFormat("Title,Author\nSapiens,Harari"), Option.some("csv"))
@@ -51,8 +54,10 @@ export function detectFormat(content: string): Option.Option<ImportFormat> {
   if ((text.startsWith("[") || text.startsWith("{")) && isJson(text))
     return Option.some("zotero-json");
   if (/^TY {2}- /m.test(head)) return Option.some("ris");
+  if (/^PMID- ?\d/m.test(head)) return Option.some("medline");
   if (/^references\s*:/m.test(head)) return Option.some("csl-yaml");
   if (/^\s*@\s*[A-Za-z]+\s*[{(]/m.test(head)) return Option.some("bibtex");
+  if ((head.match(/^%[0-9A-Z@] \S/gm) ?? []).length >= 2) return Option.some("refer");
   if (CSV_TITLE_HEADER.test(head.split(/\r?\n/, 1)[0] ?? "")) return Option.some("csv");
   return Option.none();
 }
