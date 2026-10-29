@@ -175,6 +175,10 @@ function closing(text: string, open: number): Option.Option<number> {
   return state.at < 0 ? Option.none() : Option.some(state.at);
 }
 
+/** No entry in the buffer: at the end, the rest is consumed (an empty span past it); before it, wait. */
+const nothingLeft = (buffer: string, final: boolean): Option.Option<readonly [number, number]> =>
+  final && String.isNonEmpty(buffer) ? Option.some([buffer.length, buffer.length]) : Option.none();
+
 /** An entry head: `@type` and its opening delimiter. */
 const ENTRY_HEAD = /@\s*[A-Za-z]+\s*[{(]/g;
 
@@ -182,10 +186,7 @@ const ENTRY_HEAD = /@\s*[A-Za-z]+\s*[{(]/g;
 const findBibtex: Finder = (buffer, final) => {
   ENTRY_HEAD.lastIndex = 0;
   const head = ENTRY_HEAD.exec(buffer);
-  if (head === null)
-    return final && String.isNonEmpty(buffer)
-      ? Option.some([buffer.length, buffer.length])
-      : Option.none();
+  if (head === null) return nothingLeft(buffer, final);
   const open = head.index + head[0].length - 1;
   return Option.match(closing(buffer, open), {
     onNone: () => (final ? Option.some([head.index, buffer.length] as const) : Option.none()),
@@ -196,10 +197,7 @@ const findBibtex: Finder = (buffer, final) => {
 /** An RIS record: from its `TY` line to the end of its `ER` line, or to the next `TY`. */
 const findRis: Finder = (buffer, final) => {
   const start = /^TY {2}-/m.exec(buffer);
-  if (start === null)
-    return final && String.isNonEmpty(buffer)
-      ? Option.some([buffer.length, buffer.length])
-      : Option.none();
+  if (start === null) return nothingLeft(buffer, final);
   const after = /^(?:ER {2}-[^\r\n]*(?:\r\n?|\n)|TY {2}-)/gm;
   after.lastIndex = start.index + 1;
   const end = after.exec(buffer);
@@ -218,10 +216,7 @@ const findRis: Finder = (buffer, final) => {
  */
 const findParagraph: Finder = (buffer, final) => {
   const start = /\S/.exec(buffer);
-  if (start === null)
-    return final && String.isNonEmpty(buffer)
-      ? Option.some([buffer.length, buffer.length])
-      : Option.none();
+  if (start === null) return nothingLeft(buffer, final);
   const lineStart = buffer.lastIndexOf("\n", start.index) + 1;
   // The line break before a blank line ends the paragraph.
   const blank = /\r?\n[^\S\r\n]*\r?\n/g;

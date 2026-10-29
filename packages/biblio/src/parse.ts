@@ -967,21 +967,16 @@ interface RisScan {
 }
 
 /** One RIS record: each two-character tag mapped to its values, in order, and the offset of its `TY` line. */
-interface RisRecord {
-  readonly tags: MutableHashMap.MutableHashMap<string, string[]>;
-  readonly offset: number;
-}
+type RisRecord = TaggedRecord;
 
 /** Appends a tag value to an RIS record's multimap. */
 function addRisTag(record: RisRecord, tag: string, value: string): void {
-  const existing = MutableHashMap.get(record.tags, tag);
-  if (Option.isNone(existing)) MutableHashMap.set(record.tags, tag, [value]);
-  else existing.value.push(value);
+  addTagged(record, tag, value);
 }
 
 /** The first value of an RIS tag, or `None`. */
 function risFirst(record: RisRecord, tag: string): Option.Option<string> {
-  return Option.flatMap(MutableHashMap.get(record.tags, tag), Array.head);
+  return taggedFirst(record, tag);
 }
 
 /** All values across a set of RIS tags, in order. */
@@ -991,7 +986,7 @@ function risAll(record: RisRecord, tags: readonly string[]): string[] {
 
 /** All values recorded for one RIS tag, in order. */
 function risValues(record: RisRecord, tag: string): readonly string[] {
-  return Option.getOrElse(MutableHashMap.get(record.tags, tag), (): string[] => []);
+  return taggedValues(record, tag);
 }
 
 /** RIS `TY` → CSL item type; unlisted types fall back to `document`. */
@@ -1188,12 +1183,14 @@ function continueTagged(record: TaggedRecord, tag: string, text: string): void {
 }
 
 /** The first value of a tag, or `None`. */
-const taggedFirst = (record: TaggedRecord, tag: string): Option.Option<string> =>
-  Option.flatMap(MutableHashMap.get(record.tags, tag), Array.head);
+function taggedFirst(record: TaggedRecord, tag: string): Option.Option<string> {
+  return Option.flatMap(MutableHashMap.get(record.tags, tag), Array.head);
+}
 
 /** Every value of a tag, in order. */
-const taggedValues = (record: TaggedRecord, tag: string): readonly string[] =>
-  Option.getOrElse(MutableHashMap.get(record.tags, tag), (): string[] => []);
+function taggedValues(record: TaggedRecord, tag: string): readonly string[] {
+  return Option.getOrElse(MutableHashMap.get(record.tags, tag), (): string[] => []);
+}
 
 /** Parses a tagged-line document with a per-record mapping, keeping each record's position. */
 function parseTagged(
