@@ -159,6 +159,17 @@ describe("parseMedline", () => {
     ]);
   });
 
+  it("drops names that are empty", () => {
+    const outcomes = parseMedline(
+      "PMID- 5\nTI  - T\nFAU - \nCN  - \n\nPMID- 6\nTI  - U\nAU  - \n",
+      {
+        mode: "lenient",
+      },
+    );
+    expect(expectParsed(outcomes, 0).author).toBeUndefined();
+    expect(expectParsed(outcomes, 1).author).toBeUndefined();
+  });
+
   it("reads CRLF line breaks and ignores blank paragraphs", () => {
     const outcomes = parseMedline("\r\n\r\nPMID- 9\r\nTI  - T\r\n      more\r\n\r\n\r\n", {
       mode: "lenient",
