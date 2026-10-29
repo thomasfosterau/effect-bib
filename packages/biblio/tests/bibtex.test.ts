@@ -301,6 +301,23 @@ describe("BibLaTeX field semantics, as Pandoc reads them", () => {
     ).toBe("en");
   });
 
+  it("keeps a volume without a part, and a pubstate that is not a key, as written", () => {
+    const record = parseEntry(
+      "book",
+      "title = {T}, volume = {7}, part = {}, pubstate = {under review}",
+    );
+    expect(record.volume).toBe("7");
+    expect(record.status).toBe("under review");
+  });
+
+  it("quotes \\mkbibquote and italicises \\mkbibemph under CSL markup", () => {
+    const [outcome] = parseBibtex(
+      "@article{k, title = {Blah \\mkbibemph{this} and \\mkbibquote{that}}, doi = {10.1000/x}}",
+      { bibtexMarkup: true },
+    );
+    expect(expectParsed(outcome).title).toBe("Blah <i>this</i> and “that”");
+  });
+
   it("decodes \\hyphen and \\mkbibquote", () => {
     const record = parseEntry(
       "article",
