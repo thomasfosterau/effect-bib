@@ -324,6 +324,65 @@ const firstText = (reader: Reader, keys: readonly string[]): Option.Option<strin
     (key) => text(reader, key),
   );
 
+/**
+ * Splits a BibLaTeX list field at each top-level `and` (one inside braces
+ * is text: `{Clapp and Clopp} Press`).
+ */
+function splitList(source: string): string[] {
+  const separators = Array.filter(
+    Array.fromIterable(source.matchAll(/[{}]|\s+and\s+/gi)),
+    (() => {
+      let depth = 0;
+      return (match: RegExpMatchArray): boolean => {
+        if (match[0] === "{") depth += 1;
+        else if (match[0] === "}") depth = Math.max(0, depth - 1);
+        else return depth === 0;
+        return false;
+      };
+    })(),
+  );
+  const cuts = [
+    0,
+    ...Array.flatMap(separators, (match) => [match.index ?? 0, (match.index ?? 0) + match[0].length]),
+    source.length,
+  ];
+  return Array.makeBy(cuts.length / 2, (index) => source.slice(cuts[index * 2], cuts[index * 2 + 1]));
+}
+
+/**
+ * A BibLaTeX list field (`publisher`, `location`, `institution`,
+ * `organization`) as text: its `and`-separated items decoded and joined
+ * with `; `, as Pandoc writes them. Marks the field used.
+ */
+const listText = (reader: Reader, key: string): Option.Option<string> =>
+  Option.flatMap(take(reader, key), (source) => {
+    const items = Array.getSomes(Array.map(splitList(source), decodeText(reader, key)));
+    return Array.isReadonlyArrayNonEmpty(items) ? Option.some(items.join("; ")) : Option.none();
+  });
+
+/** The first present list field of `keys`, as {@link listText}; only that field is marked used. */
+const firstList = (reader: Reader, keys: readonly string[]): Option.Option<string> =>
+  Option.flatMap(
+    Array.findFirst(keys, (key) => HashMap.has(reader.fields, key)),
+    (key) => listText(reader, key),
+  );
+
+/**
+ * The publisher, as Pandoc reads it: every one of `school`, `institution`,
+ * `organization`, `howpublished` (unless it is a link) and `publisher` that
+ * is present, in that order, each a list, joined with `; `.
+ */
+function readPublisher(reader: Reader): Option.Option<string> {
+  const parts = Array.getSomes([
+    listText(reader, "school"),
+    listText(reader, "institution"),
+    listText(reader, "organization"),
+    Option.isNone(howPublishedUrl(reader)) ? text(reader, "howpublished") : Option.none(),
+    listText(reader, "publisher"),
+  ]);
+  return Array.isReadonlyArrayNonEmpty(parts) ? Option.some(parts.join("; ")) : Option.none();
+}
+
 /** Joins a title with its subtitle (`: `) and its addon (`. `). */
 function joinTitle(
   title: Option.Option<string>,
@@ -661,7 +720,7 @@ function readAdditions(
   assignAll(additions, [
     ["collection-title", titles.collectionTitle],
     ["number", Option.orElse(numbering.number, () => Option.map(arxiv, (id) => `arXiv:${id}`))],
-    ["publisher-place", firstText(reader, ["location", "address"])],
+    ["publisher-place", firstList(reader, ["location", "address"])],
     ["edition", text(reader, "edition")],
     ["abstract", text(reader, "abstract")],
     ["language", readLanguage(reader)],
@@ -715,10 +774,7 @@ function mapEntry(entry: BibtexEntry, limits: BibtexLimits, budget: Budget): Bib
     title: titles.title,
     subtitle: Option.none(),
     year: Option.none(),
-    publisher: Option.orElse(
-      firstText(reader, ["publisher", "institution", "school", "organization"]),
-      () => (Option.isNone(howPublishedUrl(reader)) ? text(reader, "howpublished") : Option.none()),
-    ),
+    publisher: readPublisher(reader),
     containerTitle: titles.containerTitle,
     volume: text(reader, "volume"),
     issue: numbering.issue,
