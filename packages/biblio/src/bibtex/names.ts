@@ -119,6 +119,63 @@ function nameParts(nameTokens: readonly string[]): NameParts {
   return { ...vonLast, jr: parts[1], first: parts.slice(2).flat() };
 }
 
+/** A `key=value` part of a BibLaTeX extended name (`family=Rabble`). */
+const EXTENDED_PART = /^([A-Za-z][A-Za-z-]*)=([\s\S]*)$/;
+
+/** True when a name is written in BibLaTeX's extended format: its first word is `key=value`. */
+const isExtended = (nameTokens: readonly string[]): boolean =>
+  Option.exists(Array.head(nameTokens), (first) => EXTENDED_PART.test(first));
+
+/** True for a BibLaTeX boolean option value that is on (`true`, or the bare key). */
+const isOn = (value: string): boolean => {
+  const normalised = value.trim().toLowerCase();
+  return normalised === "" || normalised === "true";
+};
+
+/**
+ * Structures a name in BibLaTeX's extended format (biber's
+ * `\DeclareNameFormat` keys): comma-separated `family=`, `given=`,
+ * `prefix=` and `suffix=` parts, braces protecting a value, and a per-name
+ * `useprefix` that overrides the field's. Unknown keys (`given-i`, …) are
+ * ignored.
+ */
+function parseExtendedName(
+  nameTokens: readonly string[],
+  usePrefix: boolean,
+): Option.Option<CslName> {
+  const parts = Array.filterMap(
+    splitOn(nameTokens, (token) => token === ","),
+    (words): Result.Result<readonly [string, string], void> => {
+      const match = EXTENDED_PART.exec(words.join(" "));
+      return match === null
+        ? Result.failVoid
+        : Result.succeed([(match[1] ?? "").toLowerCase(), match[2] ?? ""] as const);
+    },
+  );
+  const value = (key: string): string =>
+    Option.match(
+      Array.findLast(parts, ([name]) => name === key),
+      { onNone: () => "", onSome: ([, raw]) => text([raw.trim()]) },
+    );
+  const prefixed = Option.match(
+    Array.findLast(parts, ([name]) => name === "useprefix"),
+    { onNone: () => usePrefix, onSome: ([, raw]) => isOn(raw) },
+  );
+  return readCslName({
+    family: value("family"),
+    given: value("given"),
+    suffix: value("suffix"),
+    [prefixed ? "non-dropping-particle" : "dropping-particle"]: value("prefix"),
+  });
+}
+
+/**
+ * A family name that opens with a braced particle ending in a hyphen or an
+ * apostrophe (`{al-}Hasan`, `{d'}Alembert`), as biber and Pandoc read it:
+ * the particle, non-dropping, and the rest of the family name.
+ */
+const BRACED_PARTICLE = /^\{([^{}]*[-'’])\}(\S[\s\S]*)$/;
+
 /**
  * Structures one name. The `von` part is CSL's dropping particle (BibLaTeX's
  * default, `useprefix=false`), or its non-dropping particle under
@@ -128,8 +185,20 @@ function parseName(nameTokens: readonly string[], usePrefix: boolean): Option.Op
   if (nameTokens.length === 1 && isProtectedWord(nameTokens[0])) {
     return readCslName({ literal: text(nameTokens) });
   }
+  if (isExtended(nameTokens)) return parseExtendedName(nameTokens, usePrefix);
   const parts = nameParts(nameTokens);
   const particle = text(parts.von);
+  const braced = Option.flatMap(Array.head(parts.last), (first) =>
+    Option.fromNullishOr(BRACED_PARTICLE.exec(first)),
+  );
+  if (Option.isSome(braced) && particle === "") {
+    return readCslName({
+      family: text([braced.value[2] ?? "", ...parts.last.slice(1)]),
+      given: text(parts.first),
+      suffix: text(parts.jr),
+      "non-dropping-particle": text([braced.value[1] ?? ""]),
+    });
+  }
   return readCslName({
     family: text(parts.last),
     given: text(parts.first),
