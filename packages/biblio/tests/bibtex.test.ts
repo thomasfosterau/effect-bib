@@ -421,6 +421,50 @@ describe("BibLaTeX fields", () => {
 });
 
 describe("dates", () => {
+  it("reads era years with astronomical numbering, as CSL counts BC years", () => {
+    const issued = (date: string) => parseEntry("book", `title = {T}, date = {${date}}`).issued;
+    // EDTF -0379 is 380 BC, which CSL writes as -380; 0000 is 1 BC.
+    expect(issued("-0379-02")).toEqual({ "date-parts": [[-380, 2]] });
+    expect(issued("-0221/-0219")).toEqual({ "date-parts": [[-222], [-220]] });
+    expect(issued("0000")).toEqual({ "date-parts": [[-1]] });
+    expect(issued("0250-03-02")).toEqual({ "date-parts": [[250, 3, 2]] });
+    expect(issued("-19XX")).toEqual({ literal: "-19XX" });
+  });
+
+  it("drops a time of day and keeps the date", () => {
+    const issued = (date: string) => parseEntry("book", `title = {T}, date = {${date}}`).issued;
+    expect(issued("2001-01-03T15:00:00")).toEqual({ "date-parts": [[2001, 1, 3]] });
+    expect(issued("2001-01-03T17:07:34+05:00")).toEqual({ "date-parts": [[2001, 1, 3]] });
+    expect(issued("2016-01-19T14:20:00.000Z")).toEqual({ "date-parts": [[2016, 1, 19]] });
+    expect(issued("1999-01T10:00")).toEqual({ literal: "1999-01T10:00" });
+  });
+
+  it("reads an open start as a range whose start is empty", () => {
+    const issued = (date: string) => parseEntry("book", `title = {T}, date = {${date}}`).issued;
+    expect(issued("../2000")).toEqual({ "date-parts": [[0], [2000]], raw: "../2000" });
+    expect(issued("/1034")).toEqual({ "date-parts": [[0], [1034]], raw: "/1034" });
+    expect(issued("/2004-01-01~")).toEqual({
+      "date-parts": [[0], [2004, 1, 1]],
+      raw: "/2004-01-01~",
+      circa: true,
+    });
+  });
+
+  it("reads unspecified digits as an approximate date", () => {
+    const issued = (date: string) => parseEntry("book", `title = {T}, date = {${date}}`).issued;
+    expect(issued("199X")).toEqual({ "date-parts": [[1990]], circa: true });
+    expect(issued("19XX")).toEqual({ "date-parts": [[1900]], circa: true });
+    expect(issued("1999-XX")).toEqual({ "date-parts": [[1999]], circa: true });
+    expect(issued("1999-01-XX")).toEqual({ "date-parts": [[1999, 1]], circa: true });
+    expect(issued("1999-XX-XX")).toEqual({ "date-parts": [[1999]], circa: true });
+  });
+
+  it("keeps EDTF level 2 quarters as a literal", () => {
+    expect(parseEntry("book", "title = {T}, date = {2002-33}").issued).toEqual({
+      literal: "2002-33",
+    });
+  });
+
   it("reads EDTF ranges, open ranges, seasons and approximate dates", () => {
     expect(parseEntry("book", "title = {T}, date = {2001/2004}").issued).toEqual({
       "date-parts": [[2001], [2004]],
