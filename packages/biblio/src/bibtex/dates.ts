@@ -1,8 +1,9 @@
 /**
  * BibTeX and BibLaTeX dates as CSL dates: BibLaTeX's ISO 8601 / EDTF
- * `date` fields (`2015-03-14`, ranges `2001/2004`, open ranges `2001/..`,
- * seasons `2015-21`, approximate `2015~`), and BibTeX's `year` / `month` /
- * `day` triple. A value that does not parse is kept as the date's `literal`.
+ * `date` fields (`2015-03-14`, ranges `2001/2004`, open ranges `2001/..` and
+ * `../2001`, seasons `2015-21`, approximate `2015~`, era years `-0379`,
+ * unspecified digits `19XX` / `1999-XX` read as approximate, a time of day
+ * dropped), and BibTeX's `year` / `month` / `day` triple. A value that does not parse is kept as the date's `literal`.
  *
  * @copyright Thomas Foster
  * @module biblio/bibtex/dates
@@ -16,8 +17,14 @@ import * as String from "effect/String";
 import type * as Types from "effect/Types";
 import { type CslDate, sanitiseText, sanitiseYear } from "../record.ts";
 
-/** One EDTF / ISO 8601 date: a year of up to four digits, optional month (or season 21–24) and day, and a qualifier. */
-const EDTF_DATE = /^(\d{1,4})(?:-(\d{2})(?:-(\d{2}))?)?([?~%]?)$/;
+/**
+ * One EDTF / ISO 8601 date: a year of up to four digits, negative for an era
+ * year, or with trailing unspecified digits (`199X`, `19XX`); an optional
+ * month (`XX` unspecified, or a season 21–24) and day (`XX` unspecified); a
+ * time of day, which is dropped; and a qualifier.
+ */
+const EDTF_DATE =
+  /^(-?)(\d{1,4}|\d{3}X|\d{2}XX)(?:-(\d{2}|XX)(?:-(\d{2}|XX)(T\d{2}(?::\d{2}(?::\d{2}(?:\.\d+)?)?)?(?:Z|[+-]\d{2}(?::?\d{2})?)?)?)?)?([?~%]?)$/;
 
 /** A date's parts and whether it was qualified as approximate or uncertain. */
 interface DatePoint {
@@ -26,29 +33,74 @@ interface DatePoint {
   readonly circa: boolean;
 }
 
+/**
+ * A year as CSL stores it. ISO 8601 and EDTF number years astronomically
+ * (`0000` is 1 BC, `-0379` is 380 BC), while CSL has no year 0 and a
+ * negative year counts back from 1 BC, so an astronomical year `y <= 0` is
+ * `y - 1` in CSL (`-0379` → `-380`, as Pandoc reads it). A positive year is
+ * held to the publication-year range; unspecified digits (`19XX`) read as
+ * zeros, and an era year cannot have them.
+ */
+function cslYear(sign: string, digits: string): Option.Option<number> {
+  if (sign === "-" || /^0+$/.test(digits))
+    return digits.includes("X") ? Option.none() : Option.some(-Number(digits) - 1);
+  return sanitiseYear(Number(digits.replaceAll("X", "0")));
+}
+
+/** A day of a month (`XX` unspecified, `""` absent), refining `parts`; `None` when out of range. */
+function withDay(
+  parts: readonly number[],
+  rawDay: string,
+  qualifier: string,
+  unspecified: boolean,
+): Option.Option<DatePoint> {
+  if (rawDay === "" || rawDay === "XX")
+    return Option.some(point(parts, qualifier, unspecified || rawDay === "XX"));
+  const day = Number(rawDay);
+  return day >= 1 && day <= 31
+    ? Option.some(point([...parts, day], qualifier, unspecified))
+    : Option.none();
+}
+
+/** A month (`XX` unspecified, a season 21–24, `""` absent) and day after `year`; `None` when out of range. */
+function withMonth(
+  year: number,
+  rawMonth: string,
+  rawDay: string,
+  qualifier: string,
+  unspecified: boolean,
+): Option.Option<DatePoint> {
+  if (rawMonth === "" || rawMonth === "XX")
+    return Option.some(point([year], qualifier, unspecified || rawMonth === "XX"));
+  const month = Number(rawMonth);
+  if (month >= 21 && month <= 24 && rawDay === "")
+    return Option.some({
+      ...point([year], qualifier, unspecified),
+      season: Option.some(month - 20),
+    });
+  return month >= 1 && month <= 12
+    ? withDay([year, month], rawDay, qualifier, unspecified)
+    : Option.none();
+}
+
 /** Reads one EDTF date point, or `None` when its year, month or day is out of range. */
 function readPoint(text: string): Option.Option<DatePoint> {
   const match = EDTF_DATE.exec(text.trim());
   if (match === null) return Option.none();
-  const [, rawYear, rawMonth, rawDay, qualifier] = match;
-  const year = sanitiseYear(rawYear);
-  if (Option.isNone(year)) return Option.none();
-  const circa = String.isNonEmpty(qualifier);
-  if (rawMonth === undefined)
-    return Option.some({ parts: [year.value], season: Option.none(), circa });
-  const month = Number(rawMonth);
-  if (month >= 21 && month <= 24 && rawDay === undefined) {
-    return Option.some({ parts: [year.value], season: Option.some(month - 20), circa });
-  }
-  if (month < 1 || month > 12) return Option.none();
-  if (rawDay === undefined)
-    return Option.some({ parts: [year.value, month], season: Option.none(), circa });
-  const day = Number(rawDay);
-  if (day < 1 || day > 31) return Option.none();
-  return Option.some({ parts: [year.value, month, day], season: Option.none(), circa });
+  const [, sign = "", rawYear = "", rawMonth = "", rawDay = "", , qualifier = ""] = match;
+  return Option.flatMap(cslYear(sign, rawYear), (year) =>
+    withMonth(year, rawMonth, rawDay, qualifier, rawYear.includes("X")),
+  );
 }
 
-/** True for the open end of an EDTF range (`2001/` or `2001/..`). */
+/** A date point without a season; approximate when qualified or when digits were unspecified. */
+const point = (parts: readonly number[], qualifier: string, unspecified: boolean): DatePoint => ({
+  parts,
+  season: Option.none(),
+  circa: unspecified || String.isNonEmpty(qualifier),
+});
+
+/** True for the open side of an EDTF range (`2001/`, `2001/..`, `/2001`, `../2001`). */
 const isOpenEnd = (text: string): boolean => text.trim() === "" || text.trim() === "..";
 
 /** Builds a CSL date from a start point and an optional end point. */
@@ -77,6 +129,16 @@ function toCslDate(
 function parseEdtf(text: string): Option.Option<CslDate> {
   const sides = text.split("/");
   if (sides.length > 2) return Option.none();
+  if (sides.length === 2 && isOpenEnd(sides[0])) {
+    // An open start: CSL's open side is a `0` part (as Pandoc writes it); the text is kept in `raw`.
+    return Option.map(readPoint(sides[1]), (end) =>
+      toCslDate(
+        { parts: [0], season: Option.none(), circa: false },
+        Option.some(end),
+        Option.some(text.trim()),
+      ),
+    );
+  }
   const start = readPoint(sides[0]);
   if (Option.isNone(start)) return Option.none();
   if (sides.length === 1) return Option.some(toCslDate(start.value, Option.none(), Option.none()));
