@@ -190,6 +190,39 @@ describe("names", () => {
     ]);
   });
 
+  it("reads BibLaTeX's extended name format", () => {
+    const record = parseEntry(
+      "book",
+      "title = {T}, author = {family=Rabble, given=Richard, prefix=von, useprefix=true and given={Jean Paul}, family={de la Fontaine}, suffix=Jr and family=Smith, given=J., given-i=J, prefix=van and Doe, John}",
+    );
+    expect(record.author).toEqual([
+      { family: "Rabble", given: "Richard", "non-dropping-particle": "von" },
+      { family: "de la Fontaine", given: "Jean Paul", suffix: "Jr" },
+      { family: "Smith", given: "J.", "dropping-particle": "van" },
+      { family: "Doe", given: "John" },
+    ]);
+  });
+
+  it("lets a name's own useprefix override the field's", () => {
+    const record = parseEntry(
+      "book",
+      "title = {T}, options = {useprefix=true}, author = {family=Rabble, prefix=von, useprefix=false}",
+    );
+    expect(record.author).toEqual([{ family: "Rabble", "dropping-particle": "von" }]);
+  });
+
+  it("reads a braced particle that ends in a hyphen or apostrophe as non-dropping", () => {
+    const record = parseEntry(
+      "book",
+      "title = {T}, author = {Abdul {al-}Hasan and {d'}Alembert, Jean and {Smith}son, Ann}",
+    );
+    expect(record.author).toEqual([
+      { family: "Hasan", given: "Abdul", "non-dropping-particle": "al-" },
+      { family: "Alembert", given: "Jean", "non-dropping-particle": "d'" },
+      { family: "Smithson", given: "Ann" },
+    ]);
+  });
+
   it("makes the particle non-dropping under useprefix", () => {
     const record = parseEntry(
       "book",
