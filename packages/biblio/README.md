@@ -276,7 +276,38 @@ assert.strictEqual(Option.getOrThrow(page).identifiers.doi, "10.1037/0003-066x.5
 - **Redirects** are never followed by `fetch`: each `Location` is checked against the same policy and followed by hand, at most five deep. A refused redirect, a sixth one or one without a location fails with `LookupFailed`.
 - **Bounds:** ten seconds for the whole exchange, redirects and body included; a body of at most `MAX_INPUT_LENGTH` bytes, read as a stream and stopped at the cap; a `text/html` or `application/xhtml+xml` content type. Anything else is a `LookupFailed { source: "web" }`.
 - **Identity:** `byUrl` sends `User-Agent: <product>` only, never the contact email, since the host is arbitrary.
-- **Host names are checked as written unless you pass a resolver.** `options.resolveAddresses` (`(hostname) => Effect<readonly string[], unknown>`) is called for each hop's host; any refused address, no address, or a failure refuses the hop. A Worker cannot resolve DNS, so without the hook a public-looking name that resolves to a private address **is fetched**: the policy is fail-open for host names. Even with the hook, the connection is not pinned to the checked address, so DNS rebinding remains possible ([#123](https://github.com/thomasfosterau/effect-bib/issues/123)). On Node, pass a resolver such as `(host) => Effect.promise(() => dns.promises.lookup(host, { all: true })).pipe(Effect.map((all) => all.map((a) => a.address)))`.
+- **Host names are checked as written unless you pass a resolver.** `options.resolveAddresses` (`(hostname) => Effect<readonly string[], unknown>`) is called for each hop's host; any refused address, no address, or a failure refuses the hop. A Worker cannot resolve DNS, so without the hook a public-looking name that resolves to a private address **is fetched**: the policy is fail-open for host names. On Node, pass a resolver such as `(host) => Effect.promise(() => dns.promises.lookup(host, { all: true })).pipe(Effect.map((all) => all.map((a) => a.address)))`.
+- **DNS rebinding is the transport's to close.** The resolver is a best-effort pre-check: the connection resolves the name again, so a host can answer the check with a public address and the connection with a private one. The library does not pin the connection, so `./sources` stays Worker-safe. A Node caller who needs the guarantee supplies, through `biblioLookupClientLayer`, an `HttpClient` whose dispatcher checks the address it actually connects to, for example an undici `Agent` with a guarded `connect.lookup`:
+
+  ```ts skip-type-checking
+  import { lookup } from "node:dns";
+  import { Agent } from "undici";
+  import * as Layer from "effect/Layer";
+  import { FetchHttpClient } from "effect/http";
+
+  // `isPublic` is your range check: refuse private, loopback, link-local,
+  // unique-local and reserved addresses, as the library's policy does.
+  const agent = new Agent({
+    connect: {
+      lookup: (hostname, options, callback) =>
+        lookup(hostname, { ...options, all: true }, (error, addresses) => {
+          if (error) return callback(error, []);
+          const refused = addresses.find(({ address }) => !isPublic(address));
+          return refused
+            ? callback(new Error(`refused ${hostname}: ${refused.address}`), [])
+            : callback(null, addresses);
+        }),
+    },
+  });
+  const pinned = FetchHttpClient.layer.pipe(
+    Layer.provide(
+      Layer.succeed(FetchHttpClient.Fetch, (input, init) =>
+        fetch(input, { ...init, dispatcher: agent }),
+      ),
+    ),
+  );
+  const lookupLayer = biblioLookupClientLayer({ contact }).pipe(Layer.provide(pinned));
+  ```
 
 `byDoiCsl` uses the same policy for its redirects (the resolver included, when you pass one), on top of its registration-agency allow-list, and the same time and size bounds.
 

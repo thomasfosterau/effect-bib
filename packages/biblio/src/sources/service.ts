@@ -143,8 +143,10 @@ export class BiblioLookup extends Context.Service<
      * refuses (a private or local host, credentials, a non-default port, a
      * non-http(s) scheme) fails with `RefusedUrl` before any request.
      * Without the `resolveAddresses` option a host name is checked only as
-     * written, so one that resolves to a private address is still fetched.
-     * Added in 1.0.0.
+     * written, so one that resolves to a private address is still fetched;
+     * with it, the check is not pinned to the connection (DNS rebinding),
+     * which only a transport that checks at connect time closes. Added in
+     * 1.0.0.
      */
     readonly byUrl: (url: string) => Effect.Effect<Option.Option<EmbeddedMetadata>, LookupError>;
   }

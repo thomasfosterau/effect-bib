@@ -95,7 +95,11 @@ function readPage({
  * name that resolves to a private or loopback address is fetched: the
  * policy is fail-open for host names. With a resolver, every address is
  * checked, but the connection is not pinned to the checked address, so DNS
- * rebinding between the check and the connect is still possible.
+ * rebinding between the check and the connect is still possible: the
+ * resolver is a best-effort pre-check. To close that gap on Node, give the
+ * lookup layer an `HttpClient` whose transport checks the address it
+ * actually connects to (an undici `Agent` whose `connect.lookup` refuses
+ * non-public addresses; see the package README).
  *
  * @since 1.0.0
  */
