@@ -229,9 +229,9 @@ describe("toCslJson / fromCslJson", () => {
   });
 
   it("drops a checksum-invalid identifier rather than the record", () => {
-    const record = fromCslJson({ type: "book", title: "t", ISBN: "9780140449137" });
-    expect(record.identifiers.isbn).toBeUndefined();
-    expect(record.title).toBe("t");
+    const decoded = fromCslJson({ type: "book", title: "t", ISBN: "9780140449137" });
+    expect(decoded.identifiers.isbn).toBeUndefined();
+    expect(decoded.title).toBe("t");
   });
 
   it("decodes a non-object item to a thin document record, never throwing", () => {
@@ -240,12 +240,12 @@ describe("toCslJson / fromCslJson", () => {
   });
 
   it("drops a non-array date-parts entry and keeps the usable ones", () => {
-    const record = fromCslJson({
+    const decoded = fromCslJson({
       type: "book",
       title: "t",
       issued: { "date-parts": [2015, [2016, 3]] },
     });
-    expect(record.issued).toEqual({ "date-parts": [[2016, 3]] });
+    expect(decoded.issued).toEqual({ "date-parts": [[2016, 3]] });
   });
 
   it("falls back to the document type for an unknown CSL type", () => {

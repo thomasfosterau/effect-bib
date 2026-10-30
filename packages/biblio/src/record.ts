@@ -984,10 +984,10 @@ export function fromCslJson(item: unknown, limits: RecordLimits = {}): BiblioRec
   if (!Predicate.isObjectOrArray(item)) {
     return { type: "document", identifiers: {}, provenance };
   }
-  // SAFETY: `isObjectOrArray` proved a non-null object or array; every key is
-  // read as `unknown` and re-checked below, and an array reads as its index
-  // keys (which land in `extra`), exactly as an object would.
-  const obj = item as Readonly<Record<string, unknown>>;
+  // `isObjectOrArray` proved a non-null object or array; every key is read as
+  // `unknown` and re-checked below, and an array reads as its index keys
+  // (which land in `extra`), exactly as an object would.
+  const obj: Readonly<Record<string, unknown>> = Array.isArray(item) ? { ...item } : item;
   const rawType = obj.type;
   const type: CslItemType =
     Predicate.isString(rawType) && isCslItemType(rawType) ? rawType : "document";

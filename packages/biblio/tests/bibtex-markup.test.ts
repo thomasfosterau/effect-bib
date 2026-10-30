@@ -7,7 +7,7 @@
  */
 
 import * as Option from "effect/Option";
-import { describe, expect, it } from "vite-plus/test";
+import { assert, describe, expect, it } from "vite-plus/test";
 import {
   type BiblioRecord,
   concat,
@@ -33,7 +33,7 @@ import {
 /** The record of the first outcome, failing the test when it is not parsed. */
 function recordOf(outcomes: readonly ParseOutcome[]): BiblioRecord {
   const [outcome] = outcomes;
-  if (outcome?.outcome !== "parsed") return expect.fail("expected a parsed outcome");
+  if (outcome?.outcome !== "parsed") return assert.fail("expected a parsed outcome");
   return outcome.record;
 }
 

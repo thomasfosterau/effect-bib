@@ -196,7 +196,7 @@ describe("determinism", () => {
   it("is order-independent for a sorted (author-date) bibliography", () => {
     const forward = bibliographyToText(renderBibliography(mixed, { style: apaStyle }));
     const reversed = bibliographyToText(
-      renderBibliography([...mixed].reverse(), { style: apaStyle }),
+      renderBibliography(mixed.toReversed(), { style: apaStyle }),
     );
     expect(forward).toBe(reversed);
   });

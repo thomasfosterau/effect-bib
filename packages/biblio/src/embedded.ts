@@ -103,8 +103,8 @@ const ENTITIES = HashMap.fromIterable<string, string>([
 ]);
 
 /** Decodes HTML character references; an unknown or invalid one stays as written. */
-function decodeEntities(text: string): string {
-  return text.replace(/&(#[xX][0-9A-Fa-f]{1,6}|#\d{1,7}|[A-Za-z]+);/g, (whole, body: string) => {
+function decodeEntities(source: string): string {
+  return source.replace(/&(#[xX][0-9A-Fa-f]{1,6}|#\d{1,7}|[A-Za-z]+);/g, (whole, body: string) => {
     if (!body.startsWith("#"))
       return Option.getOrElse(HashMap.get(ENTITIES, body.toLowerCase()), () => whole);
     const code =

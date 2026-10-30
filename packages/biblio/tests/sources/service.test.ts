@@ -51,7 +51,7 @@ const lookupLayer = biblioLookupClientLayer({ contact: CONTACT });
 const withLookup = <A, E>(
   layer: StubRouter["layer"],
   use: (lookup: BiblioLookup["Service"]) => Effect.Effect<A, E>,
-): Effect.Effect<A, E, never> =>
+): Effect.Effect<A, E> =>
   Effect.gen(function* () {
     const lookup = yield* BiblioLookup;
     return yield* use(lookup);

@@ -12,12 +12,20 @@
 
 import { defineConfig } from "vite-plus";
 import { recommended } from "@effect/tsgo/oxlint-presets";
-import effect from "@mpsuesser/oxlint-plugin-effect";
+import effect from "@enfect/oxlint";
 
 export default defineConfig({
-  // Staged-file checks run by `vp staged` (pre-commit).
+  // Staged-file checks run by `vp staged` (pre-commit): format with fixes,
+  // then lint WITHOUT fixes. Lint is type-aware, and `vp check --fix` would
+  // silently apply the type-aware rules' autofixes (warn-level ones included)
+  // to the staged files at commit time, so the commit would differ from the
+  // tree that was verified. `--no-error-on-unmatched-pattern` lets a commit
+  // that stages only files lint never reads (Markdown, JSON, CSS) pass.
   staged: {
-    "*.{js,ts,css,json,md}": "vp check --fix",
+    "*.{js,ts,css,json,md}": [
+      "vp check --fix --no-lint",
+      "vp check --no-fmt --no-error-on-unmatched-pattern",
+    ],
   },
   fmt: {
     overrides: [
@@ -31,8 +39,11 @@ export default defineConfig({
   },
   lint: {
     extends: [recommended, effect.configs.recommended],
+    plugins: ["typescript", "unicorn", "oxc", "import", "promise", "vitest", "jsdoc"],
     categories: {
       correctness: "error",
+      suspicious: "error",
+      perf: "error",
     },
     rules: {
       "eslint/no-unused-vars": [
@@ -69,6 +80,34 @@ export default defineConfig({
       // there with a handful of per-site `oxlint-disable` justifications —
       // the plain-nullable seams and the untrusted-input boundary listed in
       // packages/biblio/CLAUDE.md — so a new site cannot land silently.
+      // `_tag` is Effect's discriminant (tagged unions, `Data.TaggedError`).
+      "eslint/no-underscore-dangle": ["error", { allow: ["_tag"] }],
+      // The library builds immutable values (readonly records and arrays): a
+      // fresh spread inside `map` / `flatMap` is the point, not a missed
+      // in-place mutation, and every input is bounded (`MAX_*`).
+      "oxc/no-map-spread": "off",
+      // Flags every spread of `Schema.JsonObject` (a plain-object index
+      // signature, never a class instance) in the embedded-metadata reader
+      // as a class spread: a false positive with no code-level fix.
+      "typescript/no-misused-spread": "off",
+      // `@since` and `@category` are the docgen tags every export carries.
+      "jsdoc/check-tag-names": ["error", { definedTags: ["since", "category"] }],
+      // Vitest's `expect(value, message)` takes a failure message second.
+      "vitest/valid-expect": ["error", { maxArgs: 2 }],
+      // The suite's assertion helpers (tests/effect.ts) assert on the exit.
+      "vitest/expect-expect": [
+        "error",
+        { assertFunctionNames: ["expect", "assert", "expectFailureInstanceOf"] },
+      ],
+      // Mirrors `unstableApiUsage: "suggestion"` in tsconfig.base.json: Effect
+      // 4 marks most of `effect/http` unstable, so every HttpClient use in
+      // `./sources` would warn and bury the rest.
+      "effecttsgo/unstable-api-usage": "off",
+      // 1 site, follow-up #136: the public `ResolveAddresses` callback
+      // (`./sources`) declares its error `unknown` because a caller's
+      // resolver can fail with anything; the request policy only reads the
+      // failure as "did not resolve". Narrowing it changes a published type.
+      "effecttsgo/any-unknown-in-error-context": "warn",
       "typescript/no-explicit-any": "off",
       "typescript/no-empty-object-type": "off",
       "typescript/ban-ts-comment": "off",
@@ -97,11 +136,8 @@ export default defineConfig({
           "effect/use-command-executor-service": "off",
           "effect/avoid-sync-fs": "off",
           "effect/avoid-process-env": "off",
-          "effect/use-console-service": "off",
           "effect/use-filesystem-service": "off",
           "effect/use-path-service": "off",
-          "effect/avoid-native-fetch": "off",
-          "effect/effect-promise-vs-trypromise": "off",
         },
       },
       // The suite's run helpers ARE the test harness boundary the rule
@@ -112,6 +148,34 @@ export default defineConfig({
         files: ["packages/biblio/tests/effect.ts"],
         rules: {
           "effect/effect-run-in-body": "off",
+        },
+      },
+      // Tests are the program's entry points: they provide their layers per
+      // case (`Effect.provide`), keep each helper next to the cases it serves
+      // rather than hoisting it out of the `describe` it reads as part of,
+      // and cast a deliberately hostile input past the types to prove the
+      // runtime handles it.
+      {
+        files: ["packages/biblio/tests/**", "tests/dist-consumer/**"],
+        rules: {
+          "effecttsgo/strict-effect-provide": "off",
+          "unicorn/consistent-function-scoping": "off",
+          "typescript/no-unsafe-type-assertion": "off",
+        },
+      },
+      // The type-equality idiom `(<X>() => X extends A ? 1 : 2) extends …`
+      // needs its single-use type parameter: that is how it compares types.
+      {
+        files: ["**/*.types.ts", "tests/dist-consumer/src/*.ts"],
+        rules: {
+          "typescript/no-unnecessary-type-parameters": "off",
+        },
+      },
+      // Config comments describe task wiring, not commented-out tests.
+      {
+        files: ["**/vite.config.ts"],
+        rules: {
+          "vitest/no-commented-out-tests": "off",
         },
       },
       // Type-level tests: every binding exists to be assigned, never read,
@@ -125,11 +189,15 @@ export default defineConfig({
         },
       },
     ],
-    // Type-aware linting is intentionally disabled: type checking stays the
-    // `check` tasks' job (native tsc, Effect-patched).
+    // Type-aware linting through oxlint-tsgolint (bundled with Vite+, patched
+    // by `effect-tsgo patch --oxlint`), with `typeCheck` reporting TypeScript
+    // diagnostics too. tsgolint reads each file's nearest tsconfig.json; the
+    // package's tsconfig.json covers `src/` and `tests/` already. The `check`
+    // tasks stay the type gate of record (they also check the emitted
+    // declarations).
     options: {
-      typeAware: false,
-      typeCheck: false,
+      typeAware: true,
+      typeCheck: true,
     },
     jsPlugins: [
       {

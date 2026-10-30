@@ -38,3 +38,4 @@ packages/*/docs/
 # Fetched oracle corpora (`vp run oracles:fetch`, #91): GPL test cases read at
 # test time, never committed.
 .oracles/
+.vitest/

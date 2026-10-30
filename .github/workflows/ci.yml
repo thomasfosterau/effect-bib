@@ -18,7 +18,8 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/trunk' }}
 
-# No permissions by default; the single job grants only what it needs.
+# No permissions by default; the single job grants only what it needs. CI
+# needs no secret and no OIDC token, so a Dependabot PR runs it safely.
 permissions: {}
 
 jobs:
@@ -45,14 +46,14 @@ jobs:
           restore-keys: |
             vp-task-v1-${{ runner.os }}-
       - name: Format and lint
-        run: vp check
+        run: pnpm exec vp check
       # Build first, as its own step. `check` (through the dist-consumer
       # check) and `test:coverage` each depend on `build` as well, so neither
       # can run against a missing dist/ (#22).
       - name: Build
-        run: vp run -r build
+        run: pnpm exec vp run -r build
       - name: Type gates (package, type-level tests, emitted declarations)
-        run: vp run --concurrency-limit 2 check
+        run: pnpm exec vp run --concurrency-limit 2 check
       # `test:coverage`, not `test:unit` (#49): the same tests, plus two gates
       # the plain run lacks. vite-plus's `test --coverage` guard throws unless
       # `@vitest/coverage-istanbul` equals its bundled `vitest` exactly (#47),
@@ -61,11 +62,11 @@ jobs:
       # Pandoc's BibLaTeX test cases for the BibTeX oracle (#91): GPL, so
       # fetched at a pinned commit rather than vendored.
       - name: Fetch the oracle corpora
-        run: vp run --filter ./packages/biblio oracles:fetch
+        run: pnpm exec vp run --filter ./packages/biblio oracles:fetch
       - name: Unit tests + coverage
-        run: vp run -r test:coverage
+        run: pnpm exec vp run -r test:coverage
       # Type-checks AND runs every JSDoc @example.
       - name: Verify documentation examples (docgen)
-        run: vp run -r docgen
+        run: pnpm exec vp run -r docgen
       - name: Audit
         run: pnpm audit --audit-level high

@@ -22,7 +22,8 @@ jobs:
     name: Version or publish
     # Never run on forks (they have neither the environment nor the trusted
     # publisher binding, so a fork cannot publish on your behalf).
-    if: github.repository == 'thomasfosterau/effect-bib'
+    # Nor for a Dependabot-authored push: this job holds `id-token: write`.
+    if: github.repository == 'thomasfosterau/effect-bib' && github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     # Requires manual approval via a protected GitHub Environment named
@@ -61,7 +62,7 @@ jobs:
         run: npm install -g npm@11.20.0
 
       - name: Build
-        run: vp run -r build
+        run: pnpm exec vp run -r build
 
       # Opens/updates the "Version Packages" PR while changesets are pending;
       # once it has merged, runs `pnpm run release` (scripts/release.sh) and

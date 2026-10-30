@@ -513,7 +513,7 @@ function remember(state: State, unit: Unit, cap: number): void {
         )
           // The key falls back to its next entry still in the window (a scan of at most the window).
           Option.match(
-            Array.findFirst(state.parents, (parent) => parent.key === evicted.key),
+            Array.findFirst(state.parents, (entry) => entry.key === evicted.key),
             {
               onNone: () => MutableHashMap.remove(state.parentIndex, evicted.key),
               onSome: (next) => MutableHashMap.set(state.parentIndex, evicted.key, next),

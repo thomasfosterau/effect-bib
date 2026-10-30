@@ -387,12 +387,12 @@ const markupDecoders = {
 /** Runs a markup decoder, building it on first use (the pieces refer to each other). */
 function runMarkup(inNoCase: boolean, source: string): string {
   const key = inNoCase ? "noCase" : "top";
-  const decoder = Option.getOrElse(markupDecoders[key], () => {
+  const markup = Option.getOrElse(markupDecoders[key], () => {
     const built = compile(markupPieces(inNoCase));
     markupDecoders[key] = Option.some(built);
     return built;
   });
-  const decoded = Parser.parsePeek(decoder, source);
+  const decoded = Parser.parsePeek(markup, source);
   return Result.isSuccess(decoded) ? decoded.success[1].join("") : literal(source);
 }
 
