@@ -4,11 +4,11 @@ Maintained by Thomas Foster, with a workflow meant to be approachable for both h
 
 ## Setup
 
-`pnpm install` (or `vp install`) installs dependencies, patches the native `tsc` / `oxlint` with `@effect/tsgo` (the root `prepare` script) and installs the Vite+ git hooks: the committed [.vite-hooks/pre-commit](.vite-hooks/pre-commit) runs `vp staged` (`vp check --fix` on staged files). There is no pre-push hook.
+`pnpm install` (or `vp install`) installs dependencies, patches the native `tsc` / `oxlint` with `@effect/tsgo` (the root `prepare` script) and installs the Vite+ git hooks: the committed [.vite-hooks/pre-commit](.vite-hooks/pre-commit) runs `vp staged` (`vp check --fix --no-lint`, then `vp check --no-fmt`: formatting is fixed, lint, which is type-aware, only reports). There is no pre-push hook.
 
 ## CI expectations
 
-[ci.yml](.github/workflows/ci.yml) runs one job, the gates in [AGENTS.md#verification](AGENTS.md#verification) minus the local fallow audit. [release.yml](.github/workflows/release.yml) runs changesets/action on `trunk`: it opens the "Version Packages" PR while unreleased changesets exist and publishes once it merges, via npm trusted publishing (OIDC) from the protected `release` environment — see [PUBLISHING.md](PUBLISHING.md).
+[ci.yml](.github/workflows/ci.yml) runs one job, the gates in [AGENTS.md#verification](AGENTS.md#verification) minus the local fallow audit. Every workflow defaults to `permissions: {}`, pins each action to a commit SHA, checks out without persisted credentials (except the Release job, whose Changesets step pushes), sets Node as `"*"` with `check-latest` (never `latest`, which can resolve to a pre-release) and never runs the Release job for Dependabot; CI needs no secret, so Dependabot PRs run it safely. `uvx zizmor --offline .github` audits the workflows (config in `.github/zizmor.yml`). [release.yml](.github/workflows/release.yml) runs changesets/action on `trunk`: it opens the "Version Packages" PR while unreleased changesets exist and publishes once it merges, via npm trusted publishing (OIDC) from the protected `release` environment — see [PUBLISHING.md](PUBLISHING.md).
 
 ## Pre-PR checklist
 

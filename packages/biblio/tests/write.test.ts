@@ -9,7 +9,7 @@
 
 import * as Array from "effect/Array";
 import * as Record from "effect/Record";
-import { describe, expect, it } from "vite-plus/test";
+import { assert, describe, expect, it } from "vite-plus/test";
 import {
   type BiblioRecord,
   fromCslJson,
@@ -26,7 +26,7 @@ import {
 /** The records of parsed outcomes, failing the test on a skipped one. */
 function records(outcomes: readonly ParseOutcome[]): BiblioRecord[] {
   return outcomes.map((outcome) => {
-    if (outcome.outcome !== "parsed") expect.fail(`skipped: ${outcome.reason}`);
+    if (outcome.outcome !== "parsed") assert.fail(`skipped: ${outcome.reason}`);
     return outcome.record;
   });
 }
@@ -520,7 +520,7 @@ describe("CSL YAML reader edge cases", () => {
         "  keyword: true",
       ].join("\n"),
     );
-    if (outcome.outcome !== "parsed") return expect.fail("expected a record");
+    if (outcome.outcome !== "parsed") assert.fail("expected a record");
     expect(outcome.record).toMatchObject({
       title: 'Tab here éA😀 "q"',
       note: "a plain scalar continued here",

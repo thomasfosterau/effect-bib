@@ -178,7 +178,6 @@ export type Checks = [
     // oxlint-disable-next-line effect/prefer-option-over-null -- asserts an optional parameter's shape
     Equals<Parameters<typeof parseBibliographicFile>[2], ParseOptions | undefined>
   >,
-  // oxlint-disable-next-line effect/prefer-option-over-null -- `bestConfidentMatch` returns the plain nullable website's ingest consumes
   /** _bestKeepsTheCandidateType */ Assert<Equals<NonNullable<typeof best>["id"], number>>,
   /** _bibliographyEntries */ Assert<
     Equals<(typeof bibliography.entries)[number]["label"], Option.Option<string>>

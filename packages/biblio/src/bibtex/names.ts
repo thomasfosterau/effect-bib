@@ -188,15 +188,15 @@ function parseName(nameTokens: readonly string[], usePrefix: boolean): Option.Op
   if (isExtended(nameTokens)) return parseExtendedName(nameTokens, usePrefix);
   const parts = nameParts(nameTokens);
   const particle = text(parts.von);
-  const braced = Option.flatMap(Array.head(parts.last), (first) =>
+  const bracedParticle = Option.flatMap(Array.head(parts.last), (first) =>
     Option.fromNullishOr(BRACED_PARTICLE.exec(first)),
   );
-  if (Option.isSome(braced) && particle === "") {
+  if (Option.isSome(bracedParticle) && particle === "") {
     return readCslName({
-      family: text([braced.value[2] ?? "", ...parts.last.slice(1)]),
+      family: text([bracedParticle.value[2] ?? "", ...parts.last.slice(1)]),
       given: text(parts.first),
       suffix: text(parts.jr),
-      "non-dropping-particle": text([braced.value[1] ?? ""]),
+      "non-dropping-particle": text([bracedParticle.value[1] ?? ""]),
     });
   }
   return readCslName({

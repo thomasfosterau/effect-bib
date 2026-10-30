@@ -10,7 +10,7 @@
  */
 
 import * as Record from "effect/Record";
-import { describe, expect, it } from "vite-plus/test";
+import { assert, describe, expect, it } from "vite-plus/test";
 import {
   MAX_AUTHORS,
   MAX_INPUT_LENGTH,
@@ -22,7 +22,7 @@ import {
 /** Narrows a `ParseOutcome` to its parsed record, failing the test otherwise. */
 function expectParsed(outcome: ParseOutcome) {
   if (outcome.outcome !== "parsed") {
-    expect.fail(`expected a parsed outcome, got skipped (${outcome.reason})`);
+    assert.fail(`expected a parsed outcome, got skipped (${outcome.reason})`);
   }
   return outcome.record;
 }

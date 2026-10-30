@@ -255,9 +255,11 @@ interface Distinction {
   readonly suffix: string;
 }
 
+/** The `n`th lower-case Latin letter (0 is `a`). */
+const letter = (n: number): string => "abcdefghijklmnopqrstuvwxyz".charAt(n);
+
 /** The year-suffix letters: `a` … `z`, then `aa`, `ab`, …. */
 function suffixLetter(index: number): string {
-  const letter = (n: number): string => "abcdefghijklmnopqrstuvwxyz".charAt(n);
   return index < 26 ? letter(index) : `${letter(Math.floor(index / 26) - 1)}${letter(index % 26)}`;
 }
 
@@ -312,15 +314,15 @@ function disambiguate(
   records: HashMap.HashMap<string, BiblioRecord>,
   settings: InText,
 ): HashMap.HashMap<string, Distinction> {
-  const namesOf = (id: string) =>
+  const namesFor = (id: string) =>
     HashMap.getUnsafe(records, id).author ?? HashMap.getUnsafe(records, id).editor ?? [];
   const forms = MutableHashMap.fromIterable(
-    ids.map((id) => [id, defaultForm(namesOf(id), settings)] as const),
+    ids.map((id) => [id, defaultForm(namesFor(id), settings)] as const),
   );
   const formOf = (id: string): NameForm =>
     Option.getOrElse(MutableHashMap.get(forms, id), constant(NO_NAMES));
   Array.forEach(ambiguousGroups(ids, records, formOf, settings), (group) => {
-    const longest = maximum(group.map((id) => namesOf(id).length));
+    const longest = maximum(group.map((id) => namesFor(id).length));
     const counts = Array.makeBy(longest + 1, (shown) =>
       distinctCount(
         group,

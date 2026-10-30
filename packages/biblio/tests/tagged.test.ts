@@ -7,7 +7,7 @@
  */
 
 import * as Stream from "effect/Stream";
-import { describe, expect, it } from "vite-plus/test";
+import { assert, describe, expect, it } from "vite-plus/test";
 import {
   parseBibliographicFile,
   parseBibliographicStream,
@@ -20,7 +20,7 @@ import { runTest } from "./effect.ts";
 /** Narrows the outcome at `index` to its parsed record, failing the test otherwise. */
 function expectParsed(outcomes: readonly ParseOutcome[], index: number) {
   const outcome = outcomes[index];
-  if (outcome?.outcome !== "parsed") expect.fail(`expected a parsed outcome at ${index}`);
+  if (outcome?.outcome !== "parsed") assert.fail(`expected a parsed outcome at ${index}`);
   return outcome.record;
 }
 

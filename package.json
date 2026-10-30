@@ -21,7 +21,7 @@
     "@effect/docgen": "catalog:",
     "@effect/language-service": "catalog:",
     "@effect/tsgo": "catalog:",
-    "@mpsuesser/oxlint-plugin-effect": "catalog:",
+    "@enfect/oxlint": "catalog:",
     "@thomasfosterau/biblio": "workspace:*",
     "@types/node": "catalog:",
     "@typescript/native": "catalog:",
@@ -30,8 +30,7 @@
     "tsx": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
-    "vite-plus": "catalog:",
-    "vitest": "catalog:"
+    "vite-plus": "catalog:"
   },
   "engines": {
     "node": ">=22",

@@ -42,31 +42,34 @@ catalog:
   # explicit set of component versions and hard-errors
   # (UnsupportedTargetPackageVersionError) on anything else, failing `pnpm
   # install` itself rather than a later task. 0.55.0 supports oxlint
-  # 1.87.0–1.89.0 and oxlint-tsgolint 7.0.2003 / 7.0.2004, so vite-plus 1.3.0
-  # (oxlint 1.88.0, tsgolint 7.0.2004) is the pairing; vite-plus 1.0.x
+  # 1.87.0–1.89.0 and oxlint-tsgolint 7.0.2003 / 7.0.2004, so vite-plus 1.4.0
+  # (oxlint 1.89.0, tsgolint 7.0.2004) is the pairing; vite-plus 1.0.x
   # (oxlint 1.85.0) is no longer supported, and vite-plus <=1.0.0 carries
   # GHSA-587h-7wmj-h5pm (a high that fails `pnpm audit`). Read the `components` table in
   # node_modules/@effect/tsgo/dist/effect-tsgo.cjs before bumping any of the
   # three.
-  "@effect/tsgo": 0.57.0
-  # Depends on `effect` exactly (0.6.0 → 4.0.0), which the `effect` override
-  # forces onto the catalog singleton; a plugin release targeting a different
-  # `effect` can fail `vite.config.ts` loading (#39, #63).
-  "@mpsuesser/oxlint-plugin-effect": ^0.6.0
+  "@effect/tsgo": 0.63.0
+  # The Effect lint rules (`effect/*`, anti-slop included), registered as an
+  # oxlint JS plugin by `vite.config.ts`; replaces
+  # `@mpsuesser/oxlint-plugin-effect`. Depends on `effect` exactly (0.9.0 →
+  # 4.1.0), which the `effect` override forces onto the catalog singleton: it
+  # lints fine on that copy. Runs inside vite-plus's oxlint, so it moves in the
+  # `toolchain` Dependabot group.
+  "@enfect/oxlint": ^0.9.0
   # The BibTeX scanner's parser combinators (#72). Peers `effect ^4.0.0`.
   "@thomasfosterau/effect-parse": 0.3.0
   "@types/node": ^26.6.5
   # The coverage provider must equal the `vitest` that vite-plus bundles (see
   # the vite-plus note below), so it moves with vite-plus, by hand: vite-plus
   # ships no provider, and its `test --coverage` startup guard throws on any
-  # version other than its bundled vitest's (1.3.0 → 5.0.5). Its own peer
+  # version other than its bundled vitest's (1.4.0 → 5.0.5). Its own peer
   # (`vitest: <same version>`) cannot catch a skew here, for two reasons: the
   # `vitest: "catalog:"` override rewrites that peer to the catalog version,
   # and `peerDependencyRules` (`allowAny: vitest`, below) accepts any `vitest`
   # version whatever range the peer declares.
   "@vitest/coverage-istanbul": 5.0.5
   effect: 4.0.0
-  fallow: 3.35.0
+  fallow: 3.37.0
   # `@effect/docgen` runs each example under tsx.
   tsx: ^4.23.15
   # TypeScript 6/7 side-by-side: TS7 (the native Go compiler) ships no JS API
@@ -82,15 +85,15 @@ catalog:
   # versions, so this entry — not a catalog entry of its own — is what decides
   # the oxlint version `effect-tsgo patch --oxlint` has to support (see the
   # @effect/tsgo note above): 1.0.0 carries oxlint 1.85.0, 1.1.0 1.87.0, 1.2.0
-  # and 1.3.0 1.88.0. `vite` is the same release under its aliased core
-  # package, and `vitest` must match vite-plus's exact pin (1.3.0 → 5.0.5) because the
+  # and 1.3.0 1.88.0, 1.4.0 1.89.0. `vite` is the same release under its aliased core
+  # package, and `vitest` must match vite-plus's exact pin (1.4.0 → 5.0.5) because the
   # `vitest: "catalog:"` override forces every resolution to the catalog
   # singleton. `@vitest/coverage-istanbul` (above) moves with it to the same
   # version: bumping vite-plus means reading its new `vitest` pin from
   # node_modules/vite-plus/package.json and setting `vite`, `vitest` and the
   # coverage provider with it.
   vite-plus: 1.4.0
-  vite: npm:@voidzero-dev/vite-plus-core@1.3.0
+  vite: npm:@voidzero-dev/vite-plus-core@1.4.0
   vitest: 5.0.5
 
 # Peer ranges the PUBLISHED package declares. Kept as a named catalog so the
@@ -108,11 +111,12 @@ overrides:
   # range admits the fix but whose lockfile resolution stayed below it.
   # Drop once that resolution reaches >=8.12.2 on its own.
   undici: ^8.12.2
-  vite: "catalog:"
-  vitest: "catalog:"
   # `effect` MUST be a singleton (see the header): force every resolution to
   # the catalog version so a hoisting reshuffle cannot introduce a second copy.
   effect: "catalog:"
+  # The `@*` keys are the form `vp migrate` manages under pnpm.
+  vite@*: "catalog:"
+  vitest@*: "catalog:"
 nodeLinker: hoisted
 allowBuilds:
   esbuild: true
@@ -129,9 +133,12 @@ peerDependencyRules:
     vitest: "*"
     typescript: "*"
 
-# Supply-chain delay (owner's policy, gardeneria#1149): hold newly published
-# versions for 1 day (unit: MINUTES) before pnpm will install them.
-minimumReleaseAge: 1440
+# Supply-chain delay (owner's policy, gardeneria#1149, relaxed to 8 hours on
+# 2026-10-30): hold newly published versions for 480 MINUTES before pnpm will
+# install them. Dependabot's `cooldown` (.github/dependabot.yml) takes whole
+# days only, so it waits 1 day: longer than this, so a Dependabot PR never
+# proposes a version pnpm would still refuse.
+minimumReleaseAge: 480
 minimumReleaseAgeExclude:
   # @thomasfosterau/* is first-party — exempt so our own releases install immediately.
   - "@thomasfosterau/*"

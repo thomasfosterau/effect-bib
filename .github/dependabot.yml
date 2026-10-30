@@ -15,7 +15,7 @@
 #   bundled `vitest` exactly (#47); `effect-tsgo patch` (the root `prepare`)
 #   hard-errors on a `@typescript/native` (TS7) / `typescript` (the TS6 alias,
 #   `@typescript/typescript6`) / oxlint pairing its release ships no artifact
-#   for; and `@mpsuesser/oxlint-plugin-effect` runs inside that oxlint. One
+#   for; and `@enfect/oxlint` (the Effect lint rules) runs inside that oxlint. One
 #   PR, then, even for a major: read the `components` table in
 #   node_modules/@effect/tsgo/dist/effect-tsgo.cjs and the version notes in
 #   pnpm-workspace.yaml before merging it.
@@ -29,14 +29,28 @@
 #   `@thomasfosterau/effect-parse`), minor and patch only, so PR volume stays
 #   low; a major outside the lockstep sets opens on its own.
 #
-# The `overrides` in pnpm-workspace.yaml (`vite`, `vitest`, `effect`) all point
-# at `catalog:`, so a catalog bump moves them; there is no overrides-only pin to
-# move by hand. The published peer range (`catalogs.peers.effect`) is a
-# deliberate floor, not a version to chase: change it by hand, with a
-# changeset.
+# Hand moves, on the matching group's PR, because Dependabot cannot make them:
 #
-# `cooldown` mirrors pnpm-workspace.yaml's `minimumReleaseAge` (1 day), with
-# the same `@thomasfosterau/*` exemption as `minimumReleaseAgeExclude`.
+# - the npm-alias catalog entries: `vite` (`npm:@voidzero-dev/vite-plus-core`,
+#   always equal to `vite-plus`; `pnpm exec vp migrate` re-pins it, then drop
+#   the `minimumReleaseAgeExclude` entries it adds), `typescript`
+#   (`npm:@typescript/typescript6`) and `@typescript/native`
+#   (`npm:typescript`, a pairing `@effect/tsgo`'s `components` table lists);
+# - `vitest` and `@vitest/coverage-istanbul` to the exact `vitest` the new
+#   vite-plus pins;
+# - an `@effect/tsgo` release that supports the new vite-plus's oxlint and
+#   oxlint-tsgolint, when a toolchain PR fails `pnpm install`;
+# - the `undici` security floor under `overrides` (drop it once the
+#   resolution reaches the fix on its own). The other `overrides` (`vite@*`,
+#   `vitest@*`, `effect`) point at `catalog:`, so a catalog bump moves them.
+#
+# The published peer range (`catalogs.peers.effect`) is a deliberate floor,
+# not a version to chase: change it by hand, with a changeset.
+#
+# `cooldown` takes whole days only, so it is 1 day: longer than
+# pnpm-workspace.yaml's `minimumReleaseAge` (480 minutes, 8 hours), so a
+# Dependabot PR never proposes a version pnpm would still refuse. Same
+# `@thomasfosterau/*` exemption as `minimumReleaseAgeExclude`.
 version: 2
 updates:
   - package-ecosystem: "npm"
@@ -70,7 +84,7 @@ updates:
           - "@typescript/native"
           - "typescript"
           - "@typescript/typescript6"
-          - "@mpsuesser/oxlint-plugin-effect"
+          - "@enfect/*"
         update-types: ["major", "minor", "patch"]
       docgen:
         applies-to: version-updates
@@ -113,7 +127,9 @@ updates:
       - "dependencies"
     commit-message:
       prefix: "chore"
+    cooldown:
+      default-days: 1
     groups:
-      actions:
+      github-actions:
         patterns:
           - "*"

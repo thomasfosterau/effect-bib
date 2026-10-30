@@ -835,8 +835,8 @@ function csvHeaderIndex(header: readonly string[]): Partial<Record<CsvColumn, nu
       Record.keys(CSV_COLUMNS),
       (key): Result.Result<readonly [CsvColumn, number], void> => {
         const aliases: readonly string[] = CSV_COLUMNS[key];
-        const at = normalised.findIndex((h) => aliases.includes(h));
-        return at === -1 ? Result.failVoid : Result.succeed([key, at] as const);
+        const index = normalised.findIndex((h) => aliases.includes(h));
+        return index === -1 ? Result.failVoid : Result.succeed([key, index] as const);
       },
     ),
   );

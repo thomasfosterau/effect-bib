@@ -319,7 +319,7 @@ export function normaliseDoi(raw: string): Option.Option<string> {
  * @since 0.1.0
  */
 export function decodeDoi(raw: string): Option.Option<Doi> {
-  return Option.map(normaliseDoi(raw), Doi.make);
+  return Option.map(normaliseDoi(raw), (doi) => Doi.make(doi));
 }
 
 // ── ISSN ──────────────────────────────────────────────────────────────
