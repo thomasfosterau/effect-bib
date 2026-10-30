@@ -1,6 +1,6 @@
 {
   "name": "@thomasfosterau/biblio",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Bibliographic toolkit on Effect: CSL-JSON records as Effect Schema, checksummed ISBN / DOI / ISSN / ORCID identifiers, BibTeX / RIS / CSV / CSL-JSON parsing, same-work dedup scoring, APA / Vancouver rendering, and Crossref / OpenAlex / OpenLibrary lookup over Effect's HttpClient.",
   "keywords": [
     "bibliography",
