@@ -69,7 +69,6 @@ Read the installed package before writing Effect code, and never guess at an Eff
 
 - The SessionStart hook (`.claude/hooks/session-start.sh`) installs dependencies against the lockfile and links `vp` (a re-exec shim that prefers the nearest worktree's `node_modules`), `tsx` and `fallow` into `~/.local/bin` so they resolve from a non-interactive shell, and repairs a broken bare `node`. It hydrates no secrets; none are needed.
 - A PreToolUse hook (`.claude/hooks/fallow-gate.sh`) runs the fallow gate before `git commit` / `git push`; a PostToolUse hook runs `vp fmt --write` on every edited `.ts` / `.js` / `.json` / `.md` / `.css` file.
-- `.claude/settings.json` enables the `@enfect/claude` plugin (Effect guidance, skills and post-write pattern checks), pinned by `ref` to the reviewed `mpsuesser/enfect` commit that published 0.9.0; moving it is a reviewed edit of that SHA.
 - Every gate runs offline except `pnpm audit` (network). The Release workflow (OIDC, `release` environment) runs only in CI.
 
 ## Documentation surfaces
