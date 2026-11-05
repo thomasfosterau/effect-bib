@@ -59,7 +59,7 @@ catalog:
   # `toolchain` Dependabot group.
   "@enfect/oxlint": ^0.9.0
   # The BibTeX scanner's parser combinators (#72). Peers `effect ^4.0.0`.
-  "@thomasfosterau/effect-parse": 0.4.0
+  "@thomasfosterau/effect-parse": 0.4.1
   "@types/node": ^26.6.6
   # The coverage provider must equal the `vitest` that vite-plus bundles (see
   # the vite-plus note below), so it moves with vite-plus, by hand: vite-plus
