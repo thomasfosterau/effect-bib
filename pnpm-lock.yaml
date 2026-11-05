@@ -13,7 +13,7 @@ catalogs:
       specifier: ^3.0.3
       version: 3.0.3
     '@effect/docgen':
-      specifier: ^4.0.0
+      specifier: ^4.1.2
       version: 4.1.2
     '@effect/language-service':
       specifier: ^0.87.5
