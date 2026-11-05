@@ -360,11 +360,12 @@ describe("author-date citations", () => {
   });
 
   it("shows a locator with an unknown label bare", () => {
-    // SAFETY: a caller outside TypeScript can pass any label; it renders without a term.
-    const label = "bogus" as LocatorLabel;
-    expect(texts([{ cites: [{ id: "harari", locator: "7", label }] }], apaStyle)).toEqual([
-      "(Harari, 2015, 7)",
-    ]);
+    // A caller outside TypeScript can pass any label; it renders without a term.
+    // `Reflect.set` writes the label past the types, as such a caller would.
+    const label: LocatorLabel = "page";
+    const cite = { id: "harari", locator: "7", label };
+    expect(Reflect.set(cite, "label", "bogus")).toBe(true);
+    expect(texts([{ cites: [cite] }], apaStyle)).toEqual(["(Harari, 2015, 7)"]);
   });
 
   it("labels locators from the locale, plural for a range", () => {
