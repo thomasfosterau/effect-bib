@@ -83,7 +83,7 @@ assert.strictEqual(record["citation-key"], "harari2015");
 assert.deepStrictEqual(record.extra, { "custom-key": "kept" });
 ```
 
-**`toCslJson(record): CslJsonItem`** — the inverse projection: drops `provenance`, writes the brands back into `ISBN` / `DOI` / `ISSN` / `PMID` / `PMCID` (an arXiv id as `number: "arXiv:<id>"` when the record has no `number`), re-merges `extra` (modelled fields win over a stale carried key). `fromCslJson(toCslJson(record))` also lifts a record that kept CSL variables in `extra` (as 0.x did) into their typed slots.
+**`toCslJson(record): CslJsonItem`** — the inverse projection: drops `provenance`, writes the brands back into `ISBN` / `DOI` / `ISSN` / `PMID` / `PMCID` (an arXiv id as `number: "arXiv:<id>"` when the record has no `number`), re-merges `extra` (modelled fields win over a stale carried key). `fromCslJson(toCslJson(record))` also lifts a record that kept CSL variables in `extra` (as records from before the full CSL variable set did) into their typed slots.
 
 Name and date helpers: `makeCslName(parts)`, `parsePersonName(raw)` (`"Family, Given"` or `"Given Family"`), `cslNameDisplay(name)`, `readCslName(entry)`, `readCslNameArray(value, maxNames?)`, `dateFromYear(year)`, `yearOf(date)` (a range's start year, else the year of a `raw` date; `null` when there is none) and `endYearOf(date)` (`Option` of a range's last year, when it differs). Sanitisers: `sanitiseText(value, maxLength?)` (trim, collapse whitespace, clamp to `maxLength`, default `MAX_TEXT_FIELD_LENGTH`), `sanitiseYear(value)`. Default bounds: `MAX_TEXT_FIELD_LENGTH` (2000), `MAX_AUTHORS` (100).
 
@@ -334,7 +334,7 @@ program.pipe(Effect.provide(lookupLayer)); // Effect<Option<BiblioRecord>, Looku
 
 ## Compatibility
 
-- **Wire compatibility.** `BiblioRecord` decodes every record the website application has persisted; any change to its shape (a field name, a key's optionality, an identifier brand, the `provenance` / `extra` shape) is a major version. 1.0.0 added the item `id`, `categories`, the rest of the CSL 1.0.2 variables and the `pmid` / `pmcid` / `arxiv` identifier slots, all optional, so every 0.x record still decodes; `fromCslJson(toCslJson(record))` moves a 0.x record's CSL variables out of `extra`.
+- **Wire compatibility.** `BiblioRecord` decodes every record the website application has persisted; any change to its shape (a field name, a key's optionality, an identifier brand, the `provenance` / `extra` shape) is a major version. The item `id`, `categories`, the rest of the CSL 1.0.2 variables and the `pmid` / `pmcid` / `arxiv` identifier slots are all optional, so a record from before they were typed still decodes; `fromCslJson(toCslJson(record))` moves such a record's CSL variables out of `extra`.
 - **Plain-nullable returns.** `isbnForms(isbn).isbn10`, `parsePersonName`, `cslNameDisplay`, `yearOf`, `makeCslName` and `bestConfidentMatch` return `null`, and `getStyle` returns `undefined`, rather than an `Option`. This is a stable contract, not a migration in progress.
 - **Scope.** The package stops at the CSL record: mapping records onto an application's own data model and persisting them stay in the application. Extracted from `thomasfosterau/website`'s `packages/biblio` with its git history; a `website#NNN` cite in a source comment is an issue in `thomasfosterau/website`.
 

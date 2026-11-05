@@ -43,7 +43,7 @@ export interface BibtexEntry {
  * The scanned entries of a document, and whether entries past the caller's
  * cap were left out.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export interface BibtexScan {
   readonly entries: BibtexEntry[];
@@ -63,7 +63,7 @@ const MAX_VALUE_LENGTH = 64_000;
  * nothing, so many fields that each name one large macro cannot multiply
  * the work.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export const MIN_MACRO_EXPANSION = 8_000_000;
 

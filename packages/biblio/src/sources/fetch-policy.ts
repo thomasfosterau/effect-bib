@@ -18,7 +18,7 @@
  *
  * @copyright Thomas Foster
  * @module biblio/sources/fetch-policy
- * @since 1.0.0
+ * @since 0.1.0
  */
 
 import * as Array from "effect/Array";
@@ -33,7 +33,7 @@ import { LookupFailed, type LookupSource } from "./errors.ts";
 /**
  * The most redirects followed from the first URL.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 const MAX_REDIRECTS = 5;
 
@@ -41,7 +41,7 @@ const MAX_REDIRECTS = 5;
  * The time allowed for one guarded exchange, every redirect and the body
  * read included.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 const FETCH_TIMEOUT = "10 seconds";
 
@@ -56,7 +56,7 @@ const FETCH_TIMEOUT = "10 seconds";
  * is the caller's transport's job (a dispatcher that checks the address at
  * connect time).
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export type ResolveAddresses = (hostname: string) => Effect.Effect<readonly string[]>;
 
@@ -65,7 +65,7 @@ export type ResolveAddresses = (hostname: string) => Effect.Effect<readonly stri
  * reported against, an optional extra test each hop must pass (DOI
  * negotiation's agency allow-list), and an optional resolver.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export interface FetchPolicy {
   readonly source: LookupSource;
@@ -201,7 +201,7 @@ function refused6(groups: readonly number[]): boolean {
  * not be fetched, or `None` when it is a public address. Text that is
  * neither is refused.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export function addressRefusal(address: string): Option.Option<string> {
   const v4 = parse4(address);
@@ -236,7 +236,7 @@ const isIpLiteral = (hostname: string): boolean =>
  * Why a URL may not be fetched under the policy (scheme, credentials, port,
  * host), or `None` when it may.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 function urlRefusal(url: URL): Option.Option<string> {
   if (url.protocol !== "https:" && url.protocol !== "http:")
@@ -250,7 +250,7 @@ function urlRefusal(url: URL): Option.Option<string> {
  * Parses `location` against `base` and applies {@link urlRefusal}: the URL
  * to fetch, or why it may not be.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export function checkUrl(location: string, base?: string): Result.Result<URL, string> {
   return Result.try({
@@ -273,7 +273,7 @@ export function checkUrl(location: string, base?: string): Result.Result<URL, st
  * `allowHop` and, when there is a resolver, every resolved address. `None`
  * when the hop may be fetched, else why not.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export function hopRefusal(url: URL, policy: FetchPolicy): Effect.Effect<Option.Option<string>> {
   const syntactic = urlRefusal(url);
@@ -323,7 +323,7 @@ function send(
  * The final (non-redirect) response of a guarded exchange, and the URL that
  * gave it.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export interface GuardedResponse {
   readonly url: URL;
@@ -364,7 +364,7 @@ function follow(
  * Bounds an exchange (its hops and its body read) by {@link FETCH_TIMEOUT},
  * failing with a {@link LookupFailed} when the time runs out.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export const withFetchTimeout = <A, E>(
   exchange: Effect.Effect<A, E>,
@@ -386,7 +386,7 @@ export const withFetchTimeout = <A, E>(
  * fault is a {@link LookupFailed}. Wrap the whole exchange, `read`
  * included, in {@link withFetchTimeout}.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export const fetchGuarded = <A, E>(
   client: HttpClient.HttpClient,
@@ -405,7 +405,7 @@ const tooLarge = (source: LookupSource, maxBytes: number): LookupFailed =>
  * fails before any of it is read), so an endless or oversized body is never
  * buffered whole.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export function readBoundedText(
   response: HttpClientResponse.HttpClientResponse,
@@ -442,7 +442,7 @@ export function readBoundedText(
  * A response's media type (`text/html` from `text/html; charset=utf-8`),
  * lower-cased, or `""` when it declares none.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export const mediaType = (response: HttpClientResponse.HttpClientResponse): string =>
   Option.match(Headers.get(response.headers, "content-type"), {

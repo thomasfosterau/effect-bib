@@ -12,7 +12,7 @@
  *
  * @copyright Thomas Foster
  * @module biblio/write/latex
- * @since 1.0.0
+ * @since 0.1.0
  */
 
 import * as Array from "effect/Array";
@@ -115,7 +115,7 @@ function accented(char: string): Option.Option<string> {
  * The writer's LaTeX dialect: UTF-8 kept (`biblatex`), or ASCII with accent
  * commands (`bibtex`).
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export type LatexDialect = "bibtex" | "biblatex";
 
@@ -124,7 +124,7 @@ export type LatexDialect = "bibtex" | "biblatex";
  * `''`) broken with an empty group so they read back as typed, and in the
  * `bibtex` dialect non-ASCII letters as accent commands.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 function escapeLatex(value: string, dialect: LatexDialect): string {
   const chars = Array.fromIterable(value.normalize("NFC"));
@@ -168,7 +168,7 @@ function richToLatex(rich: RichText, dialect: LatexDialect): string {
  * markup as LaTeX commands, a `nocase` span as a case-protecting `{…}` group,
  * the text escaped.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export const textToLatex = (value: string, dialect: LatexDialect): string =>
   richToLatex(parseCslMarkup(value), dialect);
@@ -177,7 +177,7 @@ export const textToLatex = (value: string, dialect: LatexDialect): string =>
  * A verbatim field value (a URL, a DOI): braces and backslashes, which would
  * unbalance or escape the field, percent-encoded; everything else as written.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export const verbatimLatex = (value: string): string =>
   value.replace(/\{/g, "%7B").replace(/\}/g, "%7D").replace(/\\/g, "%5C");

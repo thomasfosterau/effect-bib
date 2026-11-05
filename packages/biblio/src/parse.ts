@@ -94,8 +94,7 @@ import { scanBibtex } from "./bibtex/scan.ts";
 // ── Public surface ────────────────────────────────────────────────────
 
 /**
- * The file formats this module can parse. `csl-yaml`, `medline` (PubMed's
- * `.nbib`) and `refer` (Refer / EndNote tagged) were added in 1.0.0.
+ * The file formats this module can parse.
  *
  * @since 0.1.0
  */
@@ -109,8 +108,7 @@ export type ImportFormat =
   | "refer";
 
 /**
- * Why a source entry produced no importable record. `too-large` and
- * `truncated` were added in 1.0.0.
+ * Why a source entry produced no importable record.
  *
  * @since 0.1.0
  */
@@ -131,7 +129,7 @@ export type SkipReason =
  * 0) and the line and column (from 1) of its first character — a BibTeX
  * entry's `@`, an RIS record's `TY` tag, a CSV row's first cell.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export interface SourcePosition {
   readonly offset: number;
@@ -193,7 +191,7 @@ export const MAX_INPUT_LENGTH = 8_000_000;
  * and an ISBN or DOI, else a `no-title` / `no-identifier` skip); `lenient`
  * keeps every entry the format admits.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export type ParseMode = "import" | "lenient";
 
@@ -215,7 +213,7 @@ export type ParseMode = "import" | "lenient";
  * {@link parseCslMarkup}, or any CSL processor) as the `<` it is, never as a
  * tag. Names, dates and identifiers are not affected.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export interface ParseOptions extends RecordLimits {
   readonly mode?: ParseMode;
@@ -587,7 +585,7 @@ function bibtexOutcomes(
  * the package.
  *
  * @category internal
- * @since 1.0.0
+ * @since 0.1.0
  */
 export function parseBibtexDocument(
   content: string,
@@ -729,7 +727,7 @@ const decodeCslReferences = Schema.decodeUnknownOption(
  * assert.deepStrictEqual(record?.issued, { "date-parts": [[2015]] })
  * ```
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export function parseCslYaml(content: string, options: ParseOptions = {}): ParseOutcome[] {
   return withinInputCap(content, settings(options), (input, config) => {
@@ -1336,7 +1334,7 @@ function medlineOutcome(record: TaggedRecord, config: Settings): ParseOutcome {
  * carries the position of its record's first line; records are stamped
  * `provenance.source: "medline"`.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export function parseMedline(content: string, options: ParseOptions = {}): ParseOutcome[] {
   return parseTagged(content, options, medlineTag, medlineOutcome);
@@ -1422,7 +1420,7 @@ function referOutcome(record: TaggedRecord, config: Settings): ParseOutcome {
  * position of its record's first line; records are stamped
  * `provenance.source: "refer"`.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export function parseRefer(content: string, options: ParseOptions = {}): ParseOutcome[] {
   return parseTagged(content, options, referTag, referOutcome);

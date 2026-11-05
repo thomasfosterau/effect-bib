@@ -35,7 +35,7 @@ export function spend(budget: Budget, amount: number): boolean {
  * makes fresh ones per document; a streamed parse shares one pair across
  * the stream, so many small documents cannot each claim a full budget.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export interface BibtexBudgets {
   readonly macros: Budget;

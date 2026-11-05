@@ -8,7 +8,7 @@
  *
  * @copyright Thomas Foster
  * @module biblio/sources/doi
- * @since 1.0.0
+ * @since 0.1.0
  */
 
 import * as Effect from "effect/Effect";
@@ -32,7 +32,7 @@ import {
  * holds every address a redirect host resolves to to the request policy, on
  * top of the agency allow-list.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export interface DoiCslOptions {
   readonly resolveAddresses?: ResolveAddresses;
@@ -114,7 +114,7 @@ function negotiate(
  * `client` is expected to carry the polite User-Agent; the request asks for
  * CSL-JSON whatever `Accept` the client sets.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export const lookupDoiCsl: (
   client: HttpClient.HttpClient,

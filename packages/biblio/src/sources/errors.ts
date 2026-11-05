@@ -13,9 +13,8 @@
 import * as Schema from "effect/Schema";
 
 /**
- * The external source authorities a lookup can fail against. `doi` (content
- * negotiation at `doi.org`) and `web` (a page fetched by `byUrl`) were added
- * in 1.0.0.
+ * The external source authorities a lookup can fail against: `doi` is
+ * content negotiation at `doi.org`, `web` a page fetched by `byUrl`.
  *
  * @since 0.1.0
  */
@@ -54,7 +53,7 @@ export class LookupFailed extends Schema.TaggedError<LookupFailed>()("LookupFail
  * private, loopback, link-local, unique-local or local-network host — with
  * the reason. Fix the input, don't retry.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export class RefusedUrl extends Schema.TaggedError<RefusedUrl>()("RefusedUrl", {
   url: Schema.String,
@@ -62,8 +61,7 @@ export class RefusedUrl extends Schema.TaggedError<RefusedUrl>()("RefusedUrl", {
 }) {}
 
 /**
- * The typed error channel for a lookup. `RefusedUrl` (from `byUrl`) was
- * added in 1.0.0.
+ * The typed error channel for a lookup.
  *
  * @since 0.1.0
  */

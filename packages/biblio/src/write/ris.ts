@@ -3,7 +3,7 @@
  *
  * @copyright Thomas Foster
  * @module biblio/write/ris
- * @since 1.0.0
+ * @since 0.1.0
  */
 
 import * as Array from "effect/Array";
@@ -160,7 +160,7 @@ function writeRecord(record: BiblioRecord): string {
  * assert.strictEqual(parsed.outcome === "parsed" ? parsed.record.identifiers.isbn : undefined, "9780226458083")
  * ```
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export function toRis(records: readonly BiblioRecord[]): string {
   return Array.isReadonlyArrayEmpty(records)

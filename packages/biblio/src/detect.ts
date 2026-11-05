@@ -3,7 +3,7 @@
  *
  * @copyright Thomas Foster
  * @module biblio/detect
- * @since 1.0.0
+ * @since 0.1.0
  */
 
 import * as Option from "effect/Option";
@@ -46,7 +46,7 @@ const CSV_TITLE_HEADER = /^(?:[^\n,]*,)*\s*"?(?:title|name)"?\s*(?:,|$)/i;
  * assert.deepStrictEqual(detectFormat("just some notes"), Option.none())
  * ```
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export function detectFormat(content: string): Option.Option<ImportFormat> {
   const text = content.replace(/^﻿/, "").trimStart();

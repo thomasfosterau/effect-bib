@@ -6,7 +6,7 @@
  *
  * @copyright Thomas Foster
  * @module biblio/write/keys
- * @since 1.0.0
+ * @since 0.1.0
  */
 
 import * as Array from "effect/Array";
@@ -36,7 +36,7 @@ const fold = (value: string): string =>
  * A record's own key: its `citation-key`, else a string `id`, cleaned of the
  * characters a key cannot hold; `None` when nothing usable is left.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export function ownKey(record: BiblioRecord): Option.Option<string> {
   const candidate = Option.orElse(Option.fromUndefinedOr(record["citation-key"]), () =>
@@ -73,7 +73,7 @@ function titleWord(record: BiblioRecord): string {
  * significant title word (`harari2015sapiens`), in lower-case ASCII; `ref`
  * when the record has none of them.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 function generatedKey(record: BiblioRecord): string {
   const year = yearOf(record.issued);
@@ -101,7 +101,7 @@ function unused(taken: MutableHashSet.MutableHashSet<string>, key: string, index
  * ({@link generatedKey}), with a letter suffix when the key is already taken
  * by an earlier record.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export function citationKeys(records: readonly BiblioRecord[]): string[] {
   const taken = MutableHashSet.empty<string>();

@@ -73,7 +73,7 @@ export interface BiblioLookupOptions {
    * Resolves a host to its addresses, so `byUrl` refuses a public name that
    * points at a private, loopback or link-local address. Supply it where the
    * runtime can resolve DNS (Node); a Worker cannot, and without it only the
-   * URL itself is checked. Added in 1.0.0.
+   * URL itself is checked.
    */
   readonly resolveAddresses?: ResolveAddresses;
 }
@@ -132,7 +132,7 @@ export class BiblioLookup extends Context.Service<
     readonly byDoiRecord: (doi: string) => Effect.Effect<Option.Option<BiblioRecord>, LookupError>;
     /**
      * DOI lookup by content negotiation at `doi.org`: CSL-JSON from whichever
-     * agency registered the DOI (Crossref, DataCite, …). Added in 1.0.0.
+     * agency registered the DOI (Crossref, DataCite, …).
      */
     readonly byDoiCsl: (doi: string) => Effect.Effect<Option.Option<BiblioRecord>, LookupError>;
     /** CSL-native title search via OpenAlex, ranked by upstream relevance. */
@@ -145,8 +145,7 @@ export class BiblioLookup extends Context.Service<
      * Without the `resolveAddresses` option a host name is checked only as
      * written, so one that resolves to a private address is still fetched;
      * with it, the check is not pinned to the connection (DNS rebinding),
-     * which only a transport that checks at connect time closes. Added in
-     * 1.0.0.
+     * which only a transport that checks at connect time closes.
      */
     readonly byUrl: (url: string) => Effect.Effect<Option.Option<EmbeddedMetadata>, LookupError>;
   }

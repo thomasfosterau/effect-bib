@@ -67,7 +67,7 @@ const MAX_SOURCE_LENGTH = 64_000;
  * thousands of children of one large `crossref` parent cannot multiply the
  * work.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export const DECODED_SOURCE_FACTOR = 4;
 
@@ -77,7 +77,7 @@ export const DECODED_SOURCE_FACTOR = 4;
  * scales with; and whether text fields keep their LaTeX formatting as CSL
  * markup.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export interface BibtexLimits {
   readonly maxFieldLength: number;
@@ -162,7 +162,7 @@ const SERIAL_KINDS = HashSet.make("article", "periodical", "suppperiodical");
  * BibLaTeX's `type` keys → their English genre; any other `type` is kept as
  * written. The BibTeX writer reads it in reverse.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export const GENRES = HashMap.fromIterable<string, string>([
   ["phdthesis", "PhD thesis"],
@@ -207,7 +207,7 @@ const DEFAULT_GENRES = HashMap.fromIterable<string, string>([
  * Babel / polyglossia language names → BCP 47 tags. The BibTeX writer reads
  * it in reverse.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export const LANGUAGES = HashMap.fromIterable<string, string>([
   ["english", "en-US"],
