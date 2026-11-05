@@ -85,7 +85,7 @@ const MAX_CATEGORIES = 100;
  * collaboration lists hundreds of authors; a non-positive or non-integer
  * value falls back to the default.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export interface RecordLimits {
   readonly maxFieldLength?: number;
@@ -277,9 +277,9 @@ export const RecordIdentifiers = Schema.Struct({
 export type RecordIdentifiers = typeof RecordIdentifiers.Type;
 
 /**
- * The external authority (or channel) a record came from. `html` (citation
- * metadata embedded in a web page), `medline` (a PubMed / MEDLINE file) and
- * `refer` (a Refer / EndNote tagged file) were added in 1.0.0.
+ * The external authority (or channel) a record came from: a lookup source,
+ * a file format, `html` (citation metadata embedded in a web page) or
+ * `manual`.
  *
  * @since 0.1.0
  */
@@ -338,8 +338,6 @@ export type Provenance = typeof Provenance.Type;
  * live, checksummed, in `identifiers`; the citation-time variables
  * (`citation-number`, `first-reference-note-number`, `locator`,
  * `year-suffix`) belong to a rendering, not a record, and stay in `extra`.
- * Every member typed here beyond the 0.1.0 set (`id`, `citation-key`,
- * `categories` and the rest of the CSL variables) was added in 1.0.0.
  *
  * @since 0.1.0
  */
@@ -710,7 +708,7 @@ export function yearOf(date: CslDate | undefined): number | null {
  * `date-parts` entry — when it differs from {@link yearOf}'s, else
  * `Option.none()`.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export function endYearOf(date: CslDate): Option.Option<number> {
   const last = date["date-parts"]?.[1]?.[0];

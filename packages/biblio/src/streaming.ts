@@ -8,7 +8,7 @@
  *
  * @copyright Thomas Foster
  * @module biblio/streaming
- * @since 1.0.0
+ * @since 0.1.0
  */
 
 import * as Array from "effect/Array";
@@ -45,7 +45,7 @@ import {
  * {@link parseBibliographicStream}, the text it must hold at once (one entry,
  * with the macros and cross-referenced parents it carries).
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export class InputTooLarge extends Schema.TaggedError<InputTooLarge>()("InputTooLarge", {
   format: Schema.String,
@@ -87,7 +87,7 @@ const inputCap = (options: ParseOptions): number =>
  * assert.ok(Exit.isFailure(exit))
  * ```
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export const parseBibliographic = (
   content: string,
@@ -791,7 +791,7 @@ function step(
  * assert.deepStrictEqual(outcomes[1].position, { offset: 108, line: 3, column: 1 })
  * ```
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export const parseBibliographicStream = <E, R>(
   chunks: Stream.Stream<string, E, R>,

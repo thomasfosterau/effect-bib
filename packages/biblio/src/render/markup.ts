@@ -13,7 +13,7 @@
  *
  * @copyright Thomas Foster
  * @module biblio/render/markup
- * @since 1.0.0
+ * @since 0.1.0
  */
 
 import * as Array from "effect/Array";
@@ -106,7 +106,7 @@ function closeFrame(stack: Frame[], asSpan: boolean): void {
  * assert.strictEqual(toPlainText(parseCslMarkup("a < b <u>c</u>")), "a < b <u>c</u>")
  * ```
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export function parseCslMarkup(value: string): RichText {
   const root: Frame = { tag: "NoCase", element: "", opened: "", children: [] };
@@ -155,7 +155,7 @@ const CSL_TAGS: Readonly<Record<Styled["_tag"], readonly [string, string]>> = {
  * assert.strictEqual(toCslMarkup(concat(text("On "), italic(text("Homo sapiens")))), "On <i>Homo sapiens</i>")
  * ```
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export function toCslMarkup(rich: RichText): string {
   return rich
@@ -182,6 +182,6 @@ export function toCslMarkup(rich: RichText): string {
  * assert.strictEqual(stripCslMarkup("The <i>Beagle</i> voyage"), "The Beagle voyage")
  * ```
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export const stripCslMarkup = (value: string): string => toPlainText(parseCslMarkup(value));

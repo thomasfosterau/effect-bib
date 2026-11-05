@@ -410,7 +410,7 @@ const decodeNoCaseMarkup = (source: string): string => runMarkup(true, source);
  * (`<span class="nocase"><</span>`), which reads back as the `<` it is.
  * Total.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export function decodeLatexMarkup(source: string): string {
   return runMarkup(false, source);

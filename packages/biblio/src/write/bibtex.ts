@@ -3,7 +3,7 @@
  *
  * @copyright Thomas Foster
  * @module biblio/write/bibtex
- * @since 1.0.0
+ * @since 0.1.0
  */
 
 import * as Array from "effect/Array";
@@ -24,7 +24,7 @@ import { type LatexDialect, textToLatex, verbatimLatex } from "./latex.ts";
  * for biber) or `bibtex` (the classic entry types, `year` / `month` / `day`,
  * `journal` and `address`, and ASCII text with LaTeX accent commands).
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export type BibtexDialect = LatexDialect;
 
@@ -32,7 +32,7 @@ export type BibtexDialect = LatexDialect;
  * How {@link toBibtex} writes: the {@link BibtexDialect} (default
  * `biblatex`).
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export interface BibtexWriteOptions {
   readonly dialect?: BibtexDialect;
@@ -569,7 +569,7 @@ function writeEntry(record: BiblioRecord, key: string, dialect: BibtexDialect): 
  * assert.strictEqual(parsed.outcome === "parsed" ? parsed.record["container-title"] : undefined, "Nature")
  * ```
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export function toBibtex(
   records: readonly BiblioRecord[],

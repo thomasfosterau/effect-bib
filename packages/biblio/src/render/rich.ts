@@ -33,8 +33,7 @@ export interface Text {
 /**
  * A styled span: italic, bold, small caps, superscript, subscript, or
  * `NoCase` — text a style's case transform must leave alone (a proper noun
- * in a title, BibTeX's `{DNA}`), which renders as its children. `NoCase`
- * was added in 1.0.0.
+ * in a title, BibTeX's `{DNA}`), which renders as its children.
  *
  * @since 0.1.0
  */
@@ -131,7 +130,7 @@ export const subscript: (children: RichText) => RichText = styled("Subscript");
 /**
  * Rich text a case transform leaves alone (CSL's `<span class="nocase">`).
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export const noCase: (children: RichText) => RichText = styled("NoCase");
 

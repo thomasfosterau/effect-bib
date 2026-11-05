@@ -3,7 +3,7 @@
  *
  * @copyright Thomas Foster
  * @module biblio/write/csl-yaml
- * @since 1.0.0
+ * @since 0.1.0
  */
 
 import * as Array from "effect/Array";
@@ -56,7 +56,7 @@ const toJson = Schema.decodeUnknownOption(Schema.Json);
  * assert.strictEqual(parsed.outcome === "parsed" ? parsed.record.title : undefined, "Sapiens")
  * ```
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export function toCslYaml(records: readonly BiblioRecord[]): string {
   const lines = Array.match(records, {

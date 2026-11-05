@@ -4,7 +4,7 @@
  *
  * @copyright Thomas Foster
  * @module biblio/limits
- * @since 1.0.0
+ * @since 0.1.0
  */
 
 import * as Option from "effect/Option";
@@ -12,7 +12,7 @@ import * as Option from "effect/Option";
 /**
  * A limit as given, when it is a positive safe integer, else `fallback`.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export function limitOr(value: Option.Option<number>, fallback: number): number {
   return Option.getOrElse(

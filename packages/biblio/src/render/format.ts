@@ -400,7 +400,7 @@ export const richField = (record: BiblioRecord, key: TextVariable): Option.Optio
  * A record's text variable as plain text, its CSL markup dropped, when
  * present: for a style that renders a variable as a string, and for sorting.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export const plainField = (record: BiblioRecord, key: TextVariable): Option.Option<string> =>
   Option.map(Option.fromNullishOr(record[key]), stripCslMarkup);

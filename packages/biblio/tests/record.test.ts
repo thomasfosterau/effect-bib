@@ -393,7 +393,7 @@ describe("the full CSL 1.0.2 variable set", () => {
     expect(sanitiseText("abcdef", 0)).toStrictEqual(Option.some("abcdef"));
   });
 
-  it("still decodes a record persisted before 1.0.0", () => {
+  it("still decodes a record persisted before the full CSL variable set", () => {
     const persisted = {
       type: "book",
       title: "Sapiens",

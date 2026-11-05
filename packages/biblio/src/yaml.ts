@@ -12,7 +12,7 @@
  *
  * @copyright Thomas Foster
  * @module biblio/yaml
- * @since 1.0.0
+ * @since 0.1.0
  */
 
 import * as Array from "effect/Array";
@@ -27,7 +27,7 @@ import * as String from "effect/String";
  * A YAML value as JSON: a scalar, a sequence or a mapping; YAML's null is
  * `null`.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export type Yaml = Schema.Json;
 
@@ -453,7 +453,7 @@ function firstDocument(source: string): string {
  * JSON-shaped data; `None` when it uses YAML the reader does not take or is
  * malformed. Total.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export function readYaml(source: string): Option.Option<Yaml> {
   const reader: Reader = { lines: toLines(firstDocument(source)), pos: 0, failed: false };
@@ -542,7 +542,7 @@ function sequenceLines(value: Schema.JsonArray, indent: string): string[] {
  * JSON data as block-style YAML lines: mappings and lists of mappings as
  * blocks, lists of scalars as flow `[…]`, strings double-quoted.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export function writeYamlMapping(value: Schema.JsonObject): string[] {
   return mappingLines(value, "");

@@ -89,22 +89,22 @@ export type Orcid = typeof Orcid.Type;
 /**
  * A proven PubMed identifier: its digits alone, no leading zero.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export const Pmid = Schema.String.pipe(Schema.brand("Pmid"));
 /**
- * @since 1.0.0
+ * @since 0.1.0
  */
 export type Pmid = typeof Pmid.Type;
 
 /**
  * A proven PubMed Central identifier in canonical `PMC1234567` form.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export const Pmcid = Schema.String.pipe(Schema.brand("Pmcid"));
 /**
- * @since 1.0.0
+ * @since 0.1.0
  */
 export type Pmcid = typeof Pmcid.Type;
 
@@ -113,11 +113,11 @@ export type Pmcid = typeof Pmcid.Type;
  * `2101.01234` or an old-scheme `hep-th/9901001`, with any `v2` version
  * suffix kept.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export const Arxiv = Schema.String.pipe(Schema.brand("Arxiv"));
 /**
- * @since 1.0.0
+ * @since 0.1.0
  */
 export type Arxiv = typeof Arxiv.Type;
 
@@ -416,7 +416,7 @@ export function decodeOrcid(raw: string): Option.Option<Orcid> {
  * assert.strictEqual(Option.isNone(decodePmid("PMC3159421")), true)
  * ```
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export function decodePmid(raw: string): Option.Option<Pmid> {
   const bare = raw.trim().replace(/^pmid:?\s*/i, "");
@@ -438,7 +438,7 @@ export function decodePmid(raw: string): Option.Option<Pmid> {
  * assert.strictEqual(Option.getOrNull(decodePmcid("pmc3159421")), "PMC3159421")
  * ```
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export function decodePmcid(raw: string): Option.Option<Pmcid> {
   const match = /^PMC(\d{1,9})$/i.exec(raw.trim().replace(/^pmcid:?\s*/i, ""));
@@ -471,7 +471,7 @@ const ARXIV_OLD =
  * assert.strictEqual(Option.getOrNull(decodeArxiv("https://arxiv.org/abs/hep-th/9901001")), "hep-th/9901001")
  * ```
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export function decodeArxiv(raw: string): Option.Option<Arxiv> {
   const bare = raw

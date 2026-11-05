@@ -8,7 +8,7 @@
  *
  * @copyright Thomas Foster
  * @module biblio/sources/web
- * @since 1.0.0
+ * @since 0.1.0
  */
 
 import * as Array from "effect/Array";
@@ -42,7 +42,7 @@ const ACCEPT_HTML = "text/html, application/xhtml+xml;q=0.9";
  * address a host resolves to to the request policy (see
  * {@link ResolveAddresses}).
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export interface WebPageOptions {
   readonly resolveAddresses?: ResolveAddresses;
@@ -101,7 +101,7 @@ function readPage({
  * actually connects to (an undici `Agent` whose `connect.lookup` refuses
  * non-public addresses; see the package README).
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export const lookupWebPage: (
   client: HttpClient.HttpClient,

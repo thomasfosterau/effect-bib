@@ -1,10 +1,10 @@
 ---
-"@thomasfosterau/biblio": major
+"@thomasfosterau/biblio": minor
 ---
 
 `BiblioRecord` gains citation keys and the full CSL 1.0.2 variable set, and the file parsers gain a lenient mode, caller-set limits and source positions.
 
-**Record (wire shape).** Every new member is optional, so a record persisted by 0.x still decodes; `fromCslJson(toCslJson(record))` moves the CSL variables a 0.x record kept in `extra` into their typed slots.
+**Record (wire shape).** Every new member is optional, so a record persisted in the earlier shape still decodes; `fromCslJson(toCslJson(record))` moves the CSL variables such a record kept in `extra` into their typed slots.
 
 - The CSL-JSON item `id` (`string | number`), `citation-key` and `categories`.
 - Every CSL 1.0.2 standard variable (`title-short`, `container-title-short`, `genre`, `medium`, `status`, `event-title`, `event-place`, `archive`, `archive_location`, `call-number`, `keyword`, `number-of-pages`, `collection-number`, `version`, `jurisdiction`, …), all 26 name variables (`collection-editor`, `director`, `interviewer`, `illustrator`, `recipient`, `reviewed-author`, `original-author`, `executive-producer`, `series-creator`, …) and the `available-date` date variable. The citation-time variables (`citation-number`, `first-reference-note-number`, `locator`, `year-suffix`) and `custom` stay in `extra`.

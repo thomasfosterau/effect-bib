@@ -10,7 +10,7 @@
  *
  * @copyright Thomas Foster
  * @module biblio/embedded
- * @since 1.0.0
+ * @since 0.1.0
  */
 
 import * as Array from "effect/Array";
@@ -37,7 +37,7 @@ import {
  * tags (the first that has a title, its gaps filled from the others), and
  * one record per COinS span (a list page cites many works).
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export interface EmbeddedMetadata {
   readonly page: Option.Option<BiblioRecord>;
@@ -51,7 +51,7 @@ export interface EmbeddedMetadata {
  * longest page read (default `MAX_INPUT_LENGTH`; a longer page yields
  * nothing), with the per-record {@link RecordLimits}.
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export interface EmbeddedOptions extends RecordLimits {
   readonly url?: string;
@@ -739,7 +739,7 @@ function toRecord(found: Item, options: EmbeddedOptions): BiblioRecord {
  * assert.strictEqual(coins[0].identifiers.isbn, "9780062316097")
  * ```
  *
- * @since 1.0.0
+ * @since 0.1.0
  */
 export function readEmbeddedMetadata(
   html: string,
