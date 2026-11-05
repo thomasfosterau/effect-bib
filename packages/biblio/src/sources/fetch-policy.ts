@@ -48,15 +48,17 @@ const FETCH_TIMEOUT = "10 seconds";
 /**
  * Resolves a host name to the addresses it would connect to (IPv4 dotted
  * quads or IPv6 text, without brackets). Supplied by a caller whose runtime
- * can resolve DNS (Node's `dns.promises.lookup`, say); a failure or an empty
- * answer refuses the host. It is a best-effort pre-check: the connection
- * resolves the name again, so it does not stop DNS rebinding. Pinning the
- * connection is the caller's transport's job (a dispatcher that checks the
- * address at connect time).
+ * can resolve DNS (Node's `dns.promises.lookup`, say); an empty answer
+ * refuses the host. It cannot fail: a resolver whose lookup can fail answers
+ * that failure with no addresses (`Effect.orElseSucceed(() => [])`), which
+ * refuses the host. It is a best-effort pre-check: the connection resolves
+ * the name again, so it does not stop DNS rebinding. Pinning the connection
+ * is the caller's transport's job (a dispatcher that checks the address at
+ * connect time).
  *
  * @since 1.0.0
  */
-export type ResolveAddresses = (hostname: string) => Effect.Effect<readonly string[], unknown>;
+export type ResolveAddresses = (hostname: string) => Effect.Effect<readonly string[]>;
 
 /**
  * How {@link fetchGuarded} treats one exchange: the source its failures are
@@ -280,20 +282,17 @@ export function hopRefusal(url: URL, policy: FetchPolicy): Effect.Effect<Option.
     return Effect.succeed(Option.some(`a host outside the allow-list (${url.hostname})`));
   const resolve = policy.resolveAddresses;
   if (Option.isNone(resolve) || isIpLiteral(url.hostname)) return Effect.succeed(Option.none());
-  return resolve.value(url.hostname).pipe(
-    Effect.result,
-    Effect.map(
-      Result.match({
-        onFailure: () => Option.some(`${url.hostname}, which failed to resolve`),
-        onSuccess: (addresses) =>
-          Array.isReadonlyArrayNonEmpty(addresses)
-            ? Array.findFirst(addresses, (address) => Option.isSome(addressRefusal(address))).pipe(
-                Option.map((address) => `${url.hostname}, which resolves to ${address}`),
-              )
-            : Option.some(`${url.hostname}, which resolves to no address`),
-      }),
-    ),
-  );
+  return resolve
+    .value(url.hostname)
+    .pipe(
+      Effect.map((addresses) =>
+        Array.isReadonlyArrayNonEmpty(addresses)
+          ? Array.findFirst(addresses, (address) => Option.isSome(addressRefusal(address))).pipe(
+              Option.map((address) => `${url.hostname}, which resolves to ${address}`),
+            )
+          : Option.some(`${url.hostname}, which resolves to no address`),
+      ),
+    );
 }
 
 /** Sends one hop with redirects left to the caller, so each is checked before it is followed. */

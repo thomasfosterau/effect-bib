@@ -22,7 +22,7 @@ import {
   LookupFailed,
   RefusedUrl,
 } from "@thomasfosterau/biblio/sources";
-import { addressRefusal } from "../../src/sources/fetch-policy.ts";
+import { addressRefusal, type ResolveAddresses } from "../../src/sources/fetch-policy.ts";
 import { MAX_INPUT_LENGTH } from "../../src/parse.ts";
 import { expectFailureInstanceOf, runTest } from "../effect.ts";
 import { stubRouter, type StubRoute } from "./stub-http.ts";
@@ -210,10 +210,16 @@ describe("BiblioLookup.byUrl", () => {
   });
 
   describe("with a resolver", () => {
-    const resolving =
+    /** A lookup that fails with `NXDOMAIN` for a host it has no answer for. */
+    const lookup =
       (answers: Readonly<Record<string, readonly string[]>>) =>
       (hostname: string): Effect.Effect<readonly string[], string> =>
         hostname in answers ? Effect.succeed(answers[hostname] ?? []) : Effect.fail("NXDOMAIN");
+    /** The documented shape: a lookup that can fail answers its failure with no addresses. */
+    const resolving =
+      (answers: Readonly<Record<string, readonly string[]>>): ResolveAddresses =>
+      (hostname) =>
+        lookup(answers)(hostname).pipe(Effect.orElseSucceed((): readonly string[] => []));
 
     it("fetches a host that resolves only to public addresses", async () => {
       const { layer, urls } = stubRouter({ [START]: html() });

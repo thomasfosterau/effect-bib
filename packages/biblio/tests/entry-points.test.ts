@@ -308,8 +308,8 @@ describe("built artifact", () => {
  * The forbidden set is a hand-kept list, so check it against the installed
  * `effect`: every directory of `effect/` except `encoding`, `testing` and
  * `internal` must be on it, and so must every `effect/encoding` module other
- * than the four that were always stable. A new directory in a later rc fails
- * here rather than slipping past the guard.
+ * than the four that were always stable. A new directory or module in a later
+ * release fails here rather than slipping past the guard.
  */
 describe("forbidden effect module list", () => {
   const dist = path.join(

@@ -66,10 +66,6 @@ export default defineConfig({
             "The `Buffer` global is typed `any` wherever @cloudflare/workers-types is loaded. Use Uint8Array/DataView.",
         },
       ],
-      // `casting-awareness` is an awareness prompt, not a defect rule — it
-      // fires on every `as`, including the narrowings the lenient CSL-JSON
-      // decoder structurally requires. Stays visible as a warning.
-      "effect/casting-awareness": "warn",
       // Hard-codes abbreviations (`Arr`, `P`, `R`, …) with no options, so it is
       // unsatisfiable under the full-name convention (`import * as Option from
       // "effect/Option"`) this library shares with its consumers.
@@ -103,11 +99,10 @@ export default defineConfig({
       // 4 marks most of `effect/http` unstable, so every HttpClient use in
       // `./sources` would warn and bury the rest.
       "effecttsgo/unstable-api-usage": "off",
-      // 1 site, follow-up #136: the public `ResolveAddresses` callback
-      // (`./sources`) declares its error `unknown` because a caller's
-      // resolver can fail with anything; the request policy only reads the
-      // failure as "did not resolve". Narrowing it changes a published type.
-      "effecttsgo/any-unknown-in-error-context": "warn",
+      // Not in `recommended` (`correctness` has it at `warn`); held at `error`
+      // so an `unknown` error channel cannot land (the public
+      // `ResolveAddresses` was the last, #136).
+      "effecttsgo/any-unknown-in-error-context": "error",
       "typescript/no-explicit-any": "off",
       "typescript/no-empty-object-type": "off",
       "typescript/ban-ts-comment": "off",

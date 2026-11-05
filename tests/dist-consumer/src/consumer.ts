@@ -209,5 +209,6 @@ export type Checks = [
     // oxlint-disable-next-line effect/prefer-option-over-null -- asserts an optional option's shape
     Equals<BiblioLookupOptions["resolveAddresses"], ResolveAddresses | undefined>
   >,
+  /** _resolverCannotFail */ Assert<Equals<Effect.Error<ReturnType<ResolveAddresses>>, never>>,
   /** _recoveredNeverFails */ Assert<Equals<Effect.Error<typeof recovered>, never>>,
 ];
