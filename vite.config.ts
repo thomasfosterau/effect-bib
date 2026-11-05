@@ -103,11 +103,10 @@ export default defineConfig({
       // 4 marks most of `effect/http` unstable, so every HttpClient use in
       // `./sources` would warn and bury the rest.
       "effecttsgo/unstable-api-usage": "off",
-      // 1 site, follow-up #136: the public `ResolveAddresses` callback
-      // (`./sources`) declares its error `unknown` because a caller's
-      // resolver can fail with anything; the request policy only reads the
-      // failure as "did not resolve". Narrowing it changes a published type.
-      "effecttsgo/any-unknown-in-error-context": "warn",
+      // Not in `recommended` (`correctness` has it at `warn`); held at `error`
+      // so an `unknown` error channel cannot land (the public
+      // `ResolveAddresses` was the last, #136).
+      "effecttsgo/any-unknown-in-error-context": "error",
       "typescript/no-explicit-any": "off",
       "typescript/no-empty-object-type": "off",
       "typescript/ban-ts-comment": "off",
