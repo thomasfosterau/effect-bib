@@ -39,7 +39,7 @@ Before you report work as done, run the gates below in order (CI's order, `.gith
 4. `vp run -r test:coverage`
 5. `vp run -r docgen`
 6. `pnpm audit --audit-level high` (network)
-7. `fallow audit --format json --quiet --explain --gate-marker agent --base origin/trunk` (the fallow gate below; not a CI step). It reads the Istanbul map `packages/biblio/coverage/coverage-final.json` that step 4 writes (`health.coverage` in `.fallowrc.json`), so run it after `test:coverage`; without the map fallow scores every function as uncovered.
+7. `vp exec fallow audit --format json --quiet --explain --gate-marker agent --base origin/trunk` (the fallow gate below; not a CI step). It reads the Istanbul map `packages/biblio/coverage/coverage-final.json` that step 4 writes (`health.coverage` in `.fallowrc.json`), so run it after `test:coverage`; without the map fallow scores every function as uncovered.
 
 - **`dist/` is built by the gates that read it.** `vp run check` and `vp run -r test:coverage` (like `test:unit`) each depend on `build` (#22), so on a clean tree they emit `dist/` before the dist-consumer check and the built-artifact cases in `packages/biblio/tests/entry-points.test.ts` run. Those cases still skip under a bare `vp test` without `dist/`, except under `CI`, where they fail instead; a skip there is not a run.
 - **Before pushing, reinstall from clean** to catch a missing peer a warm tree hides: `rm -rf node_modules packages/*/node_modules tests/*/node_modules && pnpm install --frozen-lockfile`, then the gates.
@@ -67,8 +67,8 @@ Read the installed package before writing Effect code, and never guess at an Eff
 
 ## Agent sessions
 
-- The SessionStart hook (`.claude/hooks/session-start.sh`) installs dependencies against the lockfile and links `vp` (a re-exec shim that prefers the nearest worktree's `node_modules`), `tsx` and `fallow` into `~/.local/bin` so they resolve from a non-interactive shell, and repairs a broken bare `node`. It hydrates no secrets; none are needed.
-- A PreToolUse hook (`.claude/hooks/fallow-gate.sh`) runs the fallow gate before `git commit` / `git push`; a PostToolUse hook runs `vp fmt --write` on every edited `.ts` / `.js` / `.json` / `.md` / `.css` file.
+- The SessionStart hook (`.claude/hooks/session-start.sh`) installs the global Vite+ CLI at the catalog's `vite-plus` pin with the official installer (npm-provenance and SHA-512 checked; the session's network must allow `vite.plus` and `viteplus.dev`), links `vp` and `vpx` into `~/.local/bin`, runs `vp install --frozen-lockfile`, and repairs a broken bare `node`. Nothing else goes on PATH: the global `vp` delegates to each checkout's own `vite-plus` (worktrees included, after their own `vp install`), fallow runs as `vp exec fallow …`, and TypeScript scripts as `vpx <file>.ts` (`tsx` is installed only because `@effect/docgen` spawns it). If the installer can't run, `vp` falls back to this checkout's `node_modules` copy. It hydrates no secrets; none are needed.
+- A PreToolUse hook (`.claude/hooks/fallow-gate.sh`) runs the fallow gate (through `vp exec fallow`) before `git commit` / `git push`, only in this checkout and its `.claude/worktrees/*`: from any other tree it runs none of that tree's tooling and skips the audit with a notice; a PostToolUse hook runs `vp fmt --write` on every edited `.ts` / `.js` / `.json` / `.md` / `.css` file.
 - Every gate runs offline except `pnpm audit` (network). The Release workflow (OIDC, `release` environment) runs only in CI.
 
 ## Documentation surfaces
