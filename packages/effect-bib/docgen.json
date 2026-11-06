@@ -1,0 +1,19 @@
+{
+  "$schema": "../../node_modules/@effect/docgen/schema.json",
+  "srcLink": "https://github.com/thomasfosterau/effect-bib/blob/trunk/packages/effect-bib/src/",
+  "runExamples": true,
+  "exclude": ["src/index.ts", "src/sources/index.ts", "src/render/index.ts", "src/write/index.ts"],
+  "parseCompilerOptions": "./tsconfig.build.json",
+  "examplesCompilerOptions": {
+    "noEmit": true,
+    "strict": true,
+    "exactOptionalPropertyTypes": true,
+    "skipLibCheck": true,
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "target": "esnext",
+    "lib": ["esnext", "dom", "dom.iterable"],
+    "types": ["node"],
+    "allowImportingTsExtensions": true
+  }
+}

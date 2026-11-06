@@ -1,5 +1,5 @@
 ---
-"@thomasfosterau/biblio": minor
+"@thomasfosterau/effect-bib": minor
 ---
 
 `BiblioRecord` gains citation keys and the full CSL 1.0.2 variable set, and the file parsers gain a lenient mode, caller-set limits and source positions.

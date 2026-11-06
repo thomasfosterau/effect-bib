@@ -8,12 +8,12 @@ Reference management on [Effect](https://effect.website): typed CSL-JSON records
 
 | Package | Purpose |
 | --- | --- |
-| [`@thomasfosterau/biblio`](packages/biblio/README.md) | CSL-JSON records as Effect Schema (the full CSL 1.0.2 variable set, citation keys), validated ISBN / DOI / ISSN / ORCID / PubMed / arXiv identifiers, BibTeX / RIS / CSV / CSL-JSON parsing (an import policy or a lenient bibliography read), same-work dedup scoring and APA / Vancouver / Chicago rendering with in-text citations (`.`, browser-safe), plus Crossref / OpenAlex / OpenLibrary lookup over Effect's `HttpClient` (`./sources`). Peer: `effect`. |
+| [`@thomasfosterau/effect-bib`](packages/effect-bib/README.md) | CSL-JSON records as Effect Schema (the full CSL 1.0.2 variable set, citation keys), validated ISBN / DOI / ISSN / ORCID / PubMed / arXiv identifiers, BibTeX / RIS / CSV / CSL-JSON parsing (an import policy or a lenient bibliography read), same-work dedup scoring and APA / Vancouver / Chicago rendering with in-text citations (`.`, browser-safe), plus Crossref / OpenAlex / OpenLibrary lookup over Effect's `HttpClient` (`./sources`). Peer: `effect`. |
 
 ## Install
 
 ```bash
-pnpm add @thomasfosterau/biblio effect
+pnpm add @thomasfosterau/effect-bib effect
 ```
 
 `effect` `^4.0.0` is a peer dependency; Node.js 22 or newer is required.
@@ -22,7 +22,7 @@ pnpm add @thomasfosterau/biblio effect
 
 ```ts
 import * as Option from "effect/Option";
-import { apaStyle, decodeIsbn, fromCslJson, renderReference } from "@thomasfosterau/biblio";
+import { apaStyle, decodeIsbn, fromCslJson, renderReference } from "@thomasfosterau/effect-bib";
 
 // A proven identifier is a distinct type from the string it came from.
 Option.getOrNull(decodeIsbn("0-06-231609-5")); // "9780062316097" (an `Isbn`)
@@ -34,7 +34,7 @@ const record = fromCslJson({ type: "book", title: "Sapiens", ISBN: "978006231609
 renderReference(record, { style: apaStyle }); // "(n.d.). Sapiens."
 ```
 
-The lookup service, the file parsers, dedup scoring and the full API are in the [package README](packages/biblio/README.md).
+The lookup service, the file parsers, dedup scoring and the full API are in the [package README](packages/effect-bib/README.md).
 
 ## Development
 

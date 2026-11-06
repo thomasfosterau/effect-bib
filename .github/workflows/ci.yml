@@ -57,12 +57,12 @@ jobs:
       # `test:coverage`, not `test:unit` (#49): the same tests, plus two gates
       # the plain run lacks. vite-plus's `test --coverage` guard throws unless
       # `@vitest/coverage-istanbul` equals its bundled `vitest` exactly (#47),
-      # and the coverage thresholds in packages/biblio/vite.config.ts fail the
+      # and the coverage thresholds in packages/effect-bib/vite.config.ts fail the
       # step on a drop (#50).
       # Pandoc's BibLaTeX test cases for the BibTeX oracle (#91): GPL, so
       # fetched at a pinned commit rather than vendored.
       - name: Fetch the oracle corpora
-        run: pnpm exec vp run --filter ./packages/biblio oracles:fetch
+        run: pnpm exec vp run --filter ./packages/effect-bib oracles:fetch
       - name: Unit tests + coverage
         run: pnpm exec vp run -r test:coverage
       # Type-checks AND runs every JSDoc @example.

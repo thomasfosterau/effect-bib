@@ -1,5 +1,5 @@
 ---
-"@thomasfosterau/biblio": minor
+"@thomasfosterau/effect-bib": minor
 ---
 
 Two new input formats:

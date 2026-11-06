@@ -1,8 +1,8 @@
 {
   "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
   "entry": [
-    "packages/biblio/src/index.ts",
-    "packages/biblio/src/sources/index.ts",
+    "packages/effect-bib/src/index.ts",
+    "packages/effect-bib/src/sources/index.ts",
     "packages/*/tests/**/*.test.ts",
     "packages/*/tests/**/*.types.ts",
     "tests/dist-consumer/src/*.ts",
@@ -42,18 +42,18 @@
   },
   "boundaries": {
     "zones": [
-      { "name": "biblio", "patterns": ["packages/biblio/**"] },
+      { "name": "effect-bib", "patterns": ["packages/effect-bib/**"] },
       { "name": "dist-consumer", "patterns": ["tests/dist-consumer/**"] }
     ],
     "rules": [
-      { "from": "biblio", "allow": [] },
-      { "from": "dist-consumer", "allow": ["biblio"] }
+      { "from": "effect-bib", "allow": [] },
+      { "from": "dist-consumer", "allow": ["effect-bib"] }
     ]
   },
   "health": {
     "maxCyclomatic": 20,
     "maxCognitive": 15,
     "maxCrap": 30,
-    "coverage": "packages/biblio/coverage/coverage-final.json"
+    "coverage": "packages/effect-bib/coverage/coverage-final.json"
   }
 }

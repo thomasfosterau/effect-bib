@@ -1,0 +1,343 @@
+# `@thomasfosterau/effect-bib`
+
+Bibliographic toolkit on Effect: CSL-JSON records as Effect Schema, checksummed ISBN / DOI / ISSN / ORCID identifiers, BibTeX / RIS / CSV / CSL-JSON / CSL YAML parsing and BibTeX / BibLaTeX / RIS / CSL YAML writing, same-work dedup scoring, APA / Vancouver rendering, and Crossref / OpenAlex / OpenLibrary lookup over Effect's `HttpClient`.
+
+**Disclaimer:** This repository and package have been created using Claude Code. The package's API and functionality is in flux, so expect churn and breaking changes.
+
+## Install
+
+```bash
+pnpm add @thomasfosterau/effect-bib effect
+```
+
+`effect` (`^4.0.0`) is a peer dependency, tested against `effect@4.0.0` and the current 4.x release. Node.js 22 or newer is required. The one runtime dependency, [`@thomasfosterau/effect-parse`](https://github.com/thomasfosterau/effect-parse) (the BibTeX scanner), peers `effect ^4.0.0` too.
+
+### Entry points
+
+| Subpath | Imports | Contents |
+| --- | --- | --- |
+| `.` | `effect` only | `BiblioRecord` and the CSL-JSON interop, the identifier brands and decoders, the file parsers and writers, dedup scoring, the render engine and the two built-in styles |
+| `./sources` | `effect/http` | The `BiblioLookup` service and its layers, the per-source lookup functions and response schemas, the typed error channel |
+
+The split is a packaging commitment, not a convention: the root entry resolves none of the modules that were under `effect/unstable/*` before rc.118 (`effect/http`, `effect/sql`, …), nor the directories `effect` has added since (`effect/graphql`, …; see [the forbidden-module list](https://github.com/thomasfosterau/effect-bib/blob/trunk/packages/effect-bib/tests/fixtures/forbidden-effect-modules.mjs)) and no `sources/` module, so a browser bundle that imports it never loads the HTTP clients. [`tests/entry-points.test.ts`](https://github.com/thomasfosterau/effect-bib/blob/trunk/packages/effect-bib/tests/entry-points.test.ts) walks the real import graph of both the sources and the built artifact.
+
+## Usage
+
+A `BiblioRecord` is a typed superset of CSL-JSON: its core is the closed CSL 1.0.2 vocabulary modelled as Effect Schema, and its additions are strictly additive — first-class checksummed identifiers, a source provenance envelope, and an `extra` map that carries CSL variables the model does not consume. Everything that produces one (a file parser, a lookup source, `fromCslJson`) validates field by field and never throws on partial or hostile input; everything that consumes one (dedup, rendering, `toCslJson`) is pure.
+
+```ts
+import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
+import { apaStyle, decodeIsbn, fromCslJson, renderReference } from "@thomasfosterau/effect-bib";
+import { BiblioLookup, biblioLookupLayer } from "@thomasfosterau/effect-bib/sources";
+
+// A proven identifier is a distinct type from the string it came from.
+Option.getOrNull(decodeIsbn("0-06-231609-5")); // "9780062316097" (an `Isbn`)
+
+// Any CSL-JSON item decodes; the ISBN is checksummed into its branded slot.
+const record = fromCslJson({ type: "book", title: "Sapiens", ISBN: "9780062316097" });
+
+// Rendering is a pure function of (record, style, locale).
+renderReference(record, { style: apaStyle }); // "(n.d.). Sapiens."
+
+// Lookup is an Effect service over HttpClient; the production layer uses the global fetch
+// and identifies every request with your contact.
+const program = Effect.gen(function* () {
+  const lookup = yield* BiblioLookup;
+  return yield* lookup.byIsbnRecord("9780062316097"); // Option<BiblioRecord>
+});
+const lookupLayer = biblioLookupLayer({
+  contact: { product: "my-app/1.0", email: "ops@example.org" },
+});
+Effect.runPromise(program.pipe(Effect.provide(lookupLayer)));
+```
+
+## API
+
+Each snippet below is an excerpt of a JSDoc `@example` in the source. CI compiles and executes the full examples (`vp run -r docgen`), and each `assert` from `node:assert` throws on a wrong value, so an expected value that drifts from the code fails the build.
+
+### Records — `.`
+
+**`BiblioRecord`** (`Schema.Struct`) — `type: CslItemType` (required), the CSL-JSON item `id?: string | number` and `categories?: readonly string[]`, then every CSL 1.0.2 variable under its CSL-JSON name: the standard variables as optional strings (`citation-key`, `title`, `title-short`, `container-title`, `collection-title`, `collection-number`, `publisher`, `publisher-place`, `page`, `volume`, `issue`, `number`, `edition`, `genre`, `medium`, `status`, `event-title`, `event-place`, `archive`, `archive_location`, `call-number`, `keyword`, `abstract`, `note`, `URL`, … — numeric variables as their text), the 26 name variables as optional `CslName` arrays (`author`, `editor`, `translator`, `container-author`, `collection-editor`, `director`, `interviewer`, `illustrator`, `recipient`, `reviewed-author`, `original-author`, `contributor`, `curator`, `executive-producer`, `guest`, `host`, `narrator`, `organizer`, `performer`, `producer`, `script-writer`, `series-creator`, …) and the six date variables as optional `CslDate`s (`issued`, `accessed`, `available-date`, `event-date`, `original-date`, `submitted`). Then the superset: `identifiers: RecordIdentifiers` (required; `isbn?: Isbn`, `doi?: Doi`, `issn?: Issn`, `pmid?: Pmid`, `pmcid?: Pmcid`, `arxiv?: Arxiv`), `provenance: Provenance` (required; `source: ProvenanceSource`, `retrievedBy?`, `retrievedAt?`) and `extra?: Record<string, unknown>`. The CSL identifier variables (`DOI`, `ISBN`, `ISSN`, `PMID`, `PMCID`) live, validated, in `identifiers`; the citation-time variables (`citation-number`, `first-reference-note-number`, `locator`, `year-suffix`) and CSL's `custom` object stay in `extra`. A text variable may carry CSL's rich-text markup (see [Rich text](#rendering--)).
+
+**`CslItemType`** — the closed CSL 1.0.2 item-type enumeration (`article-journal`, `book`, `chapter`, `webpage`, … `document` is the neutral fallback). `isCslItemType(value)` narrows a string.
+
+**`CslName`** — `family` / `given` / `dropping-particle` / `non-dropping-particle` / `suffix` / `literal`, all optional, plus the superset `orcid?: Orcid`. **`CslDate`** — `date-parts` / `season` / `circa` / `literal` / `raw`.
+
+**`fromCslJson(item: unknown, limits?: RecordLimits): BiblioRecord`** — lenient, total decode of any CSL-JSON item. Identifiers are validated where present (a checksum failure drops the identifier, not the record; an arXiv id is read from a `number: "arXiv:…"` or an arxiv.org `URL`); every CSL variable lands in its typed slot, the legacy aliases `event`, `journalAbbreviation` and `shortTitle` filling `event-title`, `container-title-short` and `title-short` when those are absent; unknown keys survive in `extra`; the record is stamped `provenance.source: "csl-json"`. `limits` (`{ maxFieldLength?, maxAuthors? }`) raises the text and name-list bounds.
+
+```ts
+const record = fromCslJson({
+  id: "harari2015",
+  "citation-key": "harari2015",
+  type: "book",
+  title: "Sapiens",
+  "title-short": "Sapiens",
+  ISBN: "0-06-231609-5",
+  author: [{ family: "Harari", given: "Yuval Noah" }],
+  issued: { "date-parts": [[2015]] },
+  "custom-key": "kept",
+});
+assert.strictEqual(record.identifiers.isbn, "9780062316097");
+assert.strictEqual(record["citation-key"], "harari2015");
+assert.deepStrictEqual(record.extra, { "custom-key": "kept" });
+```
+
+**`toCslJson(record): CslJsonItem`** — the inverse projection: drops `provenance`, writes the brands back into `ISBN` / `DOI` / `ISSN` / `PMID` / `PMCID` (an arXiv id as `number: "arXiv:<id>"` when the record has no `number`), re-merges `extra` (modelled fields win over a stale carried key). `fromCslJson(toCslJson(record))` also lifts a record that kept CSL variables in `extra` (as records from before the full CSL variable set did) into their typed slots.
+
+Name and date helpers: `makeCslName(parts)`, `parsePersonName(raw)` (`"Family, Given"` or `"Given Family"`), `cslNameDisplay(name)`, `readCslName(entry)`, `readCslNameArray(value, maxNames?)`, `dateFromYear(year)`, `yearOf(date)` (a range's start year, else the year of a `raw` date; `null` when there is none) and `endYearOf(date)` (`Option` of a range's last year, when it differs). Sanitisers: `sanitiseText(value, maxLength?)` (trim, collapse whitespace, clamp to `maxLength`, default `MAX_TEXT_FIELD_LENGTH`), `sanitiseYear(value)`. Default bounds: `MAX_TEXT_FIELD_LENGTH` (2000), `MAX_AUTHORS` (100).
+
+### Identifiers — `.`
+
+**`Isbn`, `Doi`, `Issn`, `Orcid`, `Pmid`, `Pmcid`, `Arxiv`** — `Schema.String.pipe(Schema.brand(…))`. The `Type` is the brand, the `Encoded` is `string`: the brand is a proof, not a representation. A raw string is never assignable to a brand and the brands are distinct from each other (`tests/identifiers.types.ts` pins this at the type level).
+
+**`decodeIsbn(raw): Option<Isbn>`** — accepts a hyphenated / spaced ISBN-10 or ISBN-13, validates the checksum (mod-11 / EAN mod-10), returns the canonical 13-digit form. **`isbnForms(isbn)`** gives an `IsbnForms`, `{ isbn13, isbn10 | null }`; `convertIsbn10To13` / `convertIsbn13To10` are the raw converters.
+
+```ts
+const isbn = decodeIsbn("0-06-231609-5");
+assert.strictEqual(Option.getOrNull(isbn), "9780062316097");
+assert.deepStrictEqual(
+  Option.map(isbn, isbnForms),
+  Option.some({ isbn13: "9780062316097", isbn10: "0062316095" }),
+);
+// A checksum failure is `Option.none()`, never a throw.
+assert.strictEqual(Option.isNone(decodeIsbn("978-0-06-231609-8")), true);
+```
+
+**`decodeDoi(raw): Option<Doi>`** — strips a resolver URL or `doi:` scheme, lower-cases, rejects control characters, whitespace, over-length values and `..` segments (`normaliseDoi` is the un-branded step). **`decodeIssn(raw): Option<Issn>`** — mod-11, canonical `NNNN-NNNN`. **`decodeOrcid(raw): Option<Orcid>`** — ISO 7064 mod-11-2, canonical `0000-0002-1825-0097`.
+
+```ts
+assert.strictEqual(
+  Option.getOrNull(decodeDoi("https://doi.org/10.1038/NPHYS1170")),
+  "10.1038/nphys1170",
+);
+assert.strictEqual(Option.getOrNull(decodeIssn("00280836")), "0028-0836");
+assert.strictEqual(
+  Option.getOrNull(decodeOrcid("https://orcid.org/0000-0002-1825-0097")),
+  "0000-0002-1825-0097",
+);
+```
+
+**`decodePmid(raw): Option<Pmid>`** — a PubMed id's digits (a `PMID:` prefix stripped; no leading zero). **`decodePmcid(raw): Option<Pmcid>`** — canonical `PMC1234567`. **`decodeArxiv(raw): Option<Arxiv>`** — a current-scheme (`2101.01234v2`) or old-scheme (`hep-th/9901001`) arXiv id, bare, with an `arXiv:` prefix or an arxiv.org `abs` / `pdf` URL stripped. None of the three schemes has a check digit, so the syntax is the whole test.
+
+```ts
+assert.strictEqual(Option.getOrNull(decodePmid("PMID: 15371539")), "15371539");
+assert.strictEqual(Option.getOrNull(decodePmcid("pmc3159421")), "PMC3159421");
+assert.strictEqual(Option.getOrNull(decodeArxiv("arXiv:2101.01234v2")), "2101.01234v2");
+```
+
+### Parsing — `.`
+
+**`parseBibliographicFile(content, format, options?): ParseOutcome[]`** — `format` is `ImportFormat` (`"bibtex" | "zotero-json" | "csl-yaml" | "csv" | "ris" | "medline" | "refer"`); the per-format parsers `parseBibtex`, `parseZoteroJson`, `parseCslYaml`, `parseCsv`, `parseRis`, `parseMedline`, `parseRefer` (each `(content, options?)`) are exported too, and **`detectFormat(content): Option<ImportFormat>`** guesses the format from the content. Pure and network-free; the BibTeX scanner is a grammar in [`@thomasfosterau/effect-parse`](https://github.com/thomasfosterau/effect-parse) combinators, with brace nesting capped at 32 levels (deeper nesting stops the scan like an unbalanced tail). One `ParseOutcome` per source entry: `{ outcome: "parsed", record, position? }` or `{ outcome: "skipped", reason: SkipReason, position? }`, where `position` is the entry's `SourcePosition` (`{ offset, line, column }` of a BibTeX entry's `@`, an RIS `TY` line, the first line of a MEDLINE or Refer record, or a CSV row; CSL-JSON has none). An entry's key (BibTeX's citation key, RIS `ID`, a CSV `key` / `citation key` / `id` column, CSL-JSON `id` / `citation-key`) is the record's `id` and `citation-key`.
+
+`options` is a `ParseOptions`: `mode` (`ParseMode`) and the bounds. In the default `"import"` mode a record needs a title and at least one dedup identifier (ISBN or DOI), else it is skipped (`"no-title"` / `"no-identifier"`); in `"lenient"` mode every entry the format admits is a record, as a document's bibliography needs. CSL-JSON and CSL YAML items are read in full with `fromCslJson` in either mode (an item with no `type` takes one from its identifier in `"import"` mode). `maxRecords` (default `MAX_RECORDS`, 5000), `maxInputLength` (default `MAX_INPUT_LENGTH`, 8,000,000 code units), `maxFieldLength` and `maxAuthors` set the bounds; input over the input cap is one `"too-large"` outcome, and entries past the record cap one trailing `"truncated"` outcome. `"malformed"` marks an entry (or a whole JSON or CSV file) that could not be read.
+
+```ts
+const outcomes = parseBibliographicFile(bibtex, "bibtex");
+assert.deepStrictEqual(
+  outcomes.map((outcome) => outcome.outcome),
+  ["parsed", "skipped"],
+);
+assert.strictEqual(outcomes[1].outcome === "skipped" ? outcomes[1].reason : undefined, "no-title");
+```
+
+**`parseMedline(content)`** reads a PubMed / MEDLINE file (PubMed's `.nbib` "Citation manager" export): one record per paragraph of `TAG - value` lines, a value continuing on indented lines. `TI` (or a book's `BTI`) is the title; `FAU` (else `AU`, `Family Initials`) and `CN` the authors, `FED` / `ED` the editors; `JT` (or `TA`) the journal; `VI`, `IP`, `PG` and the year of `DP` the volume, issue, pages and date; the `[doi]` of `LID` / `AID` the DOI; `IS` and `ISBN` the ISSN and ISBN; `PMID` the record's `id` and its `pmid`, with `PMC` its `pmcid`. A record with a journal is an `article-journal`, a titled one in a book (`BTI`) a `chapter`, a book alone a `book`. **`parseRefer(content)`** reads Refer / EndNote tagged files: one record per paragraph of `%X value` lines, an untagged line continuing the previous value. `%0` (EndNote's reference type, else inferred from `%J` or `%B`) is the type; `%T`, `%A`, `%E`, `%J` (or a book's `%B`), `%V`, `%N`, `%P`, the year of `%D`, `%I`, `%@` (ISBN and ISSN), `%R` (DOI) and `%F` (or `%L`) as the `id` and `citation-key`. Records are stamped `provenance.source` `"medline"` / `"refer"`, and both stream record by record in `parseBibliographicStream`.
+
+**`parseBibtex(content)`** reads BibTeX and BibLaTeX in full: `@string` macros (and the predefined `jan` … `dec`) with `#` concatenation; LaTeX decoded to Unicode (`{\"o}` → `ö`, `--` → `–`, `\emph{…}` → its text; grouping braces are removed, so `{DNA}`'s case protection is dropped, unless the `bibtexMarkup` option is on); BibTeX name rules (`von Last, Jr, First`, a braced corporate name as a `literal`, `and others` as `extra["tex.others"]`); `crossref` and `xdata` inheritance with BibLaTeX's rules (an `@inbook` takes its parent book's `title` as its container title); BibLaTeX's fields and dates (`journaltitle`, `location`, `urldate`, EDTF ranges as full `date-parts`, arXiv `eprint`s); and the BibTeX / BibLaTeX → CSL entry-type mapping Pandoc and citeproc-js use. BibLaTeX's field semantics follow Pandoc's reading: the list fields `publisher`, `location` / `address`, `institution` and `organization` split at each top-level `and` and join with `; ` (`Routledge and Kegan Paul` → `Routledge; Kegan Paul`), and the publisher is every one of `school`, `institution`, `organization`, `howpublished` and `publisher` present, in that order; a multi-volume `@book` (one with a `maintitle`) takes the `maintitle` as its `title` and its own title as the `volume-title`, while a contained entry (`@inbook`, `@incollection`, …) takes the `maintitle` as its `container-title` and its `booktitle` as the `volume-title`; `collection-title` is the `series` alone; `volume` and `part` read as `7.2`; the localisation keys are spelled out (`type = {patentus}` → `U.S. patent`, `pubstate = {inpress}` → `in press`, `series = {newseries}` → `new series`, `series = {3}` → `3rd series`); and the language is `langid`, else the legacy `hyphenation`, else `language`, with a `langidopts` `variant` setting a Babel language's region (`english` with `variant=british` → `en-GB`). Fields with a CSL variable fill it (`shorttitle` → `title-short`, `keywords` → `keyword`, `type` → `genre`, `eventtitle` → `event-title`, …), an `eprint` of type `arxiv` / `pubmed` and the `pmid` / `pmcid` fields fill `identifiers` when they validate, and any other field lands in `extra` as `tex.<field>`; only `file` is dropped.
+
+With **`bibtexMarkup: true`** (opt-in; the default output is unchanged) text fields keep BibTeX's formatting as CSL markup: `\emph{…}` / `\textit{…}` → `<i>…</i>`, `\textbf{…}` → `<b>`, `\textsc{…}` → a small-caps span, `\textsuperscript{…}` / `\textsubscript{…}` → `<sup>` / `<sub>`, and a case-protecting `{DNA}` → `<span class="nocase">DNA</span>`. CSL markup has no escape, so a literal `<` in the BibTeX text is written as `<span class="nocase"><</span>`, which reads back as `<`, never as a tag. `toBibtex` writes the same markup back as LaTeX, so the two round-trip.
+
+```ts
+const chapter = outcomes[1].outcome === "parsed" ? outcomes[1].record : undefined;
+assert.strictEqual(chapter?.title, "Schön's Method");
+assert.strictEqual(chapter?.["container-title"], "The Oxford Handbook");
+assert.deepStrictEqual(chapter?.author, [
+  { family: "Berg", given: "Anna", "dropping-particle": "van der" },
+]);
+assert.deepStrictEqual(chapter?.extra, { "tex.others": ["author"] });
+assert.strictEqual(chapter?.["citation-key"], "chapter");
+assert.deepStrictEqual(outcomes[1].position, { offset: 168, line: 3, column: 1 });
+
+// A document's bibliography: no identifier needed.
+const [thesis] = parseBibtex(
+  "@phdthesis{doe2020, title = {On Things}, author = {Doe, Jane}, school = {MIT}, year = 2020}",
+  { mode: "lenient" },
+);
+assert.strictEqual(thesis.outcome === "parsed" ? thesis.record.genre : undefined, "PhD thesis");
+```
+
+**`parseCslYaml(content)`** reads CSL YAML: a Pandoc bibliography file, or a Markdown document's front matter, holding `references:` (or a bare list of items). It reads the YAML subset bibliographies are written in (block mappings and lists, one-line flow lists, plain, quoted and block scalars, comments); anything else (anchors, aliases, tags) is one `"malformed"` outcome rather than a misreading.
+
+**`parseBibliographic(content, format, options?): Effect<ParseOutcome[], InputTooLarge>`** is the same parse as an `Effect`, failing with the typed `InputTooLarge` error (`{ format, maxInputLength, message }`) where the pure parser yields a `"too-large"` outcome. **`parseBibliographicStream(chunks, format, options?): Stream<ParseOutcome, E | InputTooLarge, R>`** reads a large file as a `Stream` of text chunks and emits each entry's outcome as soon as the entry is complete, so the file never has to be in memory at once: BibTeX, RIS and CSV stream entry by entry with the whole-file parse's outcomes and positions (BibTeX `@string` macros carried forward; a `crossref` / `xdata` child read with its parent from a window of the last 1000 entries, or held back until a later parent arrives); CSL-JSON and CSL YAML are read whole at the end. In a stream, `maxInputLength` bounds the text held at once (an unfinished entry, the macros, the waiting children), not the whole stream, and the record cap ends the stream with one `"truncated"` outcome.
+
+```ts
+const chunks = Stream.fromIterable([
+  '@string{ups = "Oxford Univ',
+  'ersity Press"}\n@book{a, title = {First}, publisher = ups, isbn = {9780199695836}}\n@bo',
+  "ok{b, title = {Second}, isbn = {9780062316097}}",
+]);
+const outcomes = Effect.runSync(Stream.runCollect(parseBibliographicStream(chunks, "bibtex")));
+assert.strictEqual(
+  outcomes[0].outcome === "parsed" ? outcomes[0].record.publisher : undefined,
+  "Oxford University Press",
+);
+assert.deepStrictEqual(outcomes[1].position, { offset: 108, line: 3, column: 1 });
+```
+
+### Writing — `.`
+
+**`toBibtex(records, { dialect? }): string`** writes a `.bib` document, the inverse of `parseBibtex`. `dialect` is `"biblatex"` (the default: BibLaTeX's entry types and fields, ISO 8601 / EDTF `date`, UTF-8 text) or `"bibtex"` (the classic entry types, `year` / `month` / `day`, `journal`, `address`, and ASCII text with accent commands, `ö` → `{\"o}`). CSL markup becomes LaTeX (`<i>` → `\emph{…}`, a `nocase` span → a case-protecting `{…}` group), the specials are escaped, and the `tex.<field>` passthrough `parseBibtex` kept is written back. Each entry's key is the record's own `citation-key` (or string `id`), cleaned of characters a key cannot hold, else a generated `authorYEARword` key; a key already used gets a letter suffix (`darwin1859origin`, `darwin1859origina`). A record with a `volume-title` is written, in the BibLaTeX dialect, as a `maintitle` and a `title` (or, in a contained entry, a `maintitle` and a `booktitle`), the reader's mapping in reverse. What BibTeX cannot hold (ORCIDs, `categories`, the CSL variables with no BibLaTeX field) is left out.
+
+```ts
+const bib = toBibtex([record]);
+assert.strictEqual(bib.split("\n")[0], "@article{berg2004dna,");
+assert.ok(bib.includes("  title = {The {DNA} of Schön},"));
+assert.ok(bib.includes("  date = {2004-03},"));
+
+// Classic BibTeX: ASCII, with accent commands and `year` / `month`.
+const classic = toBibtex([record], { dialect: "bibtex" });
+assert.ok(classic.includes('  title = {The {DNA} of Sch{\\"o}n},'));
+assert.ok(classic.includes("  month = mar,"));
+```
+
+**`toRis(records): string`** writes RIS (CRLF line ends, `Last, First, Suffix` names, `PY` / `DA` dates, `SP` / `EP` pages, plain text), and **`toCslYaml(records): string`** writes CSL YAML: a `references:` list between `---` and `...`, both a Pandoc bibliography file and a front-matter block. For each format, `parse(write(records))` keeps every field the format models.
+
+### Dedup — `.`
+
+**`recordMatchInput(record): MatchInput`** projects a record to `{ title, authors }`; **`scoreMatch(incoming, candidate): MatchScore`** scores title-token Jaccard, author-surname Jaccard (`Option.none()` when either side has no authors) and the shared significant title tokens; **`isConfidentMatch(score)`** is the high-precision same-work decision (title ≥ 0.9 with author agreement ≥ 0.5, or title ≥ 0.95 with ≥ 2 shared tokens when there is no author signal); **`matchConfidence(score)`** ranks; **`bestConfidentMatch(incoming, candidates)`** picks the best confident candidate or `null`. Normalisers: `normaliseForMatch`, `titleTokens`, `authorSurname`.
+
+```ts
+const score = scoreMatch(
+  { title: "The Hobbit", authors: ["J. R. R. Tolkien"] },
+  { title: "Hobbit", authors: ["Tolkien, J.R.R."] },
+);
+assert.strictEqual(isConfidentMatch(score), true);
+```
+
+### Rendering — `.`
+
+**`renderReference(record, { style, locale? }): string`** and **`renderBibliography(records, options): RenderedBibliography`** — author-date styles sort by the style's `sortKey` and carry no label; numeric styles keep citation order and number each entry (`label: Option<string>`). **`bibliographyToText(bibliography)`** flattens to one line per entry. `locale` defaults to `enLocale`.
+
+**`apaStyle`** (APA 7th, author-date), **`vancouverStyle`** (numeric) and **`chicagoNotesStyle`** (Chicago 17th notes and bibliography, a note style) are the built-ins; `builtInStyles` holds the three (`{ apa, vancouver, "chicago-notes" }`) and `getStyle(id)` looks a style up by any id (`undefined` when unknown). A `CitationStyle` is data — `{ id, title, category, renderReference, sortKey }`, optionally `reference` (rich output) and `citation` (in-text settings: et-al thresholds, affixes, delimiters, a note style's first and short forms) — so a consumer can supply its own without touching the engine, composing the `format.ts` primitives (`formatNameList`, `givenInitials`, `issuedYearText`, `pagesLabel`, `preferredUrl`, `dispatchRich`, …).
+
+**Rich text.** `renderReferenceRich(record, options): RichText` is the same reference with its formatting kept (APA's italic titles, journals and volumes; a linked DOI), and every `RenderedEntry` carries `rich` beside `text`. `RichText` is a small format-neutral inline AST (`Text`, `Italic`, `Bold`, `SmallCaps`, `Superscript`, `Subscript`, `NoCase`, `Link`, `Display`) with `toPlainText`, `toHtml` (citeproc-js's markup; a link renders only for an `http(s)` or `mailto` URL) and `toMarkdown` adapters. Italics flip-flop as in citeproc-js: italic inside italic (a species name in an italic book title) renders upright, as a `font-style:normal` span in HTML and outside the emphasis in Markdown. The string functions are `toPlainText` over the same tree.
+
+**CSL markup in fields.** A record's text variables may carry CSL-JSON's rich-text markup (`<i>`, `<b>`, `<sup>`, `<sub>`, `<span style="font-variant:small-caps;">`, `<span class="nocase">`), kept as text on the record as CSL-JSON keeps it. **`parseCslMarkup(value): RichText`** reads it (anything else that looks like a tag is literal text), **`toCslMarkup(rich)`** writes it back, and **`stripCslMarkup(value)`** is its plain text. All three built-in styles render it (`richField`; Vancouver's `<sub>` / `<sup>` survive in its rich output too), and sorting, plain-string output (`plainField`) and dedup read the plain text. Dates render a range's years (`2001–2003`) and a `literal` date as written.
+
+```ts
+const title = parseCslMarkup(
+  'The <i>Escherichia coli</i> genome and <span class="nocase">DNA</span>',
+);
+assert.strictEqual(toPlainText(title), "The Escherichia coli genome and DNA");
+assert.strictEqual(toHtml(title), "The <i>Escherichia coli</i> genome and DNA");
+```
+
+**`renderCitations(clusters, records, { style, locale?, nocite? }): RenderedCitations`** renders a whole document's in-text citations and its bibliography in one pass. `records` is any iterable of `[id, record]` pairs (a `Map`); a cluster is `{ cites: [{ id, locator?, label?, prefix?, suffix?, mode? }] }`, with `mode` one of `normal`, `suppress-author`, `author-only` and `author-in-text` (narrative: `Ray (2004)`). Author-date styles sort and group a cluster's cites (`Smith, 2001, 2004`) and disambiguate across the document (more names, then initials, then a year suffix `2004a` the bibliography repeats); numeric styles number sources in order of first citation and compress runs (`[1–3, 5]`); note styles give a source's first note in full, later ones short, and a repeat "ibid.", with each cite's position reported. `nocite` (ids, or `"*"`) adds uncited records to the bibliography, and `missing` lists cited ids with no record.
+
+```ts
+const apa = renderCitations(clusters, records, { style: apaStyle });
+assert.deepStrictEqual(
+  apa.citations.map((citation) => citation.text),
+  ["(Ray, 2004, p. 5; Smith, 2001, 2004b)", "Ray (2004)", "(Smith, 2004a)"],
+);
+assert.strictEqual(apa.bibliography.entries[3]?.text, "Smith, J. (2004b). Third.");
+```
+
+```ts
+assert.strictEqual(
+  renderReference(article, { style: apaStyle }),
+  "Ray, O. (2004). Can loneliness be lethal? Nature, 431, 231-232. https://doi.org/10.1038/431231a",
+);
+assert.strictEqual(
+  renderReference(article, { style: vancouverStyle }),
+  "Ray O. Can loneliness be lethal? Nature. 2004;431:231-232.",
+);
+```
+
+### Embedded metadata — `.`
+
+**`readEmbeddedMetadata(html, options?): EmbeddedMetadata`** reads the citation metadata a web page carries: `{ page, coins }`, where `page` is the record for the page itself (`Option<BiblioRecord>`) and `coins` one record per COinS span (`<span class="Z3988" title="…">`, an OpenURL ContextObject; a list page cites many works). The page record comes from the first source that has a title, in order: the Highwire Press `<meta name="citation_…">` tags publishers write for Google Scholar, schema.org JSON-LD (`<script type="application/ld+json">`: `ScholarlyArticle`, `Book`, `Chapter`, `Dataset`, … with their authors, ORCIDs and the periodical, volume and issue they are part of, `@graph` included), then Dublin Core `<meta name="DC.…">` tags; any field it lacks is filled from the others, and `options.url` becomes its `URL` when the page names none. A `URL` is kept only as an absolute `http(s)` link (a relative one resolved against `options.url`); a `javascript:`, `data:` or other link is dropped, from every source. Every value goes through `fromCslJson`, so text is sanitised and identifiers validated; records carry `provenance: { source: "html", retrievedBy?: { identifierType: "url", identifier: options.url } }`. Pure and total: the page is scanned as text in linear time and never executed (an opening tag longer than 64 KiB is skipped), a page with no metadata yields `{ page: Option.none(), coins: [] }`, a page longer than `options.maxInputLength` (default `MAX_INPUT_LENGTH`) yields nothing, and `options.maxRecords` (default `MAX_RECORDS`) caps the COinS records.
+
+```ts
+const html = `<html><head>
+  <meta name="citation_title" content="Structure of Scientific Revolutions">
+  <meta name="citation_author" content="Kuhn, Thomas S.">
+  <meta name="citation_doi" content="10.1037/0003-066X.59.1.29">
+</head></html>`;
+const { page } = readEmbeddedMetadata(html, { url: "https://example.org/kuhn" });
+assert.strictEqual(Option.getOrThrow(page).identifiers.doi, "10.1037/0003-066x.59.1.29");
+```
+
+### Lookup — `./sources`
+
+**`BiblioLookup`** — `Context.Service` with `byIsbnRecord(isbn: string)`, `byDoiRecord(doi: string)`, `byDoiCsl(doi: string)` → `Effect<Option<BiblioRecord>, LookupError>` and `byTitle(query: string)` → `Effect<readonly BiblioRecord[], LookupError>`. Each method decodes the raw identifier first and fails with `InvalidIdentifier` before any request; a clean upstream 404 is `Option.none()`; `byTitle` never fails on an empty result. `byDoiCsl` asks `https://doi.org` itself for the DOI's CSL-JSON by content negotiation (`Accept: application/vnd.citationstyles.csl+json`), which the DOI's own registration agency answers — Crossref, DataCite or mEDRA — so it reaches DOIs Crossref's API does not hold; the record carries `provenance: { source: "csl-json", retrievedBy: { identifierType: "doi", endpoint: "https://doi.org" } }`.
+
+**`byUrl(url: string)`** → `Effect<Option<EmbeddedMetadata>, LookupError>` fetches a publisher's page and reads it with `readEmbeddedMetadata`; the page record's `URL` is the URL that finally answered (even when the page names another), and a clean 404 is `Option.none()`. Because the caller picks the URL, the fetch runs under the library's own request policy (it does not rely on your `HttpClient`):
+
+- **Refused before any request, with `RefusedUrl { url, reason }`:** a scheme other than `http` / `https`; credentials in the URL; a non-default port; an IP literal in a private, loopback, link-local (cloud metadata `169.254.169.254` included), unique-local, carrier-grade NAT, multicast, documentation or reserved range (also as an IPv4-mapped, NAT64 or 6to4 IPv6 address, and in decimal or hex spellings); `localhost`, a single-label host, or a `.localhost`, `.local`, `.internal`, `.home.arpa`, `.localdomain` or `.lan` name.
+- **Redirects** are never followed by `fetch`: each `Location` is checked against the same policy and followed by hand, at most five deep. A refused redirect, a sixth one or one without a location fails with `LookupFailed`.
+- **Bounds:** ten seconds for the whole exchange, redirects and body included; a body of at most `MAX_INPUT_LENGTH` bytes, read as a stream and stopped at the cap; a `text/html` or `application/xhtml+xml` content type. Anything else is a `LookupFailed { source: "web" }`.
+- **Identity:** `byUrl` sends `User-Agent: <product>` only, never the contact email, since the host is arbitrary.
+- **Host names are checked as written unless you pass a resolver.** `options.resolveAddresses` (`(hostname) => Effect<readonly string[]>`) is called for each hop's host; any refused address or no address refuses the hop. The resolver cannot fail: answer a failed lookup with no addresses, which refuses the hop. A Worker cannot resolve DNS, so without the hook a public-looking name that resolves to a private address **is fetched**: the policy is fail-open for host names. On Node, pass a resolver such as `(host) => Effect.tryPromise(() => dns.promises.lookup(host, { all: true })).pipe(Effect.map((all) => all.map((a) => a.address)), Effect.orElseSucceed(() => []))`.
+- **DNS rebinding is the transport's to close.** The resolver is a best-effort pre-check: the connection resolves the name again, so a host can answer the check with a public address and the connection with a private one. The library does not pin the connection, so `./sources` stays Worker-safe. A Node caller who needs the guarantee supplies, through `biblioLookupClientLayer`, an `HttpClient` whose dispatcher checks the address it actually connects to, for example an undici `Agent` with a guarded `connect.lookup`:
+
+  ```ts skip-type-checking
+  import { lookup } from "node:dns";
+  import { Agent } from "undici";
+  import * as Layer from "effect/Layer";
+  import { FetchHttpClient } from "effect/http";
+
+  // `isPublic` is your range check: refuse private, loopback, link-local,
+  // unique-local and reserved addresses, as the library's policy does.
+  const agent = new Agent({
+    connect: {
+      lookup: (hostname, options, callback) =>
+        lookup(hostname, { ...options, all: true }, (error, addresses) => {
+          if (error) return callback(error, []);
+          const refused = addresses.find(({ address }) => !isPublic(address));
+          return refused
+            ? callback(new Error(`refused ${hostname}: ${refused.address}`), [])
+            : callback(null, addresses);
+        }),
+    },
+  });
+  const pinned = FetchHttpClient.layer.pipe(
+    Layer.provide(
+      Layer.succeed(FetchHttpClient.Fetch, (input, init) =>
+        fetch(input, { ...init, dispatcher: agent }),
+      ),
+    ),
+  );
+  const lookupLayer = biblioLookupClientLayer({ contact }).pipe(Layer.provide(pinned));
+  ```
+
+`byDoiCsl` uses the same policy for its redirects (the resolver included, when you pass one), on top of its registration-agency allow-list, and the same time and size bounds.
+
+**`biblioLookupLayer(options): Layer<BiblioLookup>`** — production, over `FetchHttpClient` (the global fetch). **`biblioLookupClientLayer(options): Layer<BiblioLookup, never, HttpClient>`** — over whatever `HttpClient` is in context, which is how a test injects a stubbed fetch. Both attach `acceptJson`, `filterStatusOk` and a polite `User-Agent` built from the required `options.contact`. Each call builds a new layer, so build it once and share it.
+
+**`LookupContact`** — `{ product, email }`, who is making the lookups. Every request sends `User-Agent: <product> (mailto:<email>)`, and OpenAlex requests also send `mailto=<email>`, so Crossref and OpenAlex route you to their polite pool and can reach you about your traffic. Use your own application's name and address; the package ships no default.
+
+```ts
+const program = Effect.gen(function* () {
+  const lookup = yield* BiblioLookup;
+  return yield* lookup.byIsbnRecord("978-0-06-231609-7");
+});
+const lookupLayer = biblioLookupLayer({
+  contact: { product: "my-app/1.0", email: "ops@example.org" },
+});
+program.pipe(Effect.provide(lookupLayer)); // Effect<Option<BiblioRecord>, LookupError>
+```
+
+**Errors** — `InvalidIdentifier { kind: "isbn" | "doi", value }` and `RefusedUrl { url, reason }` (fix the input, don't retry) and `LookupFailed { source: LookupSource, description }` (transport, non-404 status, refused redirect, bound exceeded or decode failure); `LookupError` is their union and `LookupSource` is `"openlibrary" | "crossref" | "openalex" | "doi" | "web"`.
+
+**Per-source functions** (take an already-composed `HttpClient` and a proven identifier): `lookupOpenLibraryByIsbn(client, isbn)`, `lookupCrossrefByDoi(client, doi)`, `lookupDoiCsl(client, doi, { resolveAddresses? })`, `lookupWebPage(client, url, { resolveAddresses? })`, `lookupOpenAlexByDoi(client, doi, contact)`, `searchOpenAlexByTitle(client, query, contact)` (the OpenAlex pair sends `contact.email` as `mailto`; the User-Agent is whatever your client sets). The lenient response schemas (`OpenLibraryEdition`, `OpenLibraryAuthor`, `CrossrefResponse`, `OpenAlexWork`, `OpenAlexSearchResponse`) and normalisers (`normaliseOpenLibraryRecord`, `normaliseCrossrefRecord`, `normaliseOpenAlexRecord`) are exported so a consumer can drive them against recorded fixtures.
+
+## Compatibility
+
+- **Wire compatibility.** `BiblioRecord` decodes every record the website application has persisted; any change to its shape (a field name, a key's optionality, an identifier brand, the `provenance` / `extra` shape) is a major version. The item `id`, `categories`, the rest of the CSL 1.0.2 variables and the `pmid` / `pmcid` / `arxiv` identifier slots are all optional, so a record from before they were typed still decodes; `fromCslJson(toCslJson(record))` moves such a record's CSL variables out of `extra`.
+- **Plain-nullable returns.** `isbnForms(isbn).isbn10`, `parsePersonName`, `cslNameDisplay`, `yearOf`, `makeCslName` and `bestConfidentMatch` return `null`, and `getStyle` returns `undefined`, rather than an `Option`. This is a stable contract, not a migration in progress.
+- **Scope.** The package stops at the CSL record: mapping records onto an application's own data model and persisting them stay in the application. Extracted from `thomasfosterau/website`'s `packages/biblio` with its git history; a `website#NNN` cite in a source comment is an issue in `thomasfosterau/website`.
+
+## License
+
+MIT

@@ -1,5 +1,5 @@
 ---
-"@thomasfosterau/biblio": minor
+"@thomasfosterau/effect-bib": minor
 ---
 
 BibLaTeX dates beyond EDTF level 0 now read as dates instead of a `literal`:

@@ -1,5 +1,5 @@
 ---
-"@thomasfosterau/biblio": minor
+"@thomasfosterau/effect-bib": minor
 ---
 
 `parseBibtex` now reads BibLaTeX's field semantics as Pandoc does. Several fields of the records it produces change, so this is a breaking change for anyone who stores those records.
