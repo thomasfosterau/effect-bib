@@ -26,7 +26,7 @@ vp lint                                    # oxlint
 vp fmt                                     # oxfmt (writes)
 vp check --fix                             # format + lint, autofix
 vp run check                               # the whole type gate (builds dist/ for the declaration check)
-vp run --filter ./packages/biblio check    # one package's type check
+vp run --filter ./packages/effect-bib check    # one package's type check
 vp run -r test:coverage                    # unit tests + coverage thresholds, the CI gate (builds dist/ first)
 vp run -r test:unit                        # the same unit tests, no coverage (builds dist/ first)
 vp test run tests/some.test.ts             # single file (from inside the package)

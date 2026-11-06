@@ -1,5 +1,5 @@
 ---
-"@thomasfosterau/biblio": minor
+"@thomasfosterau/effect-bib": minor
 ---
 
 `parseBibtex` reads BibLaTeX's extended name format (biber's `\DeclareNameFormat` keys): a name such as `family=Rabble, given=Richard, prefix=von, useprefix=true` gives `{ family: "Rabble", given: "Richard", "non-dropping-particle": "von" }`. It reads the `family`, `given`, `prefix` and `suffix` parts, with braces protecting a value. A per-name `useprefix` overrides the entry's. Other keys, such as `given-i`, are ignored. Before this change such a name was read as words.

@@ -1,5 +1,5 @@
 ---
-"@thomasfosterau/biblio": minor
+"@thomasfosterau/effect-bib": minor
 ---
 
 Embedded web metadata and DOI content negotiation. `readEmbeddedMetadata(html, options?)` reads a web page's citation metadata into records: the page's own record from its Highwire Press `citation_*` tags, schema.org JSON-LD (authors with ORCIDs, the periodical, volume and issue a work is part of) or Dublin Core tags, merged in that order, and one record per COinS span. It is pure and total, scans the page as text in linear time, and bounds the page length and the COinS record count. A record's `URL` is kept only as an absolute `http(s)` link. `ProvenanceSource` gains `"html"` for these records.

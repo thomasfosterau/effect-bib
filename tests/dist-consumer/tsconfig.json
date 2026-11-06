@@ -11,8 +11,8 @@
     // i.e. `any`, and every `Equals<…>` assertion in src/consumer.ts is false
     // against `any`.
     "paths": {
-      "@thomasfosterau/biblio": ["../../packages/biblio/dist/index.d.ts"],
-      "@thomasfosterau/biblio/sources": ["../../packages/biblio/dist/sources/index.d.ts"]
+      "@thomasfosterau/effect-bib": ["../../packages/effect-bib/dist/index.d.ts"],
+      "@thomasfosterau/effect-bib/sources": ["../../packages/effect-bib/dist/sources/index.d.ts"]
     }
   },
   "include": ["src"]

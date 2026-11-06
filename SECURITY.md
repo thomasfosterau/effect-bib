@@ -8,7 +8,7 @@ You can expect an initial response within a few days. Please include a descripti
 
 ## Untrusted input
 
-`@thomasfosterau/biblio` exists to read data nobody controls — uploaded bibliographic files and responses from public APIs — so the untrusted-input posture is the package's design, not a hardening pass:
+`@thomasfosterau/effect-bib` exists to read data nobody controls — uploaded bibliographic files and responses from public APIs — so the untrusted-input posture is the package's design, not a hardening pass:
 
 - **Total decoders.** Every parser, normaliser and identifier decoder returns `Option.none()`, a `skipped` outcome or a thinner record on partial or hostile input; nothing throws.
 - **Identifiers reach a URL only as proven brands.** `Isbn` / `Doi` / `Issn` / `Orcid` are branded, checksum-validated values; a `Doi` has no control characters, whitespace or `..` segment, an `Isbn` is exclusively digits, and the source clients percent-encode on top of that. The raw string never reaches a path.

@@ -1,5 +1,5 @@
 ---
-"@thomasfosterau/biblio": minor
+"@thomasfosterau/effect-bib": minor
 ---
 
 Initial release, on Effect `4.0.0-rc.118`: the bibliographic toolkit extracted from the website application's `packages/biblio`, with its history.

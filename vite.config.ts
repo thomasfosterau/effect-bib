@@ -75,7 +75,7 @@ export default defineConfig({
       // level. `prefer-option-over-null` and `no-unknown-parameters` stay
       // there with a handful of per-site `oxlint-disable` justifications —
       // the plain-nullable seams and the untrusted-input boundary listed in
-      // packages/biblio/CLAUDE.md — so a new site cannot land silently.
+      // packages/effect-bib/CLAUDE.md — so a new site cannot land silently.
       // `_tag` is Effect's discriminant (tagged unions, `Data.TaggedError`).
       "eslint/no-underscore-dangle": ["error", { allow: ["_tag"] }],
       // The library builds immutable values (readonly records and arrays): a
@@ -140,7 +140,7 @@ export default defineConfig({
       // their whole job (`@effect/vitest`'s `it.effect` does not load under
       // the Vite+ vitest alias; see the module comment).
       {
-        files: ["packages/biblio/tests/effect.ts"],
+        files: ["packages/effect-bib/tests/effect.ts"],
         rules: {
           "effect/effect-run-in-body": "off",
         },
@@ -151,7 +151,7 @@ export default defineConfig({
       // and cast a deliberately hostile input past the types to prove the
       // runtime handles it.
       {
-        files: ["packages/biblio/tests/**", "tests/dist-consumer/**"],
+        files: ["packages/effect-bib/tests/**", "tests/dist-consumer/**"],
         rules: {
           "effecttsgo/strict-effect-provide": "off",
           "unicorn/consistent-function-scoping": "off",
@@ -210,7 +210,7 @@ export default defineConfig({
       // graph node.
       check: {
         command: "echo 'check: every type gate green'",
-        dependsOn: ["@thomasfosterau/biblio#check", "@reference-manager/dist-consumer#check"],
+        dependsOn: ["@thomasfosterau/effect-bib#check", "@reference-manager/dist-consumer#check"],
         cache: false,
       },
     },

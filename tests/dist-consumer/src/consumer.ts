@@ -47,7 +47,7 @@ import {
   type SourcePosition,
   toCslJson,
   vancouverStyle,
-} from "@thomasfosterau/biblio";
+} from "@thomasfosterau/effect-bib";
 import {
   BiblioLookup,
   biblioLookupClientLayer,
@@ -60,7 +60,7 @@ import {
   lookupCrossrefByDoi,
   RefusedUrl,
   type ResolveAddresses,
-} from "@thomasfosterau/biblio/sources";
+} from "@thomasfosterau/effect-bib/sources";
 
 /** A compile-time assertion: `T` must be exactly `true`. */
 type Assert<T extends true> = T;
