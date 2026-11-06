@@ -101,12 +101,16 @@ catalog:
   vitest: 5.0.5
 
 # Peer ranges the PUBLISHED package declares. Kept as a named catalog so the
-# strict catalog mode still governs them while they stay ranges (an exact
-# `4.0.0-rc.118` peer would reject a consumer on rc.119). `pnpm pack`
+# strict catalog mode still governs them while they stay ranges. `pnpm pack`
 # replaces `catalog:peers` with these ranges in the published manifest.
+# `effect` is `^4.0.0` by policy: raise it only when a dependency requires a
+# newer one, naming that dependency here (none does: the one runtime
+# dependency, @thomasfosterau/effect-parse, peers on `effect ^4.0.0`). Proved
+# by running `vp run check` and the unit suites with the `effect` pin above
+# set to 4.0.0.
 catalogs:
   peers:
-    effect: ">=4.0.0-rc.118"
+    effect: ^4.0.0
 
 overrides:
   # undici <8.12.2 — GHSA-xjj6-f33q-929c (high): an unhandled error on a

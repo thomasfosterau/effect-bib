@@ -16,7 +16,7 @@ Reference management on [Effect](https://effect.website): typed CSL-JSON records
 pnpm add @thomasfosterau/biblio effect
 ```
 
-`effect` `>=4.0.0-rc.118` is a peer dependency; Node.js 22 or newer is required.
+`effect` `^4.0.0` is a peer dependency; Node.js 22 or newer is required.
 
 ## Example
 
