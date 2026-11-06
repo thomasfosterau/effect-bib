@@ -4,6 +4,8 @@ Maintained by Thomas Foster, with a workflow meant to be approachable for both h
 
 ## Setup
 
+Open in a Codespace or Dev Container: `.devcontainer/` provisions it with the same hook as agent sessions.
+
 `pnpm install` (or `vp install`) installs dependencies, patches the native `tsc` / `oxlint` with `@effect/tsgo` (the root `prepare` script) and installs the Vite+ git hooks: the committed [.vite-hooks/pre-commit](.vite-hooks/pre-commit) runs `vp staged` (`vp check --fix --no-lint`, then `vp check --no-fmt`: formatting is fixed, lint, which is type-aware, only reports). There is no pre-push hook.
 
 ## CI expectations
