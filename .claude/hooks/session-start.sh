@@ -161,15 +161,17 @@ fi
 if [ -f "$PROJECT_DIR/pnpm-lock.yaml" ]; then
   log "syncing dependencies against the lockfile…"
   # The fallback `vp` points into node_modules, which may not exist yet, so
-  # only the global CLI installs; without it, pnpm does.
+  # only the global CLI installs; without it, pnpm does. No stdin and
+  # CI=true: pnpm must never stop at a prompt here (it asks before replacing
+  # a modules directory another pnpm version laid out).
   if [ -x "$VP_GLOBAL_BIN/vp" ]; then
-    (cd "$PROJECT_DIR" && "$VP_GLOBAL_BIN/vp" install --frozen-lockfile >/dev/null 2>&1) \
+    (cd "$PROJECT_DIR" && CI=true "$VP_GLOBAL_BIN/vp" install --frozen-lockfile </dev/null >/dev/null 2>&1) \
       || log "dependency install failed; continuing"
   elif command -v corepack >/dev/null 2>&1; then
-    (cd "$PROJECT_DIR" && corepack pnpm install --frozen-lockfile >/dev/null 2>&1) \
+    (cd "$PROJECT_DIR" && CI=true corepack pnpm install --frozen-lockfile </dev/null >/dev/null 2>&1) \
       || log "dependency install failed; continuing"
   else
-    (cd "$PROJECT_DIR" && pnpm install --frozen-lockfile >/dev/null 2>&1) \
+    (cd "$PROJECT_DIR" && CI=true pnpm install --frozen-lockfile </dev/null >/dev/null 2>&1) \
       || log "dependency install failed; continuing"
   fi
 fi
