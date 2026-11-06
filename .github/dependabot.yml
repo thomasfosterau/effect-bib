@@ -3,31 +3,26 @@
 # The `npm` ecosystem at `/` reads the pnpm workspace, its catalogs and
 # pnpm-lock.yaml, so a bump lands as a catalog edit plus a lockfile update.
 #
-# `groups` collect the sets that MUST move together, so no member can drift
-# from the rest in a PR of its own. Dependabot puts a dependency in the FIRST
-# group whose patterns match, so the groups run specific → general, and
-# `exclude-patterns` keep each package out of a group it would otherwise also
-# match. Every catalog entry in pnpm-workspace.yaml belongs to exactly one:
+# `groups` exist only for sets that MUST move together (exact cross-pins or a
+# hard compatibility table), so updating one member alone breaks the install
+# or the build; every other dependency gets its own PR. Dependabot puts a
+# dependency in the FIRST group whose patterns match, so `exclude-patterns`
+# keep a package out of a group it would otherwise also match:
 #
 # - `toolchain`: `vite-plus` pins the `oxlint`, `oxfmt`, `oxlint-tsgolint` and
-#   `vitest` it carries (and `vite` is its aliased core,
-#   `@voidzero-dev/vite-plus-core`); the coverage provider must equal that
-#   bundled `vitest` exactly (#47); `effect-tsgo patch` (the root `prepare`)
-#   hard-errors on a `@typescript/native` (TS7) / `typescript` (the TS6 alias,
-#   `@typescript/typescript6`) / oxlint pairing its release ships no artifact
-#   for; and `@enfect/oxlint` (the Effect lint rules) runs inside that oxlint. One
-#   PR, then, even for a major: read the `components` table in
-#   node_modules/@effect/tsgo/dist/effect-tsgo.cjs and the version notes in
-#   pnpm-workspace.yaml before merging it.
-# - `docgen`: `@effect/docgen` runs every example under `tsx`.
+#   `vitest` it carries; the coverage provider must equal that bundled
+#   `vitest` exactly (#47); `effect-tsgo patch` (the root `prepare`)
+#   hard-errors on a TypeScript / oxlint pairing its release ships no
+#   artifact for. One PR, then, even for a major: read the `components` table
+#   in node_modules/@effect/tsgo/dist/effect-tsgo.cjs and the version notes in
+#   pnpm-workspace.yaml before merging it. (`@enfect/oxlint` ranges its oxlint
+#   plugin API, so it moves on its own.)
 # - `effect`: the Effect 4 release line is a lockstep-versioned singleton set
-#   (the `effect` override in pnpm-workspace.yaml forces one copy). It also
-#   carries `@effect/language-service`. `@effect/tsgo` and `@effect/docgen`
-#   are excluded: they belong to the groups above.
-# - `changesets`, `fallow`: each its own set.
-# - `minor-and-patch`: everything else (`@types/node`,
-#   `@thomasfosterau/effect-parse`), minor and patch only, so PR volume stays
-#   low; a major outside the lockstep sets opens on its own.
+#   (the `effect` override in pnpm-workspace.yaml forces one copy), with
+#   `@effect/docgen`, which depends on `effect` and `@effect/platform-node` at
+#   its own release (docgen 4.0.x crashes on effect 4.1: `effect/Crypto` is
+#   gone). It also carries `@effect/language-service`. `@effect/tsgo` is
+#   toolchain.
 #
 # Hand moves, on the matching group's PR, because Dependabot cannot make them:
 #
@@ -69,29 +64,16 @@ updates:
       exclude:
         - "@thomasfosterau/*"
     groups:
+      # vite-plus pins vitest/oxlint exactly; @effect/tsgo's patch supports only listed oxlint versions.
       toolchain:
         applies-to: version-updates
         patterns:
           - "vite-plus"
-          - "vite"
-          - "@voidzero-dev/*"
           - "vitest"
           - "@vitest/*"
-          - "oxlint"
-          - "oxfmt"
-          - "oxlint-tsgolint"
           - "@effect/tsgo"
-          - "@typescript/native"
-          - "typescript"
-          - "@typescript/typescript6"
-          - "@enfect/*"
         update-types: ["major", "minor", "patch"]
-      docgen:
-        applies-to: version-updates
-        patterns:
-          - "@effect/docgen"
-          - "tsx"
-        update-types: ["major", "minor", "patch"]
+      # One release train; @effect/docgen runs on effect/@effect/platform-node at its own release.
       effect:
         applies-to: version-updates
         patterns:
@@ -99,23 +81,7 @@ updates:
           - "@effect/*"
         exclude-patterns:
           - "@effect/tsgo"
-          - "@effect/docgen"
         update-types: ["major", "minor", "patch"]
-      changesets:
-        applies-to: version-updates
-        patterns:
-          - "@changesets/*"
-        update-types: ["major", "minor", "patch"]
-      fallow:
-        applies-to: version-updates
-        patterns:
-          - "fallow"
-        update-types: ["major", "minor", "patch"]
-      minor-and-patch:
-        applies-to: version-updates
-        patterns:
-          - "*"
-        update-types: ["minor", "patch"]
   - package-ecosystem: "github-actions"
     directory: "/"
     target-branch: "trunk"
@@ -129,7 +95,3 @@ updates:
       prefix: "chore"
     cooldown:
       default-days: 1
-    groups:
-      github-actions:
-        patterns:
-          - "*"

@@ -55,11 +55,11 @@ catalog:
   # oxlint JS plugin by `vite.config.ts`; replaces
   # `@mpsuesser/oxlint-plugin-effect`. Depends on `effect` exactly (0.9.0 →
   # 4.1.0), which the `effect` override forces onto the catalog singleton: it
-  # lints fine on that copy. Runs inside vite-plus's oxlint, so it moves in the
-  # `toolchain` Dependabot group.
+  # lints fine on that copy. Runs inside vite-plus's oxlint but ranges its
+  # plugin API (`@oxlint/plugins ^1.85.0`), so Dependabot moves it on its own.
   "@enfect/oxlint": ^0.9.0
   # The BibTeX scanner's parser combinators (#72). Peers `effect ^4.0.0`.
-  "@thomasfosterau/effect-parse": 0.4.0
+  "@thomasfosterau/effect-parse": 0.4.1
   "@types/node": ^26.6.6
   # The coverage provider must equal the `vitest` that vite-plus bundles (see
   # the vite-plus note below), so it moves with vite-plus, by hand: vite-plus
@@ -71,7 +71,7 @@ catalog:
   # version whatever range the peer declares.
   "@vitest/coverage-istanbul": 5.0.5
   effect: 4.1.2
-  fallow: 3.37.0
+  fallow: 3.40.0
   # Exists only for docgen: `@effect/docgen` requires it as a peer and spawns
   # the `tsx` binary itself to run each example. Scripts never invoke it;
   # they run TypeScript with `vpx <file>.ts`.
