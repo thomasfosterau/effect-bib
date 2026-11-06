@@ -329,7 +329,9 @@ describe("forbidden effect module list", () => {
     const expected = subdirectories(dist).filter(
       (name) => !["encoding", "testing", "internal"].includes(name),
     );
-    expect(sorted(FORBIDDEN_DIRECTORIES)).toEqual(expected);
+    // Containment, not equality: the list also names directories later 4.x
+    // releases added, so it holds on every `effect` the peer range admits.
+    expect(Array.difference(expected, FORBIDDEN_DIRECTORIES)).toEqual([]);
   });
 
   it("covers every effect/encoding module that was unstable", () => {
@@ -340,7 +342,7 @@ describe("forbidden effect module list", () => {
         .map((name) => name.replace(/\.js$/, ""))
         .filter((name) => !HashSet.has(STABLE_ENCODING, name)),
     );
-    expect(sorted(FORBIDDEN_ENCODING_MODULES)).toEqual(expected);
+    expect(Array.difference(expected, FORBIDDEN_ENCODING_MODULES)).toEqual([]);
   });
 
   it("matches the forbidden modules and leaves the stable ones alone", () => {

@@ -10,7 +10,7 @@ Bibliographic toolkit on Effect: CSL-JSON records as Effect Schema, checksummed 
 pnpm add @thomasfosterau/biblio effect
 ```
 
-`effect` (`>=4.0.0-rc.118`) is a peer dependency, built against `effect@4.0.0-rc.118`. Node.js 22 or newer is required. The one runtime dependency, [`@thomasfosterau/effect-parse`](https://github.com/thomasfosterau/effect-parse) (the BibTeX scanner), peers `effect ^4.0.0`, so an `effect` 4.0 pre-release draws a peer warning from it.
+`effect` (`^4.0.0`) is a peer dependency, tested against `effect@4.0.0` and the current 4.x release. Node.js 22 or newer is required. The one runtime dependency, [`@thomasfosterau/effect-parse`](https://github.com/thomasfosterau/effect-parse) (the BibTeX scanner), peers `effect ^4.0.0` too.
 
 ### Entry points
 

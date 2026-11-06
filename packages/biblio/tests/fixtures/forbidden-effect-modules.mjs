@@ -6,7 +6,9 @@
  * `Zip`), so the browser-safe root admits only the stable core. Shared by
  * `entry-points.test.ts` (the import-graph walker) and `forbid-http-peer.mjs`
  * (the resolver hooks), and checked against the installed `effect` by a drift
- * test so a new directory in a later rc cannot slip past it.
+ * test so a new directory in a later release cannot slip past it. The check is
+ * containment: on an older 4.x (down to the 4.0.0 peer floor) the list names
+ * modules that release does not have yet.
  *
  * `effect/testing` is left out (always stable), and so are the stable
  * `effect/encoding/{Base64,Base64Url,Hex,EncodingError}` modules; the rest of
