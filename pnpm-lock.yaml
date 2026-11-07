@@ -22,8 +22,8 @@ catalogs:
       specifier: 0.67.3
       version: 0.67.3
     '@enfect/oxlint':
-      specifier: ^0.9.0
-      version: 0.9.0
+      specifier: ^0.10.0
+      version: 0.10.0
     '@thomasfosterau/effect-parse':
       specifier: 0.4.1
       version: 0.4.1
@@ -82,7 +82,7 @@ importers:
         version: 0.67.3
       '@enfect/oxlint':
         specifier: 'catalog:'
-        version: 0.9.0
+        version: 0.10.0
       '@thomasfosterau/effect-bib':
         specifier: workspace:*
         version: link:packages/effect-bib
@@ -345,8 +345,8 @@ packages:
   '@emnapi/wasi-threads@2.2.0':
     resolution: {integrity: sha512-JP7OYH38Q7+pyTAe14raZHLQIK7BDKbdwji+Xi3pcd/6QkJYQH3SX4wu6EplGrGJWRepoNzedfm0G3B9Z4e9Rw==}
 
-  '@enfect/oxlint@0.9.0':
-    resolution: {integrity: sha512-xOKRAj9DmtVb5DqF/EznATObYldQBEWO2nmRYg7E+FxG258dsn5PHOODhakORbR0PVcs9VZ3MfvkuU0JSTRVbA==}
+  '@enfect/oxlint@0.10.0':
+    resolution: {integrity: sha512-A5VEkq8tV8FDRnvK0/AAQePX5iszZ6FlBIwWOsnb6EJFUDURwUIxpJvv3R5sXINId2zkYk1DIjOhpP4W0YsbHg==}
 
   '@esbuild/aix-ppc64@0.28.2':
     resolution: {integrity: sha512-XExcO+dvLKvVtNTibSTBej1NCAbaGhWn9Ww1ZPx80qsahhPFe/8jgWP0IchNe0F3HwkU7n8ejhH8bjonqht8mQ==}
@@ -873,10 +873,6 @@ packages:
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [x64]
     os: [win32]
-
-  '@oxlint/plugins@1.89.0':
-    resolution: {integrity: sha512-TJBBNl4KIxbxrSk7gsqlz6iM1kxidfyTizEzfWqXvijF2Ou8/Da58GvjemBVmCmaUamwRij+JwsVc0kpBFuqfg==}
-    engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
 
   '@oxlint/plugins@1.91.0':
     resolution: {integrity: sha512-Fh+SOBxMu7/pbSk84WG4BN6npcxxlF4jWNQJ+S4IUNyvSVeQwOVTFQMD/Dx2EqBQ1lVeCADcJ+0rzT1BKQ9cUA==}
@@ -2552,9 +2548,9 @@ snapshots:
       tslib: 2.9.1
     optional: true
 
-  '@enfect/oxlint@0.9.0':
+  '@enfect/oxlint@0.10.0':
     dependencies:
-      '@oxlint/plugins': 1.89.0
+      '@oxlint/plugins': 1.91.0
       effect: 4.1.2
       effect-oxlint: 0.4.0(effect@4.1.2)
 
@@ -2844,8 +2840,6 @@ snapshots:
 
   '@oxlint/binding-win32-x64-msvc@1.91.0':
     optional: true
-
-  '@oxlint/plugins@1.89.0': {}
 
   '@oxlint/plugins@1.91.0': {}
 
@@ -3376,7 +3370,7 @@ snapshots:
 
   effect-oxlint@0.4.0(effect@4.1.2):
     dependencies:
-      '@oxlint/plugins': 1.89.0
+      '@oxlint/plugins': 1.91.0
       effect: 4.1.2
 
   effect@4.1.2: {}

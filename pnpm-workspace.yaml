@@ -57,7 +57,7 @@ catalog:
   # 4.1.0), which the `effect` override forces onto the catalog singleton: it
   # lints fine on that copy. Runs inside vite-plus's oxlint but ranges its
   # plugin API (`@oxlint/plugins ^1.85.0`), so Dependabot moves it on its own.
-  "@enfect/oxlint": ^0.9.0
+  "@enfect/oxlint": ^0.10.0
   # The BibTeX scanner's parser combinators (#72). Peers `effect ^4.0.0`.
   "@thomasfosterau/effect-parse": 0.4.1
   "@types/node": ^26.6.6
