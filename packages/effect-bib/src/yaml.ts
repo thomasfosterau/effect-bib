@@ -538,9 +538,10 @@ const flow = (value: Yaml): string =>
 function mappingLines(value: Schema.JsonObject, indent: string): string[] {
   return R.toEntries(value).flatMap(([key, entry]) => {
     if (isFlow(entry)) return [`${indent}${yamlKey(key)}: ${flow(entry)}`];
-    if (isList(entry)) return [`${indent}${yamlKey(key)}:`, ...sequenceLines(entry, indent)];
+    if (isList(entry))
+      return Arr.prepend(sequenceLines(entry, indent), `${indent}${yamlKey(key)}:`);
     if (!isObject(entry) || R.isEmptyRecord(entry)) return [`${indent}${yamlKey(key)}: {}`];
-    return [`${indent}${yamlKey(key)}:`, ...mappingLines(entry, `${indent}  `)];
+    return Arr.prepend(mappingLines(entry, `${indent}  `), `${indent}${yamlKey(key)}:`);
   });
 }
 

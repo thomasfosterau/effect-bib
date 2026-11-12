@@ -9,6 +9,7 @@
 
 import * as Arr from "effect/Array";
 import * as R from "effect/Record";
+import * as Struct from "effect/Struct";
 import { assert, describe, expect, it } from "vite-plus/test";
 import {
   type BiblioRecord,
@@ -419,7 +420,9 @@ describe("CSL YAML", () => {
       corpus.map(toCslJson).map((item, index) =>
         // A mapping's plain number reads back as text (as Pandoc reads it), and
         // CSL admits a season either way.
-        index === 5 ? { ...item, issued: { "date-parts": [[2019]], season: "2" } } : item,
+        index === 5
+          ? Struct.assign({ issued: { "date-parts": [[2019]], season: "2" } })(item)
+          : item,
       ),
     );
   });
