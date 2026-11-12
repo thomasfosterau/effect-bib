@@ -34,7 +34,7 @@ import * as P from "effect/Predicate";
 import * as R from "effect/Record";
 import * as Schema from "effect/Schema";
 import { describe, expect, it } from "vite-plus/test";
-import { type CslJsonItem, decodeIsbn, parseBibtex, toCslJson } from "@thomasfosterau/effect-bib";
+import { decodeIsbn, parseBibtex, toCslJson } from "@thomasfosterau/effect-bib";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const fixtures = path.join(here, "fixtures", "bibtex");
@@ -80,8 +80,7 @@ const unescape = (text: string): string =>
     .replace(/&amp;/g, "&");
 
 /** A text value as compared: markup stripped, whitespace collapsed, NFC. */
-// oxlint-disable-next-line effect/no-unknown-parameters -- compares the untyped CSL-JSON values of two sources (ours and Pandoc's); any value reads as text or nothing
-const plain = (value: unknown): string =>
+const plain = (value: Schema.Json): string =>
   P.isString(value) || P.isNumber(value)
     ? unescape(globalThis.String(value).replace(/<[^>]*>/g, ""))
         // Pandoc applies smart punctuation to straight quotes; compare both as straight.
@@ -93,7 +92,7 @@ const plain = (value: unknown): string =>
     : "";
 
 /** One CSL item's comparable projection: field → canonical text. */
-function projection(item: CslJsonItem): Record<string, string> {
+function projection(item: Schema.JsonObject): Record<string, string> {
   const fields: Array<readonly [string, string]> = [
     ...TEXT_FIELDS.map((key) => [key, plain(item[key])] as const),
     // CSL requires a type; Pandoc leaves an entry type it does not map untyped.
@@ -112,13 +111,14 @@ function projection(item: CslJsonItem): Record<string, string> {
 }
 
 const decodeNames = Schema.decodeUnknownOption(
-  Schema.Array(Schema.Record(Schema.String, Schema.Unknown)),
+  Schema.Array(Schema.Record(Schema.String, Schema.Json)),
 );
-const decodeDate = Schema.decodeUnknownOption(Schema.Record(Schema.String, Schema.Unknown));
+const decodeDate = Schema.decodeUnknownOption(Schema.Record(Schema.String, Schema.Json));
+/** Our own `toCslJson` output, read as the JSON object it is. */
+const decodeItem = decodeDate;
 
 /** A name list as compared: each name's parts, markup stripped. */
-// oxlint-disable-next-line effect/no-unknown-parameters -- an untyped CSL-JSON name list, decoded here
-const names = (value: unknown): string =>
+const names = (value: Schema.Json): string =>
   Option.match(decodeNames(value), {
     onNone: () => "",
     onSome: (list) =>
@@ -134,8 +134,7 @@ const names = (value: unknown): string =>
   });
 
 /** A date as compared: its `date-parts`, else its literal or raw text. */
-// oxlint-disable-next-line effect/no-unknown-parameters -- an untyped CSL-JSON date, decoded here
-const date = (value: unknown): string =>
+const date = (value: Schema.Json): string =>
   Option.match(decodeDate(value), {
     onNone: () => "",
     onSome: (fields) =>
@@ -158,15 +157,15 @@ function differences(ours: Record<string, string>, theirs: Record<string, string
 interface CorpusFile {
   readonly name: string;
   readonly source: string;
-  readonly oracle: Option.Option<readonly CslJsonItem[]>;
+  readonly oracle: Option.Option<readonly Schema.JsonObject[]>;
 }
 
 const decodeOracle = Schema.decodeUnknownOption(
-  Schema.fromJsonString(Schema.Array(Schema.Record(Schema.String, Schema.Unknown))),
+  Schema.fromJsonString(Schema.Array(Schema.Record(Schema.String, Schema.Json))),
 );
 
 /** Pandoc's committed reading of a corpus file. */
-const oracleFor = (corpus: string, base: string): Option.Option<readonly CslJsonItem[]> => {
+const oracleFor = (corpus: string, base: string): Option.Option<readonly Schema.JsonObject[]> => {
   const file = path.join(fixtures, "oracle", corpus, `${base}.json`);
   return fs.existsSync(file) ? decodeOracle(fs.readFileSync(file, "utf8")) : Option.none();
 };
@@ -212,11 +211,13 @@ const read = (source: string) =>
 function divergences(file: CorpusFile): Array<readonly [string, string[]]> {
   if (Option.isNone(file.oracle)) return [];
   const ours = R.fromEntries(
-    read(file.source).flatMap((outcome) =>
-      outcome.outcome === "parsed"
-        ? [[globalThis.String(outcome.record.id), projection(toCslJson(outcome.record))] as const]
-        : [],
-    ),
+    read(file.source).flatMap((outcome) => {
+      if (outcome.outcome !== "parsed") return [];
+      const csl = decodeItem(toCslJson(outcome.record));
+      return Option.isSome(csl)
+        ? [[globalThis.String(outcome.record.id), projection(csl.value)] as const]
+        : [];
+    }),
   );
   const theirs = R.fromEntries(
     file.oracle.value.map((item) => [globalThis.String(item.id), projection(item)] as const),

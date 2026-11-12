@@ -32,11 +32,16 @@ import {
   toCslJson,
   yearOf,
   type BiblioRecord,
+  type CslJsonItem,
 } from "@thomasfosterau/effect-bib";
 import { expectSome } from "./assert.ts";
 
 const doiOf = (raw: string) => expectSome(decodeDoi(raw), "a DOI");
 const issnOf = (raw: string) => expectSome(decodeIssn(raw), "an ISSN");
+const decodeString = Schema.decodeUnknownOption(Schema.String);
+const decodeJson = Schema.decodeUnknownOption(Schema.Json);
+/** `toCslJson`'s plain object, read back as the JSON value `fromCslJson` takes. */
+const asJson = (item: CslJsonItem) => expectSome(decodeJson(item), "a JSON item");
 
 // ── Surviving sanitisers ──────────────────────────────────────────────
 
@@ -45,10 +50,15 @@ describe("sanitiseText", () => {
     expect(sanitiseText("  hello   world \n")).toStrictEqual(Option.some("hello world"));
   });
 
-  it("returns None for whitespace-only or non-string input", () => {
+  it("returns None for whitespace-only input", () => {
     expect(sanitiseText("   ")).toStrictEqual(Option.none());
-    expect(sanitiseText(undefined)).toStrictEqual(Option.none());
-    expect(sanitiseText(42)).toStrictEqual(Option.none());
+  });
+
+  it("reads an untrusted value through a string decoder first, so a non-string is None", () => {
+    const clean = (value: Option.Option<string>) => Option.flatMap(value, sanitiseText);
+    expect(clean(decodeString(undefined))).toStrictEqual(Option.none());
+    expect(clean(decodeString(42))).toStrictEqual(Option.none());
+    expect(clean(decodeString(" ok "))).toStrictEqual(Option.some("ok"));
   });
 
   it("clamps an over-long value to the max field length", () => {
@@ -68,7 +78,6 @@ describe("sanitiseYear", () => {
     ["a year past the upper bound", 3000],
     ["a year below the lower bound", 0],
     ["non-numeric text", "not a year"],
-    ["null", null],
   ])("rejects %s", (_label, value) => {
     expect(sanitiseYear(value)).toStrictEqual(Option.none());
   });
@@ -205,7 +214,7 @@ describe("toCslJson / fromCslJson", () => {
   });
 
   it("round-trips the CSL core and re-validates identifiers (typed-superset invariant)", () => {
-    const back = fromCslJson(toCslJson(record));
+    const back = fromCslJson(asJson(toCslJson(record)));
     expect(back.title).toBe(record.title);
     expect(back.identifiers.doi).toBe(record.identifiers.doi);
     expect(back.identifiers.issn).toBe(record.identifiers.issn);
@@ -325,7 +334,7 @@ describe("the full CSL 1.0.2 variable set", () => {
       categories: ["one", "two"],
       "number-of-pages": "120",
     });
-    expect(fromCslJson(csl)).toEqual(fromCslJson(item));
+    expect(fromCslJson(asJson(csl))).toEqual(fromCslJson(item));
   });
 
   it("keeps a numeric id as a number", () => {
@@ -374,7 +383,7 @@ describe("the full CSL 1.0.2 variable set", () => {
       provenance: { source: "bibtex" },
       extra: { genre: "PhD thesis", PMID: "15371539", "tex.custom": "x" },
     };
-    expect(fromCslJson(toCslJson(old))).toMatchObject({
+    expect(fromCslJson(asJson(toCslJson(old)))).toMatchObject({
       genre: "PhD thesis",
       identifiers: { pmid: "15371539" },
       extra: { "tex.custom": "x" },

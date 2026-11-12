@@ -27,6 +27,9 @@ function isNotFound(error: HttpClientError.HttpClientError): boolean {
   return error.reason._tag === "StatusCodeError" && error.reason.response.status === 404;
 }
 
+/** One untrusted array element as a string; `None` for anything else. */
+const decodeString = Schema.decodeUnknownOption(Schema.String);
+
 /**
  * The first plausible sanitised string from an upstream array, or `None`.
  *
@@ -34,8 +37,7 @@ function isNotFound(error: HttpClientError.HttpClientError): boolean {
  */
 export function firstString(values: Option.Option<readonly unknown[]>): Option.Option<string> {
   if (Option.isNone(values)) return Option.none();
-  const first = Arr.findFirst(values.value, (value) => Option.isSome(sanitiseText(value)));
-  return Option.isNone(first) ? Option.none() : sanitiseText(first.value);
+  return Arr.findFirst(values.value, (value) => Option.flatMap(decodeString(value), sanitiseText));
 }
 
 /** A short human-readable description of an upstream HTTP failure. */

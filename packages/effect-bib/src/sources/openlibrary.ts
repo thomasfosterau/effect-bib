@@ -115,7 +115,7 @@ export function openLibraryAuthorKeys(edition: OpenLibraryEdition): readonly str
  * @since 0.1.0
  */
 export function openLibraryAuthorName(author: OpenLibraryAuthor): Option.Option<string> {
-  return sanitiseText(author.name);
+  return Option.flatMap(decodeString(author.name), sanitiseText);
 }
 
 const decodeString = Schema.decodeUnknownOption(Schema.String);
@@ -142,7 +142,7 @@ function pickIsbn(edition: OpenLibraryEdition, requested: Isbn): Isbn {
 function subjectList(values: Option.Option<readonly unknown[]>): Option.Option<readonly string[]> {
   if (Option.isNone(values)) return Option.none();
   const subjects = Arr.filterMap(values.value, (value): Result.Result<string, void> => {
-    const text = sanitiseText(value);
+    const text = Option.flatMap(decodeString(value), sanitiseText);
     return Option.isNone(text) ? Result.failVoid : Result.succeed(text.value);
   }).slice(0, MAX_SUBJECTS);
   return Arr.isArrayNonEmpty(subjects) ? Option.some(subjects) : Option.none();
@@ -169,9 +169,9 @@ export function normaliseOpenLibraryRecord(
   requestedIsbn: Isbn,
   authorNames: readonly string[],
 ): Option.Option<BiblioRecord> {
-  const baseTitle = sanitiseText(edition.title);
+  const baseTitle = Option.flatMap(decodeString(edition.title), sanitiseText);
   if (Option.isNone(baseTitle)) return Option.none();
-  const subtitle = sanitiseText(edition.subtitle);
+  const subtitle = Option.flatMap(decodeString(edition.subtitle), sanitiseText);
   const title = Option.isNone(subtitle)
     ? baseTitle.value
     : `${baseTitle.value}: ${subtitle.value}`.slice(0, MAX_TEXT_FIELD_LENGTH);
