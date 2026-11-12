@@ -29,20 +29,23 @@ export type LookupSource = typeof LookupSource.Type;
  *
  * @since 0.1.0
  */
-export class InvalidIdentifier extends Schema.TaggedError<InvalidIdentifier>()(
-  "InvalidIdentifier",
-  {
-    kind: Schema.Literals(["isbn", "doi"]),
-    value: Schema.String,
-  },
-) {}
+export class InvalidIdentifier extends Schema.TaggedError<
+  InvalidIdentifier,
+  { readonly brand: unique symbol }
+>()("InvalidIdentifier", {
+  kind: Schema.Literals(["isbn", "doi"]),
+  value: Schema.String,
+}) {}
 
 /**
  * An upstream transport / decode failure (network, 5xx, malformed body).
  *
  * @since 0.1.0
  */
-export class LookupFailed extends Schema.TaggedError<LookupFailed>()("LookupFailed", {
+export class LookupFailed extends Schema.TaggedError<
+  LookupFailed,
+  { readonly brand: unique symbol }
+>()("LookupFailed", {
   source: LookupSource,
   description: Schema.String,
 }) {}
@@ -55,10 +58,13 @@ export class LookupFailed extends Schema.TaggedError<LookupFailed>()("LookupFail
  *
  * @since 0.1.0
  */
-export class RefusedUrl extends Schema.TaggedError<RefusedUrl>()("RefusedUrl", {
-  url: Schema.String,
-  reason: Schema.String,
-}) {}
+export class RefusedUrl extends Schema.TaggedError<RefusedUrl, { readonly brand: unique symbol }>()(
+  "RefusedUrl",
+  {
+    url: Schema.String,
+    reason: Schema.String,
+  },
+) {}
 
 /**
  * The typed error channel for a lookup.
