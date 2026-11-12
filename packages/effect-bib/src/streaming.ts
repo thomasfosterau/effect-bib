@@ -23,6 +23,7 @@ import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 import * as Stream from "effect/Stream";
 import * as Str from "effect/String";
+import * as Struct from "effect/Struct";
 import type { BibtexBudgets } from "./bibtex/budget.ts";
 import { DECODED_SOURCE_FACTOR } from "./bibtex/fields.ts";
 import { MIN_MACRO_EXPANSION } from "./bibtex/scan.ts";
@@ -657,7 +658,7 @@ function readCsv(state: State, units: readonly Unit[], options: ParseOptions): P
   const rows = units.filter((unit) => Str.isNonEmpty(unit.text.trim()));
   return parseUnits(
     state.header.value,
-    rows.map((unit) => ({ ...unit, text: unit.text.replace(/\r?\n?$/, "") })),
+    rows.map(Struct.evolve({ text: (text: string) => text.replace(/\r?\n?$/, "") })),
     (document) => parseCsv(document, documentOptions(options, document)),
   );
 }

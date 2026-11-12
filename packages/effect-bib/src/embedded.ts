@@ -424,7 +424,10 @@ function nodesOf(value: Schema.Json, depth = 0): Node[] {
   if (depth > 3) return [];
   return listOf(Option.some(value)).flatMap((entry) =>
     isNode(entry)
-      ? [entry, ...members(entry, "@graph").flatMap((graph) => nodesOf(graph, depth + 1))]
+      ? Arr.prepend(
+          members(entry, "@graph").flatMap((graph) => nodesOf(graph, depth + 1)),
+          entry,
+        )
       : [],
   );
 }

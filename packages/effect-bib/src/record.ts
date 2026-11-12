@@ -740,7 +740,7 @@ function dateToCsl(date: CslDate): CslDate {
   const parts = date["date-parts"];
   return parts === undefined
     ? { ...date }
-    : { ...date, "date-parts": parts.map((part) => [...part]) };
+    : { ...date, "date-parts": parts.map((part) => Arr.copy(part)) };
 }
 
 /**

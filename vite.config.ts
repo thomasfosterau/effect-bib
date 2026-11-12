@@ -98,10 +98,6 @@ export default defineConfig({
       // (#169), so a new site cannot land silently.
       // `_tag` is Effect's discriminant (tagged unions, `Data.TaggedError`).
       "eslint/no-underscore-dangle": ["error", { allow: ["_tag"] }],
-      // The library builds immutable values (readonly records and arrays): a
-      // fresh spread inside `map` / `flatMap` is the point, not a missed
-      // in-place mutation, and every input is bounded (`MAX_*`).
-      "oxc/no-map-spread": "off",
       // Flags every spread of `Schema.JsonObject` (a plain-object index
       // signature, never a class instance) in the embedded-metadata reader
       // as a class spread: a false positive with no code-level fix.
