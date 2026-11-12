@@ -218,7 +218,7 @@ function openAlexAuthors(value: Option.Option<readonly unknown[]>): CslName[] {
   ).slice(0, MAX_AUTHORS);
 }
 
-const decodeNumber = Schema.decodeUnknownOption(Schema.Number);
+const decodeNumber = Schema.decodeUnknownOption(Schema.Finite);
 
 /**
  * Normalises one OpenAlex `Work` into a CSL-aligned {@link BiblioRecord}.
