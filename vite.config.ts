@@ -104,7 +104,12 @@ export default defineConfig({
       "effecttsgo/any-unknown-in-error-context": "error",
       // Lint to zero (#169): each preset rule cleared of its sites is held at
       // `error` here until the whole preset flips.
+      "effecttsgo/map-some-to-as-some": "error",
+      "effecttsgo/prefer-succeed-some-or-none": "error",
       "effecttsgo/prefer-typed-schema-decoder": "error",
+      "effecttsgo/schema-class-missing-brand": "error",
+      "effecttsgo/schema-number": "error",
+      "effecttsgo/unnecessary-typeof-type": "error",
       "typescript/no-explicit-any": "off",
       "typescript/no-empty-object-type": "off",
       "typescript/ban-ts-comment": "off",
