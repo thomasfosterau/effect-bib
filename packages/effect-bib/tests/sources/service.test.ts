@@ -136,6 +136,13 @@ describe("BiblioLookup.byDoiRecord", () => {
   );
 });
 
+/** A lookup client layer whose resolver answers `answer` for every host. */
+const resolving = (answer: string) =>
+  biblioLookupClientLayer({
+    contact: CONTACT,
+    resolveAddresses: () => Effect.succeed([answer]),
+  });
+
 describe("BiblioLookup.byDoiCsl", () => {
   const doi = "10.5281/zenodo.1234567";
   const url = "https://doi.org/10.5281/zenodo.1234567";
@@ -255,11 +262,6 @@ describe("BiblioLookup.byDoiCsl", () => {
         [url]: { status: 302, body: {}, location: agency },
         [agency]: { status: 200, body: { type: "dataset", title: "Rebound" } },
       });
-      const resolving = (answer: string) =>
-        biblioLookupClientLayer({
-          contact: CONTACT,
-          resolveAddresses: () => Effect.succeed([answer]),
-        });
       const refused = Effect.gen(function* () {
         const lookup = yield* BiblioLookup;
         return yield* lookup.byDoiCsl(doi);

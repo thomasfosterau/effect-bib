@@ -67,6 +67,27 @@ const RIS = [
 
 const CSV = 'title,isbn\r\n"A\nB",9780062316097\r\n\r\nC,9780062316097\nD,not-an-isbn';
 
+/** `text` cut after each index in `cuts`, as a stream of chunks. */
+const cutAt = (text: string, cuts: readonly number[]): Stream.Stream<string> => {
+  const bounds = [0, ...Arr.sort(Arr.dedupe(cuts), Order.Number), text.length];
+  return Stream.fromIterable(
+    Arr.zipWith(bounds, bounds.slice(1), (from, to) => text.slice(from, to)),
+  );
+};
+
+/** The indices between the CR and the LF of every CRLF. */
+const insideCrlf = (text: string): number[] =>
+  Arr.fromIterable(text.matchAll(/\r\n/g)).map((match) => match.index + 1);
+
+/** A deterministic pseudo-random sequence of `count` cut points in `[1, length)`. */
+const randomCuts = (length: number, count: number, seed: number): number[] =>
+  Arr.unfold({ n: 0, state: seed }, ({ n, state }) => {
+    const next = (Math.imul(state, 1_103_515_245) + 12_345) >>> 0;
+    return n < count
+      ? Option.some([1 + (next % (length - 1)), { n: n + 1, state: next }] as const)
+      : Option.none();
+  });
+
 describe("parseBibliographicStream", () => {
   it.effect.each([
     ["bibtex", BIBTEX],
@@ -90,27 +111,6 @@ describe("parseBibliographicStream", () => {
   );
 
   describe("a CRLF split across chunks", () => {
-    /** `text` cut after each index in `cuts`, as a stream of chunks. */
-    const cutAt = (text: string, cuts: readonly number[]): Stream.Stream<string> => {
-      const bounds = [0, ...Arr.sort(Arr.dedupe(cuts), Order.Number), text.length];
-      return Stream.fromIterable(
-        Arr.zipWith(bounds, bounds.slice(1), (from, to) => text.slice(from, to)),
-      );
-    };
-
-    /** The indices between the CR and the LF of every CRLF. */
-    const insideCrlf = (text: string): number[] =>
-      Arr.fromIterable(text.matchAll(/\r\n/g)).map((match) => match.index + 1);
-
-    /** A deterministic pseudo-random sequence of `count` cut points in `[1, length)`. */
-    const randomCuts = (length: number, count: number, seed: number): number[] =>
-      Arr.unfold({ n: 0, state: seed }, ({ n, state }) => {
-        const next = (Math.imul(state, 1_103_515_245) + 12_345) >>> 0;
-        return n < count
-          ? Option.some([1 + (next % (length - 1)), { n: n + 1, state: next }] as const)
-          : Option.none();
-      });
-
     it.effect.each([
       [
         "csv",
@@ -307,11 +307,30 @@ describe("parseBibliographicStream", () => {
   );
 });
 
-describe("parseBibliographicStream's bounds", () => {
-  /** The stream's outcomes for `parts`, one chunk each. */
-  const fromParts = (parts: readonly string[], format: ImportFormat, options: ParseOptions) =>
-    Stream.runCollect(parseBibliographicStream(Stream.fromIterable(parts), format, options));
+/** The stream's outcomes for `parts`, one chunk each. */
+const fromParts = (parts: readonly string[], format: ImportFormat, options: ParseOptions) =>
+  Stream.runCollect(parseBibliographicStream(Stream.fromIterable(parts), format, options));
 
+/** How many outcomes parsed with a title. */
+const titled = (outcomes: readonly ParseOutcome[]) =>
+  outcomes.filter((outcome) => outcome.outcome === "parsed" && outcome.record.title !== undefined)
+    .length;
+
+/** A BibTeX book entry padded so a few of them exceed a chunk. */
+const big = (key: string) => `@book{${key}, title = {${key}}, note = {${"n".repeat(400)}}}`;
+
+/** `effect`'s result and the milliseconds it took (real time: run it under `it.live`). */
+const timed = <A, E>(effect: Effect.Effect<A, E>) =>
+  Effect.map(Effect.timed(effect), ([duration, outcomes]) => ({
+    ms: Duration.toMillis(duration),
+    outcomes,
+  }));
+
+/** A CSV document with `rows` data rows. */
+const csv = (rows: number): string =>
+  ["title,isbn", ...Arr.makeBy(rows, (index) => `Title ${index},9780062316097`)].join("\n");
+
+describe("parseBibliographicStream's bounds", () => {
   it.effect(
     "shares one macro-expansion budget across the stream, as the whole-file parse spends one",
     () =>
@@ -321,10 +340,6 @@ describe("parseBibliographicStream's bounds", () => {
           `@string{b = ${Arr.makeBy(50, () => "a").join(" # ")}}`,
         ];
         const entries = Arr.makeBy(200, (index) => `@misc{k${index}, title = b}`);
-        const titled = (outcomes: readonly ParseOutcome[]) =>
-          outcomes.filter(
-            (outcome) => outcome.outcome === "parsed" && outcome.record.title !== undefined,
-          ).length;
         const whole = parseBibliographicFile([...macros, ...entries].join("\n"), "bibtex", {
           mode: "lenient",
         });
@@ -367,7 +382,6 @@ describe("parseBibliographicStream's bounds", () => {
 
   it.effect("evicts cross-reference parents by length, and never holds more than the cap", () =>
     Effect.gen(function* () {
-      const big = (key: string) => `@book{${key}, title = {${key}}, note = {${"n".repeat(400)}}}`;
       const parts = [
         big("parent"),
         big("other1"),
@@ -408,17 +422,8 @@ describe("parseBibliographicStream's bounds", () => {
     }),
   );
 
-  /** `effect`'s result and the milliseconds it took (real time: run it under `it.live`). */
-  const timed = <A, E>(effect: Effect.Effect<A, E>) =>
-    Effect.map(Effect.timed(effect), ([duration, outcomes]) => ({
-      ms: Duration.toMillis(duration),
-      outcomes,
-    }));
-
   it.live("finds each outcome's start in linear time, however many entries one chunk holds", () =>
     Effect.gen(function* () {
-      const csv = (rows: number): string =>
-        ["title,isbn", ...Arr.makeBy(rows, (index) => `Title ${index},9780062316097`)].join("\n");
       const options = {
         mode: "lenient",
         maxRecords: 1_000_000,

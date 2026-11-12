@@ -146,6 +146,10 @@ describe("LaTeX decoding", () => {
   });
 });
 
+/** Parses a `url` field value in a minimal `@misc` entry and returns the record URL. */
+const url = (value: string) =>
+  expectParsed(parseBibtex(`@misc{k, title = {T}, doi = {10.1000/x}, url = ${value}}`)[0]).URL;
+
 describe("verbatim fields wrapped in a brace group", () => {
   it("keeps the identifier of a doubly braced DOI, ISSN and URL", () => {
     const record = expectParsed(
@@ -159,8 +163,6 @@ describe("verbatim fields wrapped in a brace group", () => {
   });
 
   it("removes every group that wraps the whole value, and only those", () => {
-    const url = (value: string) =>
-      expectParsed(parseBibtex(`@misc{k, title = {T}, doi = {10.1000/x}, url = ${value}}`)[0]).URL;
     expect(url("{{{https://example.org/deep}}}")).toBe("https://example.org/deep");
     expect(url("{ {https://example.org/spaced} }")).toBe("https://example.org/spaced");
     expect(url("{{a}{b}}")).toBe("{a}{b}");
@@ -581,9 +583,14 @@ describe("BibLaTeX fields", () => {
   });
 });
 
+/** Parses a BibLaTeX book from raw fields and returns its `issued` date. */
+const issuedFrom = (fields: string) => parseEntry("book", `title = {T}, ${fields}`).issued;
+
+/** The `issued` date a BibLaTeX book gets from one `date` field value. */
+const issued = (date: string) => issuedFrom(`date = {${date}}`);
+
 describe("dates", () => {
   it("reads era years with astronomical numbering, as CSL counts BC years", () => {
-    const issued = (date: string) => parseEntry("book", `title = {T}, date = {${date}}`).issued;
     // EDTF -0379 is 380 BC, which CSL writes as -380; 0000 is 1 BC.
     expect(issued("-0379-02")).toEqual({ "date-parts": [[-380, 2]] });
     expect(issued("-0221/-0219")).toEqual({ "date-parts": [[-222], [-220]] });
@@ -593,7 +600,6 @@ describe("dates", () => {
   });
 
   it("drops a time of day and keeps the date", () => {
-    const issued = (date: string) => parseEntry("book", `title = {T}, date = {${date}}`).issued;
     expect(issued("2001-01-03T15:00:00")).toEqual({ "date-parts": [[2001, 1, 3]] });
     expect(issued("2001-01-03T17:07:34+05:00")).toEqual({ "date-parts": [[2001, 1, 3]] });
     expect(issued("2016-01-19T14:20:00.000Z")).toEqual({ "date-parts": [[2016, 1, 19]] });
@@ -601,7 +607,6 @@ describe("dates", () => {
   });
 
   it("reads an open start as a range whose start is empty", () => {
-    const issued = (date: string) => parseEntry("book", `title = {T}, date = {${date}}`).issued;
     expect(issued("../2000")).toEqual({ "date-parts": [[0], [2000]], raw: "../2000" });
     expect(issued("/1034")).toEqual({ "date-parts": [[0], [1034]], raw: "/1034" });
     expect(issued("/2004-01-01~")).toEqual({
@@ -612,7 +617,6 @@ describe("dates", () => {
   });
 
   it("reads unspecified digits as an approximate date", () => {
-    const issued = (date: string) => parseEntry("book", `title = {T}, date = {${date}}`).issued;
     expect(issued("199X")).toEqual({ "date-parts": [[1990]], circa: true });
     expect(issued("19XX")).toEqual({ "date-parts": [[1900]], circa: true });
     expect(issued("1999-XX")).toEqual({ "date-parts": [[1999]], circa: true });
@@ -659,9 +663,11 @@ describe("dates", () => {
   });
 });
 
+/** The CSL type a BibTeX entry kind maps to. */
+const typeOf = (kind: string, extra = "") => parseEntry(kind, `title = {T}${extra}`).type;
+
 describe("entry types", () => {
   it("maps BibTeX and BibLaTeX types to CSL item types", () => {
-    const typeOf = (kind: string, extra = "") => parseEntry(kind, `title = {T}${extra}`).type;
     expect(typeOf("booklet")).toBe("pamphlet");
     expect(typeOf("inreference")).toBe("entry-encyclopedia");
     expect(typeOf("unpublished")).toBe("manuscript");
@@ -778,16 +784,19 @@ describe("edge cases", () => {
   });
 
   it("reads month-precision dates and rejects out-of-range parts", () => {
-    const issued = (fields: string) => parseEntry("book", `title = {T}, ${fields}`).issued;
-    expect(issued("date = {2015-03}")).toEqual({ "date-parts": [[2015, 3]] });
-    expect(issued("date = {2015-03-32}")).toEqual({ literal: "2015-03-32" });
-    expect(issued("date = {3000}")).toEqual({ literal: "3000" });
-    expect(issued("date = {2001/2002/2003}")).toEqual({ literal: "2001/2002/2003" });
-    expect(issued("date = {2001/2002-13}")).toEqual({ literal: "2001/2002-13" });
-    expect(issued("date = {  }, year = {2010}")).toEqual({ "date-parts": [[2010]] });
-    expect(issued("year = {2010}, month = {13}")).toEqual({ "date-parts": [[2010]] });
-    expect(issued("year = {2010}, month = {5}, day = {40}")).toEqual({ "date-parts": [[2010, 5]] });
-    expect(issued("year = {2001/2004}, month = {5}")).toEqual({ "date-parts": [[2001], [2004]] });
+    expect(issuedFrom("date = {2015-03}")).toEqual({ "date-parts": [[2015, 3]] });
+    expect(issuedFrom("date = {2015-03-32}")).toEqual({ literal: "2015-03-32" });
+    expect(issuedFrom("date = {3000}")).toEqual({ literal: "3000" });
+    expect(issuedFrom("date = {2001/2002/2003}")).toEqual({ literal: "2001/2002/2003" });
+    expect(issuedFrom("date = {2001/2002-13}")).toEqual({ literal: "2001/2002-13" });
+    expect(issuedFrom("date = {  }, year = {2010}")).toEqual({ "date-parts": [[2010]] });
+    expect(issuedFrom("year = {2010}, month = {13}")).toEqual({ "date-parts": [[2010]] });
+    expect(issuedFrom("year = {2010}, month = {5}, day = {40}")).toEqual({
+      "date-parts": [[2010, 5]],
+    });
+    expect(issuedFrom("year = {2001/2004}, month = {5}")).toEqual({
+      "date-parts": [[2001], [2004]],
+    });
   });
 
   it("keeps a subtitle with no title in extra rather than dropping it", () => {

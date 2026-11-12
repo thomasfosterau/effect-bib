@@ -247,13 +247,14 @@ describe("author elision", () => {
 
 // ── Edge cases: missing fields exercise the null branches ─────────────
 
-describe("sparse records", () => {
-  const bare = (type: BiblioRecord["type"]): BiblioRecord => ({
-    type,
-    identifiers: {},
-    provenance: { source: "manual" },
-  });
+/** A record with only the mandatory members, for the sparse-field cases. */
+const bare = (type: BiblioRecord["type"]): BiblioRecord => ({
+  type,
+  identifiers: {},
+  provenance: { source: "manual" },
+});
 
+describe("sparse records", () => {
   it("APA renders a year-only reference when there is no author", () => {
     const r: BiblioRecord = { ...bare("book"), issued: dateFromYear(1999), title: "Anon Work" };
     expect(renderReference(r, { style: apaStyle })).toBe("(1999). Anon Work.");
@@ -497,6 +498,9 @@ describe("formatOneName", () => {
   });
 });
 
+/** `n` distinct author names. */
+const names = (n: number) => Arr.makeBy(n, (i) => cslName(`Fam${i}`, `Giv${i}`));
+
 describe("formatNameList", () => {
   const opts: NameListOptions = {
     initials: { periods: true, spaced: true },
@@ -509,7 +513,6 @@ describe("formatNameList", () => {
     displayBeforeEtAl: 2,
     etAl: "et al.",
   };
-  const names = (n: number) => Arr.makeBy(n, (i) => cslName(`Fam${i}`, `Giv${i}`));
 
   it("returns empty string for no names", () => {
     expect(formatNameList([], opts)).toBe("");
@@ -671,12 +674,6 @@ describe("renderBibliography output shape", () => {
 // ── Remaining branch coverage ─────────────────────────────────────────
 
 describe("coverage edges", () => {
-  const bare = (type: BiblioRecord["type"]): BiblioRecord => ({
-    type,
-    identifiers: {},
-    provenance: { source: "manual" },
-  });
-
   it("a numeric style's sort key is an inert empty string", () => {
     expect(vancouverStyle.sortKey(book)).toBe("");
   });

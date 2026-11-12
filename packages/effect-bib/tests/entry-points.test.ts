@@ -304,6 +304,30 @@ describe("package exports map", () => {
 });
 
 /**
+ * The end-to-end statement, and the one that does not depend on the walker
+ * above being right: load the built entry in a process where
+ * the former `effect/unstable/*` modules (`effect/http`, ...) cannot be resolved at all.
+ */
+const loadWithoutUnstable = (entry: string, env: R.ReadonlyRecord<string, string> = {}) =>
+  spawnSync(
+    process.execPath,
+    [
+      "--import",
+      fileURLToPath(new URL("./fixtures/forbid-http-peer.mjs", import.meta.url)),
+      "--input-type=module",
+      "-e",
+      // The entry arrives as an argument, so no path is spliced into the code.
+      `await import(process.argv[1]); console.log("LOADED")`,
+      entry,
+    ],
+    { cwd: ROOT, encoding: "utf8", env: { ...process.env, ...env } },
+  );
+
+/** The same, with effect-parse unresolvable too. */
+const loadWithoutEffectParse = (entry: string) =>
+  loadWithoutUnstable(entry, { FORBID_ALSO: EFFECT_PARSE_PATTERN });
+
+/**
  * `tsc` emits one file per module and only rewrites the `.ts` extensions, so
  * the source graph above is the built graph. This re-checks it on the
  * artifact anyway, because that is what actually ships. The `test:unit` and
@@ -335,30 +359,6 @@ describe("built artifact", () => {
     expect(missing, "dist/ files missing").toEqual([]);
   });
 
-  /**
-   * The end-to-end statement, and the one that does not depend on the walker
-   * above being right: load the built entry in a process where
-   * the former `effect/unstable/*` modules (`effect/http`, ...) cannot be resolved at all.
-   */
-  const loadWithoutUnstable = (entry: string, env: R.ReadonlyRecord<string, string> = {}) =>
-    spawnSync(
-      process.execPath,
-      [
-        "--import",
-        fileURLToPath(new URL("./fixtures/forbid-http-peer.mjs", import.meta.url)),
-        "--input-type=module",
-        "-e",
-        // The entry arrives as an argument, so no path is spliced into the code.
-        `await import(process.argv[1]); console.log("LOADED")`,
-        entry,
-      ],
-      { cwd: ROOT, encoding: "utf8", env: { ...process.env, ...env } },
-    );
-
-  /** The same, with effect-parse unresolvable too. */
-  const loadWithoutEffectParse = (entry: string) =>
-    loadWithoutUnstable(entry, { FORBID_ALSO: EFFECT_PARSE_PATTERN });
-
   it.skipIf(unbuilt)("loads the root entry with effect/http and its siblings unresolvable", () => {
     const result = loadWithoutUnstable(built);
     expect(`${result.stdout}${result.stderr}`).toContain("LOADED");
@@ -388,6 +388,15 @@ describe("built artifact", () => {
   });
 });
 
+/** The immediate subdirectory names of `dir`. */
+const subdirectories = (dir: string): ReadonlyArray<string> =>
+  sorted(
+    fs
+      .readdirSync(dir, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name),
+  );
+
 /**
  * The forbidden set is a hand-kept list, so check it against the installed
  * `effect`: every directory of `effect/` except `encoding`, `testing` and
@@ -400,13 +409,6 @@ describe("forbidden effect module list", () => {
     path.dirname(createRequire(import.meta.url).resolve("effect/package.json")),
     "dist",
   );
-  const subdirectories = (dir: string): ReadonlyArray<string> =>
-    sorted(
-      fs
-        .readdirSync(dir, { withFileTypes: true })
-        .filter((entry) => entry.isDirectory())
-        .map((entry) => entry.name),
-    );
   const STABLE_ENCODING = HashSet.make("Base64", "Base64Url", "Hex", "EncodingError", "index");
 
   it("covers every effect directory except encoding, testing and internal", () => {

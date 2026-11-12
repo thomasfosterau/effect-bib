@@ -61,6 +61,52 @@ const byUrl = (
 
 const START = "https://example.org/paper";
 
+/** A lookup that fails with `NXDOMAIN` for a host it has no answer for. */
+const lookup =
+  (answers: Readonly<Record<string, readonly string[]>>) =>
+  (hostname: string): Effect.Effect<readonly string[], string> =>
+    hostname in answers ? Effect.succeed(answers[hostname] ?? []) : Effect.fail("NXDOMAIN");
+
+/** The documented shape: a lookup that can fail answers its failure with no addresses. */
+const resolving =
+  (answers: Readonly<Record<string, readonly string[]>>): ResolveAddresses =>
+  (hostname) =>
+    lookup(answers)(hostname).pipe(Effect.orElseSucceed((): readonly string[] => []));
+
+/** A layer whose fetch answers `respond`, honouring the abort signal. */
+const hanging = (respond: () => Promise<Response>): Layer.Layer<HttpClient.HttpClient> =>
+  FetchHttpClient.layer.pipe(
+    Layer.provide(
+      Layer.succeed(FetchHttpClient.Fetch, (_input, init) =>
+        Promise.race([
+          respond(),
+          new Promise<Response>((_, reject) =>
+            init?.signal?.addEventListener("abort", () => reject(init.signal?.reason)),
+          ),
+        ]),
+      ),
+    ),
+  );
+
+/** The failure of `byUrl` over `layer` once the lookup time limit elapses (test clock). */
+const timesOut = (layer: Layer.Layer<HttpClient.HttpClient>) =>
+  Effect.gen(function* () {
+    const fiber = yield* Effect.forkChild(Effect.flip(byUrl(layer, START)));
+    yield* TestClock.adjust("11 seconds");
+    return yield* Fiber.join(fiber);
+  });
+
+/** A fetch response that never completes. */
+const endless = (): Promise<Response> =>
+  Promise.resolve(
+    new Response(
+      new ReadableStream<Uint8Array>({
+        start: (controller) => controller.enqueue(new TextEncoder().encode("<html>")),
+      }),
+      { status: 200, headers: { "content-type": "text/html" } },
+    ),
+  );
+
 describe("BiblioLookup.byUrl", () => {
   it.effect(
     "reads the page's embedded metadata, identifying itself without the contact email",
@@ -245,17 +291,6 @@ describe("BiblioLookup.byUrl", () => {
   );
 
   describe("with a resolver", () => {
-    /** A lookup that fails with `NXDOMAIN` for a host it has no answer for. */
-    const lookup =
-      (answers: Readonly<Record<string, readonly string[]>>) =>
-      (hostname: string): Effect.Effect<readonly string[], string> =>
-        hostname in answers ? Effect.succeed(answers[hostname] ?? []) : Effect.fail("NXDOMAIN");
-    /** The documented shape: a lookup that can fail answers its failure with no addresses. */
-    const resolving =
-      (answers: Readonly<Record<string, readonly string[]>>): ResolveAddresses =>
-      (hostname) =>
-        lookup(answers)(hostname).pipe(Effect.orElseSucceed((): readonly string[] => []));
-
     it.effect("fetches a host that resolves only to public addresses", () =>
       Effect.gen(function* () {
         const { layer, urls } = stubRouter({ [START]: html() });
@@ -309,28 +344,6 @@ describe("BiblioLookup.byUrl", () => {
   });
 
   describe("time limit", () => {
-    /** A layer whose fetch answers `respond`, honouring the abort signal. */
-    const hanging = (respond: () => Promise<Response>): Layer.Layer<HttpClient.HttpClient> =>
-      FetchHttpClient.layer.pipe(
-        Layer.provide(
-          Layer.succeed(FetchHttpClient.Fetch, (_input, init) =>
-            Promise.race([
-              respond(),
-              new Promise<Response>((_, reject) =>
-                init?.signal?.addEventListener("abort", () => reject(init.signal?.reason)),
-              ),
-            ]),
-          ),
-        ),
-      );
-
-    const timesOut = (layer: Layer.Layer<HttpClient.HttpClient>) =>
-      Effect.gen(function* () {
-        const fiber = yield* Effect.forkChild(Effect.flip(byUrl(layer, START)));
-        yield* TestClock.adjust("11 seconds");
-        return yield* Fiber.join(fiber);
-      });
-
     it.effect("fails when the response never arrives", () =>
       Effect.gen(function* () {
         const failure = yield* timesOut(hanging(() => new Promise<Response>(() => {})));
@@ -341,15 +354,6 @@ describe("BiblioLookup.byUrl", () => {
 
     it.effect("fails when the body never finishes", () =>
       Effect.gen(function* () {
-        const endless = (): Promise<Response> =>
-          Promise.resolve(
-            new Response(
-              new ReadableStream<Uint8Array>({
-                start: (controller) => controller.enqueue(new TextEncoder().encode("<html>")),
-              }),
-              { status: 200, headers: { "content-type": "text/html" } },
-            ),
-          );
         const failure = yield* timesOut(hanging(endless));
         expect(failure).toBeInstanceOf(LookupFailed);
         expect(failure).toMatchObject({ description: "timed out" });
@@ -358,13 +362,13 @@ describe("BiblioLookup.byUrl", () => {
   });
 });
 
-describe("BiblioLookup.byUrl over a raw response", () => {
-  /** A layer whose fetch answers every request with `respond()`. */
-  const answering = (respond: () => Response): Layer.Layer<HttpClient.HttpClient> =>
-    FetchHttpClient.layer.pipe(
-      Layer.provide(Layer.succeed(FetchHttpClient.Fetch, () => Promise.resolve(respond()))),
-    );
+/** A layer whose fetch answers every request with `respond()`. */
+const answering = (respond: () => Response): Layer.Layer<HttpClient.HttpClient> =>
+  FetchHttpClient.layer.pipe(
+    Layer.provide(Layer.succeed(FetchHttpClient.Fetch, () => Promise.resolve(respond()))),
+  );
 
+describe("BiblioLookup.byUrl over a raw response", () => {
   it.effect("refuses a response with no content type", () =>
     Effect.gen(function* () {
       const layer = answering(() => new Response(null, { status: 200 }));
