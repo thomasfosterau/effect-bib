@@ -17,11 +17,11 @@
 
 // website#1072. The pure, plain-TypeScript posture matches `dedup-match.ts`.
 
-import * as Array from "effect/Array";
+import * as Arr from "effect/Array";
 import * as HashMap from "effect/HashMap";
 import * as Option from "effect/Option";
 import * as Result from "effect/Result";
-import * as String from "effect/String";
+import * as Str from "effect/String";
 import type { BiblioRecord, CslDate, CslName } from "../record.ts";
 import { endYearOf, yearOf } from "../record.ts";
 import { parseCslMarkup, stripCslMarkup } from "./markup.ts";
@@ -76,10 +76,10 @@ export interface NameListOptions {
  * @since 0.1.0
  */
 export function compact(parts: readonly Option.Option<string>[]): string[] {
-  return Array.filterMap(parts, (part): Result.Result<string, void> => {
+  return Arr.filterMap(parts, (part): Result.Result<string, void> => {
     if (Option.isNone(part)) return Result.failVoid;
     const trimmed = part.value.trim();
-    return String.isEmpty(trimmed) ? Result.failVoid : Result.succeed(trimmed);
+    return Str.isEmpty(trimmed) ? Result.failVoid : Result.succeed(trimmed);
   });
 }
 
@@ -98,7 +98,7 @@ export function joinParts(parts: readonly Option.Option<string>[], separator: st
  * @since 0.1.0
  */
 export function terminate(text: string): string {
-  if (String.isEmpty(text)) return text;
+  if (Str.isEmpty(text)) return text;
   return /[.?!]$/.test(text) ? text : `${text}.`;
 }
 
@@ -120,12 +120,12 @@ export function givenInitials(given: string, opts: InitialsOptions): string {
   const initialOf = (token: string): string =>
     token
       .split("-")
-      .filter(String.isNonEmpty)
+      .filter(Str.isNonEmpty)
       .map((piece) => piece.charAt(0).toUpperCase() + (opts.periods ? "." : ""))
       .join("-");
   return given
     .split(/\s+/)
-    .filter(String.isNonEmpty)
+    .filter(Str.isNonEmpty)
     .map(initialOf)
     .join(opts.spaced ? " " : "");
 }
@@ -179,13 +179,13 @@ export function citationName(name: CslName): string {
     [Option.fromNullishOr(name["non-dropping-particle"]), Option.fromNullishOr(name.family)],
     " ",
   );
-  return String.isNonEmpty(family) ? family : (name.given ?? "");
+  return Str.isNonEmpty(family) ? family : (name.given ?? "");
 }
 
 /** Combines a family cluster and given initials in the configured order. */
 function orderName(family: string, initials: string, opts: NameListOptions): string {
-  if (String.isEmpty(family) || String.isEmpty(initials))
-    return String.isNonEmpty(family) ? family : initials;
+  if (Str.isEmpty(family) || Str.isEmpty(initials))
+    return Str.isNonEmpty(family) ? family : initials;
   return opts.familyFirst
     ? `${family}${opts.familyGivenSeparator}${initials}`
     : `${initials} ${family}`;
@@ -211,7 +211,7 @@ export function formatOneName(name: CslName, opts: NameListOptions): string {
  * @since 0.1.0
  */
 export function formatNameList(names: readonly CslName[], opts: NameListOptions): string {
-  if (Array.isReadonlyArrayEmpty(names)) return "";
+  if (Arr.isReadonlyArrayEmpty(names)) return "";
   const rendered = names.map((name) => formatOneName(name, opts));
   if (names.length > opts.maxNames) {
     return `${rendered.slice(0, opts.displayBeforeEtAl).join(opts.delimiter)}, ${opts.etAl}`;
@@ -384,7 +384,7 @@ export function dispatchRich(head: RichRenderer, bodies: RichRenderers): RichRen
 export function issuedYearWithSuffix(record: BiblioRecord, ctx: RenderContext): string {
   const year = issuedYearText(Option.fromNullishOr(record.issued), ctx.locale);
   const suffix = ctx.yearSuffix ?? "";
-  if (String.isEmpty(suffix)) return year;
+  if (Str.isEmpty(suffix)) return year;
   return yearOf(record.issued) === null ? `${year}-${suffix}` : `${year}${suffix}`;
 }
 

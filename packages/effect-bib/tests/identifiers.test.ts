@@ -12,7 +12,7 @@
  * @module tests/unit/biblio-identifiers
  */
 
-import * as Array from "effect/Array";
+import * as Arr from "effect/Array";
 import * as Option from "effect/Option";
 import * as Result from "effect/Result";
 import { describe, expect, it } from "vite-plus/test";
@@ -47,7 +47,7 @@ const CHECK_CHARS = "0123456789X";
 
 /** A random string of `n` decimal digits. */
 function randomDigits(rng: () => number, n: number): string {
-  return Array.makeBy(n, () => DIGITS[Math.floor(rng() * 10)]).join("");
+  return Arr.makeBy(n, () => DIGITS[Math.floor(rng() * 10)]).join("");
 }
 
 /**
@@ -59,12 +59,12 @@ function findValidCheck<T>(
   body: string,
   decode: (raw: string) => Option.Option<T>,
 ): Option.Option<string> {
-  return Array.findFirst(CHECK_CHARS.split(""), (check) => Option.isSome(decode(body + check)));
+  return Arr.findFirst(CHECK_CHARS.split(""), (check) => Option.isSome(decode(body + check)));
 }
 
 /** Mutates one character of `value` to a different digit (deterministically). */
 function mutateDigit(rng: () => number, value: string): string {
-  const positions = Array.filterMap(value.split(""), (c, i): Result.Result<number, void> =>
+  const positions = Arr.filterMap(value.split(""), (c, i): Result.Result<number, void> =>
     /\d/.test(c) ? Result.succeed(i) : Result.failVoid,
   );
   const at = expectPresent(positions[Math.floor(rng() * positions.length)], "a digit position");
@@ -107,7 +107,7 @@ describe("decodeIsbn", () => {
 
   it("property: freshly-generated valid ISBN-13s decode; any single-digit mutation fails", () => {
     const rng = makeRng(0x1b7);
-    Array.forEach(Array.range(1, 200), () => {
+    Arr.forEach(Arr.range(1, 200), () => {
       const isbn13 = convertIsbn10To13(`${randomDigits(rng, 9)}0`);
       expect(Option.getOrNull(decodeIsbn(isbn13))).toBe(isbn13);
       expect(Option.isNone(decodeIsbn(mutateDigit(rng, isbn13)))).toBe(true);
@@ -116,7 +116,7 @@ describe("decodeIsbn", () => {
 
   it("property: valid ISBN-10s decode to their 13-form; any single-digit mutation fails", () => {
     const rng = makeRng(0x2c8);
-    Array.forEach(Array.range(1, 200), () => {
+    Arr.forEach(Arr.range(1, 200), () => {
       const isbn13 = convertIsbn10To13(`${randomDigits(rng, 9)}0`);
       const isbn10 = expectSome(convertIsbn13To10(isbn13), "an ISBN-10 form");
       expect(Option.getOrNull(decodeIsbn(isbn10))).toBe(isbn13);
@@ -204,7 +204,7 @@ describe("decodeIssn", () => {
 
   it("property: generated valid ISSNs decode; any single-digit mutation fails", () => {
     const rng = makeRng(0x3d9);
-    const generated = Array.reduce(Array.range(1, 300), 0, (count) => {
+    const generated = Arr.reduce(Arr.range(1, 300), 0, (count) => {
       if (count >= 150) return count;
       const body = randomDigits(rng, 7);
       const check = findValidCheck(body, decodeIssn);
@@ -234,7 +234,7 @@ describe("decodeOrcid", () => {
 
   it("property: generated valid ORCIDs decode; any single-digit mutation fails", () => {
     const rng = makeRng(0x4ea);
-    const generated = Array.reduce(Array.range(1, 400), 0, (count) => {
+    const generated = Arr.reduce(Arr.range(1, 400), 0, (count) => {
       if (count >= 150) return count;
       const body = randomDigits(rng, 15);
       const check = findValidCheck(body, decodeOrcid);
@@ -258,10 +258,10 @@ describe("decodePmid / decodePmcid", () => {
   });
 
   it("rejects a leading zero, an over-long id, a PMCID as a PMID, and bare digits as a PMCID", () => {
-    Array.forEach(["0123", "1234567890", "PMC3159421", "12 34", "", "15371539/.."], (raw) => {
+    Arr.forEach(["0123", "1234567890", "PMC3159421", "12 34", "", "15371539/.."], (raw) => {
       expect(Option.isNone(decodePmid(raw))).toBe(true);
     });
-    Array.forEach(["3159421", "PMC", "PMC12a", "PMC1234567890"], (raw) => {
+    Arr.forEach(["3159421", "PMC", "PMC12a", "PMC1234567890"], (raw) => {
       expect(Option.isNone(decodePmcid(raw))).toBe(true);
     });
   });
@@ -280,13 +280,13 @@ describe("decodeArxiv", () => {
       ["math.GT/0309136", "math.GT/0309136"],
       ["https://arxiv.org/abs/cond-mat/0207270v3", "cond-mat/0207270v3"],
     ];
-    Array.forEach(cases, ([raw, id]) => {
+    Arr.forEach(cases, ([raw, id]) => {
       expect(Option.getOrNull(decodeArxiv(raw))).toBe(id);
     });
   });
 
   it("rejects a bad month, a traversal, whitespace and a bare word", () => {
-    Array.forEach(
+    Arr.forEach(
       [
         "2113.01234",
         "2100.01234",

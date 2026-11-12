@@ -7,8 +7,8 @@
  * @module tests/unit/biblio-write
  */
 
-import * as Array from "effect/Array";
-import * as Record from "effect/Record";
+import * as Arr from "effect/Array";
+import * as R from "effect/Record";
 import { assert, describe, expect, it } from "vite-plus/test";
 import {
   type BiblioRecord,
@@ -33,7 +33,7 @@ function records(outcomes: readonly ParseOutcome[]): BiblioRecord[] {
 
 /** A record's CSL-JSON, restricted to `keys`. */
 const project = (record: BiblioRecord, keys: readonly string[]) =>
-  Record.filter(toCslJson(record), (_, key) => keys.includes(key));
+  R.filter(toCslJson(record), (_, key) => keys.includes(key));
 
 /** The round-trip corpus: one record per mapping worth pinning. */
 const corpus: BiblioRecord[] = [
@@ -254,7 +254,7 @@ describe("toBibtex", () => {
     expect(bib).toContain("@book{unicode,");
     expect(bib).toContain("Sch{\\\"o}n's ``Stra{\\ss}e'' -- {\\O}resund");
     expect(bib).toContain('author = {G{\\"o}del, Kurt and {\\c{C}}elik, Ay{\\c{s}}e}');
-    expect(Array.fromIterable(bib).every((char) => char.charCodeAt(0) < 128)).toBe(true);
+    expect(Arr.fromIterable(bib).every((char) => char.charCodeAt(0) < 128)).toBe(true);
   });
 
   it("escapes LaTeX specials and keeps markup as commands", () => {
@@ -316,7 +316,7 @@ describe("toBibtex", () => {
   });
 
   it("round-trips the classic BibTeX types and fields", () => {
-    const classic = Array.filter(corpus, (record) =>
+    const classic = Arr.filter(corpus, (record) =>
       ["book", "article-journal", "chapter", "thesis", "report", "paper-conference"].includes(
         record.type,
       ),
@@ -390,7 +390,7 @@ describe("toRis", () => {
       "DOI",
       "ISSN",
     ];
-    const ris = Array.filter(corpus, (record) =>
+    const ris = Arr.filter(corpus, (record) =>
       ["book", "article-journal", "chapter", "thesis", "report", "paper-conference"].includes(
         record.type,
       ),
@@ -562,7 +562,7 @@ describe("CSL YAML reader edge cases", () => {
   });
 
   it("rejects block nesting past the limit", () => {
-    const deep = Array.makeBy(70, (level) => `${"  ".repeat(level)}k:`).join("\n");
+    const deep = Arr.makeBy(70, (level) => `${"  ".repeat(level)}k:`).join("\n");
     expect(parseCslYaml(`references:\n- ${deep}`)).toEqual([
       { outcome: "skipped", reason: "malformed" },
     ]);

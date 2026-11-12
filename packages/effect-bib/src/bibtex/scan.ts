@@ -14,13 +14,13 @@
  */
 
 import { Compiler, Parser, Token } from "@thomasfosterau/effect-parse";
-import * as Array from "effect/Array";
+import * as Arr from "effect/Array";
 import * as HashMap from "effect/HashMap";
 import * as HashSet from "effect/HashSet";
 import * as MutableHashMap from "effect/MutableHashMap";
 import * as Option from "effect/Option";
 import * as Result from "effect/Result";
-import * as String from "effect/String";
+import * as Str from "effect/String";
 import { type Budget, spend } from "./budget.ts";
 
 /**
@@ -241,7 +241,7 @@ const fieldMap = Parser.fold(bibtexField, {
   f: (fields, [key, value]) => {
     const fits =
       MutableHashMap.size(fields) < MAX_FIELDS_PER_ENTRY || MutableHashMap.has(fields, key);
-    if (String.isNonEmpty(key) && fits) MutableHashMap.set(fields, key, value);
+    if (Str.isNonEmpty(key) && fits) MutableHashMap.set(fields, key, value);
     return fields;
   },
 });
@@ -339,7 +339,7 @@ function evaluateValue(raw: string, macros: Macros): string {
   const parsed = Parser.parse(valueGrammar, raw);
   if (Result.isFailure(parsed)) return unwrapRawValue(raw).slice(0, MAX_VALUE_LENGTH);
   const [first, rest] = parsed.success;
-  return Array.reduce([first, ...rest], "", (value, part) =>
+  return Arr.reduce([first, ...rest], "", (value, part) =>
     value.length >= MAX_VALUE_LENGTH
       ? value
       : (value + resolvePart(part, macros)).slice(0, MAX_VALUE_LENGTH),
@@ -385,8 +385,8 @@ function readEntry(block: RawBlock, macros: Macros): BibtexEntry {
   }
   const [key, raw] = scanned.success[1];
   const fields = HashMap.fromIterable(
-    Array.map(
-      Array.fromIterable(raw),
+    Arr.map(
+      Arr.fromIterable(raw),
       ([name, value]) => [name, evaluateValue(value, macros)] as const,
     ),
   );
@@ -421,7 +421,7 @@ export function scanBibtex(
   };
   const entries: BibtexEntry[] = [];
   // One entry past the cap tells a truncated document.
-  const truncated = Array.some(scanBlocks(content, maxEntries + 1), (block) => {
+  const truncated = Arr.some(scanBlocks(content, maxEntries + 1), (block) => {
     if (block.kind === "string") defineMacros(block.body, macros);
     else if (entries.length < maxEntries) entries.push(readEntry(block, macros));
     else return true;

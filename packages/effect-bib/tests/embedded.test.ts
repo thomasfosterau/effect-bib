@@ -8,7 +8,7 @@
  */
 
 import * as Option from "effect/Option";
-import * as Record from "effect/Record";
+import * as R from "effect/Record";
 import * as Schema from "effect/Schema";
 import { describe, expect, it } from "vite-plus/test";
 import { readEmbeddedMetadata } from "@thomasfosterau/effect-bib";
@@ -231,7 +231,7 @@ describe("precedence", () => {
 describe("COinS", () => {
   /** A COinS span for the KEV pairs. */
   const span = (pairs: Readonly<Record<string, string>>): string =>
-    `<span class="Z3988" title="${Record.toEntries(pairs)
+    `<span class="Z3988" title="${R.toEntries(pairs)
       .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
       .join("&amp;")}"></span>`;
 

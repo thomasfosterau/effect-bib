@@ -6,7 +6,7 @@
  * @module tests/unit/biblio-markup
  */
 
-import * as Array from "effect/Array";
+import * as Arr from "effect/Array";
 import { describe, expect, it } from "vite-plus/test";
 import {
   bold,
@@ -53,7 +53,7 @@ describe("parseCslMarkup", () => {
   });
 
   it("keeps unknown, unbalanced and attribute-bearing tags as literal text", () => {
-    Array.forEach(
+    Arr.forEach(
       [
         "a < b",
         "x <u>u</u>",

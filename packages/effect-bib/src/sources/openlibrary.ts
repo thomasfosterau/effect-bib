@@ -18,10 +18,10 @@
 
 // Refit onto the CSL-aligned `BiblioRecord` (website#1070, website#574).
 
-import * as Array from "effect/Array";
+import * as Arr from "effect/Array";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
-import * as Predicate from "effect/Predicate";
+import * as P from "effect/Predicate";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 import type * as Types from "effect/Types";
@@ -101,7 +101,7 @@ const decodeAuthorReference = Schema.decodeUnknownOption(
  * @since 0.1.0
  */
 export function openLibraryAuthorKeys(edition: OpenLibraryEdition): readonly string[] {
-  return Array.filterMap(edition.authors ?? [], (ref): Result.Result<string, void> =>
+  return Arr.filterMap(edition.authors ?? [], (ref): Result.Result<string, void> =>
     Option.match(decodeAuthorReference(ref), {
       onNone: () => Result.failVoid,
       onSome: ({ key }) => Result.succeed(key),
@@ -129,28 +129,28 @@ function dateFromPublishDate(value: string): Option.Option<CslDate> {
 
 /** Picks the first checksum-valid ISBN literal echoed by the upstream 13/10 arrays, else the requested one. */
 function pickIsbn(edition: OpenLibraryEdition, requested: Isbn): Isbn {
-  const candidates = Array.flatMap([edition.isbn_13, edition.isbn_10], (list) => list ?? []);
-  const decoded = Array.filterMap(candidates, (value): Result.Result<Isbn, void> => {
-    if (!Predicate.isString(value)) return Result.failVoid;
+  const candidates = Arr.flatMap([edition.isbn_13, edition.isbn_10], (list) => list ?? []);
+  const decoded = Arr.filterMap(candidates, (value): Result.Result<Isbn, void> => {
+    if (!P.isString(value)) return Result.failVoid;
     const isbn = decodeIsbn(value);
     return Option.isNone(isbn) ? Result.failVoid : Result.succeed(isbn.value);
   });
-  return Option.getOrElse(Array.head(decoded), () => requested);
+  return Option.getOrElse(Arr.head(decoded), () => requested);
 }
 
 /** Bounded, sanitised subject strings for the `extra.subject` passthrough. */
 function subjectList(values: Option.Option<readonly unknown[]>): Option.Option<readonly string[]> {
   if (Option.isNone(values)) return Option.none();
-  const subjects = Array.filterMap(values.value, (value): Result.Result<string, void> => {
+  const subjects = Arr.filterMap(values.value, (value): Result.Result<string, void> => {
     const text = sanitiseText(value);
     return Option.isNone(text) ? Result.failVoid : Result.succeed(text.value);
   }).slice(0, MAX_SUBJECTS);
-  return Array.isArrayNonEmpty(subjects) ? Option.some(subjects) : Option.none();
+  return Arr.isArrayNonEmpty(subjects) ? Option.some(subjects) : Option.none();
 }
 
 /** Structures a bounded list of author display names into {@link CslName}s. */
 function structuredAuthors(names: readonly string[]): CslName[] {
-  return Array.filterMap(names, (name): Result.Result<CslName, void> => {
+  return Arr.filterMap(names, (name): Result.Result<CslName, void> => {
     const parsed = parsePersonName(name);
     return parsed === null ? Result.failVoid : Result.succeed(parsed);
   }).slice(0, MAX_AUTHORS);
@@ -189,7 +189,7 @@ export function normaliseOpenLibraryRecord(
   const optional: Types.Mutable<Partial<BiblioRecord>> = {};
   if (Option.isSome(publisher)) optional.publisher = publisher.value;
   if (Option.isSome(publisherPlace)) optional["publisher-place"] = publisherPlace.value;
-  if (Array.isReadonlyArrayNonEmpty(author)) optional.author = author;
+  if (Arr.isReadonlyArrayNonEmpty(author)) optional.author = author;
   if (Option.isSome(issued)) optional.issued = issued.value;
   const passthrough: Types.Mutable<Pick<BiblioRecord, "extra">> = {};
   if (Option.isSome(subject)) passthrough.extra = { subject: subject.value };
@@ -239,7 +239,7 @@ export const lookupOpenLibraryByIsbn: (
     (key) => ol(`${key}.json`, OpenLibraryAuthor),
     { concurrency: 1 },
   );
-  const authorNames = Array.filterMap(authors, (author): Result.Result<string, void> => {
+  const authorNames = Arr.filterMap(authors, (author): Result.Result<string, void> => {
     if (Option.isNone(author)) return Result.failVoid;
     const name = openLibraryAuthorName(author.value);
     return Option.isNone(name) ? Result.failVoid : Result.succeed(name.value);

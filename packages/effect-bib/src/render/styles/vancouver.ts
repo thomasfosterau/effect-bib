@@ -23,7 +23,7 @@
 // is what the golden tests exercise.
 
 import * as Option from "effect/Option";
-import * as String from "effect/String";
+import * as Str from "effect/String";
 import type { BiblioRecord } from "../../record.ts";
 import {
   dispatchRich,
@@ -58,7 +58,7 @@ function authorNames(ctx: RenderContext): NameListOptions {
 /** `"Smith JR, Doe AB."` — the author head, or empty when unauthored. */
 function head(record: BiblioRecord, ctx: RenderContext): RichText {
   const names = formatNameList(record.author ?? [], authorNames(ctx));
-  return text(String.isNonEmpty(names) ? terminate(names) : "");
+  return text(Str.isNonEmpty(names) ? terminate(names) : "");
 }
 
 /** A field followed by a period, when present. */
@@ -102,7 +102,7 @@ function book(record: BiblioRecord, ctx: RenderContext): RichText {
 function chapter(record: BiblioRecord, ctx: RenderContext): RichText {
   const editors = formatNameList(record.editor ?? [], authorNames(ctx));
   const label = (record.editor?.length ?? 0) > 1 ? EDITORS : EDITOR;
-  const inClause = String.isNonEmpty(editors)
+  const inClause = Str.isNonEmpty(editors)
     ? part(`${ctx.locale.in}: ${editors}, ${label}.`)
     : Option.none<RichText>();
   const pages =
@@ -125,7 +125,7 @@ function article(record: BiblioRecord, ctx: RenderContext): RichText {
       ? `${record.volume}${record.issue !== undefined ? `(${record.issue})` : ""}`
       : "";
   const page = record.page !== undefined ? `:${record.page}` : "";
-  const detail = `${year(record, ctx)}${String.isNonEmpty(volIssue) ? `;${volIssue}` : ""}${page}`;
+  const detail = `${year(record, ctx)}${Str.isNonEmpty(volIssue) ? `;${volIssue}` : ""}${page}`;
   return joinRich(
     [
       terminated(richField(record, "title")),

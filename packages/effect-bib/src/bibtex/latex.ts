@@ -19,7 +19,7 @@
 import { Compiler, Parser, Token } from "@thomasfosterau/effect-parse";
 import * as HashMap from "effect/HashMap";
 import * as Option from "effect/Option";
-import * as Record from "effect/Record";
+import * as R from "effect/Record";
 import * as Result from "effect/Result";
 import { braced } from "./scan.ts";
 
@@ -195,7 +195,7 @@ const withGroup = (f: (inner: string) => string): Parser.Parser<string> =>
  * function, so a command's parser is not rebuilt each time it occurs.
  * Later entries win, so an accent takes precedence over a symbol word.
  */
-const controlWords = Record.fromEntries([
+const controlWords = R.fromEntries([
   ...Array.from(SYMBOL_WORDS, ([name, symbol]) => [name, Parser.succeed(symbol)] as const),
   ["url", withGroup((inner) => inner)],
   ["href", withGroup(() => "")],
@@ -208,7 +208,7 @@ const controlWords = Record.fromEntries([
 const droppedCommand = Parser.succeed("");
 
 /** What follows a known control symbol (`\"`, `\&`, `\\`, …); an accent wins over a character. */
-const controlSymbols = Record.fromEntries([
+const controlSymbols = R.fromEntries([
   ...Array.from(SYMBOL_CHARACTERS, ([char, text]) => [char, Parser.succeed(text)] as const),
   ...Array.from(SYMBOL_ACCENTS, ([char, mark]) => [char, accented(mark)] as const),
 ]);
@@ -301,7 +301,7 @@ const literal = (text: string): string => text.replace(/</g, LITERAL_LT);
 function markupPieces(inNoCase: boolean): Parser.Parser<string> {
   const decode = (inner: string): string =>
     inNoCase ? decodeNoCaseMarkup(inner) : decodeLatexMarkup(inner);
-  const words = Record.fromEntries([
+  const words = R.fromEntries([
     ...Array.from(
       SYMBOL_WORDS,
       ([name, symbol]) => [name, Parser.succeed(literal(symbol))] as const,

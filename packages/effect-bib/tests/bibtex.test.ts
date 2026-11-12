@@ -9,7 +9,7 @@
  * @module tests/unit/biblio-bibtex
  */
 
-import * as Record from "effect/Record";
+import * as R from "effect/Record";
 import { assert, describe, expect, it } from "vite-plus/test";
 import {
   MAX_AUTHORS,
@@ -678,7 +678,7 @@ describe("hostile input", () => {
     const record = expectParsed(
       parseBibtex(`@misc{k, title = {T}, doi = {10.1000/x}, ${fields}}`)[0],
     );
-    expect(Record.keys(record.extra ?? {})).toHaveLength(254);
+    expect(R.keys(record.extra ?? {})).toHaveLength(254);
   });
 
   it("bounds macro expansion across a document, however many fields name a large macro", () => {
@@ -688,7 +688,7 @@ describe("hostile input", () => {
     expect(content.length).toBeLessThanOrEqual(MAX_INPUT_LENGTH);
     const record = expectParsed(parseBibtex(content)[0]);
     // Only the first fields within the expansion budget expand.
-    const expanded = Record.keys(record.extra ?? {}).length;
+    const expanded = R.keys(record.extra ?? {}).length;
     expect(expanded).toBeGreaterThan(0);
     expect(expanded).toBeLessThan(200);
   });
@@ -707,7 +707,7 @@ describe("hostile input", () => {
     const outcomes = parseBibtex(content);
     expect(outcomes).toHaveLength(5000);
     // The first children decode the inherited fields; the budget stops the rest.
-    expect(Record.keys(expectParsed(outcomes[1]).extra ?? {})).toHaveLength(100);
+    expect(R.keys(expectParsed(outcomes[1]).extra ?? {})).toHaveLength(100);
     expect(expectParsed(outcomes[1]).author).toEqual([{ family: "Doe", given: "Jane" }]);
     expect(expectParsed(outcomes[4999]).extra).toBeUndefined();
     expect(expectParsed(outcomes[4999]).author).toBeUndefined();

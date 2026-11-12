@@ -18,7 +18,7 @@
 
 // website#1072. That determinism is the property the snapshot fixtures pin.
 
-import * as Array from "effect/Array";
+import * as Arr from "effect/Array";
 import * as Option from "effect/Option";
 import * as Order from "effect/Order";
 import type { BiblioRecord } from "../record.ts";
@@ -64,7 +64,7 @@ function orderRecords(
 ): readonly BiblioRecord[] {
   if (style.category === "numeric") return records;
   // Author-date and note bibliographies are alphabetical.
-  return Array.sortWith(records, style.sortKey, Order.String);
+  return Arr.sortWith(records, style.sortKey, Order.String);
 }
 
 /**

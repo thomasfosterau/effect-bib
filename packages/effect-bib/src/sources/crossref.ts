@@ -16,11 +16,11 @@
 
 // Refit onto the CSL-aligned `BiblioRecord` (website#1070, website#574).
 
-import * as Array from "effect/Array";
+import * as Arr from "effect/Array";
 import * as Effect from "effect/Effect";
 import * as HashMap from "effect/HashMap";
 import * as Option from "effect/Option";
-import * as Predicate from "effect/Predicate";
+import * as P from "effect/Predicate";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 import type * as Types from "effect/Types";
@@ -38,6 +38,7 @@ import {
 } from "../record.ts";
 import { LookupFailed } from "./errors.ts";
 import { firstString, jsonGet } from "./http.ts";
+import { optionalSlots } from "./slots.ts";
 
 const CROSSREF_BASE = "https://api.crossref.org";
 
@@ -117,7 +118,7 @@ const decodeCrossrefAuthor = Schema.decodeUnknownOption(CrossrefAuthor);
 
 /** Builds a structured {@link CslName} from a Crossref author `{ given, family, name, ORCID }` object. */
 function crossrefAuthorName(author: typeof CrossrefAuthor.Type): Option.Option<CslName> {
-  const hasStructured = Predicate.isString(author.family) || Predicate.isString(author.given);
+  const hasStructured = P.isString(author.family) || P.isString(author.given);
   return readCslName({
     family: author.family,
     given: author.given,
@@ -141,27 +142,24 @@ const decodeCrossrefDate = Schema.decodeUnknownOption(CrossrefDate);
 
 /** Extracts a {@link CslDate} from a Crossref `date-parts` object, keeping month/day when present. */
 function crossrefDate(date: typeof CrossrefDate.Type): Option.Option<CslDate> {
-  const nums = Array.filter(
+  const nums = Arr.filter(
     date["date-parts"][0],
-    (n): n is number => Predicate.isNumber(n) && Number.isFinite(n),
+    (n): n is number => P.isNumber(n) && Number.isFinite(n),
   );
-  if (!Array.isReadonlyArrayNonEmpty(nums)) return Option.none();
-  return Option.map(sanitiseYear(Array.headNonEmpty(nums)), (year) => ({
-    "date-parts": [[year, ...Array.tailNonEmpty(nums)]],
+  if (!Arr.isReadonlyArrayNonEmpty(nums)) return Option.none();
+  return Option.map(sanitiseYear(Arr.headNonEmpty(nums)), (year) => ({
+    "date-parts": [[year, ...Arr.tailNonEmpty(nums)]],
   }));
 }
 
 /** The first checksum-valid ISSN from Crossref's `ISSN` array, or `None`. */
 function firstIssn(values: Option.Option<readonly unknown[]>): Option.Option<Issn> {
-  return Array.head(
-    Array.filterMap(
-      Option.isNone(values) ? [] : values.value,
-      (value): Result.Result<Issn, void> => {
-        if (!Predicate.isString(value)) return Result.failVoid;
-        const decoded = decodeIssn(value);
-        return Option.isNone(decoded) ? Result.failVoid : Result.succeed(decoded.value);
-      },
-    ),
+  return Arr.head(
+    Arr.filterMap(Option.isNone(values) ? [] : values.value, (value): Result.Result<Issn, void> => {
+      if (!P.isString(value)) return Result.failVoid;
+      const decoded = decodeIssn(value);
+      return Option.isNone(decoded) ? Result.failVoid : Result.succeed(decoded.value);
+    }),
   );
 }
 
@@ -170,7 +168,7 @@ type CrossrefMessage = NonNullable<CrossrefResponse["message"]>;
 
 /** Bounded, ordered author list from `message.author`. */
 function collectCrossrefAuthors(entries: Option.Option<readonly unknown[]>): CslName[] {
-  return Array.filterMap(
+  return Arr.filterMap(
     Option.isNone(entries) ? [] : entries.value,
     (entry): Result.Result<CslName, void> => {
       const name = Option.flatMap(decodeCrossrefAuthor(entry), crossrefAuthorName);
@@ -181,7 +179,7 @@ function collectCrossrefAuthors(entries: Option.Option<readonly unknown[]>): Csl
 
 /** The record's DOI: the upstream-echoed one when it re-validates, else the requested one. */
 function crossrefDoi(message: CrossrefMessage, requestedDoi: Doi): Doi {
-  const echoed = Predicate.isString(message.DOI) ? decodeDoi(message.DOI) : Option.none<Doi>();
+  const echoed = P.isString(message.DOI) ? decodeDoi(message.DOI) : Option.none<Doi>();
   return Option.getOrElse(echoed, () => requestedDoi);
 }
 
@@ -217,14 +215,15 @@ function assembleCrossrefRecord(fields: CrossrefFields): BiblioRecord {
     issn,
     requestedDoi,
   } = fields;
-  const optional: Types.Mutable<Partial<BiblioRecord>> = {};
-  if (Option.isSome(containerTitle)) optional["container-title"] = containerTitle.value;
+  const optional: Types.Mutable<Partial<BiblioRecord>> = optionalSlots({
+    containerTitle,
+    volume,
+    issue,
+    page,
+    author,
+    issued,
+  });
   if (Option.isSome(publisher)) optional.publisher = publisher.value;
-  if (Option.isSome(volume)) optional.volume = volume.value;
-  if (Option.isSome(issue)) optional.issue = issue.value;
-  if (Option.isSome(page)) optional.page = page.value;
-  if (Array.isReadonlyArrayNonEmpty(author)) optional.author = author;
-  if (Option.isSome(issued)) optional.issued = issued.value;
   const identifiers: Types.Mutable<BiblioRecord["identifiers"]> = { doi };
   if (Option.isSome(issn)) identifiers.issn = issn.value;
   return {

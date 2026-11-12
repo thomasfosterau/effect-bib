@@ -14,12 +14,12 @@
  * @since 0.1.0
  */
 
-import * as Array from "effect/Array";
+import * as Arr from "effect/Array";
 import * as HashMap from "effect/HashMap";
 import * as HashSet from "effect/HashSet";
 import * as MutableHashSet from "effect/MutableHashSet";
 import * as Option from "effect/Option";
-import * as Record from "effect/Record";
+import * as R from "effect/Record";
 import * as Result from "effect/Result";
 import type * as Types from "effect/Types";
 import { decodeArxiv, decodeIsbn, decodeIssn, decodePmcid, decodePmid } from "../identifiers.ts";
@@ -306,7 +306,7 @@ function ungroup(value: string): string {
   );
   if (wrapped === 0 || wrapped * 2 > trimmed.length) return trimmed;
   const inner = trimmed.slice(wrapped, trimmed.length - wrapped);
-  const lowest = Array.reduce(inner, { depth: 0, lowest: 0 }, (state, char) => {
+  const lowest = Arr.reduce(inner, { depth: 0, lowest: 0 }, (state, char) => {
     const depth = char === "{" ? state.depth + 1 : char === "}" ? state.depth - 1 : state.depth;
     return { depth, lowest: Math.min(state.lowest, depth) };
   }).lowest;
@@ -343,7 +343,7 @@ const text = (reader: Reader, key: string): Option.Option<string> =>
 /** The first present field of `keys` as decoded text; only that field is marked used. */
 const firstText = (reader: Reader, keys: readonly string[]): Option.Option<string> =>
   Option.flatMap(
-    Array.findFirst(keys, (key) => HashMap.has(reader.fields, key)),
+    Arr.findFirst(keys, (key) => HashMap.has(reader.fields, key)),
     (key) => text(reader, key),
   );
 
@@ -355,11 +355,11 @@ const firstText = (reader: Reader, keys: readonly string[]): Option.Option<strin
  * blanks on both sides separates two items.
  */
 function splitList(source: string): string[] {
-  const runs = Array.map(
-    Array.fromIterable(source.matchAll(/[{}]|\s+|[^{}\s]+/g)),
+  const runs = Arr.map(
+    Arr.fromIterable(source.matchAll(/[{}]|\s+|[^{}\s]+/g)),
     (match) => match[0],
   );
-  const depths = Array.scan(runs, 0, (depth, run) =>
+  const depths = Arr.scan(runs, 0, (depth, run) =>
     run === "{" ? depth + 1 : run === "}" ? Math.max(0, depth - 1) : depth,
   );
   const isSeparator = (index: number): boolean =>
@@ -367,7 +367,7 @@ function splitList(source: string): string[] {
     runs[index]?.toLowerCase() === "and" &&
     /^\s/.test(runs[index - 1] ?? "") &&
     /^\s/.test(runs[index + 1] ?? "");
-  return Array.reduce(runs, [""], (items, run, index) => {
+  return Arr.reduce(runs, [""], (items, run, index) => {
     if (isSeparator(index)) items.push("");
     else if (!isSeparator(index - 1) && !isSeparator(index + 1))
       items[items.length - 1] = `${items[items.length - 1]}${run}`;
@@ -386,12 +386,12 @@ function splitList(source: string): string[] {
 const listText = (reader: Reader, key: string): Option.Option<string> =>
   Option.flatMap(take(reader, key), (source) =>
     Option.flatMap(budgeted(reader, key, source), (clamped) => {
-      const items = Array.getSomes(
-        Array.map(splitList(clamped).slice(0, reader.limits.maxAuthors), (item) =>
+      const items = Arr.getSomes(
+        Arr.map(splitList(clamped).slice(0, reader.limits.maxAuthors), (item) =>
           decodeClamped(reader, item),
         ),
       );
-      return Array.isReadonlyArrayNonEmpty(items)
+      return Arr.isReadonlyArrayNonEmpty(items)
         ? sanitiseText(items.join("; "), reader.limits.maxFieldLength)
         : Option.none();
     }),
@@ -400,7 +400,7 @@ const listText = (reader: Reader, key: string): Option.Option<string> =>
 /** The first present list field of `keys`, as {@link listText}; only that field is marked used. */
 const firstList = (reader: Reader, keys: readonly string[]): Option.Option<string> =>
   Option.flatMap(
-    Array.findFirst(keys, (key) => HashMap.has(reader.fields, key)),
+    Arr.findFirst(keys, (key) => HashMap.has(reader.fields, key)),
     (key) => listText(reader, key),
   );
 
@@ -410,14 +410,14 @@ const firstList = (reader: Reader, keys: readonly string[]): Option.Option<strin
  * is present, in that order, each a list, joined with `; `.
  */
 function readPublisher(reader: Reader): Option.Option<string> {
-  const parts = Array.getSomes([
+  const parts = Arr.getSomes([
     listText(reader, "school"),
     listText(reader, "institution"),
     listText(reader, "organization"),
     Option.isNone(howPublishedUrl(reader)) ? text(reader, "howpublished") : Option.none(),
     listText(reader, "publisher"),
   ]);
-  return Array.isReadonlyArrayNonEmpty(parts) ? Option.some(parts.join("; ")) : Option.none();
+  return Arr.isReadonlyArrayNonEmpty(parts) ? Option.some(parts.join("; ")) : Option.none();
 }
 
 /** Joins a title with its subtitle (`: `) and its addon (`. `). */
@@ -463,7 +463,7 @@ interface Titles {
 /** The journal title (`journaltitle` or `journal`, with `journalsubtitle`). */
 const journalTitle = (reader: Reader): Option.Option<string> =>
   Option.isSome(
-    Array.findFirst(["journaltitle", "journal"], (key) => HashMap.has(reader.fields, key)),
+    Arr.findFirst(["journaltitle", "journal"], (key) => HashMap.has(reader.fields, key)),
   )
     ? joinTitle(
         firstText(reader, ["journaltitle", "journal"]),
@@ -575,7 +575,7 @@ function firstValid(
   isValid: (candidate: string) => boolean,
 ): Option.Option<string> {
   return Option.flatMap(Option.flatMap(take(reader, key), decodeVerbatim(reader, key)), (value) =>
-    Option.orElse(Array.findFirst(value.split(/[\s,;]+/), isValid), () => Option.some(value)),
+    Option.orElse(Arr.findFirst(value.split(/[\s,;]+/), isValid), () => Option.some(value)),
   );
 }
 
@@ -667,7 +667,7 @@ const VARIANTS = HashMap.fromIterable<string, string>([
  */
 function readLanguage(reader: Reader): Option.Option<string> {
   return Option.flatMap(
-    Array.findFirst(["langid", "hyphenation", "language"], (key) =>
+    Arr.findFirst(["langid", "hyphenation", "language"], (key) =>
       Option.exists(peek(reader, key), (value) => Option.isSome(languageTag(value))),
     ),
     (key) =>
@@ -758,7 +758,7 @@ function readEprint(reader: Reader): Eprint {
       isValid,
     );
     if (Option.isSome(valid)) {
-      Array.forEach(["eprint", "eprinttype", "archiveprefix"], (key) => {
+      Arr.forEach(["eprint", "eprinttype", "archiveprefix"], (key) => {
         if (HashMap.has(reader.fields, key)) MutableHashSet.add(reader.consumed, key);
       });
     }
@@ -813,8 +813,8 @@ function cslVariables(reader: Reader, genre: Option.Option<string>, numbering: N
 
 /** Every field no mapping used, as `tex.<field>` (decoded, or verbatim for a link field). */
 function leftovers(reader: Reader): ReadonlyArray<readonly [string, string]> {
-  return Array.filterMap(
-    Array.fromIterable(reader.fields),
+  return Arr.filterMap(
+    Arr.fromIterable(reader.fields),
     ([key, source]): Result.Result<readonly [string, string], void> => {
       if (MutableHashSet.has(reader.consumed, key) || HashSet.has(IGNORED_FIELDS, key))
         return Result.failVoid;
@@ -834,7 +834,7 @@ function assignAll<K extends string, V>(
   target: Types.Mutable<Partial<Record<K, V>>>,
   values: ReadonlyArray<readonly [K, Option.Option<V>]>,
 ): void {
-  Array.forEach(values, ([key, value]) => {
+  Arr.forEach(values, ([key, value]) => {
     if (Option.isSome(value)) target[key] = value.value;
   });
 }
@@ -851,9 +851,8 @@ function readAdditions(
   const additions: Types.Mutable<BibtexAdditions> = {};
   const translator = readNames(reader, "translator", usePrefix, others);
   const containerAuthor = readNames(reader, "bookauthor", usePrefix, others);
-  if (Array.isReadonlyArrayNonEmpty(translator)) additions.translator = translator;
-  if (Array.isReadonlyArrayNonEmpty(containerAuthor))
-    additions["container-author"] = containerAuthor;
+  if (Arr.isReadonlyArrayNonEmpty(translator)) additions.translator = translator;
+  if (Arr.isReadonlyArrayNonEmpty(containerAuthor)) additions["container-author"] = containerAuthor;
   assignAll(additions, [
     ["collection-title", titles.collectionTitle],
     ["volume-title", titles.volumeTitle],
@@ -881,12 +880,12 @@ function readAdditions(
     ["event-date", dateField(reader, "eventdate")],
   ]);
   assignAll(additions, cslVariables(reader, readGenre(reader), numbering));
-  const extra: Types.Mutable<Record<string, unknown>> = {};
-  if (Array.isArrayNonEmpty(others)) extra["tex.others"] = others;
-  Array.forEach(leftovers(reader), ([key, value]) => {
+  const extra: Types.Mutable<NonNullable<BiblioRecord["extra"]>> = {};
+  if (Arr.isArrayNonEmpty(others)) extra["tex.others"] = others;
+  Arr.forEach(leftovers(reader), ([key, value]) => {
     extra[key] = value;
   });
-  if (!Record.isEmptyRecord(extra)) additions.extra = extra;
+  if (!R.isEmptyRecord(extra)) additions.extra = extra;
   return additions;
 }
 
@@ -949,5 +948,5 @@ export function mapBibtexEntries(
   limits: BibtexLimits,
   budget: Budget = { remaining: DECODED_SOURCE_FACTOR * limits.maxInputLength },
 ): BibtexMapped[] {
-  return Array.map(entries, (entry) => mapEntry(entry, limits, budget));
+  return Arr.map(entries, (entry) => mapEntry(entry, limits, budget));
 }

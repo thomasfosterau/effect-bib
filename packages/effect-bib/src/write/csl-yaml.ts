@@ -6,7 +6,7 @@
  * @since 0.1.0
  */
 
-import * as Array from "effect/Array";
+import * as Arr from "effect/Array";
 import * as Schema from "effect/Schema";
 import { type BiblioRecord, toCslJson } from "../record.ts";
 import { writeYamlMapping } from "../yaml.ts";
@@ -59,11 +59,11 @@ const toJson = Schema.decodeUnknownOption(Schema.Json);
  * @since 0.1.0
  */
 export function toCslYaml(records: readonly BiblioRecord[]): string {
-  const lines = Array.match(records, {
+  const lines = Arr.match(records, {
     onEmpty: () => ["references: []"],
     onNonEmpty: (list) =>
       writeYamlMapping({
-        references: Array.getSomes(list.map((record) => toJson(toCslJson(record)))),
+        references: Arr.getSomes(list.map((record) => toJson(toCslJson(record)))),
       }),
   });
   return ["---", ...lines, "...", ""].join("\n");

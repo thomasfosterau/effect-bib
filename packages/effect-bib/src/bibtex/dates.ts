@@ -10,10 +10,10 @@
  * @since 0.1.0
  */
 
-import * as Array from "effect/Array";
+import * as Arr from "effect/Array";
 import * as HashMap from "effect/HashMap";
 import * as Option from "effect/Option";
-import * as String from "effect/String";
+import * as Str from "effect/String";
 import type * as Types from "effect/Types";
 import { type CslDate, sanitiseText, sanitiseYear } from "../record.ts";
 
@@ -97,7 +97,7 @@ function readPoint(text: string): Option.Option<DatePoint> {
 const point = (parts: readonly number[], qualifier: string, unspecified: boolean): DatePoint => ({
   parts,
   season: Option.none(),
-  circa: unspecified || String.isNonEmpty(qualifier),
+  circa: unspecified || Str.isNonEmpty(qualifier),
 });
 
 /** True for the open side of an EDTF range (`2001/`, `2001/..`, `/2001`, `../2001`). */
@@ -164,7 +164,7 @@ export function readBibtexDate(text: string): Option.Option<CslDate> {
 
 /** English month names and abbreviations (lower-cased, without a period) → month number. */
 const MONTHS = HashMap.fromIterable<string, number>(
-  Array.flatMap(
+  Arr.flatMap(
     [
       "january",
       "february",
@@ -195,7 +195,7 @@ const MONTHS = HashMap.fromIterable<string, number>(
 export function readMonth(text: string): Option.Option<number> {
   const clean = text.trim().toLowerCase().replace(/\.$/, "");
   const numeric = Number(clean);
-  if (Number.isInteger(numeric) && String.isNonEmpty(clean)) {
+  if (Number.isInteger(numeric) && Str.isNonEmpty(clean)) {
     return numeric >= 1 && numeric <= 12 ? Option.some(numeric) : Option.none();
   }
   return HashMap.get(MONTHS, clean);

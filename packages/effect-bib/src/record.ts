@@ -26,14 +26,14 @@
 
 // See website#1069.
 
-import * as Array from "effect/Array";
+import * as Arr from "effect/Array";
 import * as HashSet from "effect/HashSet";
 import * as Option from "effect/Option";
-import * as Predicate from "effect/Predicate";
-import * as Record from "effect/Record";
+import * as P from "effect/Predicate";
+import * as R from "effect/Record";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
-import * as String from "effect/String";
+import * as Str from "effect/String";
 import * as Struct from "effect/Struct";
 import type * as Types from "effect/Types";
 import {
@@ -109,9 +109,9 @@ export function sanitiseText(
   value: unknown,
   maxLength: number = MAX_TEXT_FIELD_LENGTH,
 ): Option.Option<string> {
-  if (!Predicate.isString(value)) return Option.none();
+  if (!P.isString(value)) return Option.none();
   const collapsed = value.replace(/\s+/g, " ").trim();
-  if (String.isEmpty(collapsed)) return Option.none();
+  if (Str.isEmpty(collapsed)) return Option.none();
   return Option.some(collapsed.slice(0, limitOr(Option.some(maxLength), MAX_TEXT_FIELD_LENGTH)));
 }
 
@@ -125,7 +125,7 @@ export function sanitiseText(
  */
 // oxlint-disable-next-line effect/no-unknown-parameters -- untrusted-input boundary: a total sanitiser over any upstream value (see "The untrusted-input boundary" in packages/effect-bib/AGENTS.md)
 export function sanitiseYear(value: unknown): Option.Option<number> {
-  const n = Predicate.isNumber(value) ? value : Predicate.isString(value) ? Number(value) : NaN;
+  const n = P.isNumber(value) ? value : P.isString(value) ? Number(value) : NaN;
   if (!Number.isInteger(n)) return Option.none();
   if (n < MIN_PUBLICATION_YEAR || n > MAX_PUBLICATION_YEAR) return Option.none();
   return Option.some(n);
@@ -636,7 +636,7 @@ export function makeCslName(parts: {
   if (Option.isSome(suffix)) name.suffix = suffix.value;
   const literal = sanitiseText(parts.literal);
   if (Option.isSome(literal)) name.literal = literal.value;
-  if (Predicate.isString(parts.orcid)) {
+  if (P.isString(parts.orcid)) {
     const orcid = decodeOrcid(parts.orcid);
     if (Option.isSome(orcid)) name.orcid = orcid.value;
   }
@@ -659,7 +659,7 @@ export function parsePersonName(raw: string): CslName | null {
   if (comma >= 0) {
     return makeCslName({ family: cleaned.slice(0, comma), given: cleaned.slice(comma + 1) });
   }
-  const tokens = cleaned.split(" ").filter(String.isNonEmpty);
+  const tokens = cleaned.split(" ").filter(Str.isNonEmpty);
   if (tokens.length <= 1) return makeCslName({ family: cleaned });
   return makeCslName({ family: tokens[tokens.length - 1], given: tokens.slice(0, -1).join(" ") });
 }
@@ -719,19 +719,31 @@ export function endYearOf(date: CslDate): Option.Option<number> {
 // ── CSL-JSON interop ──────────────────────────────────────────────────
 
 /**
- * A plain CSL-JSON item object (the interchange shape).
+ * A plain CSL-JSON item object (the interchange shape): string keys, each
+ * value unread until a decoder checks it.
  *
  * @since 0.1.0
  */
-export type CslJsonItem = Record<string, unknown>;
+export const CslJsonItem = Schema.Record(Schema.String, Schema.Unknown);
+
+/**
+ * A plain CSL-JSON item object, as {@link toCslJson} writes it and
+ * {@link fromCslJson} reads it.
+ *
+ * @since 0.1.0
+ */
+export type CslJsonItem = typeof CslJsonItem.Type;
+
+/** A record's passthrough map: the CSL keys the model does not consume. */
+type RecordExtra = NonNullable<BiblioRecord["extra"]>;
 
 /** Serialises a {@link CslName} to a plain CSL name object, dropping empty keys. */
-function nameToCsl(name: CslName): Record<string, unknown> {
+function nameToCsl(name: CslName): CslName {
   return { ...name };
 }
 
 /** Serialises a {@link CslDate} to a plain CSL date object. */
-function dateToCsl(date: CslDate): Record<string, unknown> {
+function dateToCsl(date: CslDate): CslDate {
   const parts = date["date-parts"];
   return parts === undefined
     ? { ...date }
@@ -804,8 +816,8 @@ function definedFields<K extends string, V>(
   keys: readonly K[],
   project: (key: K) => Option.Option<V>,
 ): Readonly<Record<string, V>> {
-  return Record.fromEntries(
-    Array.filterMap(keys, (key): Result.Result<readonly [K, V], void> =>
+  return R.fromEntries(
+    Arr.filterMap(keys, (key): Result.Result<readonly [K, V], void> =>
       Option.match(project(key), {
         onNone: () => Result.failVoid,
         onSome: (value) => Result.succeed([key, value] as const),
@@ -875,7 +887,7 @@ export function readCslNameArray(
     onNone: (): CslName[] => [],
     onSome: (entries) =>
       // Scans no further than the cap: a hostile list cannot make every entry cost.
-      Array.filterMap(entries, (entry): Result.Result<CslName, void> => {
+      Arr.filterMap(entries, (entry): Result.Result<CslName, void> => {
         const name = readCslName(entry);
         return Option.isNone(name) ? Result.failVoid : Result.succeed(name.value);
       }).slice(0, cap),
@@ -884,21 +896,21 @@ export function readCslNameArray(
 
 /** Folds an empty name list to `None` for the record spread. */
 function fromCslNameList(names: readonly CslName[]): Option.Option<readonly CslName[]> {
-  return Array.isReadonlyArrayNonEmpty(names) ? Option.some(names) : Option.none();
+  return Arr.isReadonlyArrayNonEmpty(names) ? Option.some(names) : Option.none();
 }
 
 /** Cleans untrusted CSL `date-parts` lists to their finite numeric parts, or `None`. */
 function cleanDateParts(parts: readonly unknown[]): Option.Option<number[][]> {
-  const cleaned = Array.filterMap(parts, (part): Result.Result<number[], void> =>
+  const cleaned = Arr.filterMap(parts, (part): Result.Result<number[], void> =>
     Option.match(decodeUnknownArray(part), {
       onNone: () => Result.failVoid,
       onSome: (values) => {
-        const nums = values.filter((n): n is number => Predicate.isNumber(n) && Number.isFinite(n));
-        return Array.isReadonlyArrayNonEmpty(nums) ? Result.succeed(nums) : Result.failVoid;
+        const nums = values.filter((n): n is number => P.isNumber(n) && Number.isFinite(n));
+        return Arr.isReadonlyArrayNonEmpty(nums) ? Result.succeed(nums) : Result.failVoid;
       },
     }),
   );
-  return Array.isArrayNonEmpty(cleaned) ? Option.some(cleaned) : Option.none();
+  return Arr.isArrayNonEmpty(cleaned) ? Option.some(cleaned) : Option.none();
 }
 
 /** A CSL `season` is a string or a number (1–4), else absent. */
@@ -932,7 +944,7 @@ function fromCslDateValue(obj: typeof CslDateInput.Type): Option.Option<CslDate>
   if (Option.isSome(literal)) date.literal = literal.value;
   const raw = sanitiseText(obj.raw);
   if (Option.isSome(raw)) date.raw = raw.value;
-  return Array.isArrayEmpty(Struct.keys(date)) ? Option.none() : Option.some(date);
+  return Arr.isArrayEmpty(Struct.keys(date)) ? Option.none() : Option.some(date);
 }
 
 /**
@@ -979,16 +991,15 @@ function fromCslDateValue(obj: typeof CslDateInput.Type): Option.Option<CslDate>
 // oxlint-disable-next-line effect/no-unknown-parameters -- untrusted-input boundary: the lenient interop decoder takes any value by contract (see "The untrusted-input boundary" in packages/effect-bib/AGENTS.md)
 export function fromCslJson(item: unknown, limits: RecordLimits = {}): BiblioRecord {
   const provenance: Provenance = { source: "csl-json" };
-  if (!Predicate.isObjectOrArray(item)) {
+  if (!P.isObjectOrArray(item)) {
     return { type: "document", identifiers: {}, provenance };
   }
   // `isObjectOrArray` proved a non-null object or array; every key is read as
   // `unknown` and re-checked below, and an array reads as its index keys
   // (which land in `extra`), exactly as an object would.
-  const obj: Readonly<Record<string, unknown>> = Array.isArray(item) ? { ...item } : item;
+  const obj: CslJsonItem = Arr.isArray(item) ? { ...item } : item;
   const rawType = obj.type;
-  const type: CslItemType =
-    Predicate.isString(rawType) && isCslItemType(rawType) ? rawType : "document";
+  const type: CslItemType = P.isString(rawType) && isCslItemType(rawType) ? rawType : "document";
   const maxFieldLength = limitOr(
     Option.fromUndefinedOr(limits.maxFieldLength),
     MAX_TEXT_FIELD_LENGTH,
@@ -996,7 +1007,7 @@ export function fromCslJson(item: unknown, limits: RecordLimits = {}): BiblioRec
   const strings = readCslStrings(obj, maxFieldLength);
   const extra = collectCslExtra(obj, strings.aliased);
   const passthrough: Types.Mutable<Pick<BiblioRecord, "extra">> = {};
-  if (!Record.isEmptyRecord(extra)) passthrough.extra = extra;
+  if (!R.isEmptyRecord(extra)) passthrough.extra = extra;
   return {
     type,
     ...readCslItemMembers(obj, maxFieldLength),
@@ -1017,22 +1028,22 @@ const decodeItemId = Schema.decodeUnknownOption(Schema.Union([Schema.String, Sch
 
 /** Reads the item-level members: the `id` and the `categories` tags. */
 function readCslItemMembers(
-  obj: Readonly<Record<string, unknown>>,
+  obj: CslJsonItem,
   maxFieldLength: number,
 ): Pick<BiblioRecord, "id" | "categories"> {
   const members: Types.Mutable<Pick<BiblioRecord, "id" | "categories">> = {};
   const id = Option.flatMap(decodeItemId(obj.id), (value): Option.Option<string | number> =>
-    Predicate.isNumber(value) ? Option.some(value) : sanitiseText(value, maxFieldLength),
+    P.isNumber(value) ? Option.some(value) : sanitiseText(value, maxFieldLength),
   );
   if (Option.isSome(id)) members.id = id.value;
   const categories = Option.match(decodeUnknownArray(obj.categories), {
     onNone: (): string[] => [],
     onSome: (values) =>
-      Array.getSomes(
+      Arr.getSomes(
         values.slice(0, MAX_CATEGORIES).map((value) => sanitiseText(value, maxFieldLength)),
       ),
   });
-  if (Array.isArrayNonEmpty(categories)) members.categories = categories;
+  if (Arr.isArrayNonEmpty(categories)) members.categories = categories;
   return members;
 }
 
@@ -1043,22 +1054,16 @@ interface CslStrings {
 }
 
 /** Reads the modelled CSL string variables, sanitised, falling back to their legacy aliases. */
-function readCslStrings(
-  obj: Readonly<Record<string, unknown>>,
-  maxFieldLength: number,
-): CslStrings {
+function readCslStrings(obj: CslJsonItem, maxFieldLength: number): CslStrings {
   const read = (key: string): Option.Option<string> =>
     sanitiseCslString(decodeCslStringValue(obj[key]), maxFieldLength);
-  const values: Types.Mutable<Partial<Record<CslStringVar, string>>> = Record.fromEntries(
-    Array.filterMap(
-      CSL_STRING_VARS,
-      (key): Result.Result<readonly [CslStringVar, string], void> => {
-        const value = read(key);
-        return Option.isNone(value) ? Result.failVoid : Result.succeed([key, value.value] as const);
-      },
-    ),
+  const values: Types.Mutable<Partial<Record<CslStringVar, string>>> = R.fromEntries(
+    Arr.filterMap(CSL_STRING_VARS, (key): Result.Result<readonly [CslStringVar, string], void> => {
+      const value = read(key);
+      return Option.isNone(value) ? Result.failVoid : Result.succeed([key, value.value] as const);
+    }),
   );
-  const aliased = Array.filterMap(CSL_ALIASES, ([alias, key]): Result.Result<string, void> => {
+  const aliased = Arr.filterMap(CSL_ALIASES, ([alias, key]): Result.Result<string, void> => {
     if (values[key] !== undefined) return Result.failVoid;
     const value = read(alias);
     if (Option.isNone(value)) return Result.failVoid;
@@ -1070,11 +1075,11 @@ function readCslStrings(
 
 /** Reads the modelled CSL name variables into structured name lists. */
 function readCslNames(
-  obj: Readonly<Record<string, unknown>>,
+  obj: CslJsonItem,
   maxNames: number,
 ): Partial<Record<CslNameVar, readonly CslName[]>> {
-  return Record.fromEntries(
-    Array.filterMap(
+  return R.fromEntries(
+    Arr.filterMap(
       CSL_NAME_VARS,
       (key): Result.Result<readonly [CslNameVar, readonly CslName[]], void> => {
         const list = fromCslNameList(readCslNameArray(obj[key], maxNames));
@@ -1085,11 +1090,9 @@ function readCslNames(
 }
 
 /** Reads the modelled CSL date variables into structured dates. */
-function readCslDates(
-  obj: Readonly<Record<string, unknown>>,
-): Partial<Record<CslDateVar, CslDate>> {
-  return Record.fromEntries(
-    Array.filterMap(CSL_DATE_VARS, (key): Result.Result<readonly [CslDateVar, CslDate], void> => {
+function readCslDates(obj: CslJsonItem): Partial<Record<CslDateVar, CslDate>> {
+  return R.fromEntries(
+    Arr.filterMap(CSL_DATE_VARS, (key): Result.Result<readonly [CslDateVar, CslDate], void> => {
       const date = Option.flatMap(decodeCslDateInput(obj[key]), fromCslDateValue);
       return Option.isNone(date) ? Result.failVoid : Result.succeed([key, date.value] as const);
     }),
@@ -1102,7 +1105,7 @@ function readCslDates(
  * `number` (`arXiv:2101.01234`) or an arxiv.org `URL`.
  */
 function readCslIdentifiers(
-  obj: Readonly<Record<string, unknown>>,
+  obj: CslJsonItem,
   strings: Partial<Record<CslStringVar, string>>,
 ): RecordIdentifiers {
   const identifiers: Types.Mutable<RecordIdentifiers> = {};
@@ -1110,7 +1113,7 @@ function readCslIdentifiers(
   // first checksum-valid one is the record's.
   const isbn = Option.flatMap(decodeString(obj.ISBN), (value) =>
     Option.orElse(decodeIsbn(value), () =>
-      Array.findFirst(value.split(/[\s,;]+/), (token) => decodeIsbn(token)),
+      Arr.findFirst(value.split(/[\s,;]+/), (token) => decodeIsbn(token)),
     ),
   );
   if (Option.isSome(isbn)) identifiers.isbn = isbn.value;
@@ -1142,11 +1145,8 @@ function readCslIdentifiers(
 }
 
 /** Captures the CSL keys the model doesn't consume (nor read as an alias) into the passthrough map. */
-function collectCslExtra(
-  obj: Readonly<Record<string, unknown>>,
-  aliased: HashSet.HashSet<string>,
-): Record<string, unknown> {
-  return Record.filter(
+function collectCslExtra(obj: CslJsonItem, aliased: HashSet.HashSet<string>): RecordExtra {
+  return R.filter(
     obj,
     (_value, key) => !HashSet.has(KNOWN_CSL_KEYS, key) && !HashSet.has(aliased, key),
   );

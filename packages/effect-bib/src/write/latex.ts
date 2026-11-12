@@ -15,10 +15,10 @@
  * @since 0.1.0
  */
 
-import * as Array from "effect/Array";
+import * as Arr from "effect/Array";
 import * as HashMap from "effect/HashMap";
 import * as Option from "effect/Option";
-import * as Predicate from "effect/Predicate";
+import * as P from "effect/Predicate";
 import { parseCslMarkup } from "../render/markup.ts";
 import type { RichText, Styled } from "../render/rich.ts";
 
@@ -127,8 +127,8 @@ export type LatexDialect = "bibtex" | "biblatex";
  * @since 0.1.0
  */
 function escapeLatex(value: string, dialect: LatexDialect): string {
-  const chars = Array.fromIterable(value.normalize("NFC"));
-  return Array.map(chars, (char, index) => {
+  const chars = Arr.fromIterable(value.normalize("NFC"));
+  return Arr.map(chars, (char, index) => {
     const next = chars[index + 1];
     if ((char === "-" && next === "-") || (char === "'" && next === "'")) return `${char}{}`;
     const special = HashMap.get(SPECIALS, char);
@@ -155,9 +155,9 @@ const COMMANDS: Readonly<Record<Styled["_tag"], string>> = {
 function richToLatex(rich: RichText, dialect: LatexDialect): string {
   return rich
     .map((node): string => {
-      if (Predicate.isTagged(node, "Text")) return escapeLatex(node.text, dialect);
+      if (P.isTagged(node, "Text")) return escapeLatex(node.text, dialect);
       const inner = richToLatex(node.children, dialect);
-      if (Predicate.isTagged(node, "Link") || Predicate.isTagged(node, "Display")) return inner;
+      if (P.isTagged(node, "Link") || P.isTagged(node, "Display")) return inner;
       return `${COMMANDS[node._tag]}{${inner}}`;
     })
     .join("");

@@ -11,7 +11,7 @@
  */
 
 import { Compiler, Parser, Token } from "@thomasfosterau/effect-parse";
-import * as Array from "effect/Array";
+import * as Arr from "effect/Array";
 import * as Option from "effect/Option";
 import * as Result from "effect/Result";
 import { type CslName, MAX_AUTHORS, readCslName } from "../record.ts";
@@ -54,7 +54,7 @@ const tokens = Compiler.closure(
 /** Splits a token list at every token `isSeparator` accepts. */
 function splitOn(list: readonly string[], isSeparator: (token: string) => boolean): string[][] {
   const start: string[][] = [[]];
-  return Array.reduce(list, start, (groups, token) => {
+  return Arr.reduce(list, start, (groups, token) => {
     if (isSeparator(token)) groups.push([]);
     else groups[groups.length - 1].push(token);
     return groups;
@@ -93,7 +93,7 @@ interface NameParts {
 
 /** Splits `von Last` (the words before a comma): `von` runs to the last lower-case word that leaves a `Last`. */
 function splitVonLast(words: readonly string[]): Pick<NameParts, "von" | "last"> {
-  const lastVon = Array.findLastIndex(words.slice(0, -1), isLowerWord);
+  const lastVon = Arr.findLastIndex(words.slice(0, -1), isLowerWord);
   return Option.isSome(lastVon)
     ? { von: words.slice(0, lastVon.value + 1), last: words.slice(lastVon.value + 1) }
     : { von: [], last: words };
@@ -102,7 +102,7 @@ function splitVonLast(words: readonly string[]): Pick<NameParts, "von" | "last">
 /** Splits `First von Last` (no comma). */
 function splitFirstVonLast(words: readonly string[]): NameParts {
   const head = words.slice(0, -1);
-  const firstVon = Array.findFirstIndex(head, isLowerWord);
+  const firstVon = Arr.findFirstIndex(head, isLowerWord);
   if (Option.isNone(firstVon)) {
     return { first: head, von: [], last: words.slice(-1), jr: [] };
   }
@@ -124,7 +124,7 @@ const EXTENDED_PART = /^([A-Za-z][A-Za-z-]*)=([\s\S]*)$/;
 
 /** True when a name is written in BibLaTeX's extended format: its first word is `key=value`. */
 const isExtended = (nameTokens: readonly string[]): boolean =>
-  Option.exists(Array.head(nameTokens), (first) => EXTENDED_PART.test(first));
+  Option.exists(Arr.head(nameTokens), (first) => EXTENDED_PART.test(first));
 
 /** True for a BibLaTeX boolean option value that is on (`true`, or the bare key). */
 const isOn = (value: string): boolean => {
@@ -143,7 +143,7 @@ function parseExtendedName(
   nameTokens: readonly string[],
   usePrefix: boolean,
 ): Option.Option<CslName> {
-  const parts = Array.filterMap(
+  const parts = Arr.filterMap(
     splitOn(nameTokens, (token) => token === ","),
     (words): Result.Result<readonly [string, string], void> => {
       const match = EXTENDED_PART.exec(words.join(" "));
@@ -154,11 +154,11 @@ function parseExtendedName(
   );
   const value = (key: string): string =>
     Option.match(
-      Array.findLast(parts, ([name]) => name === key),
+      Arr.findLast(parts, ([name]) => name === key),
       { onNone: () => "", onSome: ([, raw]) => text([raw.trim()]) },
     );
   const prefixed = Option.match(
-    Array.findLast(parts, ([name]) => name === "useprefix"),
+    Arr.findLast(parts, ([name]) => name === "useprefix"),
     { onNone: () => usePrefix, onSome: ([, raw]) => isOn(raw) },
   );
   return readCslName({
@@ -188,7 +188,7 @@ function parseName(nameTokens: readonly string[], usePrefix: boolean): Option.Op
   if (isExtended(nameTokens)) return parseExtendedName(nameTokens, usePrefix);
   const parts = nameParts(nameTokens);
   const particle = text(parts.von);
-  const bracedParticle = Option.flatMap(Array.head(parts.last), (first) =>
+  const bracedParticle = Option.flatMap(Arr.head(parts.last), (first) =>
     Option.fromNullishOr(BRACED_PARTICLE.exec(first)),
   );
   if (Option.isSome(bracedParticle) && particle === "") {
@@ -222,10 +222,10 @@ export function parseBibtexNames(
   const scanned = Parser.parsePeek(tokens, source);
   const all = Result.isSuccess(scanned) ? scanned.success[1] : [];
   const groups = splitOn(all, (token) => token.toLowerCase() === "and").filter(
-    Array.isReadonlyArrayNonEmpty,
+    Arr.isReadonlyArrayNonEmpty,
   );
   const others = groups.some((group) => group.length === 1 && group[0].toLowerCase() === "others");
-  const names = Array.filterMap(groups, (group): Result.Result<CslName, void> => {
+  const names = Arr.filterMap(groups, (group): Result.Result<CslName, void> => {
     if (group.length === 1 && group[0].toLowerCase() === "others") return Result.failVoid;
     return Result.fromOption(parseName(group, usePrefix), () => undefined);
   }).slice(0, maxNames);

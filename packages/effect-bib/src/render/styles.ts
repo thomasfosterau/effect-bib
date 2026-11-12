@@ -14,7 +14,7 @@
 
 import * as HashMap from "effect/HashMap";
 import * as Option from "effect/Option";
-import * as Record from "effect/Record";
+import * as R from "effect/Record";
 import { apaStyle } from "./styles/apa.ts";
 import { chicagoNotesStyle } from "./styles/chicago.ts";
 import { vancouverStyle } from "./styles/vancouver.ts";
@@ -32,7 +32,7 @@ export const builtInStyles = {
 } as const satisfies Readonly<Record<string, CitationStyle>>;
 
 /** {@link builtInStyles} as a lookup by any id; a non-style key (`toString`, …) is absent. */
-const STYLES_BY_ID = HashMap.fromIterable<string, CitationStyle>(Record.toEntries(builtInStyles));
+const STYLES_BY_ID = HashMap.fromIterable<string, CitationStyle>(R.toEntries(builtInStyles));
 
 /**
  * Resolves a built-in style by id, or `undefined` when unknown. Returns
