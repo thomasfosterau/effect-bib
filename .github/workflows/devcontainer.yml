@@ -47,8 +47,8 @@ jobs:
     permissions:
       contents: read
     env:
-      # The devcontainers CLI, pinned. `vp dlx` (pnpm's `dlx`) honours the workspace's
-      # `minimumReleaseAge`, so keep this at a release at least 8 hours old.
+      # The devcontainers CLI, pinned exactly and run with `vp dlx`. Keep it at
+      # a release at least 8 hours old, the workspace's `minimumReleaseAge`.
       DEVCONTAINER_CLI: "@devcontainers/cli@0.89.0"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
