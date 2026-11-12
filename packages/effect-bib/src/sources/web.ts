@@ -57,7 +57,7 @@ function readPage({
   url,
   response,
 }: GuardedResponse): Effect.Effect<Option.Option<EmbeddedMetadata>, LookupFailed> {
-  if (response.status === 404) return Effect.succeed(Option.none());
+  if (response.status === 404) return Effect.succeedNone;
   if (response.status < 200 || response.status >= 300)
     return Effect.fail(failed(`upstream returned HTTP ${response.status}`));
   const type = mediaType(response);
