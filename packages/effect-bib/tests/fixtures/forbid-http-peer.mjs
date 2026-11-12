@@ -14,7 +14,12 @@ import { register } from "node:module";
 import { FORBIDDEN_SPECIFIER } from "./forbidden-effect-modules.mjs";
 
 // The pattern reaches the hooks thread through `initialize`'s `data`, so no
-// value is spliced into the hook source.
+// value is spliced into the hook source. `FORBID_ALSO`, when set, is a second
+// pattern blocked alongside it: the `./record` cases pass
+// `@thomasfosterau/effect-parse` there (#162).
+const also = process.env["FORBID_ALSO"];
+const source =
+  also === undefined ? FORBIDDEN_SPECIFIER.source : `(?:${FORBIDDEN_SPECIFIER.source})|(?:${also})`;
 register(
   `data:text/javascript,
     let forbidden;
@@ -27,5 +32,5 @@ register(
       }
       return next(specifier, context)
     }`,
-  { parentURL: import.meta.url, data: { source: FORBIDDEN_SPECIFIER.source } },
+  { parentURL: import.meta.url, data: { source } },
 );

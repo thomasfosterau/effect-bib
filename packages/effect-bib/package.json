@@ -40,6 +40,7 @@
   "sideEffects": false,
   "exports": {
     ".": "./src/index.ts",
+    "./record": "./src/record/index.ts",
     "./sources": "./src/sources/index.ts"
   },
   "publishConfig": {
@@ -48,6 +49,10 @@
         "types": "./dist/index.d.ts",
         "default": "./dist/index.js"
       },
+      "./record": {
+        "types": "./dist/record/index.d.ts",
+        "default": "./dist/record/index.js"
+      },
       "./sources": {
         "types": "./dist/sources/index.d.ts",
         "default": "./dist/sources/index.js"
@@ -55,13 +60,11 @@
     },
     "access": "public"
   },
-  "dependencies": {
-    "@thomasfosterau/effect-parse": "catalog:"
-  },
   "devDependencies": {
     "@effect/docgen": "catalog:",
     "@effect/language-service": "catalog:",
     "@effect/vitest": "catalog:",
+    "@thomasfosterau/effect-parse": "catalog:",
     "@types/node": "catalog:",
     "@vitest/coverage-istanbul": "catalog:",
     "effect": "catalog:",
@@ -70,7 +73,13 @@
     "vitest": "catalog:"
   },
   "peerDependencies": {
+    "@thomasfosterau/effect-parse": "catalog:peers",
     "effect": "catalog:peers"
+  },
+  "peerDependenciesMeta": {
+    "@thomasfosterau/effect-parse": {
+      "optional": true
+    }
   },
   "engines": {
     "node": ">=22"

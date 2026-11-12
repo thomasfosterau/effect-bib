@@ -7,10 +7,10 @@ Bibliographic toolkit on Effect: CSL-JSON records as Effect Schema, checksummed 
 ## Install
 
 ```bash
-pnpm add @thomasfosterau/effect-bib effect
+pnpm add @thomasfosterau/effect-bib @thomasfosterau/effect-parse effect
 ```
 
-Peers: `effect` `^4.0.0`. The one runtime dependency, [`@thomasfosterau/effect-parse`](https://github.com/thomasfosterau/effect-parse) (the BibTeX scanner), is installed with the package and peers `effect ^4.0.0` too. Node.js 22 or newer.
+Peers: `effect` `^4.0.0`, and [`@thomasfosterau/effect-parse`](https://github.com/thomasfosterau/effect-parse) `^0.4.1 || ^0.5.0` (the BibTeX scanner's combinators) as an optional peer: the root entry needs it, `./record` does not. Node.js 22 or newer.
 
 ## Example
 
@@ -33,7 +33,8 @@ assert.strictEqual(renderReference(record, { style: apaStyle }), "(n.d.). Sapien
 
 | Subpath | Imports | Contents |
 | --- | --- | --- |
-| `.` | `effect` only (browser-safe) | `BiblioRecord` and the CSL-JSON interop, identifier brands and decoders, file parsers and writers, dedup scoring, the render engine and built-in styles, embedded-metadata reading |
+| `.` | `effect`, `@thomasfosterau/effect-parse` (browser-safe) | `BiblioRecord` and the CSL-JSON interop, identifier brands and decoders, file parsers and writers, dedup scoring, the render engine and built-in styles, embedded-metadata reading |
+| `./record` | `effect` only | The record model alone: `BiblioRecord` and its CSL schemas, provenance, the identifier brands and decoders, `toCslJson` / `fromCslJson` and the name, date and sanitising helpers (the root's own bindings) |
 | `./sources` | `effect/http` | The `BiblioLookup` service and its layers, per-source lookup functions and response schemas, the typed error channel |
 
 ## Links

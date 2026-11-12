@@ -5,7 +5,9 @@
  * (`fixtures/forbidden-effect-modules.mjs`)
  * and never a `sources/` module — so a browser bundle that imports it never
  * loads the lookup clients. The `./sources` entry is where
- * `effect/http` is allowed to appear.
+ * `effect/http` is allowed to appear. The `./record` entry is the record
+ * model alone and resolves `effect` and nothing else, so a consumer that only
+ * holds records never needs `@thomasfosterau/effect-parse` (#162).
  *
  * The property is a packaging commitment, and a comment asserting it would
  * rot within two releases — one `import type` from `./sources/errors.ts`
@@ -123,6 +125,9 @@ const graphFrom = (entry: string, dir: string): Graph => {
 /** The root entry's one dependency besides `effect`: the BibTeX scanner's combinators (#72). */
 const EFFECT_PARSE = "@thomasfosterau/effect-parse";
 
+/** Matches effect-parse and every subpath of it, for the module-resolution hook. */
+const EFFECT_PARSE_PATTERN = "^@thomasfosterau/effect-parse(?:/|$)";
+
 /** Bare specifiers in `graph` other than `effect` and its modules. */
 const nonEffect = (graph: Graph): ReadonlyArray<string> =>
   Arr.filter(
@@ -146,8 +151,18 @@ describe("root entry point", () => {
     expect(unstable(root)).toEqual([]);
   });
 
-  it("resolves only `effect` modules and effect-parse", () => {
-    expect(nonEffect(root).filter((specifier) => specifier !== EFFECT_PARSE)).toEqual([]);
+  it("resolves only `effect` modules and effect-parse subpaths", () => {
+    expect(
+      nonEffect(root).filter((specifier) => !specifier.startsWith(`${EFFECT_PARSE}/`)),
+    ).toEqual([]);
+  });
+
+  // The subpaths, not the barrel: the barrel loads every effect-parse module
+  // (the binary, bit and streaming parsers included) for the three the
+  // scanner uses (#162).
+  it("imports effect-parse through its subpaths, never its root barrel", () => {
+    expect(nonEffect(root)).not.toContain(EFFECT_PARSE);
+    expect(nonEffect(root)).toContain(`${EFFECT_PARSE}/Parser`);
   });
 
   it("reaches nothing but stable `effect` modules through effect-parse", () => {
@@ -183,6 +198,37 @@ describe("root entry point", () => {
     expect(names).toContain("renderReference");
     expect(names).not.toContain("BiblioLookup");
     expect(names).not.toContain("LookupFailed");
+  });
+});
+
+describe("record entry point", () => {
+  const record = graphFrom(path.join(SRC, "record", "index.ts"), SRC);
+
+  it("resolves `effect` modules and nothing else (no effect-parse)", () => {
+    expect(nonEffect(record)).toEqual([]);
+  });
+
+  it("resolves no formerly-unstable effect surface", () => {
+    expect(unstable(record)).toEqual([]);
+  });
+
+  it("reaches neither the parsers nor the lookups", () => {
+    expect(record.modules).toEqual(["identifiers.ts", "limits.ts", "record.ts", "record/index.ts"]);
+  });
+
+  it("exports the record model, the root's own bindings, and no parser", async () => {
+    const entry = await import("@thomasfosterau/effect-bib/record");
+    const index = await import("@thomasfosterau/effect-bib");
+    const names = R.keys(entry);
+    expect(names).toContain("BiblioRecord");
+    expect(names).toContain("Provenance");
+    expect(names).toContain("decodeIsbn");
+    expect(names).toContain("fromCslJson");
+    expect(names).toContain("toCslJson");
+    expect(names).not.toContain("parseBibtex");
+    expect(names).not.toContain("BiblioLookup");
+    // The same bindings, not copies: a schema or brand from one entry is the other's.
+    expect(Arr.filter(names, (name) => !Object.is(entry[name], index[name]))).toEqual([]);
   });
 });
 
@@ -225,22 +271,35 @@ describe("package exports map", () => {
       Schema.Struct({
         exports: Schema.Unknown,
         publishConfig: Schema.Struct({ exports: Schema.Unknown }),
+        dependencies: Schema.optional(Schema.Unknown),
+        peerDependencies: Schema.optional(Schema.Record(Schema.String, Schema.String)),
+        peerDependenciesMeta: Schema.optional(Schema.Record(Schema.String, Schema.Unknown)),
       }),
     ),
   )(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"));
 
-  it("points the workspace entries at the two source barrels", () => {
+  it("points the workspace entries at the three source barrels", () => {
     expect(manifest.exports).toEqual({
       ".": "./src/index.ts",
+      "./record": "./src/record/index.ts",
       "./sources": "./src/sources/index.ts",
     });
   });
 
-  it("publishes the same two subpaths from dist/", () => {
+  it("publishes the same three subpaths from dist/", () => {
     expect(manifest.publishConfig.exports).toEqual({
       ".": { types: "./dist/index.d.ts", default: "./dist/index.js" },
+      "./record": { types: "./dist/record/index.d.ts", default: "./dist/record/index.js" },
       "./sources": { types: "./dist/sources/index.d.ts", default: "./dist/sources/index.js" },
     });
+  });
+
+  // An optional peer, not a dependency: a `./record` consumer installs no
+  // effect-parse, and one that has its own shares the copy (#162).
+  it("declares effect-parse as an optional peer and not as a dependency", () => {
+    expect(manifest.dependencies).toBeUndefined();
+    expect(R.keys(manifest.peerDependencies ?? {})).toContain(EFFECT_PARSE);
+    expect(manifest.peerDependenciesMeta?.[EFFECT_PARSE]).toEqual({ optional: true });
   });
 });
 
@@ -261,9 +320,16 @@ describe("built artifact", () => {
     expect(unstable(graphFrom(built, DIST))).toEqual([]);
   });
 
-  it.skipIf(unbuilt)("ships declarations for both entry points", () => {
+  it.skipIf(unbuilt)("ships declarations for every entry point", () => {
     const missing = Arr.filter(
-      ["index.js", "index.d.ts", "sources/index.js", "sources/index.d.ts"],
+      [
+        "index.js",
+        "index.d.ts",
+        "record/index.js",
+        "record/index.d.ts",
+        "sources/index.js",
+        "sources/index.d.ts",
+      ],
       (file) => !fs.existsSync(path.join(DIST, file)),
     );
     expect(missing, "dist/ files missing").toEqual([]);
@@ -274,7 +340,7 @@ describe("built artifact", () => {
    * above being right: load the built entry in a process where
    * the former `effect/unstable/*` modules (`effect/http`, ...) cannot be resolved at all.
    */
-  const loadWithoutUnstable = (entry: string) =>
+  const loadWithoutUnstable = (entry: string, env: R.ReadonlyRecord<string, string> = {}) =>
     spawnSync(
       process.execPath,
       [
@@ -286,13 +352,31 @@ describe("built artifact", () => {
         `await import(process.argv[1]); console.log("LOADED")`,
         entry,
       ],
-      { cwd: ROOT, encoding: "utf8" },
+      { cwd: ROOT, encoding: "utf8", env: { ...process.env, ...env } },
     );
+
+  /** The same, with effect-parse unresolvable too. */
+  const loadWithoutEffectParse = (entry: string) =>
+    loadWithoutUnstable(entry, { FORBID_ALSO: EFFECT_PARSE_PATTERN });
 
   it.skipIf(unbuilt)("loads the root entry with effect/http and its siblings unresolvable", () => {
     const result = loadWithoutUnstable(built);
     expect(`${result.stdout}${result.stderr}`).toContain("LOADED");
     expect(result.status).toBe(0);
+  });
+
+  it.skipIf(unbuilt)("loads the record entry with effect-parse unresolvable", () => {
+    const result = loadWithoutEffectParse(path.join(DIST, "record", "index.js"));
+    expect(`${result.stdout}${result.stderr}`).toContain("LOADED");
+    expect(result.status).toBe(0);
+  });
+
+  it.skipIf(unbuilt)("is checked by hooks that do block effect-parse (control: root)", () => {
+    const result = loadWithoutEffectParse(built);
+    const output = `${result.stdout}${result.stderr}`;
+    expect(output).toContain(`FORBIDDEN_PEER:${EFFECT_PARSE}/`);
+    expect(output).not.toContain("LOADED");
+    expect(result.status).not.toBe(0);
   });
 
   it.skipIf(unbuilt)("is checked by hooks that do block the sources entry (control)", () => {

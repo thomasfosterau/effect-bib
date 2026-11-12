@@ -10,7 +10,9 @@
  * @since 0.1.0
  */
 
-import { Compiler, Parser, Token } from "@thomasfosterau/effect-parse";
+import * as Compiler from "@thomasfosterau/effect-parse/Compiler";
+import * as Parser from "@thomasfosterau/effect-parse/Parser";
+import * as Token from "@thomasfosterau/effect-parse/Token";
 import * as Arr from "effect/Array";
 import * as Option from "effect/Option";
 import * as Result from "effect/Result";

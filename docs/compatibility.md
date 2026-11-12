@@ -6,10 +6,11 @@ Wire compatibility, the entry-point split, the `Option` contract and what the pa
 
 | Subpath | Imports | Contents |
 | --- | --- | --- |
-| `.` | `effect` only | `BiblioRecord` and the CSL-JSON interop, the identifier brands and decoders, the file parsers and writers, dedup scoring, the render engine and the two built-in styles |
+| `.` | `effect`, `@thomasfosterau/effect-parse` | `BiblioRecord` and the CSL-JSON interop, the identifier brands and decoders, the file parsers and writers, dedup scoring, the render engine and the built-in styles |
+| `./record` | `effect` only | The record model alone: `BiblioRecord` and its CSL schemas, provenance, the identifier brands and decoders, `toCslJson` / `fromCslJson` and the name, date and sanitising helpers (the root's own bindings) |
 | `./sources` | `effect/http` | The `BiblioLookup` service and its layers, the per-source lookup functions and response schemas, the typed error channel |
 
-The split is a packaging commitment, not a convention: the root entry resolves none of the modules that were under `effect/unstable/*` before rc.118 (`effect/http`, `effect/sql`, …), nor the directories `effect` has added since (`effect/graphql`, …; see [the forbidden-module list](https://github.com/thomasfosterau/effect-bib/blob/trunk/packages/effect-bib/tests/fixtures/forbidden-effect-modules.mjs)) and no `sources/` module, so a browser bundle that imports it never loads the HTTP clients. [`tests/entry-points.test.ts`](https://github.com/thomasfosterau/effect-bib/blob/trunk/packages/effect-bib/tests/entry-points.test.ts) walks the real import graph of both the sources and the built artifact.
+The split is a packaging commitment, not a convention: the root entry resolves none of the modules that were under `effect/unstable/*` before rc.118 (`effect/http`, `effect/sql`, …), nor the directories `effect` has added since (`effect/graphql`, …; see [the forbidden-module list](https://github.com/thomasfosterau/effect-bib/blob/trunk/packages/effect-bib/tests/fixtures/forbidden-effect-modules.mjs)) and no `sources/` module, so a browser bundle that imports it never loads the HTTP clients; `./record` resolves no module outside `effect`, effect-parse included (#162). [`tests/entry-points.test.ts`](https://github.com/thomasfosterau/effect-bib/blob/trunk/packages/effect-bib/tests/entry-points.test.ts) walks the real import graph of the sources and of the built artifact, and loads each built entry with the modules it must not reach made unresolvable.
 
 ## Compatibility
 

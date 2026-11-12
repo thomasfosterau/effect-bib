@@ -9,7 +9,8 @@ import { defineConfig } from "vite-plus";
  */
 const dist = "../../packages/effect-bib/dist";
 const assertEmitted =
-  `test -f ${dist}/index.d.ts && test -f ${dist}/sources/index.d.ts || ` +
+  `test -f ${dist}/index.d.ts && test -f ${dist}/record/index.d.ts && ` +
+  `test -f ${dist}/sources/index.d.ts || ` +
   `{ echo "dist-consumer: ${dist} has no entry declarations; run vp run @thomasfosterau/effect-bib#build" >&2; exit 1; }`;
 
 export default defineConfig({
