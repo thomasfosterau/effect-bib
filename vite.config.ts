@@ -69,6 +69,8 @@ export default defineConfig({
       // The canonical helper-module aliases (`Arr`, `P`, `R`, `Str`, `Eq`,
       // `Bool`; every other module under its full name), at `error` (#167).
       "effect/prefer-namespace-imports": "error",
+      // Lint to zero (#169)
+      "effect/imperative-loops": "error",
 
       // No ported-code allowances remain: every preset rule is at its `error`
       // level. `prefer-option-over-null` has no exception (#168);
