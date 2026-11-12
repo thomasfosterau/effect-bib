@@ -1,5 +1,5 @@
 /**
- * A consumer's view of both entry points through their EMITTED
+ * A consumer's view of every entry point through their EMITTED
  * declarations (`paths` in tsconfig.json points the package names at
  * `dist/**\/*.d.ts`). Each block exercises the types a real consumer depends
  * on, so a declaration that degrades — a brand that emits as `string`, a
@@ -61,6 +61,12 @@ import {
   RefusedUrl,
   type ResolveAddresses,
 } from "@thomasfosterau/effect-bib/sources";
+import {
+  type BiblioRecord as RecordEntryBiblioRecord,
+  type Doi as RecordEntryDoi,
+  fromCslJson as recordEntryFromCslJson,
+  type Isbn as RecordEntryIsbn,
+} from "@thomasfosterau/effect-bib/record";
 
 /** A compile-time assertion: `T` must be exactly `true`. */
 type Assert<T extends true> = T;
@@ -96,6 +102,9 @@ export const forms = Option.map(isbn, isbnForms);
 export const record: BiblioRecord = fromCslJson({ type: "book", title: "Sapiens" });
 export const limited: BiblioRecord = fromCslJson({ type: "book" }, { maxAuthors: 500 });
 export const csl = toCslJson(record);
+// `./record` re-exports the root's record model, so a record from either
+// entry is the other's: one schema, one set of brands.
+export const fromRecordEntry: BiblioRecord = recordEntryFromCslJson({ type: "book" });
 export const markup: RichText = parseCslMarkup("<i>Sapiens</i>");
 
 // ── parse ─────────────────────────────────────────────────────────────────
@@ -143,6 +152,9 @@ export const page = BiblioLookup.use((lookup) => lookup.byUrl("https://example.o
  * failing one names itself in the error.
  */
 export type Checks = [
+  /** _recordEntrySharesTheSchema */ Assert<Equals<RecordEntryBiblioRecord, BiblioRecord>>,
+  /** _recordEntrySharesTheBrands */ Assert<Equals<RecordEntryIsbn, Isbn>>,
+  /** _recordEntryBrandIsBranded */ Assert<Not<Equals<RecordEntryDoi, string>>>,
   /** _isbnIsBranded */ Assert<Not<Equals<Isbn, string>>>,
   /** _doiIsBranded */ Assert<Not<Equals<Doi, string>>>,
   /** _brandsAreDistinct */ Assert<Not<Equals<Isbn, Doi>>>,

@@ -12,6 +12,7 @@
     // against `any`.
     "paths": {
       "@thomasfosterau/effect-bib": ["../../packages/effect-bib/dist/index.d.ts"],
+      "@thomasfosterau/effect-bib/record": ["../../packages/effect-bib/dist/record/index.d.ts"],
       "@thomasfosterau/effect-bib/sources": ["../../packages/effect-bib/dist/sources/index.d.ts"]
     }
   },
