@@ -42,7 +42,7 @@ The workspace runs on pnpm and [Vite+](https://viteplus.dev) (`vp`): `vp check` 
 
 Releases go through [changesets](https://github.com/changesets/changesets) and npm trusted publishing; see [PUBLISHING.md](PUBLISHING.md). To report a vulnerability, see [SECURITY.md](SECURITY.md).
 
-The package was extracted from `thomasfosterau/website` with its git history.
+The package was extracted from `thomasfosterau/website` with its git history. The website, gardeneria and preferenceflow applications consume it, and the workspace copies their toolchain (pnpm with a strict catalog, Vite+, the TypeScript 6/7 split, the Effect oxlint preset, fallow) so the library builds against what they run.
 
 ## License
 

@@ -105,7 +105,7 @@ const MAX_PUBLICATION_YEAR = 2200;
  * @since 0.1.0
  */
 export function sanitiseText(
-  // oxlint-disable-next-line effect/no-unknown-parameters -- untrusted-input boundary: a total sanitiser over any upstream value (see "The untrusted-input boundary" in packages/effect-bib/CLAUDE.md)
+  // oxlint-disable-next-line effect/no-unknown-parameters -- untrusted-input boundary: a total sanitiser over any upstream value (see "The untrusted-input boundary" in packages/effect-bib/AGENTS.md)
   value: unknown,
   maxLength: number = MAX_TEXT_FIELD_LENGTH,
 ): Option.Option<string> {
@@ -123,7 +123,7 @@ export function sanitiseText(
  *
  * @since 0.1.0
  */
-// oxlint-disable-next-line effect/no-unknown-parameters -- untrusted-input boundary: a total sanitiser over any upstream value (see "The untrusted-input boundary" in packages/effect-bib/CLAUDE.md)
+// oxlint-disable-next-line effect/no-unknown-parameters -- untrusted-input boundary: a total sanitiser over any upstream value (see "The untrusted-input boundary" in packages/effect-bib/AGENTS.md)
 export function sanitiseYear(value: unknown): Option.Option<number> {
   const n = Predicate.isNumber(value) ? value : Predicate.isString(value) ? Number(value) : NaN;
   if (!Number.isInteger(n)) return Option.none();
@@ -602,7 +602,7 @@ function isEmptyName(name: CslName): boolean {
  * The four `null`-returning helpers below (`makeCslName`, `parsePersonName`,
  * `cslNameDisplay`, `yearOf`) return `null`, not `Option`, by contract:
  * website's `apps/api/src/biblio/*` consumes them as plain nullables. See
- * "The plain-nullable seams stay" in packages/effect-bib/CLAUDE.md. The bodies
+ * "The plain-nullable seams stay" in packages/effect-bib/AGENTS.md. The bodies
  * use the `Option`-returning sanitisers and convert at the return.
  */
 /* oxlint-disable effect/prefer-option-over-null -- cross-slice: consumed as plain nullables by apps/api */
@@ -841,7 +841,7 @@ const decodeUnknownArray = Schema.decodeUnknownOption(Schema.Array(Schema.Unknow
  *
  * @since 0.1.0
  */
-// oxlint-disable-next-line effect/no-unknown-parameters -- untrusted-input boundary: a total decoder over any CSL name value (see "The untrusted-input boundary" in packages/effect-bib/CLAUDE.md)
+// oxlint-disable-next-line effect/no-unknown-parameters -- untrusted-input boundary: a total decoder over any CSL name value (see "The untrusted-input boundary" in packages/effect-bib/AGENTS.md)
 export function readCslName(entry: unknown): Option.Option<CslName> {
   return Option.flatMap(decodeCslNameInput(entry), (obj) =>
     Option.fromNullishOr(
@@ -866,7 +866,7 @@ export function readCslName(entry: unknown): Option.Option<CslName> {
  * @since 0.1.0
  */
 export function readCslNameArray(
-  // oxlint-disable-next-line effect/no-unknown-parameters -- untrusted-input boundary: a total decoder over any CSL name-list value (see "The untrusted-input boundary" in packages/effect-bib/CLAUDE.md)
+  // oxlint-disable-next-line effect/no-unknown-parameters -- untrusted-input boundary: a total decoder over any CSL name-list value (see "The untrusted-input boundary" in packages/effect-bib/AGENTS.md)
   value: unknown,
   maxNames: number = MAX_AUTHORS,
 ): CslName[] {
@@ -976,7 +976,7 @@ function fromCslDateValue(obj: typeof CslDateInput.Type): Option.Option<CslDate>
  *
  * @since 0.1.0
  */
-// oxlint-disable-next-line effect/no-unknown-parameters -- untrusted-input boundary: the lenient interop decoder takes any value by contract (see "The untrusted-input boundary" in packages/effect-bib/CLAUDE.md)
+// oxlint-disable-next-line effect/no-unknown-parameters -- untrusted-input boundary: the lenient interop decoder takes any value by contract (see "The untrusted-input boundary" in packages/effect-bib/AGENTS.md)
 export function fromCslJson(item: unknown, limits: RecordLimits = {}): BiblioRecord {
   const provenance: Provenance = { source: "csl-json" };
   if (!Predicate.isObjectOrArray(item)) {
