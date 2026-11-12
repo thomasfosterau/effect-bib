@@ -18,7 +18,7 @@ export default defineConfig({
     tasks: {
       // Type-checks the emitted declarations, after a fresh build. The edge
       // names the package outright: this package declares no dependency on
-      // it (tsconfig.json's `paths` is the whole resolution), so a
+      // the library, since tsconfig.json's `paths` is the whole resolution, so a
       // `{ task: "build", from: "dependencies" }` edge would match nothing.
       check: {
         command: `${assertEmitted}; tsc -p tsconfig.json`,
