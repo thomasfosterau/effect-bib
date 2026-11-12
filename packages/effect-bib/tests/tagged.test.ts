@@ -6,8 +6,10 @@
  * @module tests/unit/biblio-tagged
  */
 
+import { it } from "@effect/vitest";
+import * as Effect from "effect/Effect";
 import * as Stream from "effect/Stream";
-import { assert, describe, expect, it } from "vite-plus/test";
+import { assert, describe, expect } from "vite-plus/test";
 import {
   parseBibliographicFile,
   parseBibliographicStream,
@@ -15,7 +17,6 @@ import {
   parseRefer,
   type ParseOutcome,
 } from "@thomasfosterau/effect-bib";
-import { runTest } from "./effect.ts";
 
 /** Narrows the outcome at `index` to its parsed record, failing the test otherwise. */
 function expectParsed(outcomes: readonly ParseOutcome[], index: number) {
@@ -232,28 +233,26 @@ describe("parseBibliographicFile and the stream", () => {
       ),
     );
 
-  it.each([
+  it.effect.each([
     ["medline", MEDLINE],
     ["refer", REFER],
     ["medline", MEDLINE.replaceAll("\n", "\r\n")],
-  ] as const)(
-    "streams %s with the whole-file outcomes for every chunk size",
-    async (format, text) => {
+  ] as const)("streams %s with the whole-file outcomes for every chunk size", ([format, text]) =>
+    Effect.gen(function* () {
       const whole = parseBibliographicFile(text, format, { mode: "lenient" });
       expect(whole.length).toBeGreaterThan(3);
       const sizes = [1, 3, 17, text.length];
-      const results = await Promise.all(
-        sizes.map((size) =>
-          runTest(
-            Stream.runCollect(
-              parseBibliographicStream(chunked(text, size), format, { mode: "lenient" }),
-            ),
+      const results = yield* Effect.forEach(
+        sizes,
+        (size) =>
+          Stream.runCollect(
+            parseBibliographicStream(chunked(text, size), format, { mode: "lenient" }),
           ),
-        ),
+        { concurrency: "unbounded" },
       );
       results.forEach((streamed, index) => {
         expect(streamed, `chunks of ${sizes[index]}`).toEqual(whole);
       });
-    },
+    }),
   );
 });

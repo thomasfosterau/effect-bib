@@ -12,7 +12,8 @@
  * @module tests/unit/biblio-sources-crossref
  */
 
-import { describe, expect, it } from "vite-plus/test";
+import { it } from "@effect/vitest";
+import { describe, expect } from "vite-plus/test";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
@@ -23,8 +24,7 @@ import {
   normaliseCrossrefRecord,
 } from "../../src/sources/crossref.ts";
 import { LookupFailed } from "../../src/sources/errors.ts";
-import { expectFailureInstanceOf, runTest } from "../effect.ts";
-import { filteredClient, stubRouter } from "./stub-http.ts";
+import { filteredClient, stubRouter, withLayer } from "./stub-http.ts";
 import { expectSome } from "../assert.ts";
 import rayResponseBody from "../fixtures/crossref-ray-2004.json" with { type: "json" };
 
@@ -123,57 +123,60 @@ describe("normaliseCrossrefRecord", () => {
 });
 
 describe("lookupCrossrefByDoi", () => {
-  it("resolves via the percent-encoded Crossref path", async () => {
-    const { urls, layer } = stubRouter({
-      [`https://api.crossref.org/works/${encodeURIComponent(REQUESTED_DOI)}`]: {
-        status: 200,
-        body: rayResponseBody,
-      },
-    });
-    const result = await runTest(
-      Effect.provide(
+  it.effect("resolves via the percent-encoded Crossref path", () =>
+    Effect.gen(function* () {
+      const { urls, layer } = stubRouter({
+        [`https://api.crossref.org/works/${encodeURIComponent(REQUESTED_DOI)}`]: {
+          status: 200,
+          body: rayResponseBody,
+        },
+      });
+      const result = yield* withLayer(
         Effect.gen(function* () {
           const client = yield* filteredClient;
           return yield* lookupCrossrefByDoi(client, REQUESTED_DOI);
         }),
         layer,
-      ),
-    );
-    expect(Option.isSome(result)).toBe(true);
-    expect(expectSome(result).title).toBe("How the Mind Hurts and Heals the Body.");
-    expect(urls[0]).toBe(`https://api.crossref.org/works/${encodeURIComponent(REQUESTED_DOI)}`);
-  });
+      );
+      expect(Option.isSome(result)).toBe(true);
+      expect(expectSome(result).title).toBe("How the Mind Hurts and Heals the Body.");
+      expect(urls[0]).toBe(`https://api.crossref.org/works/${encodeURIComponent(REQUESTED_DOI)}`);
+    }),
+  );
 
-  it("returns Option.none on a clean 404", async () => {
-    const { layer } = stubRouter({});
-    const result = await runTest(
-      Effect.provide(
+  it.effect("returns Option.none on a clean 404", () =>
+    Effect.gen(function* () {
+      const { layer } = stubRouter({});
+      const result = yield* withLayer(
         Effect.gen(function* () {
           const client = yield* filteredClient;
           return yield* lookupCrossrefByDoi(client, REQUESTED_DOI);
         }),
         layer,
-      ),
-    );
-    expect(Option.isNone(result)).toBe(true);
-  });
+      );
+      expect(Option.isNone(result)).toBe(true);
+    }),
+  );
 
-  it("fails with LookupFailed when the body has the wrong shape", async () => {
-    const { layer } = stubRouter({
-      [`https://api.crossref.org/works/${encodeURIComponent(REQUESTED_DOI)}`]: {
-        status: 200,
-        body: { message: "not an object" },
-      },
-    });
-    await expectFailureInstanceOf(
-      Effect.provide(
-        Effect.gen(function* () {
-          const client = yield* filteredClient;
-          return yield* lookupCrossrefByDoi(client, REQUESTED_DOI);
-        }),
-        layer,
-      ),
-      LookupFailed,
-    );
-  });
+  it.effect("fails with LookupFailed when the body has the wrong shape", () =>
+    Effect.gen(function* () {
+      const { layer } = stubRouter({
+        [`https://api.crossref.org/works/${encodeURIComponent(REQUESTED_DOI)}`]: {
+          status: 200,
+          body: { message: "not an object" },
+        },
+      });
+      expect(
+        yield* Effect.flip(
+          withLayer(
+            Effect.gen(function* () {
+              const client = yield* filteredClient;
+              return yield* lookupCrossrefByDoi(client, REQUESTED_DOI);
+            }),
+            layer,
+          ),
+        ),
+      ).toBeInstanceOf(LookupFailed);
+    }),
+  );
 });
