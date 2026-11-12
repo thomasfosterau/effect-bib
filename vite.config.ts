@@ -91,10 +91,12 @@ export default defineConfig({
       "jsdoc/check-tag-names": ["error", { definedTags: ["since", "category"] }],
       // Vitest's `expect(value, message)` takes a failure message second.
       "vitest/valid-expect": ["error", { maxArgs: 2 }],
-      // The suite's assertion helpers (tests/effect.ts) assert on the exit.
-      "vitest/expect-expect": [
+      "vitest/expect-expect": ["error", { assertFunctionNames: ["expect", "assert"] }],
+      // `@effect/vitest`'s test blocks are test blocks (#190): configuration of
+      // what counts as one, not a suppression.
+      "vitest/no-standalone-expect": [
         "error",
-        { assertFunctionNames: ["expect", "assert", "expectFailureInstanceOf"] },
+        { additionalTestBlockFunctions: ["it.effect", "it.live", "it.effect.each"] },
       ],
       // Mirrors `unstableApiUsage: "suggestion"` in tsconfig.base.json: Effect
       // 4 marks most of `effect/http` unstable, so every HttpClient use in
@@ -139,27 +141,20 @@ export default defineConfig({
           "effect/use-path-service": "off",
         },
       },
-      // The suite's run helpers ARE the test harness boundary the rule
-      // points to, but it has no entrypoint detection: running the Effect is
-      // their whole job (`@effect/vitest`'s `it.effect` does not load under
-      // the Vite+ vitest alias; see the module comment).
+      // The consumer fixture stands in for an application: its `provided`
+      // export is the entry point that supplies the lookup layer.
       {
-        files: ["packages/effect-bib/tests/effect.ts"],
+        files: ["tests/dist-consumer/**"],
         rules: {
-          "effect/effect-run-in-body": "off",
+          "effecttsgo/strict-effect-provide": "off",
         },
       },
-      // Tests are the program's entry points: they provide their layers per
-      // case (`Effect.provide`), keep each helper next to the cases it serves
-      // rather than hoisting it out of the `describe` it reads as part of,
-      // and cast a deliberately hostile input past the types to prove the
-      // runtime handles it.
+      // Tests keep each helper next to the cases it serves rather than
+      // hoisting it out of the `describe` it reads as part of.
       {
         files: ["packages/effect-bib/tests/**", "tests/dist-consumer/**"],
         rules: {
-          "effecttsgo/strict-effect-provide": "off",
           "unicorn/consistent-function-scoping": "off",
-          "typescript/no-unsafe-type-assertion": "off",
         },
       },
       // The type-equality idiom `(<X>() => X extends A ? 1 : 2) extends …`

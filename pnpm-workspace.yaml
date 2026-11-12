@@ -51,6 +51,8 @@ catalog:
   # node_modules/@effect/tsgo/dist/effect-tsgo.cjs before bumping any of the
   # three.
   "@effect/tsgo": 0.67.7
+  # `it.effect` / `it.live` / `layer` for the unit suite (#190). Peers `effect` (same minor as the pin below) and `vitest >=5 <6`; moves with the `effect` Dependabot group.
+  "@effect/vitest": 4.1.3
   # The Effect lint rules (`effect/*`, anti-slop included), registered as an
   # oxlint JS plugin by `vite.config.ts`; replaces
   # `@mpsuesser/oxlint-plugin-effect`. Depends on `effect` exactly (0.9.0 →

@@ -15,7 +15,8 @@
  * @module tests/unit/biblio-sources-openalex
  */
 
-import { describe, expect, it } from "vite-plus/test";
+import { it } from "@effect/vitest";
+import { describe, expect } from "vite-plus/test";
 import * as Effect from "effect/Effect";
 import * as Arr from "effect/Array";
 import * as Option from "effect/Option";
@@ -28,8 +29,7 @@ import {
   searchOpenAlexByTitle,
 } from "../../src/sources/openalex.ts";
 import { LookupFailed } from "../../src/sources/errors.ts";
-import { expectFailureInstanceOf, runTest } from "../effect.ts";
-import { filteredClient, stubRouter } from "./stub-http.ts";
+import { filteredClient, stubRouter, withLayer } from "./stub-http.ts";
 import { expectSome } from "../assert.ts";
 import rayWorkBody from "../fixtures/openalex-ray-2004.json" with { type: "json" };
 import searchResponse from "../fixtures/openalex-search-sapiens.json" with { type: "json" };
@@ -120,152 +120,157 @@ describe("normaliseOpenAlexRecord", () => {
 });
 
 describe("lookupOpenAlexByDoi", () => {
-  it("resolves via the doi: path qualified with the caller's encoded mailto", async () => {
-    const path = `https://api.openalex.org/works/doi:${encodeURIComponent(REQUESTED_DOI)}?${MAILTO}`;
-    const { urls, layer } = stubRouter({ [path]: { status: 200, body: rayWork } });
-    const result = await runTest(
-      Effect.provide(
+  it.effect("resolves via the doi: path qualified with the caller's encoded mailto", () =>
+    Effect.gen(function* () {
+      const path = `https://api.openalex.org/works/doi:${encodeURIComponent(REQUESTED_DOI)}?${MAILTO}`;
+      const { urls, layer } = stubRouter({ [path]: { status: 200, body: rayWork } });
+      const result = yield* withLayer(
         Effect.gen(function* () {
           const client = yield* filteredClient;
           return yield* lookupOpenAlexByDoi(client, REQUESTED_DOI, CONTACT);
         }),
         layer,
-      ),
-    );
-    expect(Option.isSome(result)).toBe(true);
-    expect(expectSome(result).title).toBe("How the Mind Hurts and Heals the Body.");
-    expect(urls).toContain(path);
-  });
+      );
+      expect(Option.isSome(result)).toBe(true);
+      expect(expectSome(result).title).toBe("How the Mind Hurts and Heals the Body.");
+      expect(urls).toContain(path);
+    }),
+  );
 
-  it("returns Option.none on a clean 404", async () => {
-    const { layer } = stubRouter({});
-    const result = await runTest(
-      Effect.provide(
+  it.effect("returns Option.none on a clean 404", () =>
+    Effect.gen(function* () {
+      const { layer } = stubRouter({});
+      const result = yield* withLayer(
         Effect.gen(function* () {
           const client = yield* filteredClient;
           return yield* lookupOpenAlexByDoi(client, REQUESTED_DOI, CONTACT);
         }),
         layer,
-      ),
-    );
-    expect(Option.isNone(result)).toBe(true);
-  });
+      );
+      expect(Option.isNone(result)).toBe(true);
+    }),
+  );
 
-  it("fails with LookupFailed on an upstream 5xx", async () => {
-    const path = `https://api.openalex.org/works/doi:${encodeURIComponent(REQUESTED_DOI)}?${MAILTO}`;
-    const { layer } = stubRouter({ [path]: { status: 503, body: {} } });
-    await expectFailureInstanceOf(
-      Effect.provide(
-        Effect.gen(function* () {
-          const client = yield* filteredClient;
-          return yield* lookupOpenAlexByDoi(client, REQUESTED_DOI, CONTACT);
-        }),
-        layer,
-      ),
-      LookupFailed,
-    );
-  });
+  it.effect("fails with LookupFailed on an upstream 5xx", () =>
+    Effect.gen(function* () {
+      const path = `https://api.openalex.org/works/doi:${encodeURIComponent(REQUESTED_DOI)}?${MAILTO}`;
+      const { layer } = stubRouter({ [path]: { status: 503, body: {} } });
+      expect(
+        yield* Effect.flip(
+          withLayer(
+            Effect.gen(function* () {
+              const client = yield* filteredClient;
+              return yield* lookupOpenAlexByDoi(client, REQUESTED_DOI, CONTACT);
+            }),
+            layer,
+          ),
+        ),
+      ).toBeInstanceOf(LookupFailed);
+    }),
+  );
 });
 
 describe("searchOpenAlexByTitle", () => {
-  it("returns ranked candidates from a real search envelope, skipping types outside the vocabulary gracefully", async () => {
-    const path = `https://api.openalex.org/works?search=Sapiens&per-page=10&${MAILTO}`;
-    const { urls, layer } = stubRouter({ [path]: { status: 200, body: searchResponse } });
-    const results = await runTest(
-      Effect.provide(
-        Effect.gen(function* () {
-          const client = yield* filteredClient;
-          return yield* searchOpenAlexByTitle(client, "Sapiens", CONTACT);
-        }),
-        layer,
-      ),
-    );
-    expect(results.length).toBeGreaterThan(0);
-    expect(results.every((r) => (r.title?.length ?? 0) > 0)).toBe(true);
-    expect(urls).toContain(path);
-  });
+  it.effect(
+    "returns ranked candidates from a real search envelope, skipping types outside the vocabulary gracefully",
+    () =>
+      Effect.gen(function* () {
+        const path = `https://api.openalex.org/works?search=Sapiens&per-page=10&${MAILTO}`;
+        const { urls, layer } = stubRouter({ [path]: { status: 200, body: searchResponse } });
+        const results = yield* withLayer(
+          Effect.gen(function* () {
+            const client = yield* filteredClient;
+            return yield* searchOpenAlexByTitle(client, "Sapiens", CONTACT);
+          }),
+          layer,
+        );
+        expect(results.length).toBeGreaterThan(0);
+        expect(results.every((r) => (r.title?.length ?? 0) > 0)).toBe(true);
+        expect(urls).toContain(path);
+      }),
+  );
 
-  it("returns [] when the search 404s", async () => {
-    const { layer } = stubRouter({});
-    const results = await runTest(
-      Effect.provide(
+  it.effect("returns [] when the search 404s", () =>
+    Effect.gen(function* () {
+      const { layer } = stubRouter({});
+      const results = yield* withLayer(
         Effect.gen(function* () {
           const client = yield* filteredClient;
           return yield* searchOpenAlexByTitle(client, "nothing", CONTACT);
         }),
         layer,
-      ),
-    );
-    expect(results).toEqual([]);
-  });
+      );
+      expect(results).toEqual([]);
+    }),
+  );
 
-  it("returns [] when results is absent", async () => {
-    const path = `https://api.openalex.org/works?search=x&per-page=10&${MAILTO}`;
-    const { layer } = stubRouter({ [path]: { status: 200, body: {} } });
-    const results = await runTest(
-      Effect.provide(
+  it.effect("returns [] when results is absent", () =>
+    Effect.gen(function* () {
+      const path = `https://api.openalex.org/works?search=x&per-page=10&${MAILTO}`;
+      const { layer } = stubRouter({ [path]: { status: 200, body: {} } });
+      const results = yield* withLayer(
         Effect.gen(function* () {
           const client = yield* filteredClient;
           return yield* searchOpenAlexByTitle(client, "x", CONTACT);
         }),
         layer,
-      ),
-    );
-    expect(results).toEqual([]);
-  });
+      );
+      expect(results).toEqual([]);
+    }),
+  );
 
-  it("skips a malformed result entry rather than failing the whole search", async () => {
-    const path = `https://api.openalex.org/works?search=x&per-page=10&${MAILTO}`;
-    const { layer } = stubRouter({
-      [path]: { status: 200, body: { results: [null, "not an object", { title: "Real Work" }] } },
-    });
-    const results = await runTest(
-      Effect.provide(
+  it.effect("skips a malformed result entry rather than failing the whole search", () =>
+    Effect.gen(function* () {
+      const path = `https://api.openalex.org/works?search=x&per-page=10&${MAILTO}`;
+      const { layer } = stubRouter({
+        [path]: { status: 200, body: { results: [null, "not an object", { title: "Real Work" }] } },
+      });
+      const results = yield* withLayer(
         Effect.gen(function* () {
           const client = yield* filteredClient;
           return yield* searchOpenAlexByTitle(client, "x", CONTACT);
         }),
         layer,
-      ),
-    );
-    expect(results).toEqual([expect.objectContaining({ title: "Real Work" })]);
-  });
+      );
+      expect(results).toEqual([expect.objectContaining({ title: "Real Work" })]);
+    }),
+  );
 
-  it("clamps an oversized query before building the URL", async () => {
-    const longQuery = "a".repeat(1000);
-    const { urls, layer } = stubRouter({});
-    await runTest(
-      Effect.provide(
+  it.effect("clamps an oversized query before building the URL", () =>
+    Effect.gen(function* () {
+      const longQuery = "a".repeat(1000);
+      const { urls, layer } = stubRouter({});
+      yield* withLayer(
         Effect.gen(function* () {
           const client = yield* filteredClient;
           return yield* searchOpenAlexByTitle(client, longQuery, CONTACT);
         }),
         layer,
-      ),
-    );
-    const requested = expectSome(
-      Option.fromNullishOr(
-        new URL(expectSome(Arr.head(urls), "a requested URL")).searchParams.get("search"),
-      ),
-      "a search parameter",
-    );
-    expect(requested.length).toBe(500);
-  });
+      );
+      const requested = expectSome(
+        Option.fromNullishOr(
+          new URL(expectSome(Arr.head(urls), "a requested URL")).searchParams.get("search"),
+        ),
+        "a search parameter",
+      );
+      expect(requested.length).toBe(500);
+    }),
+  );
 
-  it("sends the caller's contact address as the mailto parameter", async () => {
-    const { urls, layer } = stubRouter({});
-    await runTest(
-      Effect.provide(
+  it.effect("sends the caller's contact address as the mailto parameter", () =>
+    Effect.gen(function* () {
+      const { urls, layer } = stubRouter({});
+      yield* withLayer(
         Effect.gen(function* () {
           const client = yield* filteredClient;
           return yield* searchOpenAlexByTitle(client, "x", CONTACT);
         }),
         layer,
-      ),
-    );
-    const mailto = new URL(expectSome(Arr.head(urls), "a requested URL")).searchParams.get(
-      "mailto",
-    );
-    expect(mailto).toBe(CONTACT.email);
-  });
+      );
+      const mailto = new URL(expectSome(Arr.head(urls), "a requested URL")).searchParams.get(
+        "mailto",
+      );
+      expect(mailto).toBe(CONTACT.email);
+    }),
+  );
 });

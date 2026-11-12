@@ -8,7 +8,8 @@
  * @module tests/unit/biblio-sources-web
  */
 
-import { describe, expect, it } from "vite-plus/test";
+import { it } from "@effect/vitest";
+import { describe, expect } from "vite-plus/test";
 import * as Effect from "effect/Effect";
 import * as Fiber from "effect/Fiber";
 import * as Layer from "effect/Layer";
@@ -24,8 +25,7 @@ import {
 } from "@thomasfosterau/effect-bib/sources";
 import { addressRefusal, type ResolveAddresses } from "../../src/sources/fetch-policy.ts";
 import { MAX_INPUT_LENGTH } from "../../src/parse.ts";
-import { expectFailureInstanceOf, runTest } from "../effect.ts";
-import { stubRouter, type StubRoute } from "./stub-http.ts";
+import { stubRouter, type StubRoute, withLayer } from "./stub-http.ts";
 import { expectSome } from "../assert.ts";
 
 const CONTACT = { product: "biblio-tests/0.0", email: "biblio+tests@example.org" } as const;
@@ -56,65 +56,79 @@ const byUrl = (
     const lookup = yield* BiblioLookup;
     return yield* lookup.byUrl(url);
   }).pipe(
-    Effect.provide(
-      biblioLookupClientLayer({ contact: CONTACT, ...options }).pipe(Layer.provide(layer)),
-    ),
+    withLayer(biblioLookupClientLayer({ contact: CONTACT, ...options }).pipe(Layer.provide(layer))),
   );
 
 const START = "https://example.org/paper";
 
 describe("BiblioLookup.byUrl", () => {
-  it("reads the page's embedded metadata, identifying itself without the contact email", async () => {
-    const { layer, urls, userAgents, accepts, redirects } = stubRouter({ [START]: html() });
-    const found = expectSome(await runTest(byUrl(layer, START)), "page metadata");
-    const record = expectSome(found.page, "a page record");
-    expect(record.title).toBe("Structure of Scientific Revolutions");
-    expect(record.URL).toBe(START);
-    expect(urls).toEqual([START]);
-    expect(userAgents).toEqual([CONTACT.product]);
-    expect(accepts[0]).toContain("text/html");
-    expect(redirects).toEqual(["manual"]);
-  });
+  it.effect(
+    "reads the page's embedded metadata, identifying itself without the contact email",
+    () =>
+      Effect.gen(function* () {
+        const { layer, urls, userAgents, accepts, redirects } = stubRouter({ [START]: html() });
+        const found = expectSome(yield* byUrl(layer, START), "page metadata");
+        const record = expectSome(found.page, "a page record");
+        expect(record.title).toBe("Structure of Scientific Revolutions");
+        expect(record.URL).toBe(START);
+        expect(urls).toEqual([START]);
+        expect(userAgents).toEqual([CONTACT.product]);
+        expect(accepts[0]).toContain("text/html");
+        expect(redirects).toEqual(["manual"]);
+      }),
+  );
 
-  it("names the URL that answered, not the URL the page claims, and leaves COinS alone", async () => {
-    const next = "https://www.example.com/articles/1";
-    const claims = `<html><head>
+  it.effect(
+    "names the URL that answered, not the URL the page claims, and leaves COinS alone",
+    () =>
+      Effect.gen(function* () {
+        const next = "https://www.example.com/articles/1";
+        const claims = `<html><head>
   <meta name="citation_title" content="Structure of Scientific Revolutions">
   <meta name="citation_abstract_html_url" content="https://mirror.example.net/kuhn">
 </head><body>
   <span class="Z3988" title="ctx_ver=Z39.88-2004&amp;rft.btitle=Sapiens&amp;rft_id=https%3A%2F%2Fexample.net%2Fsapiens"></span>
 </body></html>`;
-    const { layer } = stubRouter({ [START]: redirect(next), [next]: html(claims) });
-    const found = expectSome(await runTest(byUrl(layer, START)), "page metadata");
-    expect(expectSome(found.page, "a page record").URL).toBe(next);
-    expect(found.coins).toHaveLength(1);
-    expect(found.coins[0]?.URL).not.toBe(next);
-  });
+        const { layer } = stubRouter({ [START]: redirect(next), [next]: html(claims) });
+        const found = expectSome(yield* byUrl(layer, START), "page metadata");
+        expect(expectSome(found.page, "a page record").URL).toBe(next);
+        expect(found.coins).toHaveLength(1);
+        expect(found.coins[0]?.URL).not.toBe(next);
+      }),
+  );
 
-  it("accepts application/xhtml+xml", async () => {
-    const { layer } = stubRouter({ [START]: html(PAGE, "application/xhtml+xml") });
-    const found = expectSome(await runTest(byUrl(layer, START)), "page metadata");
-    expect(Option.isSome(found.page)).toBe(true);
-  });
+  it.effect("accepts application/xhtml+xml", () =>
+    Effect.gen(function* () {
+      const { layer } = stubRouter({ [START]: html(PAGE, "application/xhtml+xml") });
+      const found = expectSome(yield* byUrl(layer, START), "page metadata");
+      expect(Option.isSome(found.page)).toBe(true);
+    }),
+  );
 
-  it("returns Option.none on a clean 404", async () => {
-    const { layer } = stubRouter({});
-    expect(Option.isNone(await runTest(byUrl(layer, START)))).toBe(true);
-  });
+  it.effect("returns Option.none on a clean 404", () =>
+    Effect.gen(function* () {
+      const { layer } = stubRouter({});
+      expect(Option.isNone(yield* byUrl(layer, START))).toBe(true);
+    }),
+  );
 
-  it("follows a redirect to a public host by hand, the page URL being the one that answered", async () => {
-    const next = "https://www.example.com/articles/1";
-    const { layer, urls, redirects } = stubRouter({
-      [START]: redirect("//www.example.com/articles/1", 301),
-      [next]: html(),
-    });
-    const found = expectSome(await runTest(byUrl(layer, START)), "page metadata");
-    expect(expectSome(found.page, "a page record").URL).toBe(next);
-    expect(urls).toEqual([START, next]);
-    expect(redirects).toEqual(["manual", "manual"]);
-  });
+  it.effect(
+    "follows a redirect to a public host by hand, the page URL being the one that answered",
+    () =>
+      Effect.gen(function* () {
+        const next = "https://www.example.com/articles/1";
+        const { layer, urls, redirects } = stubRouter({
+          [START]: redirect("//www.example.com/articles/1", 301),
+          [next]: html(),
+        });
+        const found = expectSome(yield* byUrl(layer, START), "page metadata");
+        expect(expectSome(found.page, "a page record").URL).toBe(next);
+        expect(urls).toEqual([START, next]);
+        expect(redirects).toEqual(["manual", "manual"]);
+      }),
+  );
 
-  it.each([
+  it.effect.each([
     ["an unparseable URL", "not a url"],
     ["the ftp scheme", "ftp://example.org/paper"],
     ["the file scheme", "file:///etc/passwd"],
@@ -149,14 +163,17 @@ describe("BiblioLookup.byUrl", () => {
     ["an .internal name", "http://metadata.google.internal/computeMetadata/v1/"],
     ["a .home.arpa name", "http://router.home.arpa/"],
     ["a single-label host", "http://intranet/"],
-  ])("refuses %s with RefusedUrl before any request", async (_, url) => {
-    const { layer, urls } = stubRouter({});
-    const failure = await expectFailureInstanceOf(byUrl(layer, url), RefusedUrl);
-    expect(failure).toMatchObject({ url });
-    expect(urls).toEqual([]);
-  });
+  ])("refuses %s with RefusedUrl before any request", ([, url]) =>
+    Effect.gen(function* () {
+      const { layer, urls } = stubRouter({});
+      const failure = yield* Effect.flip(byUrl(layer, url));
+      expect(failure).toBeInstanceOf(RefusedUrl);
+      expect(failure).toMatchObject({ url });
+      expect(urls).toEqual([]);
+    }),
+  );
 
-  it.each([
+  it.effect.each([
     ["a loopback address", "https://127.0.0.1/"],
     ["the metadata address over http", "http://169.254.169.254/latest/meta-data/"],
     ["an IPv6 unique-local address", "https://[fc00::1]/"],
@@ -165,49 +182,67 @@ describe("BiblioLookup.byUrl", () => {
     ["a non-default port", "https://example.com:8443/"],
     ["the file scheme", "file:///etc/passwd"],
     ["an unparseable location", "https://[bad"],
-  ])("refuses a redirect to %s with LookupFailed", async (_, location) => {
-    const { layer, urls } = stubRouter({ [START]: redirect(location) });
-    const failure = await expectFailureInstanceOf(byUrl(layer, START), LookupFailed);
-    expect(failure).toMatchObject({ source: "web" });
-    expect(urls).toEqual([START]);
-  });
+  ])("refuses a redirect to %s with LookupFailed", ([, location]) =>
+    Effect.gen(function* () {
+      const { layer, urls } = stubRouter({ [START]: redirect(location) });
+      const failure = yield* Effect.flip(byUrl(layer, START));
+      expect(failure).toBeInstanceOf(LookupFailed);
+      expect(failure).toMatchObject({ source: "web" });
+      expect(urls).toEqual([START]);
+    }),
+  );
 
-  it("fails on a redirect loop after five redirects, and on a redirect without a location", async () => {
-    const loop = stubRouter({ [START]: redirect(START) });
-    await expectFailureInstanceOf(byUrl(loop.layer, START), LookupFailed);
-    expect(loop.urls).toHaveLength(6);
-    const bare = stubRouter({ [START]: { status: 303, body: {} } });
-    await expectFailureInstanceOf(byUrl(bare.layer, START), LookupFailed);
-  });
+  it.effect(
+    "fails on a redirect loop after five redirects, and on a redirect without a location",
+    () =>
+      Effect.gen(function* () {
+        const loop = stubRouter({ [START]: redirect(START) });
+        expect(yield* Effect.flip(byUrl(loop.layer, START))).toBeInstanceOf(LookupFailed);
+        expect(loop.urls).toHaveLength(6);
+        const bare = stubRouter({ [START]: { status: 303, body: {} } });
+        expect(yield* Effect.flip(byUrl(bare.layer, START))).toBeInstanceOf(LookupFailed);
+      }),
+  );
 
-  it.each([
+  it.effect.each([
     ["JSON", "application/json"],
     ["plain text", "text/plain"],
     ["an image", "image/png"],
-  ])("refuses a %s response", async (_, contentType) => {
-    const { layer } = stubRouter({ [START]: html(PAGE, contentType) });
-    const failure = await expectFailureInstanceOf(byUrl(layer, START), LookupFailed);
-    expect(failure).toMatchObject({ description: expect.stringContaining("not an HTML page") });
-  });
+  ])("refuses a %s response", ([, contentType]) =>
+    Effect.gen(function* () {
+      const { layer } = stubRouter({ [START]: html(PAGE, contentType) });
+      const failure = yield* Effect.flip(byUrl(layer, START));
+      expect(failure).toBeInstanceOf(LookupFailed);
+      expect(failure).toMatchObject({ description: expect.stringContaining("not an HTML page") });
+    }),
+  );
 
-  it("fails on an upstream 5xx", async () => {
-    const { layer } = stubRouter({ [START]: { ...html(), status: 503 } });
-    await expectFailureInstanceOf(byUrl(layer, START), LookupFailed);
-  });
+  it.effect("fails on an upstream 5xx", () =>
+    Effect.gen(function* () {
+      const { layer } = stubRouter({ [START]: { ...html(), status: 503 } });
+      expect(yield* Effect.flip(byUrl(layer, START))).toBeInstanceOf(LookupFailed);
+    }),
+  );
 
-  it("refuses a body declared larger than the cap before reading it", async () => {
-    const { layer } = stubRouter({
-      [START]: { ...html(), headers: { "content-length": String(MAX_INPUT_LENGTH + 1) } },
-    });
-    const failure = await expectFailureInstanceOf(byUrl(layer, START), LookupFailed);
-    expect(failure).toMatchObject({ description: expect.stringContaining("larger than") });
-  });
+  it.effect("refuses a body declared larger than the cap before reading it", () =>
+    Effect.gen(function* () {
+      const { layer } = stubRouter({
+        [START]: { ...html(), headers: { "content-length": String(MAX_INPUT_LENGTH + 1) } },
+      });
+      const failure = yield* Effect.flip(byUrl(layer, START));
+      expect(failure).toBeInstanceOf(LookupFailed);
+      expect(failure).toMatchObject({ description: expect.stringContaining("larger than") });
+    }),
+  );
 
-  it("stops reading a body that streams past the cap", async () => {
-    const { layer } = stubRouter({ [START]: html("x".repeat(MAX_INPUT_LENGTH + 1)) });
-    const failure = await expectFailureInstanceOf(byUrl(layer, START), LookupFailed);
-    expect(failure).toMatchObject({ description: expect.stringContaining("larger than") });
-  });
+  it.effect("stops reading a body that streams past the cap", () =>
+    Effect.gen(function* () {
+      const { layer } = stubRouter({ [START]: html("x".repeat(MAX_INPUT_LENGTH + 1)) });
+      const failure = yield* Effect.flip(byUrl(layer, START));
+      expect(failure).toBeInstanceOf(LookupFailed);
+      expect(failure).toMatchObject({ description: expect.stringContaining("larger than") });
+    }),
+  );
 
   describe("with a resolver", () => {
     /** A lookup that fails with `NXDOMAIN` for a host it has no answer for. */
@@ -221,45 +256,56 @@ describe("BiblioLookup.byUrl", () => {
       (hostname) =>
         lookup(answers)(hostname).pipe(Effect.orElseSucceed((): readonly string[] => []));
 
-    it("fetches a host that resolves only to public addresses", async () => {
-      const { layer, urls } = stubRouter({ [START]: html() });
-      const resolveAddresses = resolving({
-        "example.org": ["93.184.215.14", "2606:2800::1", "::ffff:8.8.8.8"],
-      });
-      await runTest(byUrl(layer, START, { resolveAddresses }));
-      expect(urls).toEqual([START]);
-    });
+    it.effect("fetches a host that resolves only to public addresses", () =>
+      Effect.gen(function* () {
+        const { layer, urls } = stubRouter({ [START]: html() });
+        const resolveAddresses = resolving({
+          "example.org": ["93.184.215.14", "2606:2800::1", "::ffff:8.8.8.8"],
+        });
+        yield* byUrl(layer, START, { resolveAddresses });
+        expect(urls).toEqual([START]);
+      }),
+    );
 
-    it.each([
+    it.effect.each<readonly [string, readonly string[]]>([
       ["a private address", ["93.184.215.14", "10.0.0.5"]],
       ["IPv6 loopback", ["::1"]],
       ["no address", []],
       ["an unrecognised address", ["not-an-ip"]],
-    ])("refuses a host that resolves to %s", async (_, addresses) => {
-      const { layer, urls } = stubRouter({ [START]: html() });
-      const resolveAddresses = resolving({ "example.org": addresses });
-      await expectFailureInstanceOf(byUrl(layer, START, { resolveAddresses }), RefusedUrl);
-      expect(urls).toEqual([]);
-    });
+    ])("refuses a host that resolves to %s", ([, addresses]) =>
+      Effect.gen(function* () {
+        const { layer, urls } = stubRouter({ [START]: html() });
+        const resolveAddresses = resolving({ "example.org": addresses });
+        expect(yield* Effect.flip(byUrl(layer, START, { resolveAddresses }))).toBeInstanceOf(
+          RefusedUrl,
+        );
+        expect(urls).toEqual([]);
+      }),
+    );
 
-    it("refuses a host that fails to resolve", async () => {
-      const { layer } = stubRouter({ [START]: html() });
-      await expectFailureInstanceOf(
-        byUrl(layer, START, { resolveAddresses: resolving({}) }),
-        RefusedUrl,
-      );
-    });
+    it.effect("refuses a host that fails to resolve", () =>
+      Effect.gen(function* () {
+        const { layer } = stubRouter({ [START]: html() });
+        expect(
+          yield* Effect.flip(byUrl(layer, START, { resolveAddresses: resolving({}) })),
+        ).toBeInstanceOf(RefusedUrl);
+      }),
+    );
 
-    it("re-checks a redirect hop's resolved addresses", async () => {
-      const next = "https://rebind.example.net/x";
-      const { layer, urls } = stubRouter({ [START]: redirect(next), [next]: html() });
-      const resolveAddresses = resolving({
-        "example.org": ["93.184.215.14"],
-        "rebind.example.net": ["169.254.169.254"],
-      });
-      await expectFailureInstanceOf(byUrl(layer, START, { resolveAddresses }), LookupFailed);
-      expect(urls).toEqual([START]);
-    });
+    it.effect("re-checks a redirect hop's resolved addresses", () =>
+      Effect.gen(function* () {
+        const next = "https://rebind.example.net/x";
+        const { layer, urls } = stubRouter({ [START]: redirect(next), [next]: html() });
+        const resolveAddresses = resolving({
+          "example.org": ["93.184.215.14"],
+          "rebind.example.net": ["169.254.169.254"],
+        });
+        expect(yield* Effect.flip(byUrl(layer, START, { resolveAddresses }))).toBeInstanceOf(
+          LookupFailed,
+        );
+        expect(urls).toEqual([START]);
+      }),
+    );
   });
 
   describe("time limit", () => {
@@ -283,28 +329,32 @@ describe("BiblioLookup.byUrl", () => {
         const fiber = yield* Effect.forkChild(Effect.flip(byUrl(layer, START)));
         yield* TestClock.adjust("11 seconds");
         return yield* Fiber.join(fiber);
-      }).pipe(Effect.provide(TestClock.layer()));
+      });
 
-    it("fails when the response never arrives", async () => {
-      const failure = await runTest(timesOut(hanging(() => new Promise<Response>(() => {}))));
-      expect(failure).toBeInstanceOf(LookupFailed);
-      expect(failure).toMatchObject({ description: "timed out" });
-    });
+    it.effect("fails when the response never arrives", () =>
+      Effect.gen(function* () {
+        const failure = yield* timesOut(hanging(() => new Promise<Response>(() => {})));
+        expect(failure).toBeInstanceOf(LookupFailed);
+        expect(failure).toMatchObject({ description: "timed out" });
+      }),
+    );
 
-    it("fails when the body never finishes", async () => {
-      const endless = (): Promise<Response> =>
-        Promise.resolve(
-          new Response(
-            new ReadableStream<Uint8Array>({
-              start: (controller) => controller.enqueue(new TextEncoder().encode("<html>")),
-            }),
-            { status: 200, headers: { "content-type": "text/html" } },
-          ),
-        );
-      const failure = await runTest(timesOut(hanging(endless)));
-      expect(failure).toBeInstanceOf(LookupFailed);
-      expect(failure).toMatchObject({ description: "timed out" });
-    });
+    it.effect("fails when the body never finishes", () =>
+      Effect.gen(function* () {
+        const endless = (): Promise<Response> =>
+          Promise.resolve(
+            new Response(
+              new ReadableStream<Uint8Array>({
+                start: (controller) => controller.enqueue(new TextEncoder().encode("<html>")),
+              }),
+              { status: 200, headers: { "content-type": "text/html" } },
+            ),
+          );
+        const failure = yield* timesOut(hanging(endless));
+        expect(failure).toBeInstanceOf(LookupFailed);
+        expect(failure).toMatchObject({ description: "timed out" });
+      }),
+    );
   });
 });
 
@@ -315,25 +365,31 @@ describe("BiblioLookup.byUrl over a raw response", () => {
       Layer.provide(Layer.succeed(FetchHttpClient.Fetch, () => Promise.resolve(respond()))),
     );
 
-  it("refuses a response with no content type", async () => {
-    const layer = answering(() => new Response(null, { status: 200 }));
-    const failure = await expectFailureInstanceOf(byUrl(layer, START), LookupFailed);
-    expect(failure).toMatchObject({ description: expect.stringContaining("no content type") });
-  });
+  it.effect("refuses a response with no content type", () =>
+    Effect.gen(function* () {
+      const layer = answering(() => new Response(null, { status: 200 }));
+      const failure = yield* Effect.flip(byUrl(layer, START));
+      expect(failure).toBeInstanceOf(LookupFailed);
+      expect(failure).toMatchObject({ description: expect.stringContaining("no content type") });
+    }),
+  );
 
-  it("fails when the body stream errors part-way", async () => {
-    const layer = answering(
-      () =>
-        new Response(
-          new ReadableStream<Uint8Array>({
-            pull: (controller) => controller.error(new TypeError("connection reset")),
-          }),
-          { status: 200, headers: { "content-type": "text/html" } },
-        ),
-    );
-    const failure = await expectFailureInstanceOf(byUrl(layer, START), LookupFailed);
-    expect(failure).toMatchObject({ description: "failed to read the response" });
-  });
+  it.effect("fails when the body stream errors part-way", () =>
+    Effect.gen(function* () {
+      const layer = answering(
+        () =>
+          new Response(
+            new ReadableStream<Uint8Array>({
+              pull: (controller) => controller.error(new TypeError("connection reset")),
+            }),
+            { status: 200, headers: { "content-type": "text/html" } },
+          ),
+      );
+      const failure = yield* Effect.flip(byUrl(layer, START));
+      expect(failure).toBeInstanceOf(LookupFailed);
+      expect(failure).toMatchObject({ description: "failed to read the response" });
+    }),
+  );
 });
 
 describe("addressRefusal", () => {

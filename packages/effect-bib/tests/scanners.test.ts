@@ -9,11 +9,12 @@
  * @module tests/unit/scanners
  */
 
+import { it } from "@effect/vitest";
 import * as Arr from "effect/Array";
+import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Stream from "effect/Stream";
-import { describe, expect, it } from "vite-plus/test";
-import { runTest } from "./effect.ts";
+import { describe, expect } from "vite-plus/test";
 import {
   parseBibliographicStream,
   parseBibtex,
@@ -118,50 +119,57 @@ describe("CSV rows", () => {
 
 describe("streaming splits", () => {
   /** The outcomes of streaming `text` in chunks of `size` characters. */
-  const streamed = async (text: string, size: number, format: "bibtex" | "csv") =>
-    summary(
-      await runTest(
-        Stream.runCollect(
-          parseBibliographicStream(
-            Stream.fromIterable(
-              Arr.makeBy(Math.ceil(text.length / size), (index) =>
-                text.slice(index * size, (index + 1) * size),
-              ),
+  const streamed = (text: string, size: number, format: "bibtex" | "csv") =>
+    Effect.map(
+      Stream.runCollect(
+        parseBibliographicStream(
+          Stream.fromIterable(
+            Arr.makeBy(Math.ceil(text.length / size), (index) =>
+              text.slice(index * size, (index + 1) * size),
             ),
-            format,
-            { mode: "lenient" },
           ),
+          format,
+          { mode: "lenient" },
         ),
       ),
+      summary,
     );
 
-  it("closes a parenthesised entry at its parenthesis and a braced one at its brace", async () => {
-    const text =
-      "@book(a, title = {One (1)}, isbn = {9780199695836})\n@book{b, title = {Two {x}}, isbn = {9780062316097}}\n";
-    const whole = summary(parseBibtex(text, { mode: "lenient" }));
-    expect(whole).toHaveLength(2);
-    expect(
-      await Promise.all([1, 3, 7, 1000].map((size) => streamed(text, size, "bibtex"))),
-    ).toEqual([whole, whole, whole, whole]);
-  });
+  it.effect("closes a parenthesised entry at its parenthesis and a braced one at its brace", () =>
+    Effect.gen(function* () {
+      const text =
+        "@book(a, title = {One (1)}, isbn = {9780199695836})\n@book{b, title = {Two {x}}, isbn = {9780062316097}}\n";
+      const whole = summary(parseBibtex(text, { mode: "lenient" }));
+      expect(whole).toHaveLength(2);
+      expect(
+        yield* Effect.forEach([1, 3, 7, 1000], (size) => streamed(text, size, "bibtex"), {
+          concurrency: "unbounded",
+        }),
+      ).toEqual([whole, whole, whole, whole]);
+    }),
+  );
 
-  it("holds an entry back until its closing delimiter arrives", async () => {
-    const text = "@book{a, title = {One {nested}}, isbn = {9780199695836}}";
-    expect(await streamed(text, 5, "bibtex")).toEqual(
-      summary(parseBibtex(text, { mode: "lenient" })),
-    );
-  });
+  it.effect("holds an entry back until its closing delimiter arrives", () =>
+    Effect.gen(function* () {
+      const text = "@book{a, title = {One {nested}}, isbn = {9780199695836}}";
+      expect(yield* streamed(text, 5, "bibtex")).toEqual(
+        summary(parseBibtex(text, { mode: "lenient" })),
+      );
+    }),
+  );
 
-  it("reads CSV rows with quoted line breaks however the input is cut", async () => {
-    const text = 'title,publisher\n"A\r\nB",P\r\nC,"Q ""x"""\n';
-    const whole = summary(parseCsv(text, { mode: "lenient" }));
-    expect(whole).toHaveLength(2);
-    expect(await Promise.all([1, 2, 1000].map((size) => streamed(text, size, "csv")))).toEqual([
-      whole,
-      whole,
-      whole,
-    ]);
-  });
+  it.effect("reads CSV rows with quoted line breaks however the input is cut", () =>
+    Effect.gen(function* () {
+      const text = 'title,publisher\n"A\r\nB",P\r\nC,"Q ""x"""\n';
+      const whole = summary(parseCsv(text, { mode: "lenient" }));
+      expect(whole).toHaveLength(2);
+      expect(
+        yield* Effect.forEach([1, 2, 1000], (size) => streamed(text, size, "csv"), {
+          concurrency: "unbounded",
+        }),
+      ).toEqual([whole, whole, whole]);
+    }),
+  );
 });
 
 describe("YAML collections", () => {

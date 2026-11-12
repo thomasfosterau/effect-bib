@@ -8,8 +8,10 @@
  */
 
 import * as Effect from "effect/Effect";
+import { dual } from "effect/Function";
 import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
+import type * as Scope from "effect/Scope";
 import { FetchHttpClient, HttpClient } from "effect/http";
 
 export interface StubRoute {
@@ -38,6 +40,28 @@ export interface StubRoute {
  */
 export const filteredClient: Effect.Effect<HttpClient.HttpClient, never, HttpClient.HttpClient> =
   Effect.map(HttpClient.HttpClient, HttpClient.filterStatusOk);
+
+/**
+ * Runs `effect` with `layer` built in the calling test's own scope, which
+ * `it.effect` closes when the test ends. A per-test stub layer closes over
+ * that test's captured requests, so it cannot be shared through `layer(...)`;
+ * building it here keeps its lifetime inside the test instead of reaching for
+ * `Effect.provide` with a layer, which the Effect lint reserves for
+ * application entry points.
+ */
+export const withLayer: {
+  <ROut, E>(
+    layer: Layer.Layer<ROut, E>,
+  ): <A, E2, R>(
+    effect: Effect.Effect<A, E2, R>,
+  ) => Effect.Effect<A, E | E2, Exclude<R, ROut> | Scope.Scope>;
+  <A, E2, R, ROut, E>(
+    effect: Effect.Effect<A, E2, R>,
+    layer: Layer.Layer<ROut, E>,
+  ): Effect.Effect<A, E | E2, Exclude<R, ROut> | Scope.Scope>;
+} = dual(2, <A, E2, R, ROut, E>(effect: Effect.Effect<A, E2, R>, layer: Layer.Layer<ROut, E>) =>
+  Effect.flatMap(Layer.build(layer), (context) => Effect.provideContext(effect, context)),
+);
 
 /** What {@link stubRouter} hands a test: the captured requests, the routing fetch and its layer. */
 export interface StubRouter {

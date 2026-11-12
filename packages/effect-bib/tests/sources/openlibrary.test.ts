@@ -13,7 +13,8 @@
  * @module tests/unit/biblio-sources-openlibrary
  */
 
-import { describe, expect, it } from "vite-plus/test";
+import { it } from "@effect/vitest";
+import { describe, expect } from "vite-plus/test";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
@@ -27,8 +28,7 @@ import {
   OpenLibraryEdition,
 } from "../../src/sources/openlibrary.ts";
 import { LookupFailed } from "../../src/sources/errors.ts";
-import { expectFailureInstanceOf, runTest } from "../effect.ts";
-import { filteredClient, stubRouter } from "./stub-http.ts";
+import { filteredClient, stubRouter, withLayer } from "./stub-http.ts";
 import { expectSome } from "../assert.ts";
 import ulyssesAuthorBody from "../fixtures/openlibrary-ulysses-author.json" with { type: "json" };
 import ulyssesEditionBody from "../fixtures/openlibrary-ulysses-edition.json" with { type: "json" };
@@ -140,89 +140,95 @@ describe("normaliseOpenLibraryRecord", () => {
 });
 
 describe("lookupOpenLibraryByIsbn", () => {
-  it("resolves the edition and follows its author record", async () => {
-    const { urls, layer } = stubRouter({
-      "https://openlibrary.org/isbn/9780199535675.json": { status: 200, body: ulyssesEdition },
-      "https://openlibrary.org/authors/OL31827A.json": { status: 200, body: ulyssesAuthor },
-    });
-    const result = await runTest(
-      Effect.provide(
+  it.effect("resolves the edition and follows its author record", () =>
+    Effect.gen(function* () {
+      const { urls, layer } = stubRouter({
+        "https://openlibrary.org/isbn/9780199535675.json": { status: 200, body: ulyssesEdition },
+        "https://openlibrary.org/authors/OL31827A.json": { status: 200, body: ulyssesAuthor },
+      });
+      const result = yield* withLayer(
         Effect.gen(function* () {
           const client = yield* filteredClient;
           return yield* lookupOpenLibraryByIsbn(client, REQUESTED_ISBN);
         }),
         layer,
-      ),
-    );
-    expect(Option.isSome(result)).toBe(true);
-    const record = expectSome(result, "a record");
-    expect(record.title).toBe("Ulysses");
-    expect(record.author).toEqual([{ family: "Joyce", given: "James" }]);
-    expect(urls).toContain("https://openlibrary.org/isbn/9780199535675.json");
-    expect(urls).toContain("https://openlibrary.org/authors/OL31827A.json");
-  });
+      );
+      expect(Option.isSome(result)).toBe(true);
+      const record = expectSome(result, "a record");
+      expect(record.title).toBe("Ulysses");
+      expect(record.author).toEqual([{ family: "Joyce", given: "James" }]);
+      expect(urls).toContain("https://openlibrary.org/isbn/9780199535675.json");
+      expect(urls).toContain("https://openlibrary.org/authors/OL31827A.json");
+    }),
+  );
 
-  it("returns Option.none on a clean edition 404", async () => {
-    const { layer } = stubRouter({});
-    const result = await runTest(
-      Effect.provide(
+  it.effect("returns Option.none on a clean edition 404", () =>
+    Effect.gen(function* () {
+      const { layer } = stubRouter({});
+      const result = yield* withLayer(
         Effect.gen(function* () {
           const client = yield* filteredClient;
           return yield* lookupOpenLibraryByIsbn(client, REQUESTED_ISBN);
         }),
         layer,
-      ),
-    );
-    expect(Option.isNone(result)).toBe(true);
-  });
+      );
+      expect(Option.isNone(result)).toBe(true);
+    }),
+  );
 
-  it("still returns a record when an author follow-up 404s", async () => {
-    const { layer } = stubRouter({
-      "https://openlibrary.org/isbn/9780199535675.json": { status: 200, body: ulyssesEdition },
-      // author lookup unmapped -> 404
-    });
-    const result = await runTest(
-      Effect.provide(
+  it.effect("still returns a record when an author follow-up 404s", () =>
+    Effect.gen(function* () {
+      const { layer } = stubRouter({
+        "https://openlibrary.org/isbn/9780199535675.json": { status: 200, body: ulyssesEdition },
+        // author lookup unmapped -> 404
+      });
+      const result = yield* withLayer(
         Effect.gen(function* () {
           const client = yield* filteredClient;
           return yield* lookupOpenLibraryByIsbn(client, REQUESTED_ISBN);
         }),
         layer,
-      ),
-    );
-    const record = expectSome(result, "a record");
-    expect(record.author).toBeUndefined();
-  });
+      );
+      const record = expectSome(result, "a record");
+      expect(record.author).toBeUndefined();
+    }),
+  );
 
-  it("fails with LookupFailed on an upstream 5xx", async () => {
-    const { layer } = stubRouter({
-      "https://openlibrary.org/isbn/9780199535675.json": { status: 503, body: {} },
-    });
-    await expectFailureInstanceOf(
-      Effect.provide(
-        Effect.gen(function* () {
-          const client = yield* filteredClient;
-          return yield* lookupOpenLibraryByIsbn(client, REQUESTED_ISBN);
-        }),
-        layer,
-      ),
-      LookupFailed,
-    );
-  });
+  it.effect("fails with LookupFailed on an upstream 5xx", () =>
+    Effect.gen(function* () {
+      const { layer } = stubRouter({
+        "https://openlibrary.org/isbn/9780199535675.json": { status: 503, body: {} },
+      });
+      expect(
+        yield* Effect.flip(
+          withLayer(
+            Effect.gen(function* () {
+              const client = yield* filteredClient;
+              return yield* lookupOpenLibraryByIsbn(client, REQUESTED_ISBN);
+            }),
+            layer,
+          ),
+        ),
+      ).toBeInstanceOf(LookupFailed);
+    }),
+  );
 
-  it("fails with LookupFailed when the body has the wrong shape", async () => {
-    const { layer } = stubRouter({
-      "https://openlibrary.org/isbn/9780199535675.json": { status: 200, body: "not an object" },
-    });
-    await expectFailureInstanceOf(
-      Effect.provide(
-        Effect.gen(function* () {
-          const client = yield* filteredClient;
-          return yield* lookupOpenLibraryByIsbn(client, REQUESTED_ISBN);
-        }),
-        layer,
-      ),
-      LookupFailed,
-    );
-  });
+  it.effect("fails with LookupFailed when the body has the wrong shape", () =>
+    Effect.gen(function* () {
+      const { layer } = stubRouter({
+        "https://openlibrary.org/isbn/9780199535675.json": { status: 200, body: "not an object" },
+      });
+      expect(
+        yield* Effect.flip(
+          withLayer(
+            Effect.gen(function* () {
+              const client = yield* filteredClient;
+              return yield* lookupOpenLibraryByIsbn(client, REQUESTED_ISBN);
+            }),
+            layer,
+          ),
+        ),
+      ).toBeInstanceOf(LookupFailed);
+    }),
+  );
 });
