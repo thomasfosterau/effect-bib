@@ -41,6 +41,10 @@ const decodeString = Schema.decodeUnknownOption(Schema.String);
 
 // ── Surviving sanitisers ──────────────────────────────────────────────
 
+/** Sanitises a decoded string, as a caller holding an untrusted value does. */
+const clean = (value: Option.Option<string>): Option.Option<string> =>
+  Option.flatMap(value, sanitiseText);
+
 describe("sanitiseText", () => {
   it("trims and collapses internal whitespace", () => {
     expect(sanitiseText("  hello   world \n")).toStrictEqual(Option.some("hello world"));
@@ -51,7 +55,6 @@ describe("sanitiseText", () => {
   });
 
   it("reads an untrusted value through a string decoder first, so a non-string is None", () => {
-    const clean = (value: Option.Option<string>) => Option.flatMap(value, sanitiseText);
     expect(clean(decodeString(undefined))).toStrictEqual(Option.none());
     expect(clean(decodeString(42))).toStrictEqual(Option.none());
     expect(clean(decodeString(" ok "))).toStrictEqual(Option.some("ok"));
