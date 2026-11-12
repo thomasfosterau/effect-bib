@@ -14,7 +14,7 @@
 
 // See website#1070.
 
-import * as Array from "effect/Array";
+import * as Arr from "effect/Array";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
@@ -34,7 +34,7 @@ function isNotFound(error: HttpClientError.HttpClientError): boolean {
  */
 export function firstString(values: Option.Option<readonly unknown[]>): Option.Option<string> {
   if (Option.isNone(values)) return Option.none();
-  const first = Array.findFirst(values.value, (value) => Option.isSome(sanitiseText(value)));
+  const first = Arr.findFirst(values.value, (value) => Option.isSome(sanitiseText(value)));
   return Option.isNone(first) ? Option.none() : sanitiseText(first.value);
 }
 

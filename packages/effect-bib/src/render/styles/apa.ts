@@ -22,7 +22,7 @@
 // See website#1072.
 
 import * as Option from "effect/Option";
-import * as String from "effect/String";
+import * as Str from "effect/String";
 import { type BiblioRecord, yearOf } from "../../record.ts";
 import {
   dispatchRich,
@@ -73,7 +73,7 @@ function editorNames(ctx: RenderContext): NameListOptions {
 function head(record: BiblioRecord, ctx: RenderContext): RichText {
   const names = formatNameList(record.author ?? [], authorNames(ctx));
   const year = issuedYearWithSuffix(record, ctx);
-  return text(String.isNonEmpty(names) ? `${terminate(names)} (${year}).` : `(${year}).`);
+  return text(Str.isNonEmpty(names) ? `${terminate(names)} (${year}).` : `(${year}).`);
 }
 
 /** `"(2nd ed.)"` when an edition is present, else `None`. */
@@ -105,10 +105,10 @@ function containerClause(record: BiblioRecord, ctx: RenderContext): Option.Optio
       ? Option.some(text(`(${pagesLabel(record.page, ctx.locale)} ${record.page})`))
       : Option.none<RichText>();
   const container = joinRich([italicField(record, "container-title"), pages], " ");
-  if (String.isNonEmpty(editors)) {
+  if (Str.isNonEmpty(editors)) {
     return Option.some(concat(text(`${ctx.locale.in} ${editors} (${label}), `), container));
   }
-  return String.isNonEmpty(toPlainText(container)) ? Option.some(container) : Option.none();
+  return Str.isNonEmpty(toPlainText(container)) ? Option.some(container) : Option.none();
 }
 
 function book(record: BiblioRecord, ctx: RenderContext): RichText {
@@ -150,7 +150,7 @@ function article(record: BiblioRecord): RichText {
   return joinRich(
     [
       terminated(richField(record, "title")),
-      String.isNonEmpty(toPlainText(locator))
+      Str.isNonEmpty(toPlainText(locator))
         ? Option.some(terminateRich(locator))
         : Option.none<RichText>(),
       urlSuffix(record),

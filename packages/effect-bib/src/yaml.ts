@@ -15,13 +15,13 @@
  * @since 0.1.0
  */
 
-import * as Array from "effect/Array";
+import * as Arr from "effect/Array";
 import * as HashMap from "effect/HashMap";
 import * as Option from "effect/Option";
-import * as Predicate from "effect/Predicate";
-import * as Record from "effect/Record";
+import * as P from "effect/Predicate";
+import * as R from "effect/Record";
 import * as Schema from "effect/Schema";
-import * as String from "effect/String";
+import * as Str from "effect/String";
 
 /**
  * A YAML value as JSON: a scalar, a sequence or a mapping; YAML's null is
@@ -53,11 +53,11 @@ interface Reader {
 
 /** The index where a `#` comment starts on a line (outside quotes, after a blank), or its length. */
 function commentStart(text: string): number {
-  const chars = Array.fromIterable(text);
-  const state = Array.reduce(chars, { quote: "", at: -1, offset: 0 }, (acc, char, index) => {
+  const chars = Arr.fromIterable(text);
+  const state = Arr.reduce(chars, { quote: "", at: -1, offset: 0 }, (acc, char, index) => {
     const next = { ...acc, offset: acc.offset + char.length };
     if (acc.at >= 0) return next;
-    if (String.isNonEmpty(acc.quote)) {
+    if (Str.isNonEmpty(acc.quote)) {
       return char === acc.quote ? { ...next, quote: "" } : next;
     }
     if ((char === '"' || char === "'") && (index === 0 || /[\s[{,:]/.test(chars[index - 1]))) {
@@ -82,8 +82,8 @@ function toLines(source: string): Line[] {
 
 /** The next line with content, skipping blanks and comments; `None` at the end. */
 function peek(reader: Reader): Option.Option<Line> {
-  const next = Array.findFirstIndex(reader.lines.slice(reader.pos), (line) =>
-    String.isNonEmpty(line.text),
+  const next = Arr.findFirstIndex(reader.lines.slice(reader.pos), (line) =>
+    Str.isNonEmpty(line.text),
   );
   if (Option.isNone(next)) {
     reader.pos = reader.lines.length;
@@ -186,7 +186,7 @@ const unsupported = (text: string): boolean => /^[&*!%@`]/.test(text) || text.st
 function scalar(reader: Reader, text: string, inSequence: boolean): Yaml {
   if (text.startsWith("[") || text.startsWith("{")) {
     const flow = readFlow(text, 0, 0);
-    if (Option.isNone(flow) || String.isNonEmpty(text.slice(flow.value[1]).trim())) {
+    if (Option.isNone(flow) || Str.isNonEmpty(text.slice(flow.value[1]).trim())) {
       reader.failed = true;
       return null;
     }
@@ -292,7 +292,7 @@ function readFlowCollection(
     else state.pos = next.value;
   }
   if (!state.ok) return Option.none();
-  return Option.some([mapping ? Record.fromEntries(entries) : items, state.pos + 1] as const);
+  return Option.some([mapping ? R.fromEntries(entries) : items, state.pos + 1] as const);
 }
 
 /** The lines of a block scalar (`|` or `>`) after a line at `parent` indentation, folded or kept. */
@@ -303,17 +303,14 @@ function blockScalar(reader: Reader, header: string, parent: number): string {
   reader.pos += 1;
   const rest = reader.lines.slice(reader.pos);
   const length = Option.getOrElse(
-    Array.findFirstIndex(
-      rest,
-      (line) => String.isNonEmpty(line.raw.trim()) && line.indent <= parent,
-    ),
+    Arr.findFirstIndex(rest, (line) => Str.isNonEmpty(line.raw.trim()) && line.indent <= parent),
     () => rest.length,
   );
   const body = rest.slice(0, length);
   reader.pos += length;
   const indent = Option.getOrElse(
     Option.map(
-      Array.findFirst(body, (line) => String.isNonEmpty(line.raw.trim())),
+      Arr.findFirst(body, (line) => Str.isNonEmpty(line.raw.trim())),
       (line) => line.indent,
     ),
     () => parent + 1,
@@ -332,14 +329,14 @@ function inlineValue(reader: Reader, text: string, parent: number, inSequence: b
   reader.pos += 1;
   const rest = reader.lines.slice(reader.pos);
   const length = Option.getOrElse(
-    Array.findFirstIndex(rest, (line) => String.isNonEmpty(line.text) && line.indent <= parent),
+    Arr.findFirstIndex(rest, (line) => Str.isNonEmpty(line.text) && line.indent <= parent),
     () => rest.length,
   );
-  const continuation = rest.slice(0, length).filter((line) => String.isNonEmpty(line.text));
+  const continuation = rest.slice(0, length).filter((line) => Str.isNonEmpty(line.text));
   reader.pos += length;
   const whole = [text, ...continuation.map((line) => line.text.trim())].join(" ");
   if (
-    Array.isArrayNonEmpty(continuation) &&
+    Arr.isArrayNonEmpty(continuation) &&
     !/^["']/.test(text) &&
     /:\s|^- /.test(whole.slice(text.length))
   ) {
@@ -387,13 +384,13 @@ function readMapping(reader: Reader, indent: number, depth: number): Yaml {
       if (Option.exists(line, (next) => next.indent > indent)) reader.failed = true;
     } else {
       const [name, rest] = key.value;
-      const value = String.isEmpty(rest)
+      const value = Str.isEmpty(rest)
         ? nestedValue(reader, indent, depth, true)
         : inlineValue(reader, rest, indent, false);
       entries.push([name, value]);
     }
   }
-  return Record.fromEntries(entries);
+  return R.fromEntries(entries);
 }
 
 /** Reads a block sequence whose `-` markers sit at `indent`. */
@@ -409,7 +406,7 @@ function readSequence(reader: Reader, indent: number, depth: number): Yaml {
     if (Option.isNone(line)) state.going = false;
     else {
       const rest = line.value.text.slice(1).trimStart();
-      if (String.isEmpty(rest)) items.push(nestedValue(reader, indent, depth, false));
+      if (Str.isEmpty(rest)) items.push(nestedValue(reader, indent, depth, false));
       else if (isEntry(rest) || Option.isSome(keyLine(rest))) {
         // A compact entry (`- key: value`, `- - x`): the rest of the line is
         // the first line of a node indented to where its text starts.
@@ -432,17 +429,14 @@ function firstDocument(source: string): string {
   const lines = source.replace(/^﻿/, "").split(/\r\n?|\n/);
   const start = Option.getOrElse(
     Option.map(
-      Array.findFirstIndex(
-        lines,
-        (line) => /^---\s*$/.test(line) || String.isNonEmpty(line.trim()),
-      ),
+      Arr.findFirstIndex(lines, (line) => /^---\s*$/.test(line) || Str.isNonEmpty(line.trim())),
       (index) => (/^---\s*$/.test(lines[index]) ? index + 1 : index),
     ),
     () => lines.length,
   );
   const rest = lines.slice(start);
   const end = Option.getOrElse(
-    Array.findFirstIndex(rest, (line) => /^(?:---|\.\.\.)\s*$/.test(line)),
+    Arr.findFirstIndex(rest, (line) => /^(?:---|\.\.\.)\s*$/.test(line)),
     () => rest.length,
   );
   return rest.slice(0, end).join("\n");
@@ -459,7 +453,7 @@ export function readYaml(source: string): Option.Option<Yaml> {
   const reader: Reader = { lines: toLines(firstDocument(source)), pos: 0, failed: false };
   if (
     reader.lines.some(
-      (line) => line.raw.slice(line.indent).startsWith("	") && String.isNonEmpty(line.text),
+      (line) => line.raw.slice(line.indent).startsWith("	") && Str.isNonEmpty(line.text),
     )
   ) {
     return Option.none();
@@ -479,7 +473,7 @@ const mustEscape = (code: number): boolean =>
 
 /** A string as a YAML double-quoted scalar (control characters and line separators escaped). */
 function quote(value: string): string {
-  const escaped = Array.map(Array.fromIterable(value), (char) => {
+  const escaped = Arr.map(Arr.fromIterable(value), (char) => {
     const code = char.charCodeAt(0);
     if (char === "\\") return "\\\\";
     if (char === '"') return '\\"';
@@ -496,14 +490,13 @@ const yamlKey = (key: string): string => (/^[A-Za-z_][A-Za-z0-9_-]*$/.test(key) 
 const isList = (value: Yaml): value is Schema.JsonArray => globalThis.Array.isArray(value);
 
 /** True for a JSON object. */
-const isObject = (value: Yaml): value is Schema.JsonObject =>
-  Predicate.isObject(value) && !isList(value);
+const isObject = (value: Yaml): value is Schema.JsonObject => P.isObject(value) && !isList(value);
 
 /** A scalar as YAML. */
 function yamlScalar(value: Yaml): string {
-  if (Predicate.isString(value)) return quote(value);
-  if (Predicate.isNumber(value)) return Number.isFinite(value) ? value.toString() : "null";
-  if (Predicate.isBoolean(value)) return value ? "true" : "false";
+  if (P.isString(value)) return quote(value);
+  if (P.isNumber(value)) return Number.isFinite(value) ? value.toString() : "null";
+  if (P.isBoolean(value)) return value ? "true" : "false";
   return "null";
 }
 
@@ -517,10 +510,10 @@ const flow = (value: Yaml): string =>
 
 /** A mapping's entries as YAML lines at `indent`. */
 function mappingLines(value: Schema.JsonObject, indent: string): string[] {
-  return Record.toEntries(value).flatMap(([key, entry]) => {
+  return R.toEntries(value).flatMap(([key, entry]) => {
     if (isFlow(entry)) return [`${indent}${yamlKey(key)}: ${flow(entry)}`];
     if (isList(entry)) return [`${indent}${yamlKey(key)}:`, ...sequenceLines(entry, indent)];
-    if (!isObject(entry) || Record.isEmptyRecord(entry)) return [`${indent}${yamlKey(key)}: {}`];
+    if (!isObject(entry) || R.isEmptyRecord(entry)) return [`${indent}${yamlKey(key)}: {}`];
     return [`${indent}${yamlKey(key)}:`, ...mappingLines(entry, `${indent}  `)];
   });
 }
@@ -531,7 +524,7 @@ function sequenceLines(value: Schema.JsonArray, indent: string): string[] {
     if (isFlow(entry)) return [`${indent}- ${flow(entry)}`];
     if (isList(entry)) return [`${indent}-`, ...sequenceLines(entry, `${indent}  `)];
     const lines = isObject(entry) ? mappingLines(entry, `${indent}  `) : [];
-    return Array.match(lines, {
+    return Arr.match(lines, {
       onEmpty: () => [`${indent}- {}`],
       onNonEmpty: ([first, ...rest]) => [`${indent}- ${first.trimStart()}`, ...rest],
     });

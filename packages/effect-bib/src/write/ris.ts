@@ -6,10 +6,10 @@
  * @since 0.1.0
  */
 
-import * as Array from "effect/Array";
+import * as Arr from "effect/Array";
 import * as HashMap from "effect/HashMap";
 import * as Option from "effect/Option";
-import * as String from "effect/String";
+import * as Str from "effect/String";
 import type { BiblioRecord, CslDate, CslItemType, CslName } from "../record.ts";
 import { stripCslMarkup } from "../render/markup.ts";
 import { ownKey } from "./keys.ts";
@@ -48,7 +48,7 @@ const RIS_TYPES = HashMap.fromIterable<CslItemType, string>([
 /** One RIS line, or none: a value is one line of plain text. */
 const tag = (name: string, value: Option.Option<string>): Option.Option<string> =>
   Option.map(
-    Option.filter(value, (text) => String.isNonEmpty(text.trim())),
+    Option.filter(value, (text) => Str.isNonEmpty(text.trim())),
     (text) => `${name}  - ${stripCslMarkup(text).replace(/\s+/g, " ").trim()}`,
   );
 
@@ -69,9 +69,9 @@ const names = (name: string, list: Option.Option<readonly CslName[]>): Option.Op
 /** A date as RIS's `YYYY/MM/DD/` (with the parts it has), or its literal or raw text. */
 function risDate(date: CslDate): Option.Option<string> {
   const parts = date["date-parts"]?.[0] ?? [];
-  if (Array.isReadonlyArrayEmpty(parts)) return Option.fromUndefinedOr(date.literal ?? date.raw);
+  if (Arr.isReadonlyArrayEmpty(parts)) return Option.fromUndefinedOr(date.literal ?? date.raw);
   const two = (index: number): string =>
-    Option.match(Array.get(parts, index), {
+    Option.match(Arr.get(parts, index), {
       onNone: () => "",
       onSome: (value) => value.toString().padStart(2, "0"),
     });
@@ -92,7 +92,7 @@ function writeRecord(record: BiblioRecord): string {
     Option.fromUndefinedOr(record.issued?.["date-parts"]?.[0]?.[0]),
     (value) => Option.some(value.toString()),
   );
-  const lines = Array.getSomes([
+  const lines = Arr.getSomes([
     tag("TY", Option.some(Option.getOrElse(HashMap.get(RIS_TYPES, record.type), () => "GEN"))),
     tag("ID", ownKey(record)),
     tag("TI", Option.fromUndefinedOr(record.title)),
@@ -163,7 +163,7 @@ function writeRecord(record: BiblioRecord): string {
  * @since 0.1.0
  */
 export function toRis(records: readonly BiblioRecord[]): string {
-  return Array.isReadonlyArrayEmpty(records)
+  return Arr.isReadonlyArrayEmpty(records)
     ? ""
     : `${records.map(writeRecord).join("\r\n\r\n")}\r\n`;
 }

@@ -11,7 +11,7 @@
  * @since 0.1.0
  */
 
-import * as Array from "effect/Array";
+import * as Arr from "effect/Array";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Result from "effect/Result";
@@ -61,7 +61,7 @@ function readPage({
   if (response.status < 200 || response.status >= 300)
     return Effect.fail(failed(`upstream returned HTTP ${response.status}`));
   const type = mediaType(response);
-  if (!Array.contains(HTML_TYPES, type))
+  if (!Arr.contains(HTML_TYPES, type))
     return Effect.fail(failed(`not an HTML page (${type === "" ? "no content type" : type})`));
   return readBoundedText(response, MAX_INPUT_LENGTH, "web").pipe(
     Effect.map((html) => {

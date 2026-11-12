@@ -21,14 +21,14 @@ import * as fs from "node:fs";
 import { createRequire } from "node:module";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
-import * as Array from "effect/Array";
+import * as Arr from "effect/Array";
 import * as Function from "effect/Function";
 import * as HashSet from "effect/HashSet";
 import * as MutableHashMap from "effect/MutableHashMap";
 import * as MutableHashSet from "effect/MutableHashSet";
 import * as Option from "effect/Option";
 import * as Order from "effect/Order";
-import * as Record from "effect/Record";
+import * as R from "effect/Record";
 import * as Schema from "effect/Schema";
 import ts from "typescript";
 import { describe, expect, it } from "vite-plus/test";
@@ -72,12 +72,12 @@ const specifiersOf = (file: string): ReadonlyArray<string> => {
 
 /** Code-unit order, the order a bare `Array.prototype.sort()` gives strings. */
 const sorted = (items: Iterable<string>): ReadonlyArray<string> =>
-  Array.sortWith(Array.fromIterable(items), Function.identity, Order.String);
+  Arr.sortWith(Arr.fromIterable(items), Function.identity, Order.String);
 
 const resolveRelative = (from: string, specifier: string): Option.Option<string> => {
   const base = path.resolve(path.dirname(from), specifier);
   const candidates = [base.replace(/\.js$/, ".ts"), base, `${base}.ts`];
-  return Array.findFirst(
+  return Arr.findFirst(
     candidates,
     (candidate) => fs.existsSync(candidate) && fs.statSync(candidate).isFile(),
   );
@@ -98,7 +98,7 @@ const graphFrom = (entry: string, dir: string): Graph => {
     if (MutableHashSet.has(modules, file)) return;
     MutableHashSet.add(modules, file);
     const here = [...trail, path.relative(dir, file)];
-    Array.forEach(specifiersOf(file), (specifier) => {
+    Arr.forEach(specifiersOf(file), (specifier) => {
       if (!specifier.startsWith(".")) {
         if (!MutableHashMap.has(externals, specifier)) {
           MutableHashMap.set(externals, specifier, here);
@@ -115,8 +115,8 @@ const graphFrom = (entry: string, dir: string): Graph => {
   };
   walk(entry, []);
   return {
-    modules: sorted(Array.map(Array.fromIterable(modules), (file) => path.relative(dir, file))),
-    externals: Array.fromIterable(externals),
+    modules: sorted(Arr.map(Arr.fromIterable(modules), (file) => path.relative(dir, file))),
+    externals: Arr.fromIterable(externals),
   };
 };
 
@@ -125,15 +125,15 @@ const EFFECT_PARSE = "@thomasfosterau/effect-parse";
 
 /** Bare specifiers in `graph` other than `effect` and its modules. */
 const nonEffect = (graph: Graph): ReadonlyArray<string> =>
-  Array.filter(
-    Array.map(graph.externals, ([specifier]) => specifier),
+  Arr.filter(
+    Arr.map(graph.externals, ([specifier]) => specifier),
     (specifier) => specifier !== "effect" && !specifier.startsWith("effect/"),
   );
 
 const unstable = (graph: Graph): ReadonlyArray<string> =>
   sorted(
-    Array.map(
-      Array.filter(graph.externals, ([specifier]) => FORBIDDEN_SPECIFIER.test(specifier)),
+    Arr.map(
+      Arr.filter(graph.externals, ([specifier]) => FORBIDDEN_SPECIFIER.test(specifier)),
       ([specifier, trail]) => `${specifier} via ${trail.join(" -> ")}`,
     ),
   );
@@ -175,7 +175,7 @@ describe("root entry point", () => {
 
   it("exports the pure surface and none of the lookup surface", async () => {
     const index = await import("@thomasfosterau/effect-bib");
-    const names = Record.keys(index);
+    const names = R.keys(index);
     expect(names).toContain("BiblioRecord");
     expect(names).toContain("decodeIsbn");
     expect(names).toContain("parseBibliographicFile");
@@ -189,7 +189,7 @@ describe("root entry point", () => {
 describe("sources entry point", () => {
   it("exports the service, its layers, the per-source lookups and the error channel", async () => {
     const sources = await import("@thomasfosterau/effect-bib/sources");
-    expect(sorted(Record.keys(sources))).toEqual([
+    expect(sorted(R.keys(sources))).toEqual([
       "BiblioLookup",
       "CrossrefResponse",
       "InvalidIdentifier",
@@ -262,7 +262,7 @@ describe("built artifact", () => {
   });
 
   it.skipIf(unbuilt)("ships declarations for both entry points", () => {
-    const missing = Array.filter(
+    const missing = Arr.filter(
       ["index.js", "index.d.ts", "sources/index.js", "sources/index.d.ts"],
       (file) => !fs.existsSync(path.join(DIST, file)),
     );
@@ -331,7 +331,7 @@ describe("forbidden effect module list", () => {
     );
     // Containment, not equality: the list also names directories later 4.x
     // releases added, so it holds on every `effect` the peer range admits.
-    expect(Array.difference(expected, FORBIDDEN_DIRECTORIES)).toEqual([]);
+    expect(Arr.difference(expected, FORBIDDEN_DIRECTORIES)).toEqual([]);
   });
 
   it("covers every effect/encoding module that was unstable", () => {
@@ -342,7 +342,7 @@ describe("forbidden effect module list", () => {
         .map((name) => name.replace(/\.js$/, ""))
         .filter((name) => !HashSet.has(STABLE_ENCODING, name)),
     );
-    expect(Array.difference(expected, FORBIDDEN_ENCODING_MODULES)).toEqual([]);
+    expect(Arr.difference(expected, FORBIDDEN_ENCODING_MODULES)).toEqual([]);
   });
 
   it("matches the forbidden modules and leaves the stable ones alone", () => {
@@ -361,9 +361,7 @@ describe("forbidden effect module list", () => {
       "effect/testing",
       "effect/httpx",
     ];
-    expect(Array.filter(forbidden, (specifier) => !FORBIDDEN_SPECIFIER.test(specifier))).toEqual(
-      [],
-    );
-    expect(Array.filter(allowed, (specifier) => FORBIDDEN_SPECIFIER.test(specifier))).toEqual([]);
+    expect(Arr.filter(forbidden, (specifier) => !FORBIDDEN_SPECIFIER.test(specifier))).toEqual([]);
+    expect(Arr.filter(allowed, (specifier) => FORBIDDEN_SPECIFIER.test(specifier))).toEqual([]);
   });
 });

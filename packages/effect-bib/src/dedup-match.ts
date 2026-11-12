@@ -26,11 +26,11 @@
 
 // See website#610.
 
-import * as Array from "effect/Array";
+import * as Arr from "effect/Array";
 import * as HashSet from "effect/HashSet";
 import * as Option from "effect/Option";
 import * as Result from "effect/Result";
-import * as String from "effect/String";
+import * as Str from "effect/String";
 import { type BiblioRecord, cslNameDisplay } from "./record.ts";
 import { stripCslMarkup } from "./render/markup.ts";
 
@@ -70,7 +70,7 @@ export function normaliseForMatch(value: string): string {
 export function titleTokens(title: string): HashSet.HashSet<string> {
   const tokens = normaliseForMatch(title)
     .split(" ")
-    .filter((token) => String.isNonEmpty(token) && !HashSet.has(TITLE_STOPWORDS, token));
+    .filter((token) => Str.isNonEmpty(token) && !HashSet.has(TITLE_STOPWORDS, token));
   return HashSet.fromIterable(tokens);
 }
 
@@ -90,14 +90,14 @@ export function authorSurname(name: string): string {
   // otherwise the family name is the last token of "Given Surname".
   const commaIndex = name.indexOf(",");
   const familySource = commaIndex >= 0 ? name.slice(0, commaIndex) : name;
-  const parts = normaliseForMatch(familySource).split(" ").filter(String.isNonEmpty);
-  const family = Array.last(parts);
+  const parts = normaliseForMatch(familySource).split(" ").filter(Str.isNonEmpty);
+  const family = Arr.last(parts);
   return Option.isNone(family) ? "" : family.value;
 }
 
 /** Size of the intersection of two token sets, `|A ∩ B|`. */
 function intersectionSize(a: HashSet.HashSet<string>, b: HashSet.HashSet<string>): number {
-  return Array.reduce(a, 0, (count, token) => (HashSet.has(b, token) ? count + 1 : count));
+  return Arr.reduce(a, 0, (count, token) => (HashSet.has(b, token) ? count + 1 : count));
 }
 
 /**
@@ -132,7 +132,7 @@ export interface MatchInput {
  * @since 0.1.0
  */
 export function recordMatchInput(record: BiblioRecord): MatchInput {
-  const authors = Array.filterMap(record.author ?? [], (name): Result.Result<string, void> => {
+  const authors = Arr.filterMap(record.author ?? [], (name): Result.Result<string, void> => {
     const display = cslNameDisplay(name);
     return display === null ? Result.failVoid : Result.succeed(display);
   });
@@ -217,10 +217,10 @@ export function scoreMatch(incoming: MatchInput, candidate: MatchInput): MatchSc
   const sharedTitleTokens = intersectionSize(incomingTitleTokens, candidateTitleTokens);
 
   const incomingSurnames = HashSet.fromIterable(
-    incoming.authors.map(authorSurname).filter(String.isNonEmpty),
+    incoming.authors.map(authorSurname).filter(Str.isNonEmpty),
   );
   const candidateSurnames = HashSet.fromIterable(
-    candidate.authors.map(authorSurname).filter(String.isNonEmpty),
+    candidate.authors.map(authorSurname).filter(Str.isNonEmpty),
   );
   const author =
     HashSet.isEmpty(incomingSurnames) || HashSet.isEmpty(candidateSurnames)
@@ -295,7 +295,7 @@ export function bestConfidentMatch<T extends MatchInput>(
 ): T | null {
   /* oxlint-enable effect/prefer-option-over-null */
   type Best = Option.Option<{ readonly candidate: T; readonly confidence: number }>;
-  const best = Array.reduce<T, Best>(candidates, Option.none(), (acc, candidate) => {
+  const best = Arr.reduce<T, Best>(candidates, Option.none(), (acc, candidate) => {
     const score = scoreMatch(incoming, candidate);
     if (!isConfidentMatch(score)) return acc;
     const confidence = matchConfidence(score);

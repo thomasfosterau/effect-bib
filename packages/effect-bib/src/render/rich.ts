@@ -15,10 +15,10 @@
  * @since 0.1.0
  */
 
-import * as Array from "effect/Array";
+import * as Arr from "effect/Array";
 import * as Option from "effect/Option";
-import * as Predicate from "effect/Predicate";
-import * as String from "effect/String";
+import * as P from "effect/Predicate";
+import * as Str from "effect/String";
 
 /**
  * A run of plain text.
@@ -85,12 +85,12 @@ export type RichText = readonly Inline[];
  * @since 0.1.0
  */
 export const text = (value: string): RichText =>
-  String.isEmpty(value) ? [] : [{ _tag: "Text", text: value }];
+  Str.isEmpty(value) ? [] : [{ _tag: "Text", text: value }];
 
 const styled =
   (tag: Styled["_tag"]) =>
   (children: RichText): RichText =>
-    Array.isReadonlyArrayEmpty(children) ? [] : [{ _tag: tag, children }];
+    Arr.isReadonlyArrayEmpty(children) ? [] : [{ _tag: tag, children }];
 
 /**
  * Italic rich text (titles of books and journals).
@@ -141,7 +141,7 @@ export const noCase: (children: RichText) => RichText = styled("NoCase");
  * @since 0.1.0
  */
 export const link = (url: string, children: RichText = text(url)): RichText =>
-  Array.isReadonlyArrayEmpty(children) ? [] : [{ _tag: "Link", url, children }];
+  Arr.isReadonlyArrayEmpty(children) ? [] : [{ _tag: "Link", url, children }];
 
 /**
  * A CSL `display` region around `children`.
@@ -149,7 +149,7 @@ export const link = (url: string, children: RichText = text(url)): RichText =>
  * @since 0.1.0
  */
 export const display = (region: Display["display"], children: RichText): RichText =>
-  Array.isReadonlyArrayEmpty(children) ? [] : [{ _tag: "Display", display: region, children }];
+  Arr.isReadonlyArrayEmpty(children) ? [] : [{ _tag: "Display", display: region, children }];
 
 /**
  * Concatenates rich texts.
@@ -183,7 +183,7 @@ export const concat = (...parts: readonly RichText[]): RichText => parts.flat();
  */
 export function toPlainText(rich: RichText): string {
   return rich
-    .map((node) => (Predicate.isTagged(node, "Text") ? node.text : toPlainText(node.children)))
+    .map((node) => (P.isTagged(node, "Text") ? node.text : toPlainText(node.children)))
     .join("");
 }
 
@@ -192,7 +192,7 @@ export function toPlainText(rich: RichText): string {
  *
  * @since 0.1.0
  */
-export const isBlank = (rich: RichText): boolean => String.isEmpty(toPlainText(rich).trim());
+export const isBlank = (rich: RichText): boolean => Str.isEmpty(toPlainText(rich).trim());
 
 /** Escapes the characters HTML gives meaning to. */
 const escapeHtml = (value: string): string =>
@@ -250,16 +250,16 @@ const htmlNodes = (rich: RichText, inItalic: boolean): string =>
   rich.map((node) => htmlNode(node, inItalic)).join("");
 
 function htmlNode(node: Inline, inItalic: boolean): string {
-  if (Predicate.isTagged(node, "Text")) return escapeHtml(node.text);
-  if (Predicate.isTagged(node, "Link")) {
+  if (P.isTagged(node, "Text")) return escapeHtml(node.text);
+  if (P.isTagged(node, "Link")) {
     return isSafeUrl(node.url)
       ? `<a href="${escapeHtml(node.url.trim())}">${htmlNodes(node.children, inItalic)}</a>`
       : htmlNodes(node.children, inItalic);
   }
-  if (Predicate.isTagged(node, "Display")) {
+  if (P.isTagged(node, "Display")) {
     return `<div class="csl-${node.display}">${htmlNodes(node.children, inItalic)}</div>`;
   }
-  if (Predicate.isTagged(node, "Italic")) {
+  if (P.isTagged(node, "Italic")) {
     const children = htmlNodes(node.children, !inItalic);
     return inItalic ? `<span style="font-style:normal;">${children}</span>` : `<i>${children}</i>`;
   }
@@ -299,7 +299,7 @@ const markdownNodes = (rich: RichText, inItalic: boolean): string =>
 function emphasis(inner: string): string {
   const match = /^(\s*)([\s\S]*?)(\s*)$/.exec(inner);
   const [, lead, core, trail] = match ?? ["", "", inner, ""];
-  return String.isEmpty(core) ? inner : `${lead}*${core}*${trail}`;
+  return Str.isEmpty(core) ? inner : `${lead}*${core}*${trail}`;
 }
 
 /**
@@ -308,8 +308,8 @@ function emphasis(inner: string): string {
  */
 function markdownItalic(children: RichText): string {
   const none: Array<{ upright: boolean; nodes: Inline[] }> = [];
-  const runs = Array.reduce(children, none, (acc, node) => {
-    const upright = Predicate.isTagged(node, "Italic");
+  const runs = Arr.reduce(children, none, (acc, node) => {
+    const upright = P.isTagged(node, "Italic");
     const last = acc[acc.length - 1];
     if (last !== undefined && last.upright === upright && !upright) last.nodes.push(node);
     else acc.push({ upright, nodes: [node] });
@@ -319,9 +319,7 @@ function markdownItalic(children: RichText): string {
     .map((run) =>
       run.upright
         ? run.nodes
-            .map((node) =>
-              Predicate.isTagged(node, "Italic") ? markdownNodes(node.children, false) : "",
-            )
+            .map((node) => (P.isTagged(node, "Italic") ? markdownNodes(node.children, false) : ""))
             .join("")
         : emphasis(markdownNodes(run.nodes, true)),
     )
@@ -329,50 +327,50 @@ function markdownItalic(children: RichText): string {
 }
 
 function markdownNode(node: Inline, inItalic: boolean): string {
-  if (Predicate.isTagged(node, "Text")) return escapeMarkdown(node.text);
-  if (Predicate.isTagged(node, "Link")) {
+  if (P.isTagged(node, "Text")) return escapeMarkdown(node.text);
+  if (P.isTagged(node, "Link")) {
     return isSafeUrl(node.url)
       ? `[${markdownNodes(node.children, inItalic)}](${node.url.trim().replace(/[()\s<>]/g, encodeURIComponent)})`
       : markdownNodes(node.children, inItalic);
   }
-  if (Predicate.isTagged(node, "Display")) return markdownNodes(node.children, inItalic);
-  if (Predicate.isTagged(node, "Italic")) return markdownItalic(node.children);
+  if (P.isTagged(node, "Display")) return markdownNodes(node.children, inItalic);
+  if (P.isTagged(node, "Italic")) return markdownItalic(node.children);
   const [open, close] = MARKDOWN_TAGS[node._tag];
   return `${open}${markdownNodes(node.children, inItalic)}${close}`;
 }
 
 /** Removes leading whitespace, and any node left empty by it. */
 function trimStart(rich: RichText): RichText {
-  return Option.match(Array.head(rich), {
+  return Option.match(Arr.head(rich), {
     onNone: () => rich,
     onSome: (first) => {
       const rest = rich.slice(1);
-      if (!Predicate.isTagged(first, "Text")) {
+      if (!P.isTagged(first, "Text")) {
         const children = trimStart(first.children);
-        return Array.isReadonlyArrayEmpty(children)
+        return Arr.isReadonlyArrayEmpty(children)
           ? trimStart(rest)
           : [{ ...first, children }, ...rest];
       }
       const trimmed = first.text.trimStart();
-      return String.isEmpty(trimmed) ? trimStart(rest) : [{ _tag: "Text", text: trimmed }, ...rest];
+      return Str.isEmpty(trimmed) ? trimStart(rest) : [{ _tag: "Text", text: trimmed }, ...rest];
     },
   });
 }
 
 /** Removes trailing whitespace, and any node left empty by it. */
 function trimEnd(rich: RichText): RichText {
-  return Option.match(Array.last(rich), {
+  return Option.match(Arr.last(rich), {
     onNone: () => rich,
     onSome: (last) => {
       const rest = rich.slice(0, -1);
-      if (!Predicate.isTagged(last, "Text")) {
+      if (!P.isTagged(last, "Text")) {
         const children = trimEnd(last.children);
-        return Array.isReadonlyArrayEmpty(children)
+        return Arr.isReadonlyArrayEmpty(children)
           ? trimEnd(rest)
           : [...rest, { ...last, children }];
       }
       const trimmed = last.text.trimEnd();
-      return String.isEmpty(trimmed) ? trimEnd(rest) : [...rest, { _tag: "Text", text: trimmed }];
+      return Str.isEmpty(trimmed) ? trimEnd(rest) : [...rest, { _tag: "Text", text: trimmed }];
     },
   });
 }
@@ -384,12 +382,12 @@ function trimEnd(rich: RichText): RichText {
  * @since 0.1.0
  */
 export function joinRich(parts: readonly Option.Option<RichText>[], separator: string): RichText {
-  const present = Array.filter(Array.getSomes(parts), (part) => !isBlank(part)).map((part) =>
+  const present = Arr.filter(Arr.getSomes(parts), (part) => !isBlank(part)).map((part) =>
     trimEnd(trimStart(part)),
   );
   const empty: RichText = [];
-  return Array.reduce(present, empty, (joined, part) =>
-    Array.isReadonlyArrayEmpty(joined) ? part : concat(joined, text(separator), part),
+  return Arr.reduce(present, empty, (joined, part) =>
+    Arr.isReadonlyArrayEmpty(joined) ? part : concat(joined, text(separator), part),
   );
 }
 
@@ -402,6 +400,6 @@ export function joinRich(parts: readonly Option.Option<RichText>[], separator: s
  */
 export function terminateRich(rich: RichText): RichText {
   const plain = toPlainText(rich);
-  if (String.isEmpty(plain) || /[.?!]$/.test(plain)) return rich;
+  if (Str.isEmpty(plain) || /[.?!]$/.test(plain)) return rich;
   return concat(rich, text("."));
 }

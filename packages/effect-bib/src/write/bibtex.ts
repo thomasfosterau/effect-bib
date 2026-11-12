@@ -6,12 +6,12 @@
  * @since 0.1.0
  */
 
-import * as Array from "effect/Array";
+import * as Arr from "effect/Array";
 import * as HashMap from "effect/HashMap";
 import * as HashSet from "effect/HashSet";
 import * as Option from "effect/Option";
-import * as Predicate from "effect/Predicate";
-import * as Record from "effect/Record";
+import * as P from "effect/Predicate";
+import * as R from "effect/Record";
 import * as Result from "effect/Result";
 import { GENRES, LANGUAGES } from "../bibtex/fields.ts";
 import type { BiblioRecord, CslDate, CslItemType, CslName } from "../record.ts";
@@ -98,7 +98,7 @@ const reverse = (
 ): HashMap.HashMap<string, string> =>
   HashMap.union(
     HashMap.fromIterable(
-      Array.map(Array.fromIterable(table), ([name, value]) => [value, name] as const),
+      Arr.map(Arr.fromIterable(table), ([name, value]) => [value, name] as const),
     ),
     HashMap.fromIterable(preferred),
   );
@@ -206,9 +206,7 @@ function bibtexName(name: CslName, dialect: BibtexDialect): string {
 function etAlFields(record: BiblioRecord): HashSet.HashSet<string> {
   const others = record.extra?.["tex.others"];
   return HashSet.fromIterable(
-    Predicate.isIterable(others)
-      ? Array.filter(Array.fromIterable(others), Predicate.isString)
-      : [],
+    P.isIterable(others) ? Arr.filter(Arr.fromIterable(others), P.isString) : [],
   );
 }
 
@@ -218,7 +216,7 @@ function namesField(
   name: string,
   names: Option.Option<readonly CslName[]>,
 ): Option.Option<Field> {
-  if (Option.isNone(names) || Array.isReadonlyArrayEmpty(names.value)) return Option.none();
+  if (Option.isNone(names) || Arr.isReadonlyArrayEmpty(names.value)) return Option.none();
   const list = names.value.map((entry) => bibtexName(entry, writer.dialect));
   const others = HashSet.has(etAlFields(writer.record), name) ? [...list, "others"] : list;
   return Option.some({ name, value: others.join(" and ") });
@@ -233,7 +231,7 @@ const isoPoint = (parts: readonly number[]): string =>
 
 /** True for a season the EDTF month codes 21–24 can carry. */
 const isSeason = (season: CslDate["season"]): season is number =>
-  Predicate.isNumber(season) && Number.isInteger(season) && season >= 1 && season <= 4;
+  P.isNumber(season) && Number.isInteger(season) && season >= 1 && season <= 4;
 
 /**
  * A CSL date as an EDTF value (`2015-03-14`, `2001/2004`, `2015-21`,
@@ -243,8 +241,8 @@ function edtf(date: CslDate): Option.Option<string> {
   const parts = date["date-parts"];
   if (
     parts === undefined ||
-    Array.isReadonlyArrayEmpty(parts) ||
-    Array.isReadonlyArrayEmpty(parts[0])
+    Arr.isReadonlyArrayEmpty(parts) ||
+    Arr.isReadonlyArrayEmpty(parts[0])
   ) {
     return Option.fromUndefinedOr(date.literal ?? date.raw);
   }
@@ -256,7 +254,7 @@ function edtf(date: CslDate): Option.Option<string> {
       ? `${pad(parts[0][0], 4)}-${20 + date.season}`
       : isoPoint(parts[0]);
   const end =
-    parts.length > 1 && Array.isReadonlyArrayNonEmpty(parts[1])
+    parts.length > 1 && Arr.isReadonlyArrayNonEmpty(parts[1])
       ? `/${isoPoint(parts[1])}${circa}`
       : "";
   return Option.some(`${start}${circa}${end}`);
@@ -273,8 +271,7 @@ const dateField = (name: string, date: Option.Option<CslDate>): Option.Option<Fi
 function issuedFields(writer: Writer): Field[] {
   const issued = writer.record.issued;
   if (issued === undefined) return [];
-  if (writer.dialect === "biblatex")
-    return Array.fromOption(dateField("date", Option.some(issued)));
+  if (writer.dialect === "biblatex") return Arr.fromOption(dateField("date", Option.some(issued)));
   const parts = issued["date-parts"];
   const single =
     parts !== undefined &&
@@ -282,7 +279,7 @@ function issuedFields(writer: Writer): Field[] {
     parts[0].length > 1 &&
     !isSeason(issued.season) &&
     (issued.circa === undefined || issued.circa === false || issued.circa === 0);
-  if (!single) return Array.fromOption(dateField("year", Option.some(issued)));
+  if (!single) return Arr.fromOption(dateField("year", Option.some(issued)));
   const [year, month, day] = parts[0];
   return [
     { name: "year", value: year.toString() },
@@ -434,10 +431,10 @@ function optionsField(record: BiblioRecord): Option.Option<Field> {
 
 /** The `tex.<field>` passthrough the parser kept, written back when no mapping wrote the field. */
 function passthroughFields(writer: Writer, written: HashSet.HashSet<string>): Field[] {
-  return Array.filterMap(
-    Record.toEntries(writer.record.extra ?? {}),
+  return Arr.filterMap(
+    R.toEntries(writer.record.extra ?? {}),
     ([key, value]): Result.Result<Field, void> => {
-      if (!key.startsWith("tex.") || key === "tex.others" || !Predicate.isString(value))
+      if (!key.startsWith("tex.") || key === "tex.others" || !P.isString(value))
         return Result.failVoid;
       const name = key.slice(4).toLowerCase();
       if (!/^[a-z][a-z0-9_-]*$/.test(name) || HashSet.has(written, name)) return Result.failVoid;
@@ -455,7 +452,7 @@ function passthroughFields(writer: Writer, written: HashSet.HashSet<string>): Fi
 function entryFields(writer: Writer): Field[] {
   const { record } = writer;
   const biblatex = writer.dialect === "biblatex";
-  const mapped = Array.getSomes([
+  const mapped = Arr.getSomes([
     namesField(writer, "author", Option.fromUndefinedOr(record.author)),
     namesField(writer, "editor", Option.fromUndefinedOr(record.editor)),
     namesField(writer, "translator", Option.fromUndefinedOr(record.translator)),
@@ -481,7 +478,7 @@ function entryFields(writer: Writer): Field[] {
       Option.fromUndefinedOr(record["publisher-place"]),
     ),
   ]);
-  const later = Array.getSomes([
+  const later = Arr.getSomes([
     dateField("urldate", Option.fromUndefinedOr(record.accessed)),
     dateField("origdate", Option.fromUndefinedOr(record["original-date"])),
     dateField("eventdate", Option.fromUndefinedOr(record["event-date"])),
@@ -577,6 +574,6 @@ export function toBibtex(
 ): string {
   const dialect = options.dialect ?? "biblatex";
   const keys = citationKeys(records);
-  const entries = Array.map(records, (record, index) => writeEntry(record, keys[index], dialect));
-  return Array.isArrayEmpty(entries) ? "" : `${entries.join("\n\n")}\n`;
+  const entries = Arr.map(records, (record, index) => writeEntry(record, keys[index], dialect));
+  return Arr.isArrayEmpty(entries) ? "" : `${entries.join("\n\n")}\n`;
 }

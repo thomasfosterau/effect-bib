@@ -13,14 +13,14 @@
  * @since 0.1.0
  */
 
-import * as Array from "effect/Array";
+import * as Arr from "effect/Array";
 import * as HashMap from "effect/HashMap";
 import * as Option from "effect/Option";
-import * as Predicate from "effect/Predicate";
-import * as Record from "effect/Record";
+import * as P from "effect/Predicate";
+import * as R from "effect/Record";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
-import * as String from "effect/String";
+import * as Str from "effect/String";
 import { limitOr } from "./limits.ts";
 import { MAX_INPUT_LENGTH, MAX_RECORDS } from "./parse.ts";
 import {
@@ -70,25 +70,22 @@ const isList = (value: Schema.Json): value is Schema.JsonArray => globalThis.Arr
 
 /** True for a JSON object. */
 const isNode = (value: Schema.Json): value is Schema.JsonObject =>
-  Predicate.isObject(value) && !isList(value);
+  P.isObject(value) && !isList(value);
 
 /** True for an empty string or list, which an item leaves out. */
 const isBlank = (value: Schema.Json): boolean =>
-  Predicate.isString(value)
-    ? String.isEmpty(value.trim())
-    : isList(value) && Array.isReadonlyArrayEmpty(value);
+  P.isString(value) ? Str.isEmpty(value.trim()) : isList(value) && Arr.isReadonlyArrayEmpty(value);
 
 /** A member of an item or node (an own property only, so an inherited key never reads as one). */
 const get = (node: Schema.JsonObject, key: string): Option.Option<Schema.Json> =>
-  Record.get<string, Schema.Json>(node, key);
+  R.get<string, Schema.Json>(node, key);
 
 /** True when an item or node has `key` as an own member. */
 const hasKey = (node: Schema.JsonObject, key: string): boolean =>
-  Record.has<string, Schema.Json>(node, key);
+  R.has<string, Schema.Json>(node, key);
 
 /** An item from its members, the absent and empty ones dropped. */
-const item = (fields: Fields): Item =>
-  Record.filter(Record.getSomes(fields), (value) => !isBlank(value));
+const item = (fields: Fields): Item => R.filter(R.getSomes(fields), (value) => !isBlank(value));
 
 // ── HTML scanning ─────────────────────────────────────────────────────
 
@@ -126,8 +123,8 @@ const MAX_TAG_LENGTH = 65_536;
  * scan never retries from inside a name and stays linear in the tag.
  */
 function attributes(source: string): HashMap.HashMap<string, string> {
-  return Array.reduce(
-    Array.fromIterable(
+  return Arr.reduce(
+    Arr.fromIterable(
       source.matchAll(/(?<=^|[\s"'])([^\s=/>"']+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>"']+))/g),
     ),
     HashMap.empty<string, string>(),
@@ -155,8 +152,8 @@ interface OpenTag {
  */
 function openTags(html: string, element: string): readonly OpenTag[] {
   const found: OpenTag[] = [];
-  Array.reduce(
-    Array.fromIterable(html.matchAll(new RegExp(`<${element}\\b`, "gi"))),
+  Arr.reduce(
+    Arr.fromIterable(html.matchAll(new RegExp(`<${element}\\b`, "gi"))),
     // The first `>` at or after the last start searched; infinite once none is left.
     -1,
     (gt, match) => {
@@ -187,7 +184,7 @@ interface Script {
 function scripts(html: string): readonly Script[] {
   const close = /<\/script\s{0,64}>/gi;
   const found: Script[] = [];
-  Array.reduce(openTags(html, "script"), 0, (after, tag) => {
+  Arr.reduce(openTags(html, "script"), 0, (after, tag) => {
     if (tag.end <= after) return after;
     close.lastIndex = tag.end;
     const end = close.exec(html);
@@ -210,7 +207,7 @@ interface Meta {
 
 /** The page's `<meta name|property=… content=…>` tags, names lower-cased, in order. */
 const metas = (html: string): Meta[] =>
-  Array.filterMap(tags(html, "meta"), (attrs): Result.Result<Meta, void> => {
+  Arr.filterMap(tags(html, "meta"), (attrs): Result.Result<Meta, void> => {
     const name = Option.orElse(HashMap.get(attrs, "name"), () => HashMap.get(attrs, "property"));
     const content = HashMap.get(attrs, "content");
     return Option.isSome(name) && Option.isSome(content)
@@ -225,7 +222,7 @@ const all = (found: readonly Meta[], names: readonly string[]): string[] =>
 /** The first meta value under any of `names`. */
 const first = (found: readonly Meta[], names: readonly string[]): Option.Option<string> =>
   Option.map(
-    Array.findFirst(found, (meta) => names.includes(meta.name)),
+    Arr.findFirst(found, (meta) => names.includes(meta.name)),
     (meta) => meta.content,
   );
 
@@ -344,7 +341,7 @@ function dublinCore(found: readonly Meta[]): Option.Option<Item> {
   const dc = (term: string): string[] =>
     all(found, [`dc.${term}`, `dcterms.${term}`, `dc:${term}`]);
   const dcFirst = (...terms: string[]): Option.Option<string> =>
-    Array.findFirst(terms, (term) => Array.head(dc(term)));
+    Arr.findFirst(terms, (term) => Arr.head(dc(term)));
   const identifiers = [...dc("identifier"), ...dc("source")];
   return Option.map(dcFirst("title"), (title) =>
     item({
@@ -356,9 +353,9 @@ function dublinCore(found: readonly Meta[]): Option.Option<Item> {
       publisher: dcFirst("publisher"),
       language: dcFirst("language"),
       abstract: dcFirst("description", "abstract"),
-      DOI: Array.findFirst(identifiers, doiIn),
+      DOI: Arr.findFirst(identifiers, doiIn),
       ISBN: Option.map(
-        Array.findFirst(identifiers, (value) => /isbn/i.test(value)),
+        Arr.findFirst(identifiers, (value) => /isbn/i.test(value)),
         (value) => value.replace(/^.*isbn:?\s*/i, ""),
       ),
     }),
@@ -407,9 +404,9 @@ const members = (node: Node, key: string): readonly Schema.Json[] => listOf(get(
 /** A value's text: a string or number, a node's `name`, or the first such in a list. */
 function textOf(value: Schema.Json, depth = 0): Option.Option<string> {
   if (depth > 4) return Option.none();
-  if (Predicate.isString(value)) return Option.some(value);
-  if (Predicate.isNumber(value)) return Option.some(globalThis.String(value));
-  if (isList(value)) return Array.findFirst(value, (entry) => textOf(entry, depth + 1));
+  if (P.isString(value)) return Option.some(value);
+  if (P.isNumber(value)) return Option.some(globalThis.String(value));
+  if (isList(value)) return Arr.findFirst(value, (entry) => textOf(entry, depth + 1));
   return isNode(value) ? text(value, "name", depth + 1) : Option.none();
 }
 
@@ -420,7 +417,7 @@ function text(node: Node, key: string, depth = 0): Option.Option<string> {
 
 /** A node's `@type`s, lower-cased. */
 const typesOf = (node: Node): string[] =>
-  members(node, "@type").flatMap((type) => (Predicate.isString(type) ? [type.toLowerCase()] : []));
+  members(node, "@type").flatMap((type) => (P.isString(type) ? [type.toLowerCase()] : []));
 
 /** Every node of a JSON-LD document: top-level objects, list members and `@graph` members, a few levels deep. */
 function nodesOf(value: Schema.Json, depth = 0): Node[] {
@@ -434,10 +431,10 @@ function nodesOf(value: Schema.Json, depth = 0): Node[] {
 
 /** A schema.org person or organisation as a CSL name object (with an ORCID from its `@id` / `sameAs`). */
 function personItem(value: Schema.Json): Option.Option<Item> {
-  if (Predicate.isString(value)) return Option.some(nameItem(value));
+  if (P.isString(value)) return Option.some(nameItem(value));
   if (!isNode(value)) return Option.none();
-  const orcid = Array.findFirst([...members(value, "@id"), ...members(value, "sameAs")], (link) =>
-    Predicate.isString(link) && /orcid\.org\//i.test(link)
+  const orcid = Arr.findFirst([...members(value, "@id"), ...members(value, "sameAs")], (link) =>
+    P.isString(link) && /orcid\.org\//i.test(link)
       ? Option.some(link.replace(/^.*orcid\.org\//i, ""))
       : Option.none(),
   );
@@ -454,7 +451,7 @@ function personItem(value: Schema.Json): Option.Option<Item> {
 /** The container a work is part of (a periodical, through its volume and issue), with the volume and issue numbers. */
 function partOf(node: Node, depth = 0): Item {
   if (depth > 4) return {};
-  return Option.match(Array.findFirst(members(node, "isPartOf"), isNode), {
+  return Option.match(Arr.findFirst(members(node, "isPartOf"), isNode), {
     onNone: () => ({}),
     onSome: (parent) => {
       const types = typesOf(parent);
@@ -478,7 +475,7 @@ const identifiersOf = (node: Node): string[] =>
 
 /** A schema.org creative work as a CSL item; `None` for a node of another kind or without a name. */
 function schemaItem(node: Node): Option.Option<Item> {
-  const type = Array.findFirst(typesOf(node), (candidate) => HashMap.get(SCHEMA_TYPES, candidate));
+  const type = Arr.findFirst(typesOf(node), (candidate) => HashMap.get(SCHEMA_TYPES, candidate));
   const title = Option.orElse(text(node, "headline"), () => text(node, "name"));
   const people = (key: string): Option.Option<Schema.Json> =>
     Option.some(members(node, key).flatMap((person) => Option.toArray(personItem(person))));
@@ -510,7 +507,7 @@ function schemaItem(node: Node): Option.Option<Item> {
     }),
     ...partOf(node),
     ...item({
-      DOI: Array.findFirst(
+      DOI: Arr.findFirst(
         [
           ...Option.toArray(text(node, "doi")),
           ...identifiersOf(node),
@@ -525,13 +522,13 @@ function schemaItem(node: Node): Option.Option<Item> {
 
 /** The schema.org works the page's JSON-LD scripts describe. */
 function jsonLd(html: string): Item[] {
-  return Array.flatMap(scripts(html), (script) =>
+  return Arr.flatMap(scripts(html), (script) =>
     Option.exists(HashMap.get(attributes(script.source), "type"), (type) =>
       /^\s*application\/ld\+json\s*$/i.test(type),
     )
       ? Option.match(decodeJson(script.body.trim()), {
           onNone: () => [],
-          onSome: (document) => Array.getSomes(nodesOf(document).map(schemaItem)),
+          onSome: (document) => Arr.getSomes(nodesOf(document).map(schemaItem)),
         })
       : [],
   );
@@ -576,7 +573,7 @@ function coinsItem(kev: string): Option.Option<Item> {
   });
   const param = (key: string): Option.Option<string> =>
     Option.map(
-      Array.findFirst(pairs, ([name]) => name === key),
+      Arr.findFirst(pairs, ([name]) => name === key),
       ([, value]) => value,
     );
   const getAll = (key: string): string[] =>
@@ -633,20 +630,20 @@ function coinsItem(kev: string): Option.Option<Item> {
       edition: param("rft.edition"),
       ISBN: param("rft.isbn"),
       ISSN: either(param("rft.issn"), param("rft.eissn")),
-      DOI: Array.findFirst(ids, (id) =>
+      DOI: Arr.findFirst(ids, (id) =>
         id.startsWith("info:doi/") ? Option.some(id.slice(9)) : doiIn(id),
       ),
-      PMID: Array.findFirst(ids, (id) =>
+      PMID: Arr.findFirst(ids, (id) =>
         id.startsWith("info:pmid/") ? Option.some(id.slice(10)) : Option.none(),
       ),
-      URL: Array.findFirst(ids, (id) => /^https?:\/\//i.test(id) && Option.isNone(doiIn(id))),
+      URL: Arr.findFirst(ids, (id) => /^https?:\/\//i.test(id) && Option.isNone(doiIn(id))),
     }),
   );
 }
 
 /** The ContextObjects of the page's COinS spans (`<span class="Z3988" title="…">`). */
 const coins = (html: string): Item[] =>
-  Array.getSomes(
+  Arr.getSomes(
     tags(html, "span")
       .filter((attrs) =>
         Option.exists(HashMap.get(attrs, "class"), (value) => /(?:^|\s)Z3988(?:\s|$)/.test(value)),
@@ -671,19 +668,17 @@ function httpUrl(value: string, base: Option.Option<string>): Option.Option<stri
 
 /** An item with its `URL` made a safe absolute link, or dropped. */
 function withSafeUrl(found: Item, base: Option.Option<string>): Item {
-  const rest = Record.remove<string, Schema.Json, string>(found, "URL");
+  const rest = R.remove<string, Schema.Json, string>(found, "URL");
   return Option.match(
-    Option.flatMap(Option.filter(get(found, "URL"), Predicate.isString), (url) =>
-      httpUrl(url, base),
-    ),
+    Option.flatMap(Option.filter(get(found, "URL"), P.isString), (url) => httpUrl(url, base)),
     { onNone: () => rest, onSome: (url) => ({ ...rest, URL: url }) },
   );
 }
 
 /** A record from an assembled item, stamped as read from the page. */
 function toRecord(found: Item, options: EmbeddedOptions): BiblioRecord {
-  const rest = Record.remove<string, Schema.Json, string>(found, "number_arxiv");
-  const arxiv = Option.filter(get(found, "number_arxiv"), Predicate.isString);
+  const rest = R.remove<string, Schema.Json, string>(found, "number_arxiv");
+  const arxiv = Option.filter(get(found, "number_arxiv"), P.isString);
   const withArxiv =
     Option.isSome(arxiv) && !hasKey(rest, "number")
       ? { ...rest, number: `arXiv:${arxiv.value.replace(/^arxiv:/i, "")}` }
@@ -758,9 +753,9 @@ export function readEmbeddedMetadata(
     ...Option.toArray(dublinCore(found)),
   ].map((candidate) => withSafeUrl(candidate, base));
   const page = Option.map(
-    Array.findFirst(candidates, (candidate) => hasKey(candidate, "title")),
+    Arr.findFirst(candidates, (candidate) => hasKey(candidate, "title")),
     (primary) => {
-      const merged = Array.reduce(candidates, primary, (acc, other) => ({ ...other, ...acc }));
+      const merged = Arr.reduce(candidates, primary, (acc, other) => ({ ...other, ...acc }));
       return toRecord(
         hasKey(merged, "URL") || Option.isNone(base) ? merged : { ...merged, URL: base.value },
         options,

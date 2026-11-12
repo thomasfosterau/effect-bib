@@ -11,7 +11,7 @@
  * @since 0.1.0
  */
 
-import * as Array from "effect/Array";
+import * as Arr from "effect/Array";
 import * as Effect from "effect/Effect";
 import * as HashSet from "effect/HashSet";
 import * as MutableHashMap from "effect/MutableHashMap";
@@ -21,7 +21,7 @@ import * as Order from "effect/Order";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 import * as Stream from "effect/Stream";
-import * as String from "effect/String";
+import * as Str from "effect/String";
 import type { BibtexBudgets } from "./bibtex/budget.ts";
 import { DECODED_SOURCE_FACTOR } from "./bibtex/fields.ts";
 import { MIN_MACRO_EXPANSION } from "./bibtex/scan.ts";
@@ -121,8 +121,8 @@ interface Buffered {
 
 /** The position after `text`, starting from `from` (CRLF, CR and LF each end a line). */
 function advance(from: SourcePosition, text: string): SourcePosition {
-  const breaks = Array.fromIterable(text.matchAll(/\r\n?|\n/g));
-  return Option.match(Array.last(breaks), {
+  const breaks = Arr.fromIterable(text.matchAll(/\r\n?|\n/g));
+  return Option.match(Arr.last(breaks), {
     onNone: () => ({
       ...from,
       offset: from.offset + text.length,
@@ -177,7 +177,7 @@ function closing(text: string, open: number): Option.Option<number> {
 
 /** No entry in the buffer: at the end, the rest is consumed (an empty span past it); before it, wait. */
 const nothingLeft = (buffer: string, final: boolean): Option.Option<readonly [number, number]> =>
-  final && String.isNonEmpty(buffer) ? Option.some([buffer.length, buffer.length]) : Option.none();
+  final && Str.isNonEmpty(buffer) ? Option.some([buffer.length, buffer.length]) : Option.none();
 
 /** An entry head: `@type` and its opening delimiter. */
 const ENTRY_HEAD = /@\s*[A-Za-z]+\s*[{(]/g;
@@ -242,7 +242,7 @@ function rowEnd(text: string, from: number): Option.Option<number> {
 
 /** A CSV row (the header included), with its line break. */
 const findCsv: Finder = (buffer, final) => {
-  if (String.isEmpty(buffer)) return Option.none();
+  if (Str.isEmpty(buffer)) return Option.none();
   return Option.match(rowEnd(buffer, 0), {
     onNone: () => (final ? Option.some([0, buffer.length] as const) : Option.none()),
     onSome: (end) => Option.some([0, end] as const),
@@ -251,7 +251,7 @@ const findCsv: Finder = (buffer, final) => {
 
 /** The whole input as one unit, at its end: CSL-JSON and CSL YAML are read whole. */
 const findWhole: Finder = (buffer, final) =>
-  final && String.isNonEmpty(buffer) ? Option.some([0, buffer.length] as const) : Option.none();
+  final && Str.isNonEmpty(buffer) ? Option.some([0, buffer.length] as const) : Option.none();
 
 // ── Reading entries ───────────────────────────────────────────────────
 
@@ -322,7 +322,7 @@ interface State {
 
 /** The total length of some texts. */
 const lengthOf = (texts: Iterable<string>): number =>
-  Array.reduce(Array.fromIterable(texts), 0, (sum, text) => sum + text.length);
+  Arr.reduce(Arr.fromIterable(texts), 0, (sum, text) => sum + text.length);
 
 /**
  * Parses a document assembled from `context` (macros, parents, a CSV
@@ -336,14 +336,14 @@ function parseUnits(
   parse: (document: string) => ParseOutcome[],
 ): ParseOutcome[] {
   const starts: Array<readonly [number, Unit]> = [];
-  Array.reduce(units, context.length, (offset, unit) => {
+  Arr.reduce(units, context.length, (offset, unit) => {
     starts.push([offset, unit]);
     return offset + unit.text.length + 1;
   });
   const document = `${context}${units.map((unit) => unit.text).join("\n")}`;
-  return Array.filterMap(parse(document), (outcome): Result.Result<ParseOutcome, void> => {
+  return Arr.filterMap(parse(document), (outcome): Result.Result<ParseOutcome, void> => {
     const offset = outcome.position?.offset;
-    const unit = Array.findFirst(starts, ([start]) => start === offset);
+    const unit = Arr.findFirst(starts, ([start]) => start === offset);
     if (Option.isNone(unit)) return Result.failVoid;
     return Result.succeed({ ...outcome, position: unit.value[1].position });
   });
@@ -372,13 +372,13 @@ const entryKey = (text: string): Option.Option<string> =>
 
 /** The keys an entry cross-references (`crossref`, `xdata`), lower-cased. */
 const references = (text: string): string[] =>
-  Array.flatMap(
-    Array.fromIterable(text.matchAll(/\b(?:crossref|xdata)\s*=\s*[{"]?\s*([^}"]+)/gi)),
+  Arr.flatMap(
+    Arr.fromIterable(text.matchAll(/\b(?:crossref|xdata)\s*=\s*[{"]?\s*([^}"]+)/gi)),
     (match) =>
       match[1]
         .split(",")
         .map((key) => key.trim().toLowerCase())
-        .filter(String.isNonEmpty),
+        .filter(Str.isNonEmpty),
   );
 
 /** An `@string` definition's macro name, lower-cased; `None` for any other entry. */
@@ -392,7 +392,7 @@ const isMacro = (text: string): boolean => /^@\s*string\s*[{(]/i.test(text);
 
 /** The names a text may use as macros (a bare word after `=` or `#`), lower-cased; an over-approximation. */
 const macroUses = (text: string): string[] =>
-  Array.map(Array.fromIterable(text.matchAll(/[=#]\s*([A-Za-z_][^\s,#{}"=()]*)/g)), (match) =>
+  Arr.map(Arr.fromIterable(text.matchAll(/[=#]\s*([A-Za-z_][^\s,#{}"=()]*)/g)), (match) =>
     match[1].toLowerCase(),
   );
 
@@ -410,7 +410,7 @@ function parentTexts(
   depth = 0,
 ): string[] {
   if (depth > 8) return [];
-  const found = Array.filterMap(keys, (key): Result.Result<string, void> => {
+  const found = Arr.filterMap(keys, (key): Result.Result<string, void> => {
     if (MutableHashSet.has(visited, key)) return Result.failVoid;
     MutableHashSet.add(visited, key);
     return Result.fromOption(
@@ -418,7 +418,7 @@ function parentTexts(
       () => undefined,
     );
   });
-  return Array.isReadonlyArrayEmpty(found)
+  return Arr.isReadonlyArrayEmpty(found)
     ? found
     : [...found, ...parentTexts(state, found.flatMap(references), visited, depth + 1)];
 }
@@ -432,7 +432,7 @@ function macrosUsed(state: State, names: readonly string[]): Macro[] {
   const visited = MutableHashSet.empty<string>();
   const found: Macro[] = [];
   const visit = (level: readonly string[], depth: number): void => {
-    const next = Array.flatMap(level, (name) => {
+    const next = Arr.flatMap(level, (name) => {
       if (MutableHashSet.has(visited, name)) return [];
       MutableHashSet.add(visited, name);
       return Option.match(MutableHashMap.get(state.macros, name), {
@@ -443,10 +443,10 @@ function macrosUsed(state: State, names: readonly string[]): Macro[] {
         },
       });
     });
-    if (depth < 8 && Array.isReadonlyArrayNonEmpty(next)) visit(next, depth + 1);
+    if (depth < 8 && Arr.isReadonlyArrayNonEmpty(next)) visit(next, depth + 1);
   };
   visit(names, 0);
-  return Array.sortWith(found, (macro) => macro.order, Order.Number);
+  return Arr.sortWith(found, (macro) => macro.order, Order.Number);
 }
 
 /**
@@ -486,7 +486,7 @@ function define(state: State, name: string, text: string): void {
   MutableHashMap.set(state.macros, name, {
     text,
     order: state.macroCount,
-    uses: Array.fromIterable(HashSet.fromIterable(macroUses(text))),
+    uses: Arr.fromIterable(HashSet.fromIterable(macroUses(text))),
   });
   state.macroCount += 1;
   state.macroLength += text.length;
@@ -513,7 +513,7 @@ function remember(state: State, unit: Unit, cap: number): void {
         )
           // The key falls back to its next entry still in the window (a scan of at most the window).
           Option.match(
-            Array.findFirst(state.parents, (entry) => entry.key === evicted.key),
+            Arr.findFirst(state.parents, (entry) => entry.key === evicted.key),
             {
               onNone: () => MutableHashMap.remove(state.parentIndex, evicted.key),
               onSome: (next) => MutableHashMap.set(state.parentIndex, evicted.key, next),
@@ -554,7 +554,7 @@ function single(unit: Unit, context: readonly string[]): Group {
 function groups(state: State, units: readonly Unit[], cap: number): Group[] {
   const all: Group[] = [];
   const found = MutableHashMap.empty<string, string[]>();
-  Array.forEach(units, (unit) => {
+  Arr.forEach(units, (unit) => {
     const context = contextFor(state, unit, cap, found);
     const last = all[all.length - 1];
     const added = context.filter(
@@ -566,7 +566,7 @@ function groups(state: State, units: readonly Unit[], cap: number): Group[] {
         : last.size + unit.text.length + 1 + lengthOf(added.map((text) => `${text}\n`));
     if (last !== undefined && grown <= cap) {
       last.units.push(unit);
-      Array.forEach(added, (text) => {
+      Arr.forEach(added, (text) => {
         last.context.push(text);
         MutableHashSet.add(last.included, text);
       });
@@ -598,7 +598,7 @@ function readBibtex(
   final: boolean,
 ): ParseOutcome[] {
   const cap = inputCap(options);
-  Array.forEach(units, (unit) => {
+  Arr.forEach(units, (unit) => {
     Option.match(macroName(unit.text), {
       onNone: () => {
         if (!isMacro(unit.text)) remember(state, unit, cap);
@@ -612,7 +612,7 @@ function readBibtex(
   // Past the bound, the oldest waiting children are read without their parent.
   const overflow = Math.max(0, waiting.length - MAX_PENDING);
   state.pending = waiting.slice(overflow);
-  const batch = Array.sortWith(
+  const batch = Arr.sortWith(
     [...ready, ...waiting.slice(0, overflow)],
     (unit) => unit.position.offset,
     Order.Number,
@@ -630,14 +630,14 @@ function readCsv(state: State, units: readonly Unit[], options: ParseOptions): P
     const [header, ...rows] = units;
     if (header === undefined) return [];
     const probe = parseCsv(header.text, documentOptions(options, header.text));
-    if (Array.isArrayNonEmpty(probe)) {
+    if (Arr.isArrayNonEmpty(probe)) {
       state.done = true;
       return probe;
     }
     state.header = Option.some(header.text.replace(/\r?\n?$/, "\n"));
     return readCsv(state, rows, options);
   }
-  const rows = units.filter((unit) => String.isNonEmpty(unit.text.trim()));
+  const rows = units.filter((unit) => Str.isNonEmpty(unit.text.trim()));
   return parseUnits(
     state.header.value,
     rows.map((unit) => ({ ...unit, text: unit.text.replace(/\r?\n?$/, "") })),
@@ -683,7 +683,7 @@ function readUnits(
   options: ParseOptions,
   final: boolean,
 ): ParseOutcome[] {
-  const present = units.filter((unit) => String.isNonEmpty(unit.text));
+  const present = units.filter((unit) => Str.isNonEmpty(unit.text));
   if (format === "bibtex") return readBibtex(state, present, options, final);
   if (format === "ris") return readRis(present, options);
   if (format === "medline" || format === "refer")

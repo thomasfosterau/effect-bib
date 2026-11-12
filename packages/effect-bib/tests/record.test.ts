@@ -9,7 +9,7 @@
  * @module tests/unit/biblio-record
  */
 
-import * as Array from "effect/Array";
+import * as Arr from "effect/Array";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { describe, expect, it } from "vite-plus/test";
@@ -378,7 +378,7 @@ describe("the full CSL 1.0.2 variable set", () => {
 
   it("raises the field-length and name-list bounds on request", () => {
     const abstract = "a".repeat(MAX_TEXT_FIELD_LENGTH + 10);
-    const author = Array.makeBy(MAX_AUTHORS + 10, (i) => ({ family: `F${i}` }));
+    const author = Arr.makeBy(MAX_AUTHORS + 10, (i) => ({ family: `F${i}` }));
     const clamped = fromCslJson({ type: "book", abstract, author });
     expect(clamped.abstract).toHaveLength(MAX_TEXT_FIELD_LENGTH);
     expect(clamped.author).toHaveLength(MAX_AUTHORS);

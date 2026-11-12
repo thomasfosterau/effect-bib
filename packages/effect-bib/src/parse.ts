@@ -47,16 +47,16 @@
  * @since 0.1.0
  */
 
-import * as Array from "effect/Array";
+import * as Arr from "effect/Array";
 import * as HashMap from "effect/HashMap";
 import * as Match from "effect/Match";
 import * as MutableHashMap from "effect/MutableHashMap";
 import * as Option from "effect/Option";
-import * as Predicate from "effect/Predicate";
-import * as Record from "effect/Record";
+import * as P from "effect/Predicate";
+import * as R from "effect/Record";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
-import * as String from "effect/String";
+import * as Str from "effect/String";
 import type * as Types from "effect/Types";
 import {
   decodeArxiv,
@@ -275,8 +275,8 @@ const endOutcomes = (outcomes: ParseOutcome[], truncated: boolean): ParseOutcome
 function lineStarts(content: string): readonly number[] {
   return [
     0,
-    ...Array.map(
-      Array.fromIterable(content.matchAll(/\r\n?|\n/g)),
+    ...Arr.map(
+      Arr.fromIterable(content.matchAll(/\r\n?|\n/g)),
       (match) => match.index + match[0].length,
     ),
   ];
@@ -387,7 +387,7 @@ function toOutcome(fields: RawFields, source: ProvenanceSource, config: Settings
 
   const optional: Types.Mutable<Pick<BiblioRecord, "id" | "title" | "issued">> = {};
   const id = Option.flatMap(fields.id, (value): Option.Option<string | number> =>
-    Predicate.isNumber(value) ? Option.some(value) : sanitiseText(value, config.maxFieldLength),
+    P.isNumber(value) ? Option.some(value) : sanitiseText(value, config.maxFieldLength),
   );
   if (Option.isSome(id)) optional.id = id.value;
   if (Option.isSome(title)) optional.title = title.value;
@@ -452,10 +452,10 @@ function collectContributors(
   maxAuthors: number,
 ): Partial<Pick<BiblioRecord, "author" | "editor">> {
   const contributors: Types.Mutable<Partial<Pick<BiblioRecord, "author" | "editor">>> = {};
-  if (Array.isReadonlyArrayNonEmpty(fields.names)) {
+  if (Arr.isReadonlyArrayNonEmpty(fields.names)) {
     contributors.author = fields.names.slice(0, maxAuthors);
   }
-  if (Array.isReadonlyArrayNonEmpty(fields.editors)) {
+  if (Arr.isReadonlyArrayNonEmpty(fields.editors)) {
     contributors.editor = fields.editors.slice(0, maxAuthors);
   }
   return contributors;
@@ -480,7 +480,7 @@ function sanitiseTitle(
 
 /** Structures a list of display-form names, bounded and empties dropped. */
 function structuredNames(raw: readonly string[], maxAuthors: number): CslName[] {
-  return Array.filterMap(raw, (value): Result.Result<CslName, void> => {
+  return Arr.filterMap(raw, (value): Result.Result<CslName, void> => {
     const name = parsePersonName(value);
     return name === null ? Result.failVoid : Result.succeed(name);
   }).slice(0, maxAuthors);
@@ -562,8 +562,8 @@ function bibtexOutcomes(
     onNone: () => mapBibtexEntries(entries, config),
     onSome: ({ decoded }) => mapBibtexEntries(entries, config, decoded),
   });
-  const outcomes = Array.map(
-    Array.zip(entries, mapped),
+  const outcomes = Arr.map(
+    Arr.zip(entries, mapped),
     ([entry, { fields, additions }]): ParseOutcome => {
       const outcome = toOutcome(fields, "bibtex", config);
       return at(
@@ -631,8 +631,8 @@ export function parseZoteroJson(content: string, options: ParseOptions = {}): Pa
 /** The outcomes of a list of CSL items (from CSL-JSON or CSL YAML), up to the record cap. */
 function cslItemOutcomes(all: readonly unknown[], config: Settings): ParseOutcome[] {
   const [items, truncated] = capped(all, config);
-  const outcomes = Array.map(items, (item): ParseOutcome => {
-    if (!Predicate.isObjectOrArray(item)) return { outcome: "skipped", reason: "malformed" };
+  const outcomes = Arr.map(items, (item): ParseOutcome => {
+    if (!P.isObjectOrArray(item)) return { outcome: "skipped", reason: "malformed" };
     const record = fromCslJson(item, config);
     if (config.lenient) return { outcome: "parsed", record };
     const declared = Option.filter(
@@ -800,13 +800,13 @@ function splitCsvRows(content: string, maxRows: number): CsvRow[] {
     if (c === '"') inQuote = !inQuote;
     if ((c === "\n" || c === "\r") && !inQuote) {
       if (c === "\r" && content[i + 1] === "\n") i++; // CRLF
-      if (String.isNonEmpty(cur)) rows.push({ text: cur, offset: start });
+      if (Str.isNonEmpty(cur)) rows.push({ text: cur, offset: start });
       cur = "";
       start = i + 1;
       if (rows.length > maxRows) break;
     } else cur += c;
   }
-  if (String.isNonEmpty(cur)) rows.push({ text: cur, offset: start });
+  if (Str.isNonEmpty(cur)) rows.push({ text: cur, offset: start });
   return rows;
 }
 
@@ -828,15 +828,12 @@ type CsvColumn = keyof typeof CSV_COLUMNS;
 /** Builds a logical-column → cell-index map from a header row. */
 function csvHeaderIndex(header: readonly string[]): Partial<Record<CsvColumn, number>> {
   const normalised = header.map((h) => h.replace(/\s+/g, " ").trim().toLowerCase());
-  return Record.fromEntries(
-    Array.filterMap(
-      Record.keys(CSV_COLUMNS),
-      (key): Result.Result<readonly [CsvColumn, number], void> => {
-        const aliases: readonly string[] = CSV_COLUMNS[key];
-        const index = normalised.findIndex((h) => aliases.includes(h));
-        return index === -1 ? Result.failVoid : Result.succeed([key, index] as const);
-      },
-    ),
+  return R.fromEntries(
+    Arr.filterMap(R.keys(CSV_COLUMNS), (key): Result.Result<readonly [CsvColumn, number], void> => {
+      const aliases: readonly string[] = CSV_COLUMNS[key];
+      const index = normalised.findIndex((h) => aliases.includes(h));
+      return index === -1 ? Result.failVoid : Result.succeed([key, index] as const);
+    }),
   );
 }
 
@@ -859,22 +856,22 @@ export function parseCsv(content: string, options: ParseOptions = {}): ParseOutc
 function csvOutcomes(content: string, config: Settings): ParseOutcome[] {
   // The header, the cap, and one row more to tell a truncated file.
   const rows = splitCsvRows(content, config.maxRecords + 1);
-  if (Array.isArrayEmpty(rows)) return [];
+  if (Arr.isArrayEmpty(rows)) return [];
   const header = parseCsvLine(rows[0].text);
   const index = csvHeaderIndex(header);
   if (index.title === undefined) return [{ outcome: "skipped", reason: "malformed" }];
 
   const cell = (cells: readonly string[], key: CsvColumn): Option.Option<string> =>
-    Option.flatMap(Option.fromUndefinedOr(index[key]), (column) => Array.get(cells, column));
+    Option.flatMap(Option.fromUndefinedOr(index[key]), (column) => Arr.get(cells, column));
   const position = locator(content);
   const [body, truncated] = capped(rows.slice(1), config);
 
-  const outcomes = Array.map(body, (row) => {
+  const outcomes = Arr.map(body, (row) => {
     const cells = parseCsvLine(row.text);
     const authorNames = Option.match(cell(cells, "author"), {
       onNone: (): string[] => [],
       onSome: (authorCell) =>
-        authorCell.split(/\s*(?:;|\sand\s)\s*/i).filter((s) => String.isNonEmpty(s.trim())),
+        authorCell.split(/\s*(?:;|\sand\s)\s*/i).filter((s) => Str.isNonEmpty(s.trim())),
     });
     const key = cell(cells, "key");
     const outcome = toOutcome(
@@ -928,7 +925,7 @@ function splitRisRecords(content: string, maxRecords: number): RisRecord[] {
   };
   const initial: RisScan = { current: Option.none(), done: false, offset: 0 };
   const lines = content.split(/(\r?\n)/);
-  const trailing = Array.reduce(lines, initial, (state, line, index): RisScan => {
+  const trailing = Arr.reduce(lines, initial, (state, line, index): RisScan => {
     const next = state.offset + line.length;
     // The split keeps each line break as its own element, at the odd indices.
     if (state.done || index % 2 === 1) return { ...state, offset: next };
@@ -979,7 +976,7 @@ function risFirst(record: RisRecord, tag: string): Option.Option<string> {
 
 /** All values across a set of RIS tags, in order. */
 function risAll(record: RisRecord, tags: readonly string[]): string[] {
-  return Array.flatMap(tags, (tag) => risValues(record, tag));
+  return Arr.flatMap(tags, (tag) => risValues(record, tag));
 }
 
 /** All values recorded for one RIS tag, in order. */
@@ -1037,8 +1034,8 @@ interface RisSerials {
 function risSerials(record: RisRecord): RisSerials {
   const values = risValues(record, "SN");
   return {
-    isbn: Array.findFirst(values, (value) => Option.isSome(decodeIsbn(value))),
-    issn: Array.findFirst(values, (value) => Option.isSome(decodeIssn(value))),
+    isbn: Arr.findFirst(values, (value) => Option.isSome(decodeIsbn(value))),
+    issn: Arr.findFirst(values, (value) => Option.isSome(decodeIssn(value))),
   };
 }
 
@@ -1047,7 +1044,7 @@ function risSerials(record: RisRecord): RisSerials {
  * a second comma), else as a display-form name; bounded and empties dropped.
  */
 function risNames(raw: readonly string[], maxAuthors: number): CslName[] {
-  return Array.filterMap(raw, (value): Result.Result<CslName, void> => {
+  return Arr.filterMap(raw, (value): Result.Result<CslName, void> => {
     const parts = value.split(",");
     return Result.fromOption(
       parts.length >= 3
@@ -1116,7 +1113,7 @@ export function parseRis(content: string, options: ParseOptions = {}): ParseOutc
     const position = locator(input);
     const [records, truncated] = capped(splitRisRecords(input, config.maxRecords), config);
     return endOutcomes(
-      Array.map(records, (record) => at(risRecordOutcome(record, config), position(record.offset))),
+      Arr.map(records, (record) => at(risRecordOutcome(record, config), position(record.offset))),
       truncated,
     );
   });
@@ -1141,12 +1138,12 @@ type TagLine = (line: string) => Option.Option<readonly [tag: string, value: str
  */
 function splitTaggedRecords(content: string, tagLine: TagLine, maxRecords: number): TaggedRecord[] {
   const records: TaggedRecord[] = [];
-  const paragraphs = Array.fromIterable(
+  const paragraphs = Arr.fromIterable(
     content.matchAll(/(?:^|(?<=\n))(?:[^\S\r\n]*\S[^\r\n]*(?:\r?\n|$))+/g),
   );
-  Array.forEach(paragraphs.slice(0, maxRecords + 1), (paragraph) => {
+  Arr.forEach(paragraphs.slice(0, maxRecords + 1), (paragraph) => {
     const record: TaggedRecord = { tags: MutableHashMap.empty(), offset: paragraph.index };
-    const last = Array.reduce(
+    const last = Arr.reduce(
       paragraph[0].split(/\r?\n/),
       Option.none<string>(),
       (previous, line): Option.Option<string> =>
@@ -1176,13 +1173,13 @@ function addTagged(record: TaggedRecord, tag: string, value: string): void {
 /** Continues the last value of a record's tag with a wrapped line. */
 function continueTagged(record: TaggedRecord, tag: string, text: string): void {
   Option.map(MutableHashMap.get(record.tags, tag), (values) => {
-    if (String.isNonEmpty(text)) values[values.length - 1] = `${values[values.length - 1]} ${text}`;
+    if (Str.isNonEmpty(text)) values[values.length - 1] = `${values[values.length - 1]} ${text}`;
   });
 }
 
 /** The first value of a tag, or `None`. */
 function taggedFirst(record: TaggedRecord, tag: string): Option.Option<string> {
-  return Option.flatMap(MutableHashMap.get(record.tags, tag), Array.head);
+  return Option.flatMap(MutableHashMap.get(record.tags, tag), Arr.head);
 }
 
 /** Every value of a tag, in order. */
@@ -1204,7 +1201,7 @@ function parseTagged(
       config,
     );
     return endOutcomes(
-      Array.map(records, (record) => at(outcome(record, config), position(record.offset))),
+      Arr.map(records, (record) => at(outcome(record, config), position(record.offset))),
       truncated,
     );
   });
@@ -1214,7 +1211,7 @@ function parseTagged(
 const firstDecoded = (
   values: readonly string[],
   decode: (value: string) => Option.Option<unknown>,
-): Option.Option<string> => Array.findFirst(values, (value) => Option.isSome(decode(value)));
+): Option.Option<string> => Arr.findFirst(values, (value) => Option.isSome(decode(value)));
 
 // ── PubMed / MEDLINE ──────────────────────────────────────────────────
 
@@ -1231,7 +1228,7 @@ const medlineTag = tagLineOf(/^([A-Z][A-Z0-9]{0,3}) *- ?(.*)$/);
 
 /** A MEDLINE `AID` / `LID` value of one kind (`10.1000/x [doi]`), without its bracket. */
 const medlineArticleId = (record: TaggedRecord, kind: string): Option.Option<string> =>
-  Array.findFirst(
+  Arr.findFirst(
     [...taggedValues(record, "LID"), ...taggedValues(record, "AID")],
     (value): Option.Option<string> => {
       const match = /^(.*?)\s*\[([a-z]+)\]$/.exec(value.trim());
@@ -1267,11 +1264,11 @@ function medlineNames(
   maxAuthors: number,
 ): CslName[] {
   const people = taggedValues(record, full);
-  const named = Array.isReadonlyArrayNonEmpty(people)
-    ? Array.filterMap(people, (value): Result.Result<CslName, void> =>
+  const named = Arr.isReadonlyArrayNonEmpty(people)
+    ? Arr.filterMap(people, (value): Result.Result<CslName, void> =>
         Result.fromOption(Option.fromNullishOr(parsePersonName(value)), () => undefined),
       )
-    : Array.filterMap(taggedValues(record, short), (value): Result.Result<CslName, void> =>
+    : Arr.filterMap(taggedValues(record, short), (value): Result.Result<CslName, void> =>
         Result.fromOption(medlineShortName(value), () => undefined),
       );
   return named.slice(0, maxAuthors);
@@ -1311,7 +1308,7 @@ function medlineOutcome(record: TaggedRecord, config: Settings): ParseOutcome {
       citationKey: Option.none(),
       names: [
         ...medlineNames(record, "FAU", "AU", config.maxAuthors),
-        ...Array.filterMap(corporate, (name): Result.Result<CslName, void> =>
+        ...Arr.filterMap(corporate, (name): Result.Result<CslName, void> =>
           Result.fromOption(readCslName({ literal: name }), () => undefined),
         ),
       ].slice(0, config.maxAuthors),

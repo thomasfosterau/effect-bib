@@ -21,12 +21,12 @@
  * @since 0.1.0
  */
 
-import * as Array from "effect/Array";
+import * as Arr from "effect/Array";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Result from "effect/Result";
 import * as Stream from "effect/Stream";
-import * as String from "effect/String";
+import * as Str from "effect/String";
 import { FetchHttpClient, Headers, type HttpClient, type HttpClientResponse } from "effect/http";
 import { LookupFailed, type LookupSource } from "./errors.ts";
 
@@ -107,13 +107,13 @@ const inRange4 = (address: number, [network, prefix]: Range4): boolean =>
 
 /** True for an IPv4 address in a refused range. */
 const refused4 = (address: number): boolean =>
-  Array.some(REFUSED_V4, (range) => inRange4(address, range));
+  Arr.some(REFUSED_V4, (range) => inRange4(address, range));
 
 /** A dotted-quad IPv4 address as a 32-bit number. */
 function parse4(text: string): Option.Option<number> {
   if (!/^\d{1,3}(\.\d{1,3}){3}$/.test(text)) return Option.none();
   const octets = text.split(".").map(Number);
-  return Array.every(octets, (octet) => octet <= 255)
+  return Arr.every(octets, (octet) => octet <= 255)
     ? Option.some(pack4(octets[0] ?? 0, octets[1] ?? 0, octets[2] ?? 0, octets[3] ?? 0))
     : Option.none();
 }
@@ -122,7 +122,7 @@ function parse4(text: string): Option.Option<number> {
 function groups6(side: string): Option.Option<readonly number[]> {
   if (side === "") return Option.some([]);
   const parts = side.split(":");
-  return Array.every(parts, (part) => /^[0-9a-f]{1,4}$/i.test(part))
+  return Arr.every(parts, (part) => /^[0-9a-f]{1,4}$/i.test(part))
     ? Option.some(parts.map((part) => Number.parseInt(part, 16)))
     : Option.none();
 }
@@ -145,7 +145,7 @@ function parse6(text: string): Option.Option<readonly number[]> {
       if (halves.length === 1) return head.length === 8 ? Option.some(head) : Option.none();
       const missing = 8 - head.length - tail.length;
       return missing >= 1
-        ? Option.some([...head, ...Array.replicate(0, missing), ...tail])
+        ? Option.some([...head, ...Arr.replicate(0, missing), ...tail])
         : Option.none();
     }),
   );
@@ -159,7 +159,7 @@ type Group = (index: number) => number;
 
 /** The first `count` groups are all zero. */
 const zeros = (at: Group, count: number): boolean =>
-  Array.every(Array.range(0, count - 1), (index) => at(index) === 0);
+  Arr.every(Arr.range(0, count - 1), (index) => at(index) === 0);
 
 /** The IPv4 address held in two groups is refused. */
 const refusedEmbedded = (at: Group, high: number): boolean =>
@@ -193,7 +193,7 @@ const REFUSED_V6: readonly ((at: Group) => boolean)[] = [
  * 6to4).
  */
 function refused6(groups: readonly number[]): boolean {
-  return Array.some(REFUSED_V6, (rule) => rule((index) => groups[index] ?? 0));
+  return Arr.some(REFUSED_V6, (rule) => rule((index) => groups[index] ?? 0));
 }
 
 /**
@@ -219,11 +219,11 @@ const LOCAL_SUFFIXES = ["localhost", "local", "internal", "home.arpa", "localdom
 
 /** Why a host (as `URL.hostname` spells it) may not be fetched, or `None`. */
 function hostRefusal(hostname: string): Option.Option<string> {
-  const host = String.toLowerCase(hostname.endsWith(".") ? hostname.slice(0, -1) : hostname);
+  const host = Str.toLowerCase(hostname.endsWith(".") ? hostname.slice(0, -1) : hostname);
   if (host.startsWith("[") && host.endsWith("]")) return addressRefusal(host.slice(1, -1));
   if (Option.isSome(parse4(host))) return addressRefusal(host);
   if (!host.includes(".")) return Option.some(`a single-label host (${host})`);
-  return Array.some(LOCAL_SUFFIXES, (suffix) => host === suffix || host.endsWith(`.${suffix}`))
+  return Arr.some(LOCAL_SUFFIXES, (suffix) => host === suffix || host.endsWith(`.${suffix}`))
     ? Option.some(`a local host name (${host})`)
     : Option.none();
 }
@@ -286,8 +286,8 @@ export function hopRefusal(url: URL, policy: FetchPolicy): Effect.Effect<Option.
     .value(url.hostname)
     .pipe(
       Effect.map((addresses) =>
-        Array.isReadonlyArrayNonEmpty(addresses)
-          ? Array.findFirst(addresses, (address) => Option.isSome(addressRefusal(address))).pipe(
+        Arr.isReadonlyArrayNonEmpty(addresses)
+          ? Arr.findFirst(addresses, (address) => Option.isSome(addressRefusal(address))).pipe(
               Option.map((address) => `${url.hostname}, which resolves to ${address}`),
             )
           : Option.some(`${url.hostname}, which resolves to no address`),
@@ -428,8 +428,8 @@ export function readBoundedText(
     ),
     Stream.runCollect,
     Effect.map((chunks) => {
-      const bytes = new Uint8Array(Array.reduce(chunks, 0, (sum, chunk) => sum + chunk.byteLength));
-      Array.reduce(chunks, 0, (offset, chunk) => {
+      const bytes = new Uint8Array(Arr.reduce(chunks, 0, (sum, chunk) => sum + chunk.byteLength));
+      Arr.reduce(chunks, 0, (offset, chunk) => {
         bytes.set(chunk, offset);
         return offset + chunk.byteLength;
       });
@@ -447,5 +447,5 @@ export function readBoundedText(
 export const mediaType = (response: HttpClientResponse.HttpClientResponse): string =>
   Option.match(Headers.get(response.headers, "content-type"), {
     onNone: () => "",
-    onSome: (value) => String.toLowerCase((value.split(";")[0] ?? "").trim()),
+    onSome: (value) => Str.toLowerCase((value.split(";")[0] ?? "").trim()),
   });

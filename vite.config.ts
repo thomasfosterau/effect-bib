@@ -66,10 +66,9 @@ export default defineConfig({
             "The `Buffer` global is typed `any` wherever @cloudflare/workers-types is loaded. Use Uint8Array/DataView.",
         },
       ],
-      // Hard-codes abbreviations (`Arr`, `P`, `R`, …) with no options, so it is
-      // unsatisfiable under the full-name convention (`import * as Option from
-      // "effect/Option"`) this library shares with its consumers.
-      "effect/prefer-namespace-imports": "off",
+      // The canonical helper-module aliases (`Arr`, `P`, `R`, `Str`, `Eq`,
+      // `Bool`; every other module under its full name), at `error` (#167).
+      "effect/prefer-namespace-imports": "error",
 
       // No ported-code allowances remain: every preset rule is at its `error`
       // level. `prefer-option-over-null` and `no-unknown-parameters` stay

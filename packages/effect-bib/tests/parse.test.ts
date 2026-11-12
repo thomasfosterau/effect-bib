@@ -12,7 +12,7 @@
  * @module tests/unit/biblio-parse
  */
 
-import * as Array from "effect/Array";
+import * as Arr from "effect/Array";
 import * as Schema from "effect/Schema";
 import { assert, describe, expect, it } from "vite-plus/test";
 import {
@@ -178,7 +178,7 @@ describe("parseBibtex", () => {
   });
 
   it("clamps the author list to MAX_AUTHORS", () => {
-    const many = Array.makeBy(MAX_AUTHORS + 10, (i) => `Given${i} Family${i}`).join(" and ");
+    const many = Arr.makeBy(MAX_AUTHORS + 10, (i) => `Given${i} Family${i}`).join(" and ");
     const record = expectParsed(
       parseBibtex(`@book{x, title={t}, isbn={9780062316097}, author={${many}}}`)[0],
     );
@@ -497,9 +497,9 @@ describe("lenient mode and citation keys", () => {
   });
 
   it("falls back to the default for a bound that is not a positive integer", () => {
-    const authors = Array.makeBy(MAX_AUTHORS + 5, (i) => `Author${i}, A.`).join(" and ");
+    const authors = Arr.makeBy(MAX_AUTHORS + 5, (i) => `Author${i}, A.`).join(" and ");
     const entry = `@book{k, title = {T}, author = {${authors}}}`;
-    Array.forEach([0, -1, 1.5, Number.NaN], (maxAuthors) => {
+    Arr.forEach([0, -1, 1.5, Number.NaN], (maxAuthors) => {
       expect(
         expectParsed(parseBibtex(entry, { mode: "lenient", maxAuthors })[0]).author,
       ).toHaveLength(MAX_AUTHORS);
@@ -546,7 +546,7 @@ describe("format independence", () => {
     expect(fromRis).toHaveLength(2);
     // The provenance envelope differs by construction (bibtex vs ris); the CSL
     // projection drops it, so equal CSL-JSON *is* the format-independence proof.
-    Array.forEach(Array.zip(fromBibtex, fromRis), ([bibtexRecord, risRecord]) => {
+    Arr.forEach(Arr.zip(fromBibtex, fromRis), ([bibtexRecord, risRecord]) => {
       expect(toCslJson(bibtexRecord)).toEqual(toCslJson(risRecord));
     });
   });
@@ -557,7 +557,7 @@ describe("format independence", () => {
 describe("parseBibliographicFile resource bounds", () => {
   it("reports an upload over the input-length cap as one too-large outcome", () => {
     const huge = `@book{x, title={t}, isbn={9780062316097}}`.padEnd(MAX_INPUT_LENGTH + 1, " ");
-    Array.forEach(["bibtex", "zotero-json", "csv", "ris"] as const, (format) => {
+    Arr.forEach(["bibtex", "zotero-json", "csv", "ris"] as const, (format) => {
       expect(parseBibliographicFile(huge, format)).toEqual([
         { outcome: "skipped", reason: "too-large" },
       ]);
@@ -574,7 +574,7 @@ describe("parseBibliographicFile resource bounds", () => {
       `@x{k,t=${"{}".repeat(Math.floor((n - 8) / 2))}}`,
       `@x{k,t="${"a".repeat(n - 9)}}`,
     ];
-    Array.forEach(hostile, (content) => {
+    Arr.forEach(hostile, (content) => {
       expect(content.length).toBeLessThanOrEqual(n);
       const before = process.memoryUsage().heapUsed;
       expect(() => parseBibliographicFile(content, "bibtex")).not.toThrow();
@@ -584,7 +584,7 @@ describe("parseBibliographicFile resource bounds", () => {
   });
 
   it("caps the number of emitted records at MAX_RECORDS", () => {
-    const entries = Array.makeBy(
+    const entries = Arr.makeBy(
       MAX_RECORDS + 50,
       (i) => `{ "title": "t${i}", "ISBN": "9780062316097" }`,
     ).join(",");
@@ -596,16 +596,15 @@ describe("parseBibliographicFile resource bounds", () => {
   it("caps every format at the caller's record cap, with a truncated outcome only past it", () => {
     const options = { maxRecords: 2 };
     const bibtex = (n: number) =>
-      Array.makeBy(n, (i) => `@book{k${i}, title={T}, isbn={9780062316097}}`).join("\n");
+      Arr.makeBy(n, (i) => `@book{k${i}, title={T}, isbn={9780062316097}}`).join("\n");
     const json = (n: number) =>
-      `[${Array.makeBy(n, () => `{ "title": "T", "ISBN": "9780062316097" }`).join(",")}]`;
-    const csv = (n: number) =>
-      ["title,isbn", ...Array.makeBy(n, () => "T,9780062316097")].join("\n");
+      `[${Arr.makeBy(n, () => `{ "title": "T", "ISBN": "9780062316097" }`).join(",")}]`;
+    const csv = (n: number) => ["title,isbn", ...Arr.makeBy(n, () => "T,9780062316097")].join("\n");
     const ris = (n: number) =>
-      Array.makeBy(n, () => "TY  - BOOK\nTI  - T\nSN  - 9780062316097\nER  - ").join("\n");
+      Arr.makeBy(n, () => "TY  - BOOK\nTI  - T\nSN  - 9780062316097\nER  - ").join("\n");
     const reasons = (outcomes: readonly ParseOutcome[]) =>
       outcomes.map((outcome) => (outcome.outcome === "skipped" ? outcome.reason : "parsed"));
-    Array.forEach(
+    Arr.forEach(
       [
         [bibtex, "bibtex"],
         [json, "zotero-json"],

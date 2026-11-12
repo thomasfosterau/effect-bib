@@ -17,9 +17,9 @@
  * @since 0.1.0
  */
 
-import * as Array from "effect/Array";
+import * as Arr from "effect/Array";
 import * as Option from "effect/Option";
-import * as String from "effect/String";
+import * as Str from "effect/String";
 import { type BiblioRecord, type CslName, yearOf } from "../../record.ts";
 import {
   citationName,
@@ -67,7 +67,7 @@ function invertedName(name: CslName): string {
   const given = [name.given, name["dropping-particle"]]
     .filter((part) => part !== undefined)
     .join(" ");
-  const base = String.isEmpty(given) ? family : `${family}, ${given}`;
+  const base = Str.isEmpty(given) ? family : `${family}, ${given}`;
   return name.suffix === undefined ? base : `${base}, ${name.suffix}`;
 }
 
@@ -84,7 +84,7 @@ const contributors = (record: BiblioRecord): readonly CslName[] =>
 /** Bibliography names: the first inverted, the rest in reading order; past ten, seven and "et al.". */
 function bibliographyNames(record: BiblioRecord, ctx: RenderContext): string {
   const names = contributors(record);
-  if (Array.isReadonlyArrayEmpty(names)) return "";
+  if (Arr.isReadonlyArrayEmpty(names)) return "";
   const forms = names.map((name, index) => (index === 0 ? invertedName(name) : fullName(name)));
   if (forms.length > 10) return `${forms.slice(0, 7).join(", ")}, ${ctx.locale.etAl}`;
   if (forms.length === 2) return `${forms[0]}, ${ctx.locale.and} ${forms[1]}`;
@@ -97,7 +97,7 @@ function noteNames(
   ctx: RenderContext,
   form: (name: CslName) => string,
 ): string {
-  if (Array.isReadonlyArrayEmpty(names)) return "";
+  if (Arr.isReadonlyArrayEmpty(names)) return "";
   if (names.length >= 4) return `${form(names[0])} ${ctx.locale.etAl}`;
   return joinNames(names.map(form), ctx.locale.and);
 }
@@ -122,16 +122,16 @@ function imprint(record: BiblioRecord, ctx: RenderContext, withYear: boolean): s
   const publisher = record.publisher;
   const where = [place, publisher].filter((part) => part !== undefined).join(": ");
   const year = withYear ? issuedYearWithSuffix(record, ctx) : "";
-  return [where, year].filter(String.isNonEmpty).join(", ");
+  return [where, year].filter(Str.isNonEmpty).join(", ");
 }
 
 /** A journal's volume, issue and year: `431, no. 2 (2004)`. */
 function serialDetail(record: BiblioRecord, ctx: RenderContext): string {
   const volume = record.volume ?? "";
   const issue = record.issue !== undefined ? `no. ${record.issue}` : "";
-  const numbering = [volume, issue].filter(String.isNonEmpty).join(", ");
+  const numbering = [volume, issue].filter(Str.isNonEmpty).join(", ");
   const year = `(${issuedYearWithSuffix(record, ctx)})`;
-  return [numbering, year].filter(String.isNonEmpty).join(" ");
+  return [numbering, year].filter(Str.isNonEmpty).join(" ");
 }
 
 /** The record's link (its URL, or its DOI's), when present. */
@@ -144,7 +144,7 @@ const sentence = (value: Option.Option<RichText>): Option.Option<RichText> =>
 
 /** A plain-text segment, when non-empty. */
 const segment = (value: string): Option.Option<RichText> =>
-  String.isEmpty(value) ? Option.none() : Option.some(text(value));
+  Str.isEmpty(value) ? Option.none() : Option.some(text(value));
 
 /** The title of a part in its bibliography form: `“Title.”`. */
 const partTitle = (record: BiblioRecord): Option.Option<RichText> =>
@@ -153,7 +153,7 @@ const partTitle = (record: BiblioRecord): Option.Option<RichText> =>
 /** The editors after a container: `edited by Jane Doe`. */
 function editedBy(record: BiblioRecord, ctx: RenderContext, lead: string): Option.Option<string> {
   const editors = record.editor ?? [];
-  if (Array.isReadonlyArrayEmpty(editors) || record.author === undefined) return Option.none();
+  if (Arr.isReadonlyArrayEmpty(editors) || record.author === undefined) return Option.none();
   return Option.some(`${lead} ${joinNames(editors.map(fullName), ctx.locale.and)}`);
 }
 
@@ -225,7 +225,7 @@ function reference(record: BiblioRecord, ctx: RenderContext): RichText {
 /** The imprint in parentheses, when there is one: ` (New York: Harper, 2015)`. */
 function parentheticalImprint(record: BiblioRecord, ctx: RenderContext): RichText {
   const facts = imprint(record, ctx, true);
-  return String.isEmpty(facts) ? [] : text(` (${facts})`);
+  return Str.isEmpty(facts) ? [] : text(` (${facts})`);
 }
 
 /** A part's title in a note: `“Title,”`. */
@@ -294,7 +294,7 @@ function noteShort(record: BiblioRecord, ctx: RenderContext): RichText {
 
 /** Sort key: the first contributor's family name, then title, then year. */
 function sortKey(record: BiblioRecord): string {
-  const first = Array.head(contributors(record));
+  const first = Arr.head(contributors(record));
   const title = Option.getOrElse(plainField(record, "title"), () => "");
   const lead = Option.match(first, { onNone: () => title, onSome: invertedName });
   const year = `${yearOf(record.issued) ?? 0}`.padStart(6, "0");

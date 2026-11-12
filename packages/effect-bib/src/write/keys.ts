@@ -9,12 +9,12 @@
  * @since 0.1.0
  */
 
-import * as Array from "effect/Array";
+import * as Arr from "effect/Array";
 import * as HashSet from "effect/HashSet";
 import * as MutableHashSet from "effect/MutableHashSet";
 import * as Option from "effect/Option";
-import * as Predicate from "effect/Predicate";
-import * as String from "effect/String";
+import * as P from "effect/Predicate";
+import * as Str from "effect/String";
 import { type BiblioRecord, type CslName, yearOf } from "../record.ts";
 import { stripCslMarkup } from "../render/markup.ts";
 
@@ -40,18 +40,18 @@ const fold = (value: string): string =>
  */
 export function ownKey(record: BiblioRecord): Option.Option<string> {
   const candidate = Option.orElse(Option.fromUndefinedOr(record["citation-key"]), () =>
-    Option.filter(Option.fromUndefinedOr(record.id), Predicate.isString),
+    Option.filter(Option.fromUndefinedOr(record.id), P.isString),
   );
   return Option.filter(
     Option.map(candidate, (key) => key.replace(KEY_UNSAFE, "")),
-    String.isNonEmpty,
+    Str.isNonEmpty,
   );
 }
 
 /** The first contributor's surname (a literal name's first word), folded. */
 function authorPart(record: BiblioRecord): string {
   const names: readonly CslName[] = record.author ?? record.editor ?? [];
-  return Option.match(Array.head(names), {
+  return Option.match(Arr.head(names), {
     onNone: () => "",
     onSome: (name) => fold(name.family ?? name.literal?.split(" ")[0] ?? name.given ?? ""),
   });
@@ -63,7 +63,7 @@ function titleWord(record: BiblioRecord): string {
     .split(/\s+/)
     .map(fold);
   return Option.getOrElse(
-    Array.findFirst(words, (word) => String.isNonEmpty(word) && !HashSet.has(STOP_WORDS, word)),
+    Arr.findFirst(words, (word) => Str.isNonEmpty(word) && !HashSet.has(STOP_WORDS, word)),
     () => "",
   );
 }
@@ -78,7 +78,7 @@ function titleWord(record: BiblioRecord): string {
 function generatedKey(record: BiblioRecord): string {
   const year = yearOf(record.issued);
   const key = `${authorPart(record)}${year === null ? "" : year}${titleWord(record)}`;
-  return String.isEmpty(key) ? "ref" : key;
+  return Str.isEmpty(key) ? "ref" : key;
 }
 
 /** The `index`th letter suffix: `a` … `z`, then `aa`, `ab`, …. */
@@ -105,7 +105,7 @@ function unused(taken: MutableHashSet.MutableHashSet<string>, key: string, index
  */
 export function citationKeys(records: readonly BiblioRecord[]): string[] {
   const taken = MutableHashSet.empty<string>();
-  return Array.map(records, (record) => {
+  return Arr.map(records, (record) => {
     const key = unused(
       taken,
       Option.getOrElse(ownKey(record), () => generatedKey(record)),

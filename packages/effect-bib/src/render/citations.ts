@@ -14,7 +14,7 @@
  * @since 0.1.0
  */
 
-import * as Array from "effect/Array";
+import * as Arr from "effect/Array";
 import { constant, constVoid } from "effect/Function";
 import * as HashMap from "effect/HashMap";
 import * as HashSet from "effect/HashSet";
@@ -22,9 +22,9 @@ import * as MutableHashMap from "effect/MutableHashMap";
 import * as MutableHashSet from "effect/MutableHashSet";
 import * as Option from "effect/Option";
 import * as Order from "effect/Order";
-import * as Record from "effect/Record";
+import * as R from "effect/Record";
 import * as Result from "effect/Result";
-import * as String from "effect/String";
+import * as Str from "effect/String";
 import * as Struct from "effect/Struct";
 import type { BiblioRecord, CslName } from "../record.ts";
 import { citationName, givenInitials, issuedYearWithSuffix, plainField } from "./format.ts";
@@ -141,7 +141,7 @@ function locatorTerm(locale: Locale, label: LocatorLabel, locator: string): stri
   const fromLocale = (terms: Locale["locators"]): Option.Option<readonly [string, string]> =>
     Option.flatMap(Option.fromNullishOr(terms), (map) => {
       const table: Readonly<Record<string, readonly [string, string]>> = map;
-      return Record.get(table, label);
+      return R.get(table, label);
     });
   const terms = Option.getOrElse(
     Option.orElse(fromLocale(locale.locators), () => fromLocale(enLocale.locators)),
@@ -154,14 +154,12 @@ function locatorTerm(locale: Locale, label: LocatorLabel, locator: string): stri
 /** `"p. 23"` for a cite with a locator (`"23"` when page labels are omitted), else `None`. */
 function locatorText(cite: Cite, locale: Locale, omitPageLabel = false): Option.Option<string> {
   return Option.map(
-    Option.filter(Option.fromNullishOr(cite.locator), (locator) =>
-      String.isNonEmpty(locator.trim()),
-    ),
+    Option.filter(Option.fromNullishOr(cite.locator), (locator) => Str.isNonEmpty(locator.trim())),
     (locator) => {
       const label = cite.label ?? "page";
       const term =
         label === "page" && omitPageLabel ? "" : locatorTerm(locale, label, locator.trim());
-      return String.isEmpty(term) ? locator.trim() : `${term} ${locator.trim()}`;
+      return Str.isEmpty(term) ? locator.trim() : `${term} ${locator.trim()}`;
     },
   );
 }
@@ -171,15 +169,15 @@ function withAffixes(cite: Cite, body: RichText): RichText {
   const prefix = (cite.prefix ?? "").trim();
   const suffix = (cite.suffix ?? "").trim();
   return concat(
-    String.isEmpty(prefix) ? [] : text(`${prefix} `),
+    Str.isEmpty(prefix) ? [] : text(`${prefix} `),
     body,
-    String.isEmpty(suffix) ? [] : text(/^[,;.:]/.test(suffix) ? suffix : ` ${suffix}`),
+    Str.isEmpty(suffix) ? [] : text(/^[,;.:]/.test(suffix) ? suffix : ` ${suffix}`),
   );
 }
 
 /** True when a cite carries a prefix or suffix. */
 const hasAffix = (cite: Cite): boolean =>
-  String.isNonEmpty((cite.prefix ?? "").trim()) || String.isNonEmpty((cite.suffix ?? "").trim());
+  Str.isNonEmpty((cite.prefix ?? "").trim()) || Str.isNonEmpty((cite.suffix ?? "").trim());
 
 // ── Names ─────────────────────────────────────────────────────────────
 
@@ -238,7 +236,7 @@ function joinAll(forms: readonly string[], and: string): string {
 /** A record's names in a citation, joined with `and` (`"&"` in parentheses, the locale's word in prose). */
 function citeNames(record: BiblioRecord, form: NameForm, and: string, locale: Locale): string {
   const names = record.author ?? record.editor ?? [];
-  if (Array.isReadonlyArrayEmpty(names)) return stripCslMarkup(record.title ?? "");
+  if (Arr.isReadonlyArrayEmpty(names)) return stripCslMarkup(record.title ?? "");
   const forms = names.map((name, index) =>
     index === 0 && form.initials ? initialledName(name) : citationName(name),
   );
@@ -275,11 +273,11 @@ function ambiguousGroups(
   forms: (id: string) => NameForm,
   settings: InText,
 ): string[][] {
-  const groups = Array.reduce(ids, HashMap.empty<string, string[]>(), (map, id) => {
+  const groups = Arr.reduce(ids, HashMap.empty<string, string[]>(), (map, id) => {
     const key = ambiguityKey(HashMap.getUnsafe(records, id), forms(id), settings);
     return HashMap.set(map, key, [...Option.getOrElse(HashMap.get(map, key), () => []), id]);
   });
-  return Array.filter(Array.fromIterable(HashMap.values(groups)), (group) => group.length > 1);
+  return Arr.filter(Arr.fromIterable(HashMap.values(groups)), (group) => group.length > 1);
 }
 
 /** The number of distinct citation forms a group has under `forms`. */
@@ -301,7 +299,7 @@ const NO_NAMES: NameForm = { shown: 0, initials: false };
 
 /** The largest of some counts (0 for none), without spreading them into arguments. */
 const maximum = (values: readonly number[]): number =>
-  Array.reduce(values, 0, (largest, value) => Math.max(largest, value));
+  Arr.reduce(values, 0, (largest, value) => Math.max(largest, value));
 
 /**
  * Disambiguates a document's records the way CSL's author-date styles do:
@@ -321,9 +319,9 @@ function disambiguate(
   );
   const formOf = (id: string): NameForm =>
     Option.getOrElse(MutableHashMap.get(forms, id), constant(NO_NAMES));
-  Array.forEach(ambiguousGroups(ids, records, formOf, settings), (group) => {
+  Arr.forEach(ambiguousGroups(ids, records, formOf, settings), (group) => {
     const longest = maximum(group.map((id) => namesFor(id).length));
-    const counts = Array.makeBy(longest + 1, (shown) =>
+    const counts = Arr.makeBy(longest + 1, (shown) =>
       distinctCount(
         group,
         records,
@@ -333,23 +331,23 @@ function disambiguate(
     );
     const best = counts.indexOf(maximum(counts));
     if (counts[best] > distinctCount(group, records, formOf, settings)) {
-      Array.forEach(group, (id) =>
+      Arr.forEach(group, (id) =>
         MutableHashMap.set(forms, id, { ...formOf(id), shown: Math.max(formOf(id).shown, best) }),
       );
     }
   });
-  Array.forEach(ambiguousGroups(ids, records, formOf, settings), (group) => {
+  Arr.forEach(ambiguousGroups(ids, records, formOf, settings), (group) => {
     const withInitials = (id: string): NameForm => ({ ...formOf(id), initials: true });
     if (
       distinctCount(group, records, withInitials, settings) >
       distinctCount(group, records, formOf, settings)
     ) {
-      Array.forEach(group, (id) => MutableHashMap.set(forms, id, withInitials(id)));
+      Arr.forEach(group, (id) => MutableHashMap.set(forms, id, withInitials(id)));
     }
   });
   const suffixes = MutableHashMap.empty<string, string>();
-  Array.forEach(ambiguousGroups(ids, records, formOf, settings), (group) =>
-    Array.forEach(group, (id, index) => MutableHashMap.set(suffixes, id, suffixLetter(index))),
+  Arr.forEach(ambiguousGroups(ids, records, formOf, settings), (group) =>
+    Arr.forEach(group, (id, index) => MutableHashMap.set(suffixes, id, suffixLetter(index))),
   );
   return HashMap.fromIterable(
     ids.map(
@@ -393,7 +391,7 @@ function citePositions(clusters: readonly CitationCluster[]): CitePosition[][] {
       return position;
     });
     state.previousClusterSize = cluster.cites.length;
-    if (Array.isReadonlyArrayEmpty(cluster.cites)) state.previous = Option.none();
+    if (Arr.isReadonlyArrayEmpty(cluster.cites)) state.previous = Option.none();
     return positions;
   });
 }
@@ -417,7 +415,7 @@ function positionOf(
   const locator = (cite.locator ?? "").trim();
   const priorLocator = (before.value.locator ?? "").trim();
   if (locator === priorLocator) return "ibid";
-  return String.isEmpty(locator) ? "subsequent" : "ibid-with-locator";
+  return Str.isEmpty(locator) ? "subsequent" : "ibid-with-locator";
 }
 
 // ── Rendering clusters ────────────────────────────────────────────────
@@ -437,7 +435,7 @@ function contextOf(pass: Pass, id: string): RenderContext {
     Option.map(HashMap.get(pass.distinctions, id), (d) => d.suffix),
     () => "",
   );
-  return String.isEmpty(suffix)
+  return Str.isEmpty(suffix)
     ? { locale: pass.settings.locale }
     : { locale: pass.settings.locale, yearSuffix: suffix };
 }
@@ -492,12 +490,12 @@ function authorDateGroups(
 ): RichText {
   const rendered = cites.map((cite) => ({ cite, ...authorDateCite(pass, cite, withAuthor(cite)) }));
   const start: (typeof rendered)[number][][] = [];
-  const groups = Array.reduce(rendered, start, (all, item) => {
+  const groups = Arr.reduce(rendered, start, (all, item) => {
     const last = all[all.length - 1];
     const previous = last?.[last.length - 1];
     const joins =
       previous !== undefined &&
-      String.isNonEmpty(item.names) &&
+      Str.isNonEmpty(item.names) &&
       item.names === previous.names &&
       !hasAffix(item.cite) &&
       !hasAffix(previous.cite);
@@ -511,9 +509,7 @@ function authorDateGroups(
         group.map((item) => Option.some(item.rest)),
         ", ",
       );
-      const body = String.isEmpty(group[0].names)
-        ? years
-        : concat(text(`${group[0].names}, `), years);
+      const body = Str.isEmpty(group[0].names) ? years : concat(text(`${group[0].names}, `), years);
       return Option.some(withAffixes(group[0].cite, body));
     }),
     pass.settings.delimiter,
@@ -526,7 +522,7 @@ const enclose = (pass: Pass, body: RichText): RichText =>
 
 /** Sorts a parenthetical cluster's cites by the style's sort key (stable). */
 function sortCites(pass: Pass, cites: readonly Cite[]): readonly Cite[] {
-  return Array.sortWith(
+  return Arr.sortWith(
     cites,
     (cite) =>
       Option.getOrElse(
@@ -551,7 +547,7 @@ function renderAuthorDate(pass: Pass, cites: readonly Cite[]): RichText {
         ? [{ ...Struct.omit(first, ["prefix"]), mode: "suppress-author" as const }, ...rest]
         : rest;
     const lead = withAffixes(Struct.omit(first, ["suffix"]), narrativeNames(pass, first));
-    const tail = Array.isReadonlyArrayEmpty(inParentheses)
+    const tail = Arr.isReadonlyArrayEmpty(inParentheses)
       ? []
       : concat(
           text(" "),
@@ -590,7 +586,7 @@ function numericCite(pass: Pass, cite: Cite): RichText {
 /** Compresses sorted numbers into runs: `1–3, 5` (a run needs three numbers). */
 function compressNumbers(numbers: readonly number[]): string[] {
   const start: number[][] = [];
-  const runs = Array.reduce(numbers, start, (all, number) => {
+  const runs = Arr.reduce(numbers, start, (all, number) => {
     const last = all[all.length - 1];
     if (last !== undefined && number === last[last.length - 1] + 1) last.push(number);
     else if (last === undefined || number !== last[last.length - 1]) all.push([number]);
@@ -611,7 +607,7 @@ function renderNumeric(pass: Pass, cites: readonly Cite[]): RichText {
   const mode = first?.mode ?? "normal";
   if (first !== undefined && (mode === "author-only" || mode === "author-in-text")) {
     const inBrackets = mode === "author-in-text" ? [Struct.omit(first, ["prefix"]), ...rest] : rest;
-    const tail = Array.isReadonlyArrayEmpty(inBrackets)
+    const tail = Arr.isReadonlyArrayEmpty(inBrackets)
       ? []
       : concat(text(" "), numericCluster(pass, inBrackets));
     return concat(withAffixes(Struct.omit(first, ["suffix"]), narrativeNames(pass, first)), tail);
@@ -624,8 +620,8 @@ function numericCluster(pass: Pass, cites: readonly Cite[]): RichText {
   const plain = cites.filter(
     (cite) => !hasAffix(cite) && Option.isNone(locatorText(cite, pass.settings.locale)),
   );
-  const plainNumbers = Array.sortWith(
-    Array.getSomes(plain.map((cite) => HashMap.get(pass.numbers, cite.id))),
+  const plainNumbers = Arr.sortWith(
+    Arr.getSomes(plain.map((cite) => HashMap.get(pass.numbers, cite.id))),
     (number) => number,
     Order.Number,
   );
@@ -651,7 +647,7 @@ function withoutFinalPeriod(rich: RichText): RichText {
 
 /** A note style's short form: the first author's name and the title before any colon. */
 function defaultShort(record: BiblioRecord): RichText {
-  const first = Array.head(record.author ?? record.editor ?? []);
+  const first = Arr.head(record.author ?? record.editor ?? []);
   const title = Option.map(plainField(record, "title"), (value) =>
     italic(text(value.split(":")[0].trim())),
   );
@@ -726,7 +722,7 @@ function renderNote(
 /** Ids in first-appearance order, each once. */
 function uniqueInOrder(ids: Iterable<string>): string[] {
   const seen = MutableHashSet.empty<string>();
-  return Array.filter(Array.fromIterable(ids), (id) => {
+  return Arr.filter(Arr.fromIterable(ids), (id) => {
     if (MutableHashSet.has(seen, id)) return false;
     MutableHashSet.add(seen, id);
     return true;
@@ -746,7 +742,7 @@ function bibliographyIds(
   const extra = options.nocite === "*" ? allIds : (options.nocite ?? []);
   const ids = uniqueInOrder([...cited, ...extra.filter((id) => HashMap.has(records, id))]);
   if (options.style.category === "numeric") return ids;
-  return Array.sortWith(
+  return Arr.sortWith(
     ids,
     (id) => options.style.sortKey(HashMap.getUnsafe(records, id)),
     Order.String,
@@ -803,7 +799,7 @@ export function renderCitations(
   records: Iterable<readonly [string, BiblioRecord]>,
   options: RenderCitationsOptions,
 ): RenderedCitations {
-  const entries = Array.fromIterable(records);
+  const entries = Arr.fromIterable(records);
   const byId = HashMap.fromIterable(entries);
   const locale = options.locale ?? enLocale;
   const settings = inTextSettings(options.style, locale);
@@ -845,7 +841,7 @@ function bibliographyOf(pass: Pass, ids: readonly string[]): RenderedBibliograph
   const { style } = pass;
   return {
     style: style.id,
-    entries: Array.filterMap(ids, (id, index) =>
+    entries: Arr.filterMap(ids, (id, index) =>
       Result.fromOption(
         Option.map(HashMap.get(pass.records, id), (record) => {
           const ctx = contextOf(pass, id);

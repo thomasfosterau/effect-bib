@@ -12,9 +12,9 @@
  * @module tests/unit/biblio-render
  */
 
-import * as Array from "effect/Array";
+import * as Arr from "effect/Array";
 import * as Option from "effect/Option";
-import * as Record from "effect/Record";
+import * as R from "effect/Record";
 import { describe, expect, it } from "vite-plus/test";
 import {
   apaStyle,
@@ -54,8 +54,11 @@ import { expectPresent, expectSome } from "./assert.ts";
 
 // ── Test data builders (kept trivial for a low CRAP score) ────────────
 
-const cslName = (family: string, given: string, extra: Record<string, unknown> = {}): CslName =>
-  expectPresent(makeCslName({ family, given, ...extra }), "a non-empty name");
+const cslName = (
+  family: string,
+  given: string,
+  extra: Partial<Parameters<typeof makeCslName>[0]> = {},
+): CslName => expectPresent(makeCslName({ family, given, ...extra }), "a non-empty name");
 
 const doi = (raw: string) => expectSome(decodeDoi(raw), "a DOI");
 const isbn = (raw: string) => expectSome(decodeIsbn(raw), "an ISBN");
@@ -222,7 +225,7 @@ describe("author elision", () => {
   const many: BiblioRecord = {
     type: "article-journal",
     title: "A large collaboration study",
-    author: Array.makeBy(8, (i) => cslName(`Author${i}`, `First${i}`)),
+    author: Arr.makeBy(8, (i) => cslName(`Author${i}`, `First${i}`)),
     "container-title": "Big Science",
     volume: "1",
     page: "1-9",
@@ -375,7 +378,7 @@ describe("getStyle / builtInStyles", () => {
   });
 
   it("exposes the built-in styles", () => {
-    expect(Record.keys(builtInStyles)).toEqual(["apa", "vancouver", "chicago-notes"]);
+    expect(R.keys(builtInStyles)).toEqual(["apa", "vancouver", "chicago-notes"]);
   });
 });
 
@@ -509,7 +512,7 @@ describe("formatNameList", () => {
     displayBeforeEtAl: 2,
     etAl: "et al.",
   };
-  const names = (n: number) => Array.makeBy(n, (i) => cslName(`Fam${i}`, `Giv${i}`));
+  const names = (n: number) => Arr.makeBy(n, (i) => cslName(`Fam${i}`, `Giv${i}`));
 
   it("returns empty string for no names", () => {
     expect(formatNameList([], opts)).toBe("");

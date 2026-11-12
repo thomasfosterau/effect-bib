@@ -26,13 +26,12 @@
 // website#1070: the modern scholarly-graph source, added alongside the
 // OpenLibrary/Crossref refit.
 
-import * as Array from "effect/Array";
+import * as Arr from "effect/Array";
 import * as Effect from "effect/Effect";
 import * as HashMap from "effect/HashMap";
 import * as Option from "effect/Option";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
-import type * as Types from "effect/Types";
 import { HttpClient } from "effect/http";
 import { decodeDoi, decodeOrcid, type Doi } from "../identifiers.ts";
 import {
@@ -47,6 +46,7 @@ import {
 import { type LookupContact } from "./contact.ts";
 import { LookupFailed } from "./errors.ts";
 import { jsonGet } from "./http.ts";
+import { optionalSlots } from "./slots.ts";
 
 const OPENALEX_BASE = "https://api.openalex.org";
 
@@ -207,7 +207,7 @@ function openAlexAuthorName(author: {
 
 /** Bounded, ordered author list from `authorships[]`. */
 function openAlexAuthors(value: Option.Option<readonly unknown[]>): CslName[] {
-  return Array.filterMap(
+  return Arr.filterMap(
     Option.isNone(value) ? [] : value.value,
     (entry): Result.Result<CslName, void> => {
       const name = Option.flatMap(decodeOpenAlexAuthorship(entry), ({ author }) =>
@@ -236,13 +236,14 @@ export function normaliseOpenAlexRecord(work: OpenAlexWork): Option.Option<Bibli
   const doi = Option.flatMap(decodeString(work.doi), decodeDoi);
   const year = Option.filter(decodeNumber(work.publication_year), Number.isInteger);
 
-  const optional: Types.Mutable<Partial<BiblioRecord>> = {};
-  if (Option.isSome(containerTitle)) optional["container-title"] = containerTitle.value;
-  if (Option.isSome(volume)) optional.volume = volume.value;
-  if (Option.isSome(issue)) optional.issue = issue.value;
-  if (Option.isSome(page)) optional.page = page.value;
-  if (Array.isReadonlyArrayNonEmpty(author)) optional.author = author;
-  if (Option.isSome(year)) optional.issued = dateFromYear(year.value);
+  const optional = optionalSlots({
+    containerTitle,
+    volume,
+    issue,
+    page,
+    author,
+    issued: Option.map(year, dateFromYear),
+  });
   return Option.some({
     type: openAlexType(decodeString(work.type)),
     title: title.value,
@@ -314,14 +315,11 @@ export const searchOpenAlexByTitle: (
     const response = yield* get(`/works?${params.toString()}`, OpenAlexSearchResponse);
     if (Option.isNone(response)) return [];
 
-    return Array.filterMap(
-      response.value.results ?? [],
-      (raw): Result.Result<BiblioRecord, void> => {
-        const decoded = decodeOpenAlexWork(raw);
-        if (Option.isNone(decoded)) return Result.failVoid;
-        const record = normaliseOpenAlexRecord(decoded.value);
-        return Option.isNone(record) ? Result.failVoid : Result.succeed(record.value);
-      },
-    );
+    return Arr.filterMap(response.value.results ?? [], (raw): Result.Result<BiblioRecord, void> => {
+      const decoded = decodeOpenAlexWork(raw);
+      if (Option.isNone(decoded)) return Result.failVoid;
+      const record = normaliseOpenAlexRecord(decoded.value);
+      return Option.isNone(record) ? Result.failVoid : Result.succeed(record.value);
+    });
   },
 );

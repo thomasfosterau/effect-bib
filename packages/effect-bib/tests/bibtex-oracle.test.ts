@@ -26,12 +26,12 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
-import * as Array from "effect/Array";
+import * as Arr from "effect/Array";
 import * as Function from "effect/Function";
 import * as Option from "effect/Option";
 import * as Order from "effect/Order";
-import * as Predicate from "effect/Predicate";
-import * as Record from "effect/Record";
+import * as P from "effect/Predicate";
+import * as R from "effect/Record";
 import * as Schema from "effect/Schema";
 import { describe, expect, it } from "vite-plus/test";
 import { type CslJsonItem, decodeIsbn, parseBibtex, toCslJson } from "@thomasfosterau/effect-bib";
@@ -82,7 +82,7 @@ const unescape = (text: string): string =>
 /** A text value as compared: markup stripped, whitespace collapsed, NFC. */
 // oxlint-disable-next-line effect/no-unknown-parameters -- compares the untyped CSL-JSON values of two sources (ours and Pandoc's); any value reads as text or nothing
 const plain = (value: unknown): string =>
-  Predicate.isString(value) || Predicate.isNumber(value)
+  P.isString(value) || P.isNumber(value)
     ? unescape(globalThis.String(value).replace(/<[^>]*>/g, ""))
         // Pandoc applies smart punctuation to straight quotes; compare both as straight.
         .replace(/[‘’]/g, "'")
@@ -108,7 +108,7 @@ function projection(item: CslJsonItem): Record<string, string> {
     ...NAME_FIELDS.map((key) => [key, names(item[key])] as const),
     ...DATE_FIELDS.map((key) => [key, date(item[key])] as const),
   ];
-  return Record.fromEntries(fields.filter(([, value]) => value !== ""));
+  return R.fromEntries(fields.filter(([, value]) => value !== ""));
 }
 
 const decodeNames = Schema.decodeUnknownOption(
@@ -146,8 +146,8 @@ const date = (value: unknown): string =>
 
 /** The fields on which two projections differ (a field one side lacks included). */
 function differences(ours: Record<string, string>, theirs: Record<string, string>): string[] {
-  const keys = Array.dedupe([...Record.keys(ours), ...Record.keys(theirs)]);
-  return Array.sortWith(
+  const keys = Arr.dedupe([...R.keys(ours), ...R.keys(theirs)]);
+  return Arr.sortWith(
     keys.filter((key) => ours[key] !== theirs[key]),
     Function.identity,
     Order.String,
@@ -174,7 +174,7 @@ const oracleFor = (corpus: string, base: string): Option.Option<readonly CslJson
 /** The `.bib` files of a vendored corpus. */
 function vendored(corpus: string): CorpusFile[] {
   const dir = path.join(fixtures, corpus);
-  return Array.sortWith(
+  return Arr.sortWith(
     fs.readdirSync(dir).filter((file) => file.endsWith(".bib")),
     Function.identity,
     Order.String,
@@ -187,7 +187,7 @@ function vendored(corpus: string): CorpusFile[] {
 
 /** Pandoc's `biblatex-*` / `bibtex-*` cases, from the fetched checkout: each case's input. */
 function pandoc(): CorpusFile[] {
-  return Array.sortWith(
+  return Arr.sortWith(
     fs.readdirSync(pandocCases).filter((file) => /^(?:biblatex|bibtex)-.*\.md$/.test(file)),
     Function.identity,
     Order.String,
@@ -211,37 +211,37 @@ const read = (source: string) =>
 /** Every divergence of one file from its oracle: `file#id` → fields. */
 function divergences(file: CorpusFile): Array<readonly [string, string[]]> {
   if (Option.isNone(file.oracle)) return [];
-  const ours = Record.fromEntries(
+  const ours = R.fromEntries(
     read(file.source).flatMap((outcome) =>
       outcome.outcome === "parsed"
         ? [[globalThis.String(outcome.record.id), projection(toCslJson(outcome.record))] as const]
         : [],
     ),
   );
-  const theirs = Record.fromEntries(
+  const theirs = R.fromEntries(
     file.oracle.value.map((item) => [globalThis.String(item.id), projection(item)] as const),
   );
-  const ids = Array.sortWith(
-    Array.dedupe([...Record.keys(ours), ...Record.keys(theirs)]),
+  const ids = Arr.sortWith(
+    Arr.dedupe([...R.keys(ours), ...R.keys(theirs)]),
     Function.identity,
     Order.String,
   );
   return ids.flatMap((id) => {
-    const mine = Record.get(ours, id).pipe(Option.getOrUndefined);
-    const pandocs = Record.get(theirs, id).pipe(Option.getOrUndefined);
+    const mine = R.get(ours, id).pipe(Option.getOrUndefined);
+    const pandocs = R.get(theirs, id).pipe(Option.getOrUndefined);
     const fields =
       mine === undefined
         ? ["(missing)"]
         : pandocs === undefined
           ? ["(extra)"]
           : differences(mine, pandocs);
-    if (process.env.ORACLE_REPORT !== undefined && Array.isArrayNonEmpty(fields)) {
+    if (process.env.ORACLE_REPORT !== undefined && Arr.isArrayNonEmpty(fields)) {
       fs.appendFileSync(
         process.env.ORACLE_REPORT,
         `${globalThis.JSON.stringify({ entry: `${file.name}#${id}`, fields, ours: mine, pandoc: pandocs })}\n`,
       );
     }
-    return Array.isArrayNonEmpty(fields) ? [[`${file.name}#${id}`, fields] as const] : [];
+    return Arr.isArrayNonEmpty(fields) ? [[`${file.name}#${id}`, fields] as const] : [];
   });
 }
 
@@ -263,7 +263,7 @@ describe("the BibTeX oracle corpus", () => {
   const files = corpora();
 
   it("reads every corpus file totally: one outcome per entry, no throw", () => {
-    Array.forEach(files, (file) => {
+    Arr.forEach(files, (file) => {
       const outcomes = read(file.source);
       // An `@` that opens an entry (not `@string`, `@preamble` or `@comment`)
       // yields at most one outcome; nothing is lost silently beyond that.
@@ -273,7 +273,7 @@ describe("the BibTeX oracle corpus", () => {
   });
 
   it("agrees with Pandoc on every entry, except the recorded divergences", () => {
-    const actual = Record.fromEntries(files.flatMap(divergences));
+    const actual = R.fromEntries(files.flatMap(divergences));
     const recorded = Option.getOrElse(
       decodeBaseline(fs.readFileSync(baselineFile, "utf8")),
       (): Record<string, readonly string[]> => ({}),
@@ -281,7 +281,7 @@ describe("the BibTeX oracle corpus", () => {
     // Pandoc's cases are only compared when they were fetched.
     const expected = fs.existsSync(pandocCases)
       ? recorded
-      : Record.filter(recorded, (_, key) => !key.startsWith("pandoc/"));
+      : R.filter(recorded, (_, key) => !key.startsWith("pandoc/"));
     if (process.env.ORACLE_BASELINE === "write") {
       fs.writeFileSync(baselineFile, `${globalThis.JSON.stringify(actual, null, 2)}\n`);
     }

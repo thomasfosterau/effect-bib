@@ -31,10 +31,10 @@
 
 // See website#1069.
 
-import * as Array from "effect/Array";
+import * as Arr from "effect/Array";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
-import * as String from "effect/String";
+import * as Str from "effect/String";
 
 // ── Branded types ─────────────────────────────────────────────────────
 
@@ -140,11 +140,7 @@ function isbnDigit(char: string): number {
  */
 function isValidIsbn10(cleaned: string): boolean {
   if (!/^\d{9}[\dX]$/.test(cleaned)) return false;
-  const sum = Array.reduce(
-    cleaned.split(""),
-    0,
-    (acc, char, i) => acc + (10 - i) * isbnDigit(char),
-  );
+  const sum = Arr.reduce(cleaned.split(""), 0, (acc, char, i) => acc + (10 - i) * isbnDigit(char));
   return sum % 11 === 0;
 }
 
@@ -154,7 +150,7 @@ function isValidIsbn10(cleaned: string): boolean {
  */
 function isValidIsbn13(cleaned: string): boolean {
   if (!/^\d{13}$/.test(cleaned)) return false;
-  const sum = Array.reduce(
+  const sum = Arr.reduce(
     cleaned.split(""),
     0,
     (acc, char, i) => acc + (i % 2 === 0 ? 1 : 3) * isbnDigit(char),
@@ -164,7 +160,7 @@ function isValidIsbn13(cleaned: string): boolean {
 
 /** The EAN-13 check digit for a 12-digit prefix. */
 function isbn13CheckDigit(twelve: string): string {
-  const sum = Array.reduce(
+  const sum = Arr.reduce(
     twelve.split(""),
     0,
     (acc, char, i) => acc + (i % 2 === 0 ? 1 : 3) * isbnDigit(char),
@@ -174,7 +170,7 @@ function isbn13CheckDigit(twelve: string): string {
 
 /** The mod-11 check digit (`X` = 10) for a 9-digit ISBN-10 body. */
 function isbn10CheckDigit(nine: string): string {
-  const sum = Array.reduce(nine.split(""), 0, (acc, char, i) => acc + (10 - i) * isbnDigit(char));
+  const sum = Arr.reduce(nine.split(""), 0, (acc, char, i) => acc + (10 - i) * isbnDigit(char));
   const remainder = (11 - (sum % 11)) % 11;
   return remainder === 10 ? "X" : remainder.toString();
 }
@@ -283,11 +279,11 @@ export function normaliseDoi(raw: string): Option.Option<string> {
     .replace(/^https?:\/\/(dx\.)?doi\.org\//, "")
     .replace(/^doi:/, "")
     .trim();
-  if (String.isEmpty(bare) || bare.length > 256) return Option.none();
+  if (Str.isEmpty(bare) || bare.length > 256) return Option.none();
   // Reject ASCII control characters defensively before the value reaches
   // the URL builder. A codepoint check (not a literal-control-char regex)
   // keeps this source file free of control bytes.
-  const hasControlChar = Array.some(bare.split(""), (char) => {
+  const hasControlChar = Arr.some(bare.split(""), (char) => {
     const code = char.charCodeAt(0);
     return code < 0x20 || code === 0x7f;
   });
@@ -330,7 +326,7 @@ export function decodeDoi(raw: string): Option.Option<Doi> {
  */
 function isValidIssn(cleaned: string): boolean {
   if (!/^\d{7}[\dX]$/.test(cleaned)) return false;
-  const sum = Array.reduce(cleaned.split(""), 0, (acc, char, i) => acc + (8 - i) * isbnDigit(char));
+  const sum = Arr.reduce(cleaned.split(""), 0, (acc, char, i) => acc + (8 - i) * isbnDigit(char));
   return sum % 11 === 0;
 }
 
@@ -365,7 +361,7 @@ export function decodeIssn(raw: string): Option.Option<Issn> {
  */
 function isValidOrcid(cleaned: string): boolean {
   if (!/^\d{15}[\dX]$/.test(cleaned)) return false;
-  const total = Array.reduce(
+  const total = Arr.reduce(
     cleaned.slice(0, 15).split(""),
     0,
     (acc, char) => ((acc + isbnDigit(char)) * 2) % 11,

@@ -7,7 +7,7 @@
  * @module tests/unit/biblio-streaming
  */
 
-import * as Array from "effect/Array";
+import * as Arr from "effect/Array";
 import * as Exit from "effect/Exit";
 import * as Order from "effect/Order";
 import * as Stream from "effect/Stream";
@@ -26,7 +26,7 @@ import {
 /** `text` cut into chunks of `size` characters. */
 const chunked = (text: string, size: number): Stream.Stream<string> =>
   Stream.fromIterable(
-    Array.makeBy(Math.max(1, Math.ceil(text.length / size)), (index) =>
+    Arr.makeBy(Math.max(1, Math.ceil(text.length / size)), (index) =>
       text.slice(index * size, (index + 1) * size),
     ),
   );
@@ -82,7 +82,7 @@ describe("parseBibliographicStream", () => {
       const results = await Promise.all(
         sizes.map((size) => streamed(text, size, format, { mode: "lenient" })),
       );
-      Array.forEach(results, (result, index) => {
+      Arr.forEach(results, (result, index) => {
         expect(result, `chunks of ${sizes[index]}`).toEqual(whole);
       });
     },
@@ -101,7 +101,7 @@ describe("parseBibliographicStream", () => {
     const results = await Promise.all(
       sizes.map((size) => streamed(text, size, "bibtex", { mode: "lenient" })),
     );
-    Array.forEach(results, (result, index) => {
+    Arr.forEach(results, (result, index) => {
       expect(result, `chunks of ${sizes[index]}`).toEqual(whole);
     });
   });
@@ -139,11 +139,7 @@ describe("parseBibliographicStream", () => {
     const outcomes = await streamed(bibtex, 9, "bibtex", { mode: "lenient" });
     // The orphan waits for its parent until the end of the input, so it comes last.
     expect(outcomes.map((outcome) => outcome.position?.line)).toEqual([2, 3, 4, 1]);
-    const byLine = Array.sortWith(
-      outcomes,
-      (outcome) => outcome.position?.offset ?? 0,
-      Order.Number,
-    );
+    const byLine = Arr.sortWith(outcomes, (outcome) => outcome.position?.offset ?? 0, Order.Number);
     expect(byLine).toEqual(parseBibliographicFile(bibtex, "bibtex", { mode: "lenient" }));
   });
 
@@ -178,7 +174,7 @@ describe("parseBibliographicStream", () => {
     );
     expect(Exit.isFailure(whole)).toBe(true);
     // A long stream of small entries is not too large.
-    const many = Array.makeBy(50, (index) => `@misc{k${index}, title = {T}}`).join("\n");
+    const many = Arr.makeBy(50, (index) => `@misc{k${index}, title = {T}}`).join("\n");
     expect(
       await streamed(many, 7, "bibtex", { mode: "lenient", maxInputLength: 100 }),
     ).toHaveLength(50);
@@ -231,9 +227,9 @@ describe("parseBibliographicStream's bounds", () => {
   it("shares one macro-expansion budget across the stream, as the whole-file parse spends one", async () => {
     const macros = [
       `@string{a = "${"x".repeat(1000)}"}`,
-      `@string{b = ${Array.makeBy(50, () => "a").join(" # ")}}`,
+      `@string{b = ${Arr.makeBy(50, () => "a").join(" # ")}}`,
     ];
-    const entries = Array.makeBy(200, (index) => `@misc{k${index}, title = b}`);
+    const entries = Arr.makeBy(200, (index) => `@misc{k${index}, title = b}`);
     const titled = (outcomes: readonly ParseOutcome[]) =>
       outcomes.filter(
         (outcome) => outcome.outcome === "parsed" && outcome.record.title !== undefined,
@@ -258,7 +254,7 @@ describe("parseBibliographicStream's bounds", () => {
 
   it("fails a whole-read format as soon as it passes the cap, without reading on", async () => {
     const chunks = Stream.concat(
-      Stream.fromIterable(Array.makeBy(10, () => "[".padEnd(50, " "))),
+      Stream.fromIterable(Arr.makeBy(10, () => "[".padEnd(50, " "))),
       Stream.fail("read past the cap" as const),
     );
     const exit = await runTestExit(
@@ -297,7 +293,7 @@ describe("parseBibliographicStream's bounds", () => {
 
   it("reads children without their parent once the stream's context budget is spent", async () => {
     const parent = `@book{parent, title = {Parent}, note = {${"n".repeat(1400)}}}\n`;
-    const children = Array.makeBy(
+    const children = Arr.makeBy(
       40,
       (index) => `@inbook{c${index}, crossref = {parent}, title = {C}}\n`,
     );
@@ -322,10 +318,10 @@ describe("parseBibliographicStream's bounds", () => {
   };
 
   it("finds context by name, so many macros and many entries stay linear", async () => {
-    const macros = Array.makeBy(60_000, (index) => `@string{m${index} = "Value ${index}"}`).join(
+    const macros = Arr.makeBy(60_000, (index) => `@string{m${index} = "Value ${index}"}`).join(
       "\n",
     );
-    const entries = Array.makeBy(
+    const entries = Arr.makeBy(
       15_000,
       (index) => `@misc{k${index}, title = {T}, publisher = m${index % 7}}`,
     ).join("\n");
@@ -343,7 +339,7 @@ describe("parseBibliographicStream's bounds", () => {
 
   it("finds a large parent's context once per batch, not once per child", async () => {
     const parent = `@book{parent, title = {Parent}, note = {${"n word ".repeat(150_000)}}}\n`;
-    const children = Array.makeBy(
+    const children = Arr.makeBy(
       20_000,
       (index) => `@inbook{c${index}, crossref = {parent}, title = {C}}`,
     ).join("\n");
@@ -375,21 +371,21 @@ describe("parseBibliographicStream's bounds", () => {
     const results = await Promise.all(
       sizes.map((size) => streamed(text, size, "bibtex", { mode: "lenient" })),
     );
-    Array.forEach(results, (result, index) => {
+    Arr.forEach(results, (result, index) => {
       expect(result, `chunks of ${sizes[index]}`).toEqual(whole);
     });
   });
 
   it("falls back to a key's next parent in the window when the first leaves it, then forgets the key", async () => {
     // A window of 1000: `p` (Old) is pushed out by the entries after it; `p` (New) is still in.
-    const fillers = Array.makeBy(997, (index) => `@misc{f${index}, title = {F}}`);
+    const fillers = Arr.makeBy(997, (index) => `@misc{f${index}, title = {F}}`);
     const parts = [
       "@book{p, title = {Old Parent}}",
       "@book{p, title = {New Parent}}",
       ...fillers,
       "@misc{g, title = {G}}",
       "@inbook{child, crossref = {p}}",
-      ...Array.makeBy(1000, (index) => `@misc{h${index}, title = {H}}`),
+      ...Arr.makeBy(1000, (index) => `@misc{h${index}, title = {H}}`),
       "@inbook{orphan, crossref = {p}}",
     ].map((part) => `${part}\n`);
     const outcomes = await fromParts(parts, "bibtex", { mode: "lenient" });
@@ -405,7 +401,7 @@ describe("parseBibliographicStream's bounds", () => {
 
   it("uses a macro's latest definition, and a key's newer parent once the older one leaves the window", async () => {
     // The window holds 1000 entries: the child and these push out the old `p` but not the new one.
-    const fillers = Array.makeBy(998, (index) => `@misc{f${index}, title = {F}}`);
+    const fillers = Arr.makeBy(998, (index) => `@misc{f${index}, title = {F}}`);
     const parts = [
       '@string{pub = "First"}',
       '@string{inner = "Inner"}',

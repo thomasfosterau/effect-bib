@@ -16,11 +16,11 @@
  * @since 0.1.0
  */
 
-import * as Array from "effect/Array";
+import * as Arr from "effect/Array";
 import * as HashMap from "effect/HashMap";
 import * as Option from "effect/Option";
-import * as Predicate from "effect/Predicate";
-import * as String from "effect/String";
+import * as P from "effect/Predicate";
+import * as Str from "effect/String";
 import type { Inline, RichText, Styled } from "./rich.ts";
 import { toPlainText } from "./rich.ts";
 
@@ -58,14 +58,14 @@ function spanTag(attributes: string): Option.Option<Styled["_tag"]> {
 /** The span an open tag starts, or `None` when CSL's markup does not admit it. */
 function openTag(element: string, attributes: string): Option.Option<Styled["_tag"]> {
   if (element === "span") return spanTag(attributes);
-  return String.isEmpty(attributes.trim()) ? HashMap.get(PLAIN_TAGS, element) : Option.none();
+  return Str.isEmpty(attributes.trim()) ? HashMap.get(PLAIN_TAGS, element) : Option.none();
 }
 
 /** Appends text to a node list, merging it into a trailing text node. */
 function appendText(children: Inline[], value: string): void {
-  if (String.isEmpty(value)) return;
+  if (Str.isEmpty(value)) return;
   const last = children[children.length - 1];
-  if (last !== undefined && Predicate.isTagged(last, "Text")) {
+  if (last !== undefined && P.isTagged(last, "Text")) {
     children[children.length - 1] = { _tag: "Text", text: last.text + value };
   } else children.push({ _tag: "Text", text: value });
 }
@@ -76,14 +76,14 @@ function closeFrame(stack: Frame[], asSpan: boolean): void {
   const parent = stack[stack.length - 1];
   if (frame === undefined || parent === undefined) return;
   if (asSpan) {
-    if (Array.isArrayNonEmpty(frame.children)) {
+    if (Arr.isArrayNonEmpty(frame.children)) {
       parent.children.push({ _tag: frame.tag, children: frame.children });
     }
     return;
   }
   appendText(parent.children, frame.opened);
-  Array.forEach(frame.children, (child) => {
-    if (Predicate.isTagged(child, "Text")) appendText(parent.children, child.text);
+  Arr.forEach(frame.children, (child) => {
+    if (P.isTagged(child, "Text")) appendText(parent.children, child.text);
     else parent.children.push(child);
   });
 }
@@ -111,24 +111,24 @@ function closeFrame(stack: Frame[], asSpan: boolean): void {
 export function parseCslMarkup(value: string): RichText {
   const root: Frame = { tag: "NoCase", element: "", opened: "", children: [] };
   const stack: Frame[] = [root];
-  const end = Array.reduce(Array.fromIterable(value.matchAll(TAG)), 0, (from, match) => {
+  const end = Arr.reduce(Arr.fromIterable(value.matchAll(TAG)), 0, (from, match) => {
     const [whole, slash, element, attributes] = match;
     const at = match.index;
     const top = stack[stack.length - 1];
     appendText(top.children, value.slice(from, at));
-    if (String.isEmpty(slash)) {
+    if (Str.isEmpty(slash)) {
       const tag = openTag(element, attributes);
       if (Option.isSome(tag) && stack.length <= MAX_DEPTH) {
         stack.push({ tag: tag.value, element, opened: whole, children: [] });
       } else appendText(top.children, whole);
-    } else if (stack.length > 1 && top.element === element && String.isEmpty(attributes.trim())) {
+    } else if (stack.length > 1 && top.element === element && Str.isEmpty(attributes.trim())) {
       closeFrame(stack, true);
     } else appendText(stack[stack.length - 1].children, whole);
     return at + whole.length;
   });
   appendText(stack[stack.length - 1].children, value.slice(end));
   // Unclosed spans, innermost first, fold back into literal text.
-  Array.forEach(stack.slice(1), () => closeFrame(stack, false));
+  Arr.forEach(stack.slice(1), () => closeFrame(stack, false));
   return root.children;
 }
 
@@ -160,8 +160,8 @@ const CSL_TAGS: Readonly<Record<Styled["_tag"], readonly [string, string]>> = {
 export function toCslMarkup(rich: RichText): string {
   return rich
     .map((node): string => {
-      if (Predicate.isTagged(node, "Text")) return node.text;
-      if (Predicate.isTagged(node, "Link") || Predicate.isTagged(node, "Display")) {
+      if (P.isTagged(node, "Text")) return node.text;
+      if (P.isTagged(node, "Link") || P.isTagged(node, "Display")) {
         return toCslMarkup(node.children);
       }
       const [open, close] = CSL_TAGS[node._tag];
