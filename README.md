@@ -21,17 +21,18 @@ pnpm add @thomasfosterau/effect-bib effect
 ## Example
 
 ```ts
+import * as assert from "node:assert";
 import * as Option from "effect/Option";
 import { apaStyle, decodeIsbn, fromCslJson, renderReference } from "@thomasfosterau/effect-bib";
 
 // A proven identifier is a distinct type from the string it came from.
-Option.getOrNull(decodeIsbn("0-06-231609-5")); // "9780062316097" (an `Isbn`)
+assert.strictEqual(Option.getOrNull(decodeIsbn("0-06-231609-5")), "9780062316097");
 
 // Any CSL-JSON item decodes, never throwing; the ISBN is checksummed into its branded slot.
 const record = fromCslJson({ type: "book", title: "Sapiens", ISBN: "9780062316097" });
 
 // Rendering is a pure function of (record, style, locale).
-renderReference(record, { style: apaStyle }); // "(n.d.). Sapiens."
+assert.strictEqual(renderReference(record, { style: apaStyle }), "(n.d.). Sapiens.");
 ```
 
 The file parsers, dedup scoring, lookup and the rest are in the [guides](docs/); the API detail is in the per-export doc comments.
