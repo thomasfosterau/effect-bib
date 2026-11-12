@@ -102,6 +102,9 @@ export default defineConfig({
       // so an `unknown` error channel cannot land (the public
       // `ResolveAddresses` was the last, #136).
       "effecttsgo/any-unknown-in-error-context": "error",
+      // Lint to zero (#169): each preset rule cleared of its sites is held at
+      // `error` here until the whole preset flips.
+      "effecttsgo/prefer-typed-schema-decoder": "error",
       "typescript/no-explicit-any": "off",
       "typescript/no-empty-object-type": "off",
       "typescript/ban-ts-comment": "off",
