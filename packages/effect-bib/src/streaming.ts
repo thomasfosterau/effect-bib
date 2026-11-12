@@ -329,18 +329,25 @@ function parseUnits(
   units: readonly Unit[],
   parse: (document: string) => ParseOutcome[],
 ): ParseOutcome[] {
-  const starts: Array<readonly [number, Unit]> = [];
+  // Each unit's start in the document, looked up by offset: one entry per
+  // unit, so finding an outcome's unit costs the same however many there are.
+  const starts = MutableHashMap.empty<number, Unit>();
   Arr.reduce(units, context.length, (offset, unit) => {
-    starts.push([offset, unit]);
+    MutableHashMap.set(starts, offset, unit);
     return offset + unit.text.length + 1;
   });
   const document = `${context}${units.map((unit) => unit.text).join("\n")}`;
-  return Arr.filterMap(parse(document), (outcome): Result.Result<ParseOutcome, void> => {
-    const offset = outcome.position?.offset;
-    const unit = Arr.findFirst(starts, ([start]) => start === offset);
-    if (Option.isNone(unit)) return Result.failVoid;
-    return Result.succeed({ ...outcome, position: unit.value[1].position });
-  });
+  return Arr.filterMap(parse(document), (outcome): Result.Result<ParseOutcome, void> =>
+    Option.match(
+      Option.flatMap(Option.fromUndefinedOr(outcome.position?.offset), (offset) =>
+        MutableHashMap.get(starts, offset),
+      ),
+      {
+        onNone: () => Result.failVoid,
+        onSome: (unit) => Result.succeed({ ...outcome, position: unit.position }),
+      },
+    ),
+  );
 }
 
 /**
