@@ -729,7 +729,16 @@ function step(
     state.buffered = { ...state.buffered, text };
     return [];
   }
-  const [units, rest] = split({ ...state.buffered, text }, finder(format), final);
+  // A `\r` that ends the buffer may be the first half of a CRLF whose `\n` is
+  // in the next chunk: it is held back, so the pair is one line break (as in
+  // a whole-file parse) and never a bare-CR break followed by a bare-LF one.
+  const holdsCr = !final && text.endsWith("\r");
+  const [units, remainder] = split(
+    { ...state.buffered, text: holdsCr ? text.slice(0, -1) : text },
+    finder(format),
+    final,
+  );
+  const rest = holdsCr ? { ...remainder, text: `${remainder.text}\r` } : remainder;
   state.buffered = rest;
   // Parents are bounded apart (by count and length); this is the rest of
   // what the stream holds.

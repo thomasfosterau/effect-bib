@@ -9,6 +9,7 @@
 
 import * as Arr from "effect/Array";
 import * as Exit from "effect/Exit";
+import * as Option from "effect/Option";
 import * as Order from "effect/Order";
 import * as Stream from "effect/Stream";
 import { describe, expect, it } from "vite-plus/test";
@@ -87,6 +88,68 @@ describe("parseBibliographicStream", () => {
       });
     },
   );
+
+  describe("a CRLF split across chunks", () => {
+    /** `text` cut after each index in `cuts`, as a stream of chunks. */
+    const cutAt = (text: string, cuts: readonly number[]): Stream.Stream<string> => {
+      const bounds = [0, ...Arr.sort(Arr.dedupe(cuts), Order.Number), text.length];
+      return Stream.fromIterable(
+        Arr.zipWith(bounds, bounds.slice(1), (from, to) => text.slice(from, to)),
+      );
+    };
+
+    /** The indices between the CR and the LF of every CRLF. */
+    const insideCrlf = (text: string): number[] =>
+      Arr.fromIterable(text.matchAll(/\r\n/g)).map((match) => match.index + 1);
+
+    /** A deterministic pseudo-random sequence of `count` cut points in `[1, length)`. */
+    const randomCuts = (length: number, count: number, seed: number): number[] =>
+      Arr.unfold({ n: 0, state: seed }, ({ n, state }) => {
+        const next = (Math.imul(state, 1_103_515_245) + 12_345) >>> 0;
+        return n < count
+          ? Option.some([1 + (next % (length - 1)), { n: n + 1, state: next }] as const)
+          : Option.none();
+      });
+
+    it.each([
+      [
+        "csv",
+        [
+          "title,isbn",
+          "A,9780062316097",
+          '"B\r\nC",9780062316097',
+          "",
+          "D,9780199695836",
+          "E,not-an-isbn",
+          "F,9780062316097",
+        ].join("\r\n"),
+      ],
+      ["ris", RIS],
+      ["bibtex", BIBTEX.replaceAll("\n", "\r\n")],
+    ] as const)(
+      "keeps %s positions and outcomes those of the whole-file parse",
+      async (format, text) => {
+        const whole = parseBibliographicFile(text, format, { mode: "lenient" });
+        const run = async (cuts: readonly number[]) =>
+          await runTest(
+            Stream.runCollect(
+              parseBibliographicStream(cutAt(text, cuts), format, { mode: "lenient" }),
+            ),
+          );
+        // Every CRLF cut between its CR and its LF, at once and one at a time.
+        const breaks = insideCrlf(text);
+        expect(breaks.length).toBeGreaterThan(3);
+        expect(await run(breaks)).toEqual(whole);
+        const single = await Promise.all(breaks.map((cut) => run([cut])));
+        Arr.forEach(single, (result) => expect(result).toEqual(whole));
+        // And at random points, some of which fall between a CR and its LF.
+        const random = await Promise.all(
+          Arr.makeBy(20, (seed) => run(randomCuts(text.length, 12, seed + 1))),
+        );
+        Arr.forEach(random, (result) => expect(result).toEqual(whole));
+      },
+    );
+  });
 
   it("yields the whole-file outcomes for parenthesised entries, for every chunk size", async () => {
     const text = [
