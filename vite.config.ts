@@ -192,6 +192,17 @@ export default defineConfig({
   },
   run: {
     tasks: {
+      // The whole CI pipeline as one task, the one command
+      // .github/workflows/ci.yml runs (`vp run ci`), so a local run and CI are
+      // the same thing. The gates of AGENTS.md#verification, in order and
+      // fail-fast: format + lint, build, the type gates, the oracle corpora
+      // (network, for the BibTeX oracle test), unit tests + coverage, the
+      // executed docs examples, and the dependency audit (network).
+      ci: {
+        command:
+          "vp check && vp run -r build && vp run --concurrency-limit 2 check && vp run --filter ./packages/effect-bib oracles:fetch && vp run -r test:coverage && vp run -r docgen && pnpm audit --audit-level high",
+        cache: false,
+      },
       // The CI typecheck gate, as one task: every package's `check`, plus the
       // dist-consumer check that type-checks a consumer fixture against the
       // EMITTED declarations (the identifier brands must survive declaration
