@@ -1,5 +1,33 @@
 # @thomasfosterau/effect-bib
 
+## 0.2.0
+
+### Minor Changes
+
+- [#197](https://github.com/thomasfosterau/effect-bib/pull/197) [`1242c49`](https://github.com/thomasfosterau/effect-bib/commit/1242c49d624e0072b7d907a165413d0dd73373a2) Thanks [@thomasfosterau](https://github.com/thomasfosterau)! - `BiblioRecord.extra` and `toCslJson`'s `CslJsonItem` are now typed as JSON (`Record<string, Schema.Json>`) instead of `Record<string, unknown>`, so `fromCslJson(toCslJson(record))` type-checks with no decode step. Every stored `extra` came from JSON, so decoding is unchanged; code that wrote a non-JSON value (a function, a `Date`, `undefined`) into `extra` no longer compiles, and `fromCslJson` now drops such a member from a hostile input rather than carrying it.
+
+- [#173](https://github.com/thomasfosterau/effect-bib/pull/173) [`594c6c1`](https://github.com/thomasfosterau/effect-bib/commit/594c6c1ffd4f1ec688336a04417aace7e4e97f15) Thanks [@thomasfosterau](https://github.com/thomasfosterau)! - `CslJsonItem` is now also a schema (`Schema.Record(Schema.String, Schema.Unknown)`), and its type is that schema's `Type`: a readonly string-keyed object, so `toCslJson`'s result is readonly. Internally, Effect's helper modules are imported under their canonical aliases (`Arr`, `P`, `R`, `Str`), with no other change in behaviour.
+
+- [#175](https://github.com/thomasfosterau/effect-bib/pull/175) [`ae18007`](https://github.com/thomasfosterau/effect-bib/commit/ae180079f7880003accc91b1d38ec440c6d093bb) Thanks [@thomasfosterau](https://github.com/thomasfosterau)! - Every value that can be absent is now an `Option` (breaking). `makeCslName` and `parsePersonName` return `Option<CslName>`, `cslNameDisplay` returns `Option<string>`, `yearOf` returns `Option<number>` (and its date parameter is optional), `bestConfidentMatch` returns `Option<T>`, `getStyle` returns `Option<CitationStyle>`, and `IsbnForms.isbn10` is an `Option<string>`. They returned `null` / `undefined` before. Options objects and the `BiblioRecord` wire shape are unchanged.
+
+- [#163](https://github.com/thomasfosterau/effect-bib/pull/163) [`76df56e`](https://github.com/thomasfosterau/effect-bib/commit/76df56e139aaf565245f0c3f9bfd9fe9520dc95f) Thanks [@thomasfosterau](https://github.com/thomasfosterau)! - Add a `./record` entry point exporting the record model alone (`BiblioRecord` and its CSL schemas, provenance, the identifier brands and decoders, `toCslJson` / `fromCslJson` and the name, date and sanitising helpers), whose module graph reaches `effect` and nothing else. `@thomasfosterau/effect-parse` is now an optional peer dependency with the range `^0.4.1 || ^0.5.0` instead of an exact dependency: install it alongside to use the root entry's parsers; a consumer of `./record` alone needs no effect-parse. The BibTeX scanner imports effect-parse's `/Parser`, `/Token` and `/Compiler` subpaths instead of its root barrel.
+
+- [#180](https://github.com/thomasfosterau/effect-bib/pull/180) [`255869e`](https://github.com/thomasfosterau/effect-bib/commit/255869ee9e928b1fdfcc5efa15c3aedc04ce3859) Thanks [@thomasfosterau](https://github.com/thomasfosterau)! - Breaking: the total decoders and sanitisers take named types instead of `unknown`. `fromCslJson(item)`, `readCslName(entry)` and `readCslNameArray(value, maxNames?)` take `Schema.Json`; `sanitiseText(value, maxLength?)` takes a `string` and `sanitiseYear(value)` a `string | number`. Decode an untrusted value first (`Schema.decodeUnknownOption(Schema.Json)` or `Schema.String`), then pass it in; a non-string or non-year input is now a decode `None` at the caller's boundary rather than a `None` from the sanitiser.
+
+### Patch Changes
+
+- [#187](https://github.com/thomasfosterau/effect-bib/pull/187) [`0eaff63`](https://github.com/thomasfosterau/effect-bib/commit/0eaff63019bfa6a24629f23af0db38d3315a5680) Thanks [@thomasfosterau](https://github.com/thomasfosterau)! - `parseBibliographicStream` now reads a CRLF line break that falls between two chunks as one break, so the later entries' `SourcePosition.line` matches the whole-file parse (it counted the `\r` and the `\n` as two breaks before). A chunk's trailing `\r` is held until the next chunk or the end of the stream.
+
+- [#181](https://github.com/thomasfosterau/effect-bib/pull/181) [`e02bb1a`](https://github.com/thomasfosterau/effect-bib/commit/e02bb1ac187b5f0b96956a9494f1780f89234733) Thanks [@thomasfosterau](https://github.com/thomasfosterau)! - Doc comments now carry the API detail the package README used to hold (BibLaTeX field semantics on `parseBibtex`, the format list, modes and bounds on `parseBibliographicFile`, citation cluster shape on `renderCitations`, URL and size handling on `readEmbeddedMetadata`, writer details on `toBibtex` / `toRis` / `toCslYaml`). The README is now short, with long-form guides under `docs/`.
+
+- [#194](https://github.com/thomasfosterau/effect-bib/pull/194) [`14dccd7`](https://github.com/thomasfosterau/effect-bib/commit/14dccd79cbf54d3949fa27958b835d69628e9679) Thanks [@thomasfosterau](https://github.com/thomasfosterau)! - The schema-backed errors (`InputTooLarge`, `InvalidIdentifier`, `LookupFailed`, `RefusedUrl`) are branded, so a structurally similar object no longer type-checks as one. A CSL `season` or `circa` and an OpenAlex `publication_year` decode only as finite numbers.
+
+- [#188](https://github.com/thomasfosterau/effect-bib/pull/188) [`df77fee`](https://github.com/thomasfosterau/effect-bib/commit/df77fee88462784b86d9acccbe13f69b8b16b1f7) Thanks [@thomasfosterau](https://github.com/thomasfosterau)! - `parseBibliographicStream` finds each entry's start in a batch in constant time, so a chunk holding many entries is read in linear time. Streaming a 5 MB CSV in 1 MB chunks took about 12 s because each outcome scanned every start in its batch; it now takes under 2 s.
+
+- [#165](https://github.com/thomasfosterau/effect-bib/pull/165) [`49b17e9`](https://github.com/thomasfosterau/effect-bib/commit/49b17e9d363989657a8fd82069694b56b8d2fb02) Thanks [@thomasfosterau](https://github.com/thomasfosterau)! - Ship `CHANGELOG.md` in the published package, so the release notes can be read from `node_modules`.
+
+- [#186](https://github.com/thomasfosterau/effect-bib/pull/186) [`f8eb2b8`](https://github.com/thomasfosterau/effect-bib/commit/f8eb2b88cac8f3520b160b9eec376d2e4a22fa21) Thanks [@thomasfosterau](https://github.com/thomasfosterau)! - `parseCslYaml` reads long block sequences and mappings in linear time: the block readers no longer copy the remaining lines for every entry, so a flat list of 100,000 short entries parses in well under a second instead of about a minute. Output is unchanged.
+
 ## 0.1.0
 
 ### Minor Changes
