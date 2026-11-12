@@ -480,10 +480,7 @@ function sanitiseTitle(
 
 /** Structures a list of display-form names, bounded and empties dropped. */
 function structuredNames(raw: readonly string[], maxAuthors: number): CslName[] {
-  return Arr.filterMap(raw, (value): Result.Result<CslName, void> => {
-    const name = parsePersonName(value);
-    return name === null ? Result.failVoid : Result.succeed(name);
-  }).slice(0, maxAuthors);
+  return Arr.getSomes(Arr.map(raw, parsePersonName)).slice(0, maxAuthors);
 }
 
 // ── BibTeX ────────────────────────────────────────────────────────────
@@ -1049,7 +1046,7 @@ function risNames(raw: readonly string[], maxAuthors: number): CslName[] {
     return Result.fromOption(
       parts.length >= 3
         ? readCslName({ family: parts[0], given: parts[1], suffix: parts.slice(2).join(",") })
-        : Option.fromNullishOr(parsePersonName(value)),
+        : parsePersonName(value),
       () => undefined,
     );
   }).slice(0, maxAuthors);
@@ -1252,7 +1249,7 @@ function medlineType(record: TaggedRecord): CslItemType {
 function medlineShortName(value: string): Option.Option<CslName> {
   const match = /^(.+?)\s+([A-Z]{1,4})$/.exec(value.trim());
   return match === null
-    ? Option.fromNullishOr(parsePersonName(value))
+    ? parsePersonName(value)
     : readCslName({ family: match[1], given: match[2] });
 }
 
@@ -1266,7 +1263,7 @@ function medlineNames(
   const people = taggedValues(record, full);
   const named = Arr.isReadonlyArrayNonEmpty(people)
     ? Arr.filterMap(people, (value): Result.Result<CslName, void> =>
-        Result.fromOption(Option.fromNullishOr(parsePersonName(value)), () => undefined),
+        Result.fromOption(parsePersonName(value), () => undefined),
       )
     : Arr.filterMap(taggedValues(record, short), (value): Result.Result<CslName, void> =>
         Result.fromOption(medlineShortName(value), () => undefined),

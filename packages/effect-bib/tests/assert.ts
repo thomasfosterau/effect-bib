@@ -21,18 +21,3 @@ export function expectSome<A>(option: Option.Option<A>, what = "a value"): A {
     onSome: (value) => value,
   });
 }
-
-/*
- * NOT migrated to `Option`: this helper exists precisely to bridge the plain
- * nullable values a test still meets — array/string indexing (`T | undefined`)
- * and the deliberately-unmigrated cross-slice helpers (`makeCslName`,
- * `parsePersonName`). Taking an `Option` here would make it `expectSome`.
- */
-/** `value` narrowed to non-nullish; fails the test when it is `null`/`undefined`. */
-// oxlint-disable-next-line effect/prefer-option-over-null -- the helper's whole job is the plain-nullable seam
-export function expectPresent<A>(value: A | null | undefined, what = "a value"): A {
-  if (value === null || value === undefined) {
-    expect.fail(`expected ${what}, got ${String(value)}`);
-  }
-  return value;
-}

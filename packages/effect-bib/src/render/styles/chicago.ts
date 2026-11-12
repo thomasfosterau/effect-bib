@@ -297,7 +297,7 @@ function sortKey(record: BiblioRecord): string {
   const first = Arr.head(contributors(record));
   const title = Option.getOrElse(plainField(record, "title"), () => "");
   const lead = Option.match(first, { onNone: () => title, onSome: invertedName });
-  const year = `${yearOf(record.issued) ?? 0}`.padStart(6, "0");
+  const year = `${Option.getOrElse(yearOf(record.issued), () => 0)}`.padStart(6, "0");
   return `${lead.toLowerCase()} ${title.toLowerCase()} ${year}`;
 }
 

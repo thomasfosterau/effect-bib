@@ -71,10 +71,10 @@ export default defineConfig({
       "effect/prefer-namespace-imports": "error",
 
       // No ported-code allowances remain: every preset rule is at its `error`
-      // level. `prefer-option-over-null` and `no-unknown-parameters` stay
-      // there with a handful of per-site `oxlint-disable` justifications —
-      // the plain-nullable seams and the untrusted-input boundary listed in
-      // packages/effect-bib/AGENTS.md — so a new site cannot land silently.
+      // level. `prefer-option-over-null` has no exception (#168);
+      // `no-unknown-parameters` keeps the per-site justifications on the
+      // untrusted-input boundary listed in packages/effect-bib/AGENTS.md
+      // (#169), so a new site cannot land silently.
       // `_tag` is Effect's discriminant (tagged unions, `Data.TaggedError`).
       "eslint/no-underscore-dangle": ["error", { allow: ["_tag"] }],
       // The library builds immutable values (readonly records and arrays): a

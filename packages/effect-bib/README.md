@@ -85,20 +85,20 @@ assert.deepStrictEqual(record.extra, { "custom-key": "kept" });
 
 **`toCslJson(record): CslJsonItem`** — the inverse projection: drops `provenance`, writes the brands back into `ISBN` / `DOI` / `ISSN` / `PMID` / `PMCID` (an arXiv id as `number: "arXiv:<id>"` when the record has no `number`), re-merges `extra` (modelled fields win over a stale carried key). `fromCslJson(toCslJson(record))` also lifts a record that kept CSL variables in `extra` (as records from before the full CSL variable set did) into their typed slots.
 
-Name and date helpers: `makeCslName(parts)`, `parsePersonName(raw)` (`"Family, Given"` or `"Given Family"`), `cslNameDisplay(name)`, `readCslName(entry)`, `readCslNameArray(value, maxNames?)`, `dateFromYear(year)`, `yearOf(date)` (a range's start year, else the year of a `raw` date; `null` when there is none) and `endYearOf(date)` (`Option` of a range's last year, when it differs). Sanitisers: `sanitiseText(value, maxLength?)` (trim, collapse whitespace, clamp to `maxLength`, default `MAX_TEXT_FIELD_LENGTH`), `sanitiseYear(value)`. Default bounds: `MAX_TEXT_FIELD_LENGTH` (2000), `MAX_AUTHORS` (100).
+Name and date helpers: `makeCslName(parts)` and `parsePersonName(raw)` (`"Family, Given"` or `"Given Family"`), each an `Option<CslName>`, `cslNameDisplay(name)` (an `Option<string>`), `readCslName(entry)`, `readCslNameArray(value, maxNames?)`, `dateFromYear(year)`, `yearOf(date)` (an `Option` of a range's start year, else the year of a `raw` date) and `endYearOf(date)` (`Option` of a range's last year, when it differs). Sanitisers: `sanitiseText(value, maxLength?)` (trim, collapse whitespace, clamp to `maxLength`, default `MAX_TEXT_FIELD_LENGTH`), `sanitiseYear(value)`. Default bounds: `MAX_TEXT_FIELD_LENGTH` (2000), `MAX_AUTHORS` (100).
 
 ### Identifiers — `.`
 
 **`Isbn`, `Doi`, `Issn`, `Orcid`, `Pmid`, `Pmcid`, `Arxiv`** — `Schema.String.pipe(Schema.brand(…))`. The `Type` is the brand, the `Encoded` is `string`: the brand is a proof, not a representation. A raw string is never assignable to a brand and the brands are distinct from each other (`tests/identifiers.types.ts` pins this at the type level).
 
-**`decodeIsbn(raw): Option<Isbn>`** — accepts a hyphenated / spaced ISBN-10 or ISBN-13, validates the checksum (mod-11 / EAN mod-10), returns the canonical 13-digit form. **`isbnForms(isbn)`** gives an `IsbnForms`, `{ isbn13, isbn10 | null }`; `convertIsbn10To13` / `convertIsbn13To10` are the raw converters.
+**`decodeIsbn(raw): Option<Isbn>`** — accepts a hyphenated / spaced ISBN-10 or ISBN-13, validates the checksum (mod-11 / EAN mod-10), returns the canonical 13-digit form. **`isbnForms(isbn)`** gives an `IsbnForms`, `{ isbn13, isbn10 }`, with `isbn10` an `Option` (`Option.none()` for a `979` ISBN); `convertIsbn10To13` / `convertIsbn13To10` are the raw converters.
 
 ```ts
 const isbn = decodeIsbn("0-06-231609-5");
 assert.strictEqual(Option.getOrNull(isbn), "9780062316097");
 assert.deepStrictEqual(
   Option.map(isbn, isbnForms),
-  Option.some({ isbn13: "9780062316097", isbn10: "0062316095" }),
+  Option.some({ isbn13: "9780062316097", isbn10: Option.some("0062316095") }),
 );
 // A checksum failure is `Option.none()`, never a throw.
 assert.strictEqual(Option.isNone(decodeIsbn("978-0-06-231609-8")), true);
@@ -204,7 +204,7 @@ assert.ok(classic.includes("  month = mar,"));
 
 ### Dedup — `.`
 
-**`recordMatchInput(record): MatchInput`** projects a record to `{ title, authors }`; **`scoreMatch(incoming, candidate): MatchScore`** scores title-token Jaccard, author-surname Jaccard (`Option.none()` when either side has no authors) and the shared significant title tokens; **`isConfidentMatch(score)`** is the high-precision same-work decision (title ≥ 0.9 with author agreement ≥ 0.5, or title ≥ 0.95 with ≥ 2 shared tokens when there is no author signal); **`matchConfidence(score)`** ranks; **`bestConfidentMatch(incoming, candidates)`** picks the best confident candidate or `null`. Normalisers: `normaliseForMatch`, `titleTokens`, `authorSurname`.
+**`recordMatchInput(record): MatchInput`** projects a record to `{ title, authors }`; **`scoreMatch(incoming, candidate): MatchScore`** scores title-token Jaccard, author-surname Jaccard (`Option.none()` when either side has no authors) and the shared significant title tokens; **`isConfidentMatch(score)`** is the high-precision same-work decision (title ≥ 0.9 with author agreement ≥ 0.5, or title ≥ 0.95 with ≥ 2 shared tokens when there is no author signal); **`matchConfidence(score)`** ranks; **`bestConfidentMatch(incoming, candidates)`** picks the best confident candidate, an `Option`. Normalisers: `normaliseForMatch`, `titleTokens`, `authorSurname`.
 
 ```ts
 const score = scoreMatch(
@@ -218,7 +218,7 @@ assert.strictEqual(isConfidentMatch(score), true);
 
 **`renderReference(record, { style, locale? }): string`** and **`renderBibliography(records, options): RenderedBibliography`** — author-date styles sort by the style's `sortKey` and carry no label; numeric styles keep citation order and number each entry (`label: Option<string>`). **`bibliographyToText(bibliography)`** flattens to one line per entry. `locale` defaults to `enLocale`.
 
-**`apaStyle`** (APA 7th, author-date), **`vancouverStyle`** (numeric) and **`chicagoNotesStyle`** (Chicago 17th notes and bibliography, a note style) are the built-ins; `builtInStyles` holds the three (`{ apa, vancouver, "chicago-notes" }`) and `getStyle(id)` looks a style up by any id (`undefined` when unknown). A `CitationStyle` is data — `{ id, title, category, renderReference, sortKey }`, optionally `reference` (rich output) and `citation` (in-text settings: et-al thresholds, affixes, delimiters, a note style's first and short forms) — so a consumer can supply its own without touching the engine, composing the `format.ts` primitives (`formatNameList`, `givenInitials`, `issuedYearText`, `pagesLabel`, `preferredUrl`, `dispatchRich`, …).
+**`apaStyle`** (APA 7th, author-date), **`vancouverStyle`** (numeric) and **`chicagoNotesStyle`** (Chicago 17th notes and bibliography, a note style) are the built-ins; `builtInStyles` holds the three (`{ apa, vancouver, "chicago-notes" }`) and `getStyle(id)` looks a style up by any id (an `Option`, `Option.none()` when unknown). A `CitationStyle` is data — `{ id, title, category, renderReference, sortKey }`, optionally `reference` (rich output) and `citation` (in-text settings: et-al thresholds, affixes, delimiters, a note style's first and short forms) — so a consumer can supply its own without touching the engine, composing the `format.ts` primitives (`formatNameList`, `givenInitials`, `issuedYearText`, `pagesLabel`, `preferredUrl`, `dispatchRich`, …).
 
 **Rich text.** `renderReferenceRich(record, options): RichText` is the same reference with its formatting kept (APA's italic titles, journals and volumes; a linked DOI), and every `RenderedEntry` carries `rich` beside `text`. `RichText` is a small format-neutral inline AST (`Text`, `Italic`, `Bold`, `SmallCaps`, `Superscript`, `Subscript`, `NoCase`, `Link`, `Display`) with `toPlainText`, `toHtml` (citeproc-js's markup; a link renders only for an `http(s)` or `mailto` URL) and `toMarkdown` adapters. Italics flip-flop as in citeproc-js: italic inside italic (a species name in an italic book title) renders upright, as a `font-style:normal` span in HTML and outside the emphasis in Markdown. The string functions are `toPlainText` over the same tree.
 
@@ -335,7 +335,7 @@ program.pipe(Effect.provide(lookupLayer)); // Effect<Option<BiblioRecord>, Looku
 ## Compatibility
 
 - **Wire compatibility.** `BiblioRecord` decodes every record the website application has persisted; any change to its shape (a field name, a key's optionality, an identifier brand, the `provenance` / `extra` shape) is a major version. The item `id`, `categories`, the rest of the CSL 1.0.2 variables and the `pmid` / `pmcid` / `arxiv` identifier slots are all optional, so a record from before they were typed still decodes; `fromCslJson(toCslJson(record))` moves such a record's CSL variables out of `extra`.
-- **Plain-nullable returns.** `isbnForms(isbn).isbn10`, `parsePersonName`, `cslNameDisplay`, `yearOf`, `makeCslName` and `bestConfidentMatch` return `null`, and `getStyle` returns `undefined`, rather than an `Option`. This is a stable contract, not a migration in progress.
+- **`Option`, not nullables.** Every value that can be absent is an `Option`: `isbnForms(isbn).isbn10`, `parsePersonName`, `makeCslName`, `cslNameDisplay`, `yearOf`, `bestConfidentMatch` and `getStyle` included (they returned `null` / `undefined` before 0.2.0). Options objects take plain optional members (`{ mode: "lenient" }`; omit a key rather than pass `undefined`), and the `BiblioRecord` wire shape keeps its native optional keys.
 - **Scope.** The package stops at the CSL record: mapping records onto an application's own data model and persisting them stay in the application. Extracted from `thomasfosterau/website`'s `packages/biblio` with its git history; a `website#NNN` cite in a source comment is an issue in `thomasfosterau/website`.
 
 ## License

@@ -195,7 +195,9 @@ function sortKey(record: BiblioRecord): string {
   const first = record.author?.[0];
   const title = Option.getOrElse(plainField(record, "title"), () => "").toLowerCase();
   const author = first !== undefined ? sortFamily(first) : title;
-  const year = (yearOf(record.issued) ?? 0).toString().padStart(6, "0");
+  const year = Option.getOrElse(yearOf(record.issued), () => 0)
+    .toString()
+    .padStart(6, "0");
   return `${author} ${year} ${title}`;
 }
 

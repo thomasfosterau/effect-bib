@@ -150,10 +150,7 @@ function subjectList(values: Option.Option<readonly unknown[]>): Option.Option<r
 
 /** Structures a bounded list of author display names into {@link CslName}s. */
 function structuredAuthors(names: readonly string[]): CslName[] {
-  return Arr.filterMap(names, (name): Result.Result<CslName, void> => {
-    const parsed = parsePersonName(name);
-    return parsed === null ? Result.failVoid : Result.succeed(parsed);
-  }).slice(0, MAX_AUTHORS);
+  return Arr.getSomes(Arr.map(names, parsePersonName)).slice(0, MAX_AUTHORS);
 }
 
 /**

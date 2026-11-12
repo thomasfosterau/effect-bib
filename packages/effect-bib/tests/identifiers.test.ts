@@ -14,6 +14,7 @@
 
 import * as Arr from "effect/Array";
 import * as Option from "effect/Option";
+import * as Str from "effect/String";
 import * as Result from "effect/Result";
 import { describe, expect, it } from "vite-plus/test";
 import {
@@ -29,7 +30,7 @@ import {
   isbnForms,
   normaliseDoi,
 } from "@thomasfosterau/effect-bib";
-import { expectPresent, expectSome } from "./assert.ts";
+import { expectSome } from "./assert.ts";
 
 // ── Deterministic pseudo-random generator (dependency-free property tests) ─
 
@@ -67,8 +68,11 @@ function mutateDigit(rng: () => number, value: string): string {
   const positions = Arr.filterMap(value.split(""), (c, i): Result.Result<number, void> =>
     /\d/.test(c) ? Result.succeed(i) : Result.failVoid,
   );
-  const at = expectPresent(positions[Math.floor(rng() * positions.length)], "a digit position");
-  const original = Number(expectPresent(value[at], "a digit"));
+  const at = expectSome(
+    Arr.get(positions, Math.floor(rng() * positions.length)),
+    "a digit position",
+  );
+  const original = Number(expectSome(Str.charAt(value, at), "a digit"));
   // One draw, rotated forward on a collision, so the digit always changes.
   const drawn = Math.floor(rng() * 10);
   const replacement = String(drawn === original ? (drawn + 1) % 10 : drawn);
@@ -142,7 +146,7 @@ describe("ISBN 10 ↔ 13 conversion", () => {
     const isbn = decodeIsbn("9780140449136");
     expect(isbnForms(expectSome(isbn, "an ISBN"))).toEqual({
       isbn13: "9780140449136",
-      isbn10: "0140449132",
+      isbn10: Option.some("0140449132"),
     });
   });
 });

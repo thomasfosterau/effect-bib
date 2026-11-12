@@ -35,13 +35,10 @@ export const builtInStyles = {
 const STYLES_BY_ID = HashMap.fromIterable<string, CitationStyle>(R.toEntries(builtInStyles));
 
 /**
- * Resolves a built-in style by id, or `undefined` when unknown. Returns
- * `undefined`, not an `Option`, by contract (a stable shape existing
- * consumers rely on).
+ * Resolves a built-in style by id; `Option.none()` when the id is unknown.
  *
  * @since 0.1.0
  */
-// oxlint-disable-next-line effect/prefer-option-over-null -- cross-slice: apps/api consumes the plain `undefined`
-export function getStyle(id: string): CitationStyle | undefined {
-  return Option.getOrUndefined(HashMap.get(STYLES_BY_ID, id));
+export function getStyle(id: string): Option.Option<CitationStyle> {
+  return HashMap.get(STYLES_BY_ID, id);
 }

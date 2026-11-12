@@ -16,6 +16,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Arr from "effect/Array";
 import * as Option from "effect/Option";
 import { FetchHttpClient } from "effect/http";
 import {
@@ -27,7 +28,7 @@ import {
 } from "@thomasfosterau/effect-bib/sources";
 import { expectFailureInstanceOf, runTest } from "../effect.ts";
 import { stubRouter, type StubRouter } from "./stub-http.ts";
-import { expectPresent, expectSome } from "../assert.ts";
+import { expectSome } from "../assert.ts";
 import rayResponse from "../fixtures/crossref-ray-2004.json" with { type: "json" };
 import searchResponse from "../fixtures/openalex-search-sapiens.json" with { type: "json" };
 import ulyssesAuthor from "../fixtures/openlibrary-ulysses-author.json" with { type: "json" };
@@ -333,7 +334,9 @@ describe("BiblioLookup contact", () => {
   it("sends the configured address as OpenAlex's mailto", async () => {
     const { urls, layer } = stubRouter({});
     await runTest(withLookup(layer, (lookup) => lookup.byTitle("Sapiens")));
-    const mailto = new URL(expectPresent(urls[0])).searchParams.get("mailto");
+    const mailto = new URL(expectSome(Arr.head(urls), "a requested URL")).searchParams.get(
+      "mailto",
+    );
     expect(mailto).toBe(CONTACT.email);
   });
 

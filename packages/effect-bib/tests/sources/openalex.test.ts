@@ -17,6 +17,7 @@
 
 import { describe, expect, it } from "vite-plus/test";
 import * as Effect from "effect/Effect";
+import * as Arr from "effect/Array";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { decodeDoi } from "@thomasfosterau/effect-bib";
@@ -29,7 +30,7 @@ import {
 import { LookupFailed } from "../../src/sources/errors.ts";
 import { expectFailureInstanceOf, runTest } from "../effect.ts";
 import { filteredClient, stubRouter } from "./stub-http.ts";
-import { expectPresent, expectSome } from "../assert.ts";
+import { expectSome } from "../assert.ts";
 import rayWorkBody from "../fixtures/openalex-ray-2004.json" with { type: "json" };
 import searchResponse from "../fixtures/openalex-search-sapiens.json" with { type: "json" };
 
@@ -242,7 +243,12 @@ describe("searchOpenAlexByTitle", () => {
         layer,
       ),
     );
-    const requested = expectPresent(new URL(expectPresent(urls[0])).searchParams.get("search"));
+    const requested = expectSome(
+      Option.fromNullishOr(
+        new URL(expectSome(Arr.head(urls), "a requested URL")).searchParams.get("search"),
+      ),
+      "a search parameter",
+    );
     expect(requested.length).toBe(500);
   });
 
@@ -257,7 +263,9 @@ describe("searchOpenAlexByTitle", () => {
         layer,
       ),
     );
-    const mailto = new URL(expectPresent(urls[0])).searchParams.get("mailto");
+    const mailto = new URL(expectSome(Arr.head(urls), "a requested URL")).searchParams.get(
+      "mailto",
+    );
     expect(mailto).toBe(CONTACT.email);
   });
 });

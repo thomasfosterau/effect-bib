@@ -37,6 +37,17 @@ import {
 type Assert<T extends true> = T;
 type Equals<A, B> =
   (<X>() => X extends A ? 1 : 2) extends <X>() => X extends B ? 1 : 2 ? true : false;
+
+/**
+ * `true` when `K` is an optional key of `T` whose present value is exactly
+ * `V`: the wire shape's optional slot, asserted without spelling `V | undefined`.
+ */
+type OptionalSlot<T, K extends keyof T, V> =
+  Equals<Exclude<T[K], undefined>, V> extends true
+    ? Partial<Pick<T, K>> extends Pick<T, K>
+      ? true
+      : false
+    : false;
 type Not<T extends boolean> = T extends true ? false : true;
 
 declare const raw: string;
@@ -120,15 +131,13 @@ export type Checks = [
   Assert<Equals<typeof Arxiv.Encoded, string>>,
   Assert<Not<Equals<Isbn, string>>>,
   Assert<Not<Equals<Isbn, Doi>>>,
-  /* oxlint-disable effect/prefer-option-over-null -- asserts the record's own optional-key wire shape */
-  Assert<Equals<RecordIdentifiers["isbn"], Isbn | undefined>>,
-  Assert<Equals<RecordIdentifiers["doi"], Doi | undefined>>,
-  Assert<Equals<RecordIdentifiers["issn"], Issn | undefined>>,
-  Assert<Equals<RecordIdentifiers["pmid"], Pmid | undefined>>,
-  Assert<Equals<RecordIdentifiers["pmcid"], Pmcid | undefined>>,
-  Assert<Equals<RecordIdentifiers["arxiv"], Arxiv | undefined>>,
-  Assert<Equals<CslName["orcid"], Orcid | undefined>>,
-  /* oxlint-enable effect/prefer-option-over-null */
+  Assert<OptionalSlot<RecordIdentifiers, "isbn", Isbn>>,
+  Assert<OptionalSlot<RecordIdentifiers, "doi", Doi>>,
+  Assert<OptionalSlot<RecordIdentifiers, "issn", Issn>>,
+  Assert<OptionalSlot<RecordIdentifiers, "pmid", Pmid>>,
+  Assert<OptionalSlot<RecordIdentifiers, "pmcid", Pmcid>>,
+  Assert<OptionalSlot<RecordIdentifiers, "arxiv", Arxiv>>,
+  Assert<OptionalSlot<CslName, "orcid", Orcid>>,
 ];
 
 // ---------------------------------------------------------------------------
