@@ -61,7 +61,7 @@ export const jsonGet =
   ): Effect.Effect<Option.Option<S["Type"]>, LookupFailed, S["DecodingServices"]> =>
     client.get(`${base}${path}`).pipe(
       Effect.flatMap(HttpClientResponse.schemaBodyJson(schema)),
-      Effect.map(Option.some),
+      Effect.asSome,
       Effect.catchTags({
         HttpClientError: (error) =>
           isNotFound(error)

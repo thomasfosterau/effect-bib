@@ -90,7 +90,7 @@ function negotiate(
             Effect.mapError(() => failed("doi response was not JSON")),
           ),
         ),
-        Effect.map(Option.some),
+        Effect.asSome,
       );
     },
   );
