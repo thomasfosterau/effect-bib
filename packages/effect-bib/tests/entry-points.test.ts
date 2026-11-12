@@ -220,7 +220,7 @@ describe("sources entry point", () => {
 describe("package exports map", () => {
   // The two exports maps stay raw, so `toEqual` below sees every condition
   // in them rather than only the ones a schema would keep.
-  const manifest = Schema.decodeUnknownSync(
+  const manifest = Schema.decodeSync(
     Schema.fromJsonString(
       Schema.Struct({
         exports: Schema.Unknown,

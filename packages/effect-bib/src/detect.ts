@@ -15,7 +15,7 @@ const SNIFF_LENGTH = 64_000;
 
 /** True when the text is JSON. */
 const isJson = (text: string): boolean =>
-  Option.isSome(Schema.decodeUnknownOption(Schema.fromJsonString(Schema.Unknown))(text));
+  Option.isSome(Schema.decodeOption(Schema.fromJsonString(Schema.Unknown))(text));
 
 /** A CSV header naming a title column (the column the CSV parser requires). */
 const CSV_TITLE_HEADER = /^(?:[^\n,]*,)*\s*"?(?:title|name)"?\s*(?:,|$)/i;

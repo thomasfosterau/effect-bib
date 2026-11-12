@@ -86,7 +86,7 @@ function negotiate(
         return Effect.fail(failed(`upstream returned HTTP ${response.status}`));
       return readBoundedText(response, MAX_INPUT_LENGTH, "doi").pipe(
         Effect.flatMap((text) =>
-          Schema.decodeUnknownEffect(Schema.fromJsonString(Schema.Json))(text).pipe(
+          Schema.decodeEffect(Schema.fromJsonString(Schema.Json))(text).pipe(
             Effect.mapError(() => failed("doi response was not JSON")),
           ),
         ),

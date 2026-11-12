@@ -29,13 +29,13 @@ describe("cross-source dedup coherence: Crossref vs OpenAlex", () => {
   it("scores the same DOI'd work from both sources as a confident match", () => {
     const doi = expectSome(decodeDoi("10.1037/0003-066x.59.1.29"), "a DOI");
 
-    const crossrefResponse = Schema.decodeUnknownSync(CrossrefResponse)(crossrefRayBody);
+    const crossrefResponse = Schema.decodeSync(CrossrefResponse)(crossrefRayBody);
     const crossrefRecord = expectSome(
       normaliseCrossrefRecord(crossrefResponse, doi),
       "a Crossref record",
     );
     const openAlexRecord = expectSome(
-      normaliseOpenAlexRecord(Schema.decodeUnknownSync(OpenAlexWork)(openAlexRayBody)),
+      normaliseOpenAlexRecord(Schema.decodeSync(OpenAlexWork)(openAlexRayBody)),
       "an OpenAlex record",
     );
 
