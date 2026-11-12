@@ -914,11 +914,11 @@ function cleanDateParts(parts: readonly unknown[]): Option.Option<number[][]> {
 }
 
 /** A CSL `season` is a string or a number (1–4), else absent. */
-const decodeSeason = Schema.decodeUnknownOption(Schema.Union([Schema.String, Schema.Number]));
+const decodeSeason = Schema.decodeUnknownOption(Schema.Union([Schema.String, Schema.Finite]));
 
 /** A CSL `circa` flag is a boolean, number, or string, else absent. */
 const decodeCirca = Schema.decodeUnknownOption(
-  Schema.Union([Schema.Boolean, Schema.Number, Schema.String]),
+  Schema.Union([Schema.Boolean, Schema.Finite, Schema.String]),
 );
 
 /** A CSL date object as found in the wild; every member is still untrusted. */
