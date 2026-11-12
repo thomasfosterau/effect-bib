@@ -449,7 +449,7 @@ export const BiblioRecord = Schema.Struct({
   // Superset additions.
   identifiers: RecordIdentifiers,
   provenance: Provenance,
-  extra: Schema.optional(Schema.Record(Schema.String, Schema.Unknown)),
+  extra: Schema.optional(Schema.Record(Schema.String, Schema.Json)),
 });
 /**
  * @since 0.1.0
@@ -721,11 +721,12 @@ export function endYearOf(date: CslDate): Option.Option<number> {
 
 /**
  * A plain CSL-JSON item object (the interchange shape): string keys, each
- * value unread until a decoder checks it.
+ * value a JSON value, so {@link toCslJson}'s result is directly
+ * {@link fromCslJson}'s input.
  *
  * @since 0.1.0
  */
-export const CslJsonItem = Schema.Record(Schema.String, Schema.Unknown);
+export const CslJsonItem = Schema.Record(Schema.String, Schema.Json);
 
 /**
  * A plain CSL-JSON item object, as {@link toCslJson} writes it and
@@ -734,6 +735,9 @@ export const CslJsonItem = Schema.Record(Schema.String, Schema.Unknown);
  * @since 0.1.0
  */
 export type CslJsonItem = typeof CslJsonItem.Type;
+
+/** Whether a value is JSON (a function, `undefined` or a `Date` is not): the only values `extra` carries. */
+const isJsonValue = Schema.is(Schema.Json);
 
 /** A record's passthrough map: the CSL keys the model does not consume. */
 type RecordExtra = NonNullable<BiblioRecord["extra"]>;
@@ -783,9 +787,9 @@ export function toCslJson(record: BiblioRecord): CslJsonItem {
   if (pmid !== undefined) identifiers.PMID = pmid;
   if (pmcid !== undefined) identifiers.PMCID = pmcid;
   if (arxiv !== undefined && record.number === undefined) identifiers.number = `arXiv:${arxiv}`;
-  const item: Types.Mutable<Pick<BiblioRecord, "id" | "categories">> = {};
+  const item: Types.Mutable<CslJsonItemMembers> = {};
   if (record.id !== undefined) item.id = record.id;
-  if (record.categories !== undefined) item.categories = [...record.categories];
+  if (record.categories !== undefined) item.categories = record.categories;
   return {
     // Passthrough first so modelled fields win over any stale carried key.
     ...record.extra,
@@ -800,6 +804,12 @@ export function toCslJson(record: BiblioRecord): CslJsonItem {
     ),
     ...identifiers,
   };
+}
+
+/** The item-level CSL-JSON members {@link toCslJson} writes: JSON-typed, so each key is truly absent when unset. */
+interface CslJsonItemMembers {
+  readonly id?: string | number;
+  readonly categories?: readonly string[];
 }
 
 /** The CSL-JSON identifier variables {@link toCslJson} writes back from the branded slots. */
@@ -1148,6 +1158,7 @@ function readCslIdentifiers(
 function collectCslExtra(obj: Schema.JsonObject, aliased: HashSet.HashSet<string>): RecordExtra {
   return R.filter(
     obj,
-    (_value, key) => !HashSet.has(KNOWN_CSL_KEYS, key) && !HashSet.has(aliased, key),
+    (value, key) =>
+      !HashSet.has(KNOWN_CSL_KEYS, key) && !HashSet.has(aliased, key) && isJsonValue(value),
   );
 }
