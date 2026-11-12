@@ -14,6 +14,7 @@
 import * as Arr from "effect/Array";
 import * as Effect from "effect/Effect";
 import * as HashSet from "effect/HashSet";
+import * as Iterable from "effect/Iterable";
 import * as MutableHashMap from "effect/MutableHashMap";
 import * as MutableHashSet from "effect/MutableHashSet";
 import * as Option from "effect/Option";
@@ -25,6 +26,7 @@ import * as Str from "effect/String";
 import type { BibtexBudgets } from "./bibtex/budget.ts";
 import { DECODED_SOURCE_FACTOR } from "./bibtex/fields.ts";
 import { MIN_MACRO_EXPANSION } from "./bibtex/scan.ts";
+import { rowBreak } from "./csv-rows.ts";
 import { limitOr } from "./limits.ts";
 import {
   type ImportFormat,
@@ -142,37 +144,39 @@ function split(
   find: Finder,
   final: boolean,
 ): readonly [units: Unit[], rest: Buffered] {
-  const units: Unit[] = [];
-  const state = { text: buffered.text, position: buffered.position, going: true };
-  // oxlint-disable-next-line effect/imperative-loops -- each entry's extent is known only once it is found, and the next search starts where it ended; the number of entries in a chunk is not known in advance.
-  while (state.going) {
-    const found = find(state.text, final);
-    if (Option.isNone(found)) state.going = false;
-    else {
-      const [start, end] = found.value;
+  // Each step finds one entry in what the last one left, so the entries are
+  // as many as the buffer holds and the search resumes where each ended.
+  const steps = Arr.unfold({ text: buffered.text, position: buffered.position }, (state) =>
+    Option.map(find(state.text, final), ([start, end]) => {
       const position = advance(state.position, state.text.slice(0, start));
-      units.push({ text: state.text.slice(start, end), position });
-      state.position = advance(position, state.text.slice(start, end));
-      state.text = state.text.slice(end);
-    }
-  }
-  return [units, { text: state.text, position: state.position, tried: state.text.length }];
+      const text = state.text.slice(start, end);
+      const next = { text: state.text.slice(end), position: advance(position, text) };
+      return [{ unit: { text, position }, next }, next] as const;
+    }),
+  );
+  const left = Option.match(Arr.last(steps), {
+    onNone: () => ({ text: buffered.text, position: buffered.position }),
+    onSome: (last) => last.next,
+  });
+  return [steps.map((entry) => entry.unit), { ...left, tried: left.text.length }];
 }
 
 /** The index of the brace or parenthesis that closes the entry opened at `open`, or `None`. */
 function closing(text: string, open: number): Option.Option<number> {
   const paren = text[open] === "(";
-  const state = { depth: 0, at: -1 };
-  // oxlint-disable-next-line effect/imperative-loops -- a single-pass brace scanner that stops at the closing delimiter; a fold over the characters would allocate one element per character of an entry bounded only by the input cap.
-  for (let index = open + 1; index < text.length && state.at < 0; index++) {
-    const char = text[index];
-    if (char === "{") state.depth++;
-    else if (char === "}") {
-      if (state.depth === 0 && !paren) state.at = index;
-      else state.depth--;
-    } else if (char === ")" && paren && state.depth === 0) state.at = index;
-  }
-  return state.at < 0 ? Option.none() : Option.some(state.at);
+  const delimiters = paren ? /[{})]/g : /[{}]/g;
+  delimiters.lastIndex = open + 1;
+  // One step per delimiter (never per character), read lazily so the first
+  // close leaves the rest of the entry unread: at depth zero a `)` closes a
+  // parenthesised entry and a `}` a braced one; any other `}` lowers the depth.
+  const steps = Iterable.unfold(0, (depth: number) =>
+    Option.map(Option.fromNullishOr(delimiters.exec(text)), (match) => {
+      const close = depth === 0 && match[0] === (paren ? ")" : "}");
+      const next = match[0] === "{" ? depth + 1 : match[0] === "}" ? depth - 1 : depth;
+      return [close ? Result.succeed(match.index) : Result.failVoid, next] as const;
+    }),
+  );
+  return Iterable.head(Iterable.filterMap(steps, (close) => close));
 }
 
 /** No entry in the buffer: at the end, the rest is consumed (an empty span past it); before it, wait. */
@@ -227,18 +231,8 @@ const findParagraph: Finder = (buffer, final) => {
 };
 
 /** The end of the CSV row starting at `from` (past its line break), quotes spanning lines; `None` when open. */
-function rowEnd(text: string, from: number): Option.Option<number> {
-  const state = { quoted: false, at: -1 };
-  // oxlint-disable-next-line effect/imperative-loops -- the RFC-4180 row scanner (see parse.ts's splitCsvRows), stopping at the row's end.
-  for (let index = from; index < text.length && state.at < 0; index++) {
-    const char = text[index];
-    if (char === '"') state.quoted = !state.quoted;
-    else if ((char === "\n" || char === "\r") && !state.quoted) {
-      state.at = char === "\r" && text[index + 1] === "\n" ? index + 2 : index + 1;
-    }
-  }
-  return state.at < 0 ? Option.none() : Option.some(state.at);
-}
+const rowEnd = (text: string, from: number): Option.Option<number> =>
+  Option.map(rowBreak(text, from), ([, end]) => end);
 
 /** A CSV row (the header included), with its line break. */
 const findCsv: Finder = (buffer, final) => {
@@ -501,26 +495,39 @@ function remember(state: State, unit: Unit, cap: number): void {
     if (!MutableHashMap.has(state.parentIndex, key))
       MutableHashMap.set(state.parentIndex, key, parent);
     state.parentLength += unit.text.length;
-    // oxlint-disable-next-line effect/imperative-loops -- evicts from the front of the window until it is within both bounds; how many go depends on their lengths.
-    while (state.parents.length > PARENT_WINDOW || state.parentLength > cap) {
-      Option.map(Option.fromUndefinedOr(state.parents.shift()), (evicted) => {
-        state.parentLength -= evicted.text.length;
-        if (
-          Option.exists(
-            MutableHashMap.get(state.parentIndex, evicted.key),
-            (indexed) => indexed.seq === evicted.seq,
-          )
+    // The oldest parents leave until the window is within both bounds: the
+    // count bound is plain arithmetic, the length bound depends on how long
+    // the oldest are, so they are counted only while the window is too long.
+    const overCount = Math.max(0, state.parents.length - PARENT_WINDOW);
+    const overLength =
+      state.parentLength > cap
+        ? Arr.unfold({ count: 0, length: state.parentLength }, ({ count, length }) =>
+            Option.filter(Option.fromUndefinedOr(state.parents[count]), () => length > cap).pipe(
+              Option.map(
+                (oldest) =>
+                  [count + 1, { count: count + 1, length: length - oldest.text.length }] as const,
+              ),
+            ),
+          ).length
+        : 0;
+    const evicted = state.parents.splice(0, Math.max(overCount, overLength));
+    state.parentLength -= Arr.reduce(evicted, 0, (sum, old) => sum + old.text.length);
+    Arr.forEach(evicted, (gone) => {
+      if (
+        Option.exists(
+          MutableHashMap.get(state.parentIndex, gone.key),
+          (indexed) => indexed.seq === gone.seq,
         )
-          // The key falls back to its next entry still in the window (a scan of at most the window).
-          Option.match(
-            Arr.findFirst(state.parents, (entry) => entry.key === evicted.key),
-            {
-              onNone: () => MutableHashMap.remove(state.parentIndex, evicted.key),
-              onSome: (next) => MutableHashMap.set(state.parentIndex, evicted.key, next),
-            },
-          );
-      });
-    }
+      )
+        // The key falls back to its next entry still in the window (a scan of at most the window).
+        Option.match(
+          Arr.findFirst(state.parents, (entry) => entry.key === gone.key),
+          {
+            onNone: () => MutableHashMap.remove(state.parentIndex, gone.key),
+            onSome: (next) => MutableHashMap.set(state.parentIndex, gone.key, next),
+          },
+        );
+    });
   });
 }
 

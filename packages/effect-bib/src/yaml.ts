@@ -265,34 +265,56 @@ function afterItem(text: string, at: number, close: string): Option.Option<numbe
   return text[next] === close ? Option.some(next) : Option.none();
 }
 
+/**
+ * The items of a flow collection from `start` up to its `close`, and the
+ * index of that `close`. One step reads one item and the index after its
+ * separator, from where the last ended: `None` (which also ends the steps)
+ * when an item or its separator is malformed. The items are read in a flat
+ * unfold, never by recursion over the list, so a long list cannot overflow
+ * the stack; nesting is bounded by `MAX_DEPTH`.
+ */
+function flowItems<A>(
+  text: string,
+  start: number,
+  close: string,
+  readItem: (at: number) => Option.Option<readonly [A, number]>,
+): Option.Option<readonly [A[], number]> {
+  const steps = Arr.unfold(Option.some(start), (cursor) =>
+    Option.map(
+      Option.filter(cursor, (at) => text[at] !== close),
+      (at) => {
+        const read = Option.flatMap(readItem(at), ([item, after]) =>
+          Option.map(afterItem(text, after, close), (next) => [item, next] as const),
+        );
+        return [read, Option.map(read, ([, next]) => next)] as const;
+      },
+    ),
+  );
+  return Option.map(Option.all(steps), (read) => [
+    read.map(([item]) => item),
+    Option.getOrElse(
+      Option.map(Arr.last(read), ([, next]) => next),
+      () => start,
+    ),
+  ]);
+}
+
 /** Reads a `[…]` or `{…}` collection starting at `at`. */
 function readFlowCollection(
   text: string,
   at: number,
   depth: number,
 ): Option.Option<readonly [Yaml, number]> {
-  const mapping = text[at] === "{";
-  const close = mapping ? "}" : "]";
-  const items: Yaml[] = [];
-  const entries: Array<readonly [string, Yaml]> = [];
-  const state = { pos: skipBlank(text, at + 1), ok: true };
-  // oxlint-disable-next-line effect/imperative-loops -- a flow collection's items are read left to right from a moving offset; a fold over a pre-split list cannot split at the commas that matter (those outside nested brackets and quotes) without first parsing them, and recursion per item would overflow the stack on a long list.
-  while (state.ok && text[state.pos] !== close) {
-    const end = mapping
-      ? Option.map(flowEntry(text, state.pos, depth + 1), ([entry, after]) => {
-          entries.push(entry);
-          return after;
-        })
-      : Option.map(readFlow(text, state.pos, depth + 1), ([value, after]) => {
-          items.push(value);
-          return after;
-        });
-    const next = Option.flatMap(end, (after) => afterItem(text, after, close));
-    if (Option.isNone(next)) state.ok = false;
-    else state.pos = next.value;
-  }
-  if (!state.ok) return Option.none();
-  return Option.some([mapping ? R.fromEntries(entries) : items, state.pos + 1] as const);
+  const start = skipBlank(text, at + 1);
+  return text[at] === "{"
+    ? Option.map(
+        flowItems(text, start, "}", (pos) => flowEntry(text, pos, depth + 1)),
+        ([entries, close]) => [R.fromEntries(entries), close + 1] as const,
+      )
+    : Option.map(
+        flowItems(text, start, "]", (pos) => readFlow(text, pos, depth + 1)),
+        ([items, close]) => [items, close + 1] as const,
+      );
 }
 
 /** The lines of a block scalar (`|` or `>`) after a line at `parent` indentation, folded or kept. */
@@ -368,56 +390,55 @@ function nestedValue(reader: Reader, indent: number, depth: number, allowSequenc
   });
 }
 
-/** Reads a block mapping whose keys sit at `indent`. */
+/**
+ * Reads a block mapping whose keys sit at `indent`. Each entry consumes a run
+ * of lines known only once it is read, so each step reads from the reader's
+ * cursor (the reader is the state); the steps stop at a line that is not a key
+ * at `indent`, or when the reader has failed.
+ */
 function readMapping(reader: Reader, indent: number, depth: number): Yaml {
-  const entries: Array<readonly [string, Yaml]> = [];
-  const state = { going: true };
-  // oxlint-disable-next-line effect/imperative-loops -- an indentation-structured reader: each key's value consumes a run of lines whose length is known only once it is read, so the next key's position comes from the reader's cursor, not from a list a fold could walk.
-  while (state.going && !reader.failed) {
+  const entries = Arr.unfold(void 0, () => {
+    if (reader.failed) return Option.none();
     const line = peek(reader);
     const key = Option.flatMap(
       Option.filter(line, (next) => next.indent === indent),
       (next) => keyLine(next.text),
     );
     if (Option.isNone(key)) {
-      state.going = false;
       if (Option.exists(line, (next) => next.indent > indent)) reader.failed = true;
-    } else {
-      const [name, rest] = key.value;
-      const value = Str.isEmpty(rest)
-        ? nestedValue(reader, indent, depth, true)
-        : inlineValue(reader, rest, indent, false);
-      entries.push([name, value]);
+      return Option.none();
     }
-  }
+    const [name, rest] = key.value;
+    const value = Str.isEmpty(rest)
+      ? nestedValue(reader, indent, depth, true)
+      : inlineValue(reader, rest, indent, false);
+    return Option.some([[name, value] as const, void 0] as const);
+  });
   return R.fromEntries(entries);
 }
 
-/** Reads a block sequence whose `-` markers sit at `indent`. */
+/** Reads a block sequence whose `-` markers sit at `indent` (stepped as {@link readMapping}). */
 function readSequence(reader: Reader, indent: number, depth: number): Yaml {
-  const items: Yaml[] = [];
-  const state = { going: true };
-  // oxlint-disable-next-line effect/imperative-loops -- an indentation-structured reader: each entry consumes a run of lines whose length is known only once it is read (see readMapping).
-  while (state.going && !reader.failed) {
+  return Arr.unfold(void 0, () => {
+    if (reader.failed) return Option.none();
     const line = Option.filter(
       peek(reader),
       (next) => next.indent === indent && isEntry(next.text),
     );
-    if (Option.isNone(line)) state.going = false;
-    else {
-      const rest = line.value.text.slice(1).trimStart();
-      if (Str.isEmpty(rest)) items.push(nestedValue(reader, indent, depth, false));
-      else if (isEntry(rest) || Option.isSome(keyLine(rest))) {
+    return Option.map(line, (entry) => {
+      const rest = entry.text.slice(1).trimStart();
+      if (Str.isEmpty(rest)) return [nestedValue(reader, indent, depth, false), void 0] as const;
+      if (isEntry(rest) || Option.isSome(keyLine(rest))) {
         // A compact entry (`- key: value`, `- - x`): the rest of the line is
         // the first line of a node indented to where its text starts.
-        const at = indent + line.value.text.length - rest.length;
-        const compact: Line = { indent: at, text: rest, raw: line.value.raw };
+        const at = indent + entry.text.length - rest.length;
+        const compact: Line = { indent: at, text: rest, raw: entry.raw };
         reader.lines[reader.pos] = compact;
-        items.push(readNode(reader, compact, depth + 1));
-      } else items.push(inlineValue(reader, rest, indent, true));
-    }
-  }
-  return items;
+        return [readNode(reader, compact, depth + 1), void 0] as const;
+      }
+      return [inlineValue(reader, rest, indent, true), void 0] as const;
+    });
+  });
 }
 
 /**
