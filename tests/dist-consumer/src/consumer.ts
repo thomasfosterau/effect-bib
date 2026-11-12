@@ -155,6 +155,12 @@ export type Checks = [
   /** _recordEntrySharesTheSchema */ Assert<Equals<RecordEntryBiblioRecord, BiblioRecord>>,
   /** _recordEntrySharesTheBrands */ Assert<Equals<RecordEntryIsbn, Isbn>>,
   /** _recordEntryBrandIsBranded */ Assert<Not<Equals<RecordEntryDoi, string>>>,
+  /** _toCslJsonFeedsFromCslJson */ Assert<
+    typeof csl extends Parameters<typeof fromCslJson>[0] ? true : false
+  >,
+  /** _extraIsJson */ Assert<
+    NonNullable<BiblioRecord["extra"]> extends Parameters<typeof fromCslJson>[0] ? true : false
+  >,
   /** _isbnIsBranded */ Assert<Not<Equals<Isbn, string>>>,
   /** _doiIsBranded */ Assert<Not<Equals<Doi, string>>>,
   /** _brandsAreDistinct */ Assert<Not<Equals<Isbn, Doi>>>,

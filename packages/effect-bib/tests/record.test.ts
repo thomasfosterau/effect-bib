@@ -32,16 +32,12 @@ import {
   toCslJson,
   yearOf,
   type BiblioRecord,
-  type CslJsonItem,
 } from "@thomasfosterau/effect-bib";
 import { expectSome } from "./assert.ts";
 
 const doiOf = (raw: string) => expectSome(decodeDoi(raw), "a DOI");
 const issnOf = (raw: string) => expectSome(decodeIssn(raw), "an ISSN");
 const decodeString = Schema.decodeUnknownOption(Schema.String);
-const decodeJson = Schema.decodeUnknownOption(Schema.Json);
-/** `toCslJson`'s plain object, read back as the JSON value `fromCslJson` takes. */
-const asJson = (item: CslJsonItem) => expectSome(decodeJson(item), "a JSON item");
 
 // ── Surviving sanitisers ──────────────────────────────────────────────
 
@@ -214,7 +210,7 @@ describe("toCslJson / fromCslJson", () => {
   });
 
   it("round-trips the CSL core and re-validates identifiers (typed-superset invariant)", () => {
-    const back = fromCslJson(asJson(toCslJson(record)));
+    const back = fromCslJson(toCslJson(record));
     expect(back.title).toBe(record.title);
     expect(back.identifiers.doi).toBe(record.identifiers.doi);
     expect(back.identifiers.issn).toBe(record.identifiers.issn);
@@ -334,7 +330,7 @@ describe("the full CSL 1.0.2 variable set", () => {
       categories: ["one", "two"],
       "number-of-pages": "120",
     });
-    expect(fromCslJson(asJson(csl))).toEqual(fromCslJson(item));
+    expect(fromCslJson(csl)).toEqual(fromCslJson(item));
   });
 
   it("keeps a numeric id as a number", () => {
@@ -383,7 +379,7 @@ describe("the full CSL 1.0.2 variable set", () => {
       provenance: { source: "bibtex" },
       extra: { genre: "PhD thesis", PMID: "15371539", "tex.custom": "x" },
     };
-    expect(fromCslJson(asJson(toCslJson(old)))).toMatchObject({
+    expect(fromCslJson(toCslJson(old))).toMatchObject({
       genre: "PhD thesis",
       identifiers: { pmid: "15371539" },
       extra: { "tex.custom": "x" },
@@ -421,5 +417,39 @@ describe("the full CSL 1.0.2 variable set", () => {
       extra: { subject: ["History"], "title-short": "Sapiens" },
     };
     expect(Schema.decodeUnknownSync(BiblioRecordSchema)(persisted)).toEqual(persisted);
+  });
+
+  it("round-trips nested JSON extra through the schema decode and encode unchanged", () => {
+    const persisted = {
+      type: "book",
+      title: "Sapiens",
+      identifiers: {},
+      provenance: { source: "csl-json" },
+      extra: {
+        nested: { list: [1, 2.5, "three", true, false, null, { deep: [[], {}] }], flag: false },
+        count: 3,
+        nothing: null,
+      },
+    };
+    const decoded = Schema.decodeUnknownSync(BiblioRecordSchema)(persisted);
+    expect(decoded).toEqual(persisted);
+    expect(Schema.encodeSync(BiblioRecordSchema)(decoded)).toEqual(persisted);
+    // The JSON-typed projection feeds straight back into fromCslJson.
+    expect(fromCslJson(toCslJson(decoded)).extra).toEqual(persisted.extra);
+  });
+
+  it("rejects a non-JSON extra member at the schema, and fromCslJson drops it", () => {
+    const decode = Schema.decodeUnknownOption(BiblioRecordSchema);
+    const base = { type: "book", identifiers: {}, provenance: { source: "csl-json" } };
+    expect(Option.isNone(decode({ ...base, extra: { fn: () => 1 } }))).toBe(true);
+    expect(Option.isNone(decode({ ...base, extra: { missing: undefined } }))).toBe(true);
+    // `defineProperty` takes `any`: the way to plant a non-JSON member in a JSON-typed object.
+    const hostile = { type: "book", title: "t", ok: "kept" };
+    Object.defineProperty(hostile, "fn", { value: () => 1, enumerable: true });
+    Object.defineProperty(hostile, "missing", { value: undefined, enumerable: true });
+    const record = fromCslJson(hostile);
+    expect(record.title).toBe("t");
+    expect(Schema.is(BiblioRecordSchema)(record)).toBe(true);
+    expect(record.extra).toEqual({ ok: "kept" });
   });
 });
