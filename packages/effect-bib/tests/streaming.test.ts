@@ -317,6 +317,29 @@ describe("parseBibliographicStream's bounds", () => {
     return performance.now() - start;
   };
 
+  it("finds each outcome's start in linear time, however many entries one chunk holds", async () => {
+    const csv = (rows: number): string =>
+      ["title,isbn", ...Arr.makeBy(rows, (index) => `Title ${index},9780062316097`)].join("\n");
+    const options = { mode: "lenient", maxRecords: 1_000_000, maxInputLength: 10_000_000 } as const;
+    const run = async (rows: number): Promise<number> => {
+      const text = csv(rows);
+      let outcomes: readonly ParseOutcome[] = [];
+      const ms = await elapsed(async () => {
+        // One chunk: the whole text is a single batch of `rows` entries.
+        outcomes = await streamed(text, text.length, "csv", options);
+      });
+      expect(outcomes).toHaveLength(rows);
+      return ms;
+    };
+    await run(5000);
+    const small = await run(20_000);
+    const large = await run(200_000);
+    // Ten times the entries costs about ten times as long when each lookup is
+    // constant, about a hundred times when it scans the batch. The floor keeps
+    // a fast small run from inflating the ratio on a noisy runner.
+    expect(large / Math.max(small, 50)).toBeLessThan(40);
+  });
+
   it("finds context by name, so many macros and many entries stay linear", async () => {
     const macros = Arr.makeBy(60_000, (index) => `@string{m${index} = "Value ${index}"}`).join(
       "\n",
