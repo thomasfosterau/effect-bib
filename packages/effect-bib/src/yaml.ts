@@ -80,17 +80,23 @@ function toLines(source: string): Line[] {
   });
 }
 
+/**
+ * The run of lines from `from` that satisfy `keep`, up to the first that does
+ * not. Reads only the lines it takes, from the shared array and with no slice,
+ * so a caller that consumes the run (advances the cursor past it) visits every
+ * line a bounded number of times.
+ */
+const linesFrom = (lines: readonly Line[], from: number, keep: (line: Line) => boolean): Line[] =>
+  Arr.unfold(from, (at) =>
+    at < lines.length && keep(lines[at])
+      ? Option.some([lines[at], at + 1] as const)
+      : Option.none(),
+  );
+
 /** The next line with content, skipping blanks and comments; `None` at the end. */
 function peek(reader: Reader): Option.Option<Line> {
-  const next = Arr.findFirstIndex(reader.lines.slice(reader.pos), (line) =>
-    Str.isNonEmpty(line.text),
-  );
-  if (Option.isNone(next)) {
-    reader.pos = reader.lines.length;
-    return Option.none();
-  }
-  reader.pos += next.value;
-  return Option.some(reader.lines[reader.pos]);
+  reader.pos += linesFrom(reader.lines, reader.pos, (line) => Str.isEmpty(line.text)).length;
+  return Option.fromNullishOr(reader.lines[reader.pos]);
 }
 
 /** A `key:` at the start of a line: the key and the text after the colon. */
@@ -323,13 +329,12 @@ function blockScalar(reader: Reader, header: string, parent: number): string {
   const keep = header.includes("+");
   const strip = header.includes("-");
   reader.pos += 1;
-  const rest = reader.lines.slice(reader.pos);
-  const length = Option.getOrElse(
-    Arr.findFirstIndex(rest, (line) => Str.isNonEmpty(line.raw.trim()) && line.indent <= parent),
-    () => rest.length,
+  const body = linesFrom(
+    reader.lines,
+    reader.pos,
+    (line) => Str.isEmpty(line.raw.trim()) || line.indent > parent,
   );
-  const body = rest.slice(0, length);
-  reader.pos += length;
+  reader.pos += body.length;
   const indent = Option.getOrElse(
     Option.map(
       Arr.findFirst(body, (line) => Str.isNonEmpty(line.raw.trim())),
@@ -349,13 +354,13 @@ function blockScalar(reader: Reader, header: string, parent: number): string {
 function inlineValue(reader: Reader, text: string, parent: number, inSequence: boolean): Yaml {
   if (/^[|>][+-]?\d?$/.test(text)) return blockScalar(reader, text, parent);
   reader.pos += 1;
-  const rest = reader.lines.slice(reader.pos);
-  const length = Option.getOrElse(
-    Arr.findFirstIndex(rest, (line) => Str.isNonEmpty(line.text) && line.indent <= parent),
-    () => rest.length,
+  const run = linesFrom(
+    reader.lines,
+    reader.pos,
+    (line) => Str.isEmpty(line.text) || line.indent > parent,
   );
-  const continuation = rest.slice(0, length).filter((line) => Str.isNonEmpty(line.text));
-  reader.pos += length;
+  const continuation = run.filter((line) => Str.isNonEmpty(line.text));
+  reader.pos += run.length;
   const whole = [text, ...continuation.map((line) => line.text.trim())].join(" ");
   if (
     Arr.isArrayNonEmpty(continuation) &&

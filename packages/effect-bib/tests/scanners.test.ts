@@ -213,4 +213,23 @@ describe("YAML collections", () => {
     expect(parseCslYaml(flow, { mode: "lenient" })).toHaveLength(1);
     expect(parseCslYaml(block, { mode: "lenient" })).toHaveLength(2000);
   });
+  it("reads a long block sequence in linear time", () => {
+    /** The fastest of three runs, in milliseconds, of a parse of `count` short entries. */
+    const best = (count: number): number => {
+      const source = Arr.makeBy(count, (n) => `- e${n}`).join("\n");
+      return Math.min(
+        ...Arr.makeBy(3, () => {
+          const start = performance.now();
+          parseCslYaml(source, { mode: "lenient" });
+          return performance.now() - start;
+        }),
+      );
+    };
+    best(1000);
+    const small = best(5000);
+    const large = best(50_000);
+    // Ten times the entries costs about ten times as long; a slice per entry
+    // would cost about a hundred times. The bound is far from both.
+    expect(large / Math.max(small, 1)).toBeLessThan(40);
+  });
 });
