@@ -76,8 +76,8 @@ function titleWord(record: BiblioRecord): string {
  * @since 0.1.0
  */
 function generatedKey(record: BiblioRecord): string {
-  const year = yearOf(record.issued);
-  const key = `${authorPart(record)}${year === null ? "" : year}${titleWord(record)}`;
+  const year = Option.match(yearOf(record.issued), { onNone: () => "", onSome: (y) => `${y}` });
+  const key = `${authorPart(record)}${year}${titleWord(record)}`;
   return Str.isEmpty(key) ? "ref" : key;
 }
 

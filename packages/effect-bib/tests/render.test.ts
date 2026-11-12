@@ -50,7 +50,7 @@ import {
   toHtml,
   vancouverStyle,
 } from "@thomasfosterau/effect-bib";
-import { expectPresent, expectSome } from "./assert.ts";
+import { expectSome } from "./assert.ts";
 
 // ── Test data builders (kept trivial for a low CRAP score) ────────────
 
@@ -58,7 +58,7 @@ const cslName = (
   family: string,
   given: string,
   extra: Partial<Parameters<typeof makeCslName>[0]> = {},
-): CslName => expectPresent(makeCslName({ family, given, ...extra }), "a non-empty name");
+): CslName => expectSome(makeCslName({ family, given, ...extra }), "a non-empty name");
 
 const doi = (raw: string) => expectSome(decodeDoi(raw), "a DOI");
 const isbn = (raw: string) => expectSome(decodeIsbn(raw), "an ISBN");
@@ -369,12 +369,12 @@ describe("locale input", () => {
 
 describe("getStyle / builtInStyles", () => {
   it("resolves a known style by id", () => {
-    expect(getStyle("apa")).toBe(apaStyle);
-    expect(getStyle("vancouver")).toBe(vancouverStyle);
+    expect(getStyle("apa")).toEqual(Option.some(apaStyle));
+    expect(getStyle("vancouver")).toEqual(Option.some(vancouverStyle));
   });
 
   it("returns undefined for an unknown id", () => {
-    expect(getStyle("chicago")).toBeUndefined();
+    expect(getStyle("chicago")).toEqual(Option.none());
   });
 
   it("exposes the built-in styles", () => {
@@ -448,10 +448,7 @@ describe("familyName / sortFamily", () => {
   });
 
   it("sorts an organisational (literal) name by its literal", () => {
-    const org = expectPresent(
-      makeCslName({ literal: "World Health Organization" }),
-      "a literal name",
-    );
+    const org = expectSome(makeCslName({ literal: "World Health Organization" }), "a literal name");
     expect(sortFamily(org)).toBe("world health organization");
   });
 });
@@ -470,7 +467,7 @@ describe("formatOneName", () => {
   };
 
   it("renders a literal name verbatim", () => {
-    const org = expectPresent(makeCslName({ literal: "OpenAI" }), "a literal name");
+    const org = expectSome(makeCslName({ literal: "OpenAI" }), "a literal name");
     expect(formatOneName(org, apaOpts)).toBe("OpenAI");
   });
 
@@ -485,12 +482,12 @@ describe("formatOneName", () => {
   });
 
   it("renders a family-only name", () => {
-    const n = expectPresent(makeCslName({ family: "Aristotle" }), "a family name");
+    const n = expectSome(makeCslName({ family: "Aristotle" }), "a family name");
     expect(formatOneName(n, apaOpts)).toBe("Aristotle");
   });
 
   it("renders a given-only name", () => {
-    const n = expectPresent(makeCslName({ given: "Cher" }), "a given name");
+    const n = expectSome(makeCslName({ given: "Cher" }), "a given name");
     expect(formatOneName(n, apaOpts)).toBe("C.");
   });
 

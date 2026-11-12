@@ -598,18 +598,9 @@ function isEmptyName(name: CslName): boolean {
   );
 }
 
-/*
- * The four `null`-returning helpers below (`makeCslName`, `parsePersonName`,
- * `cslNameDisplay`, `yearOf`) return `null`, not `Option`, by contract:
- * website's `apps/api/src/biblio/*` consumes them as plain nullables. See
- * "The plain-nullable seams stay" in packages/effect-bib/AGENTS.md. The bodies
- * use the `Option`-returning sanitisers and convert at the return.
- */
-/* oxlint-disable effect/prefer-option-over-null -- cross-slice: consumed as plain nullables by apps/api */
-
 /**
  * Builds a sanitised {@link CslName} from loose parts, dropping empty
- * fields and validating an ORCID where present. Returns `null` when the
+ * fields and validating an ORCID where present. `Option.none()` when the
  * result carries nothing usable.
  *
  * @since 0.1.0
@@ -622,7 +613,7 @@ export function makeCslName(parts: {
   readonly suffix?: unknown;
   readonly literal?: unknown;
   readonly orcid?: unknown;
-}): CslName | null {
+}): Option.Option<CslName> {
   const name: Types.Mutable<CslName> = {};
   const family = sanitiseText(parts.family);
   if (Option.isSome(family)) name.family = family.value;
@@ -640,20 +631,20 @@ export function makeCslName(parts: {
     const orcid = decodeOrcid(parts.orcid);
     if (Option.isSome(orcid)) name.orcid = orcid.value;
   }
-  return isEmptyName(name) ? null : name;
+  return isEmptyName(name) ? Option.none() : Option.some(name);
 }
 
 /**
  * Parses a display-form personal name into a structured {@link CslName}.
  * Handles both orderings: `"Family, Given"` (the text before the first
  * comma is the family name) and `"Given Family"` (the family name is the
- * last token). Returns `null` for an empty name.
+ * last token). `Option.none()` for an empty name.
  *
  * @since 0.1.0
  */
-export function parsePersonName(raw: string): CslName | null {
+export function parsePersonName(raw: string): Option.Option<CslName> {
   const sanitised = sanitiseText(raw);
-  if (Option.isNone(sanitised)) return null;
+  if (Option.isNone(sanitised)) return Option.none();
   const cleaned = sanitised.value;
   const comma = cleaned.indexOf(",");
   if (comma >= 0) {
@@ -666,16 +657,16 @@ export function parsePersonName(raw: string): CslName | null {
 
 /**
  * The display form of a {@link CslName}: the CSL `literal` verbatim, else
- * `"Given Family"`, else the family name alone. `null` when empty.
+ * `"Given Family"`, else the family name alone; `Option.none()` when empty.
  *
  * @since 0.1.0
  */
-export function cslNameDisplay(name: CslName): string | null {
-  if (name.literal !== undefined) return name.literal;
+export function cslNameDisplay(name: CslName): Option.Option<string> {
+  if (name.literal !== undefined) return Option.some(name.literal);
   if (name.family !== undefined) {
-    return name.given !== undefined ? `${name.given} ${name.family}` : name.family;
+    return Option.some(name.given !== undefined ? `${name.given} ${name.family}` : name.family);
   }
-  return name.given ?? null;
+  return Option.fromUndefinedOr(name.given);
 }
 
 /**
@@ -689,19 +680,20 @@ export function dateFromYear(year: number): CslDate {
 
 /**
  * The year of a {@link CslDate} — `date-parts[0][0]` (a range's start),
- * else the first four-digit year of its `raw` form, sanitised — or `null`.
+ * else the first four-digit year of its `raw` form, sanitised; `Option.none()`
+ * when there is none (or no date).
  * A season (CSL's `season`, or a month of 21–24) never changes the year.
  *
  * @since 0.1.0
  */
-export function yearOf(date: CslDate | undefined): number | null {
+export function yearOf(date?: CslDate): Option.Option<number> {
   const first = date?.["date-parts"]?.[0]?.[0];
-  if (first !== undefined) return Option.getOrNull(sanitiseYear(first));
-  const raw = date?.raw === undefined ? null : /\b(\d{4})\b/.exec(date.raw);
-  return raw === null ? null : Option.getOrNull(sanitiseYear(raw[1]));
+  if (first !== undefined) return sanitiseYear(first);
+  return Option.flatMap(
+    Option.flatMapNullishOr(Option.fromUndefinedOr(date?.raw), (raw) => /\b(\d{4})\b/.exec(raw)),
+    (match) => sanitiseYear(match[1]),
+  );
 }
-
-/* oxlint-enable effect/prefer-option-over-null */
 
 /**
  * The last year of a {@link CslDate} range — the year of its second
@@ -713,7 +705,8 @@ export function yearOf(date: CslDate | undefined): number | null {
 export function endYearOf(date: CslDate): Option.Option<number> {
   const last = date["date-parts"]?.[1]?.[0];
   if (last === undefined) return Option.none();
-  return Option.filter(sanitiseYear(last), (end) => end !== yearOf(date));
+  const start = yearOf(date);
+  return Option.filter(sanitiseYear(last), (end) => Option.isNone(start) || end !== start.value);
 }
 
 // ── CSL-JSON interop ──────────────────────────────────────────────────
@@ -856,17 +849,15 @@ const decodeUnknownArray = Schema.decodeUnknownOption(Schema.Array(Schema.Unknow
 // oxlint-disable-next-line effect/no-unknown-parameters -- untrusted-input boundary: a total decoder over any CSL name value (see "The untrusted-input boundary" in packages/effect-bib/AGENTS.md)
 export function readCslName(entry: unknown): Option.Option<CslName> {
   return Option.flatMap(decodeCslNameInput(entry), (obj) =>
-    Option.fromNullishOr(
-      makeCslName({
-        family: obj.family,
-        given: obj.given,
-        droppingParticle: obj["dropping-particle"],
-        nonDroppingParticle: obj["non-dropping-particle"],
-        suffix: obj.suffix,
-        literal: obj.literal ?? obj.name,
-        orcid: obj.orcid,
-      }),
-    ),
+    makeCslName({
+      family: obj.family,
+      given: obj.given,
+      droppingParticle: obj["dropping-particle"],
+      nonDroppingParticle: obj["non-dropping-particle"],
+      suffix: obj.suffix,
+      literal: obj.literal ?? obj.name,
+      orcid: obj.orcid,
+    }),
   );
 }
 

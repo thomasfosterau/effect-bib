@@ -69,12 +69,14 @@ export default defineConfig({
       // The canonical helper-module aliases (`Arr`, `P`, `R`, `Str`, `Eq`,
       // `Bool`; every other module under its full name), at `error` (#167).
       "effect/prefer-namespace-imports": "error",
+      // Lint to zero (#169)
+      "effect/imperative-loops": "error",
 
       // No ported-code allowances remain: every preset rule is at its `error`
-      // level. `prefer-option-over-null` and `no-unknown-parameters` stay
-      // there with a handful of per-site `oxlint-disable` justifications —
-      // the plain-nullable seams and the untrusted-input boundary listed in
-      // packages/effect-bib/AGENTS.md — so a new site cannot land silently.
+      // level. `prefer-option-over-null` has no exception (#168);
+      // `no-unknown-parameters` keeps the per-site justifications on the
+      // untrusted-input boundary listed in packages/effect-bib/AGENTS.md
+      // (#169), so a new site cannot land silently.
       // `_tag` is Effect's discriminant (tagged unions, `Data.TaggedError`).
       "eslint/no-underscore-dangle": ["error", { allow: ["_tag"] }],
       // The library builds immutable values (readonly records and arrays): a
@@ -102,6 +104,9 @@ export default defineConfig({
       // so an `unknown` error channel cannot land (the public
       // `ResolveAddresses` was the last, #136).
       "effecttsgo/any-unknown-in-error-context": "error",
+      // Lint to zero (#169): each preset rule cleared of its sites is held at
+      // `error` here until the whole preset flips.
+      "effecttsgo/prefer-typed-schema-decoder": "error",
       "typescript/no-explicit-any": "off",
       "typescript/no-empty-object-type": "off",
       "typescript/ban-ts-comment": "off",

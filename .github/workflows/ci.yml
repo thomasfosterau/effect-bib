@@ -37,7 +37,18 @@ jobs:
       - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
-      - uses: $/.github/actions/setup
+      # `cache: true` restores the pnpm store (keyed on pnpm-lock.yaml); the
+      # `vite-plus` pin comes from the catalog. Never `latest` for Node: `lts`
+      # is the newest LTS line (a pre-release can be `latest`). The install is
+      # frozen and keeps lifecycle scripts on (the type gate needs the
+      # Effect-patched `tsc` that `prepare` produces).
+      - uses: voidzero-dev/setup-vp@v1.22.0
+        with:
+          version-file: pnpm-workspace.yaml
+          node-version: lts
+          cache: true
+          run-install: |
+            - args: ["--frozen-lockfile"]
       - name: Restore the Vite+ task cache
         uses: actions/cache@v6.1.0
         with:
@@ -46,14 +57,14 @@ jobs:
           restore-keys: |
             vp-task-v1-${{ runner.os }}-
       - name: Format and lint
-        run: pnpm exec vp check
+        run: vp check
       # Build first, as its own step. `check` (through the dist-consumer
       # check) and `test:coverage` each depend on `build` as well, so neither
       # can run against a missing dist/ (#22).
       - name: Build
-        run: pnpm exec vp run -r build
+        run: vp run -r build
       - name: Type gates (package, type-level tests, emitted declarations)
-        run: pnpm exec vp run --concurrency-limit 2 check
+        run: vp run --concurrency-limit 2 check
       # `test:coverage`, not `test:unit` (#49): the same tests, plus two gates
       # the plain run lacks. vite-plus's `test --coverage` guard throws unless
       # `@vitest/coverage-istanbul` equals its bundled `vitest` exactly (#47),
@@ -62,11 +73,11 @@ jobs:
       # Pandoc's BibLaTeX test cases for the BibTeX oracle (#91): GPL, so
       # fetched at a pinned commit rather than vendored.
       - name: Fetch the oracle corpora
-        run: pnpm exec vp run --filter ./packages/effect-bib oracles:fetch
+        run: vp run --filter ./packages/effect-bib oracles:fetch
       - name: Unit tests + coverage
-        run: pnpm exec vp run -r test:coverage
+        run: vp run -r test:coverage
       # Type-checks AND runs every JSDoc @example.
       - name: Verify documentation examples (docgen)
-        run: pnpm exec vp run -r docgen
+        run: vp run -r docgen
       - name: Audit
         run: pnpm audit --audit-level high

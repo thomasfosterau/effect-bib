@@ -29,7 +29,6 @@
 import * as Arr from "effect/Array";
 import * as HashSet from "effect/HashSet";
 import * as Option from "effect/Option";
-import * as Result from "effect/Result";
 import * as Str from "effect/String";
 import { type BiblioRecord, cslNameDisplay } from "./record.ts";
 import { stripCslMarkup } from "./render/markup.ts";
@@ -132,10 +131,7 @@ export interface MatchInput {
  * @since 0.1.0
  */
 export function recordMatchInput(record: BiblioRecord): MatchInput {
-  const authors = Arr.filterMap(record.author ?? [], (name): Result.Result<string, void> => {
-    const display = cslNameDisplay(name);
-    return display === null ? Result.failVoid : Result.succeed(display);
-  });
+  const authors = Arr.getSomes(Arr.map(record.author ?? [], cslNameDisplay));
   return { title: stripCslMarkup(record.title ?? ""), authors };
 }
 
@@ -262,21 +258,17 @@ export function matchConfidence(score: MatchScore): number {
   return Option.isNone(score.author) ? score.title : score.title * 0.7 + score.author.value * 0.3;
 }
 
-/* oxlint-disable effect/prefer-option-over-null -- cross-slice: apps/api consumes the plain nullable */
 /**
  * Picks the single best **confident** same-work match for `incoming` from a
  * candidate set — the highest {@link matchConfidence} among those that pass
- * {@link isConfidentMatch} — or `null` when none is confident. Pass
- * pre-filtered candidates (e.g. by title similarity, with their authors).
- * Pure and deterministic.
- *
- * Returns `null` rather than an `Option` by design: the plain-nullable
- * shape is a stable contract with existing consumers, not a pending
- * migration.
+ * {@link isConfidentMatch} — or `Option.none()` when none is confident.
+ * Pass pre-filtered candidates (e.g. by title similarity, with their
+ * authors). Pure and deterministic.
  *
  * @example
  * ```ts
  * import * as assert from "node:assert"
+ * import * as Option from "effect/Option"
  * import { bestConfidentMatch } from "@thomasfosterau/effect-bib"
  *
  * const incoming = { title: "The Hobbit", authors: ["J. R. R. Tolkien"] }
@@ -284,7 +276,7 @@ export function matchConfidence(score: MatchScore): number {
  *   { id: 1, title: "The Silmarillion", authors: ["Tolkien"] },
  *   { id: 2, title: "Hobbit", authors: ["Tolkien, J.R.R."] },
  * ])
- * assert.strictEqual(best?.id, 2)
+ * assert.deepStrictEqual(Option.map(best, ({ id }) => id), Option.some(2))
  * ```
  *
  * @since 0.1.0
@@ -292,8 +284,7 @@ export function matchConfidence(score: MatchScore): number {
 export function bestConfidentMatch<T extends MatchInput>(
   incoming: MatchInput,
   candidates: readonly T[],
-): T | null {
-  /* oxlint-enable effect/prefer-option-over-null */
+): Option.Option<T> {
   type Best = Option.Option<{ readonly candidate: T; readonly confidence: number }>;
   const best = Arr.reduce<T, Best>(candidates, Option.none(), (acc, candidate) => {
     const score = scoreMatch(incoming, candidate);
@@ -303,5 +294,5 @@ export function bestConfidentMatch<T extends MatchInput>(
       ? Option.some({ candidate, confidence })
       : acc;
   });
-  return Option.isNone(best) ? null : best.value.candidate;
+  return Option.map(best, ({ candidate }) => candidate);
 }

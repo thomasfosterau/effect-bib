@@ -33,7 +33,7 @@ catalog:
   # is unchanged in 6. 4.1 depends on `effect` / `@effect/platform-node`
   # ^4.1.1, which the `effect` override forces onto the catalog singleton, so
   # it moves with (never ahead of) the `effect` entry below.
-  "@effect/docgen": ^4.1.2
+  "@effect/docgen": ^4.1.3
   "@effect/language-service": ^0.87.5
   # Effect Language Service as a native (TypeScript-Go) binary — the TS7 side
   # of the 6/7 split. `effect-tsgo patch` overwrites the native `tsc` binary
@@ -50,7 +50,7 @@ catalog:
   # GHSA-587h-7wmj-h5pm (a high that fails `pnpm audit`). Read the `components` table in
   # node_modules/@effect/tsgo/dist/effect-tsgo.cjs before bumping any of the
   # three.
-  "@effect/tsgo": 0.67.5
+  "@effect/tsgo": 0.67.7
   # The Effect lint rules (`effect/*`, anti-slop included), registered as an
   # oxlint JS plugin by `vite.config.ts`; replaces
   # `@mpsuesser/oxlint-plugin-effect`. Depends on `effect` exactly (0.9.0 →
@@ -70,8 +70,8 @@ catalog:
   # and `peerDependencyRules` (`allowAny: vitest`, below) accepts any `vitest`
   # version whatever range the peer declares.
   "@vitest/coverage-istanbul": 5.1.0
-  effect: 4.1.2
-  fallow: 3.41.0
+  effect: 4.1.3
+  fallow: 3.42.0
   # Exists only for docgen: `@effect/docgen` requires it as a peer and spawns
   # the `tsx` binary itself to run each example. Scripts never invoke it;
   # they run TypeScript with `vpx <file>.ts`.
@@ -96,7 +96,7 @@ catalog:
   # version: bumping vite-plus means reading its new `vitest` pin from
   # node_modules/vite-plus/package.json and setting `vite`, `vitest` and the
   # coverage provider with it.
-  vite-plus: 1.5.0
+  vite-plus: 1.5.1
   vite: npm:@voidzero-dev/vite-plus-core@1.4.0
   vitest: 5.1.0
 

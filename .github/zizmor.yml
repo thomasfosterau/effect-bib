@@ -1,5 +1,5 @@
 # zizmor (GitHub Actions static analysis) configuration. Run it with
-# `uvx zizmor --offline .github`; every workflow and the setup action should
+# `uvx zizmor --offline .github`; every workflow should
 # report no findings beyond what is configured away here, each with its reason.
 rules:
   dependabot-cooldown:

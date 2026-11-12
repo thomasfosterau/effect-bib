@@ -78,72 +78,82 @@ describe("sanitiseYear", () => {
 
 describe("parsePersonName", () => {
   it("splits a 'Family, Given' form", () => {
-    expect(parsePersonName("Harari, Yuval Noah")).toEqual({
-      family: "Harari",
-      given: "Yuval Noah",
-    });
+    expect(parsePersonName("Harari, Yuval Noah")).toEqual(
+      Option.some({
+        family: "Harari",
+        given: "Yuval Noah",
+      }),
+    );
   });
 
   it("splits a 'Given Family' form on the last token", () => {
-    expect(parsePersonName("John Ronald Reuel Tolkien")).toEqual({
-      family: "Tolkien",
-      given: "John Ronald Reuel",
-    });
+    expect(parsePersonName("John Ronald Reuel Tolkien")).toEqual(
+      Option.some({
+        family: "Tolkien",
+        given: "John Ronald Reuel",
+      }),
+    );
   });
 
   it("treats a single token as a bare family name", () => {
-    expect(parsePersonName("Aristotle")).toEqual({ family: "Aristotle" });
+    expect(parsePersonName("Aristotle")).toEqual(Option.some({ family: "Aristotle" }));
   });
 
   it("returns null for an empty name", () => {
-    expect(parsePersonName("   ")).toBeNull();
+    expect(parsePersonName("   ")).toEqual(Option.none());
   });
 });
 
 describe("makeCslName", () => {
   it("keeps a checksum-valid ORCID and drops empty parts", () => {
-    expect(makeCslName({ family: "Curie", orcid: "0000-0002-1825-0097" })).toEqual({
-      family: "Curie",
-      orcid: "0000-0002-1825-0097",
-    });
+    expect(makeCslName({ family: "Curie", orcid: "0000-0002-1825-0097" })).toEqual(
+      Option.some({
+        family: "Curie",
+        orcid: "0000-0002-1825-0097",
+      }),
+    );
   });
 
   it("drops an invalid ORCID but keeps the name", () => {
-    expect(makeCslName({ family: "Curie", orcid: "bogus" })).toEqual({ family: "Curie" });
+    expect(makeCslName({ family: "Curie", orcid: "bogus" })).toEqual(
+      Option.some({ family: "Curie" }),
+    );
   });
 
   it("returns null when nothing usable remains", () => {
-    expect(makeCslName({})).toBeNull();
-    expect(makeCslName({ family: "  " })).toBeNull();
+    expect(makeCslName({})).toEqual(Option.none());
+    expect(makeCslName({ family: "  " })).toEqual(Option.none());
   });
 });
 
 describe("cslNameDisplay", () => {
   it("prefers a literal, then 'Given Family', then family, then given", () => {
-    expect(cslNameDisplay({ literal: "World Bank" })).toBe("World Bank");
-    expect(cslNameDisplay({ family: "Harari", given: "Yuval" })).toBe("Yuval Harari");
-    expect(cslNameDisplay({ family: "Plato" })).toBe("Plato");
-    expect(cslNameDisplay({ given: "Cher" })).toBe("Cher");
-    expect(cslNameDisplay({})).toBeNull();
+    expect(cslNameDisplay({ literal: "World Bank" })).toEqual(Option.some("World Bank"));
+    expect(cslNameDisplay({ family: "Harari", given: "Yuval" })).toEqual(
+      Option.some("Yuval Harari"),
+    );
+    expect(cslNameDisplay({ family: "Plato" })).toEqual(Option.some("Plato"));
+    expect(cslNameDisplay({ given: "Cher" })).toEqual(Option.some("Cher"));
+    expect(cslNameDisplay({})).toEqual(Option.none());
   });
 });
 
 describe("yearOf / dateFromYear / isCslItemType", () => {
   it("extracts the year from a date-parts date", () => {
-    expect(yearOf(dateFromYear(1962))).toBe(1962);
+    expect(yearOf(dateFromYear(1962))).toEqual(Option.some(1962));
   });
 
   it("returns null for a missing or partless date", () => {
-    expect(yearOf(undefined)).toBeNull();
-    expect(yearOf({ literal: "in press" })).toBeNull();
+    expect(yearOf(undefined)).toEqual(Option.none());
+    expect(yearOf({ literal: "in press" })).toEqual(Option.none());
   });
 
   it("reads a range's start year, a raw date's year, and ignores a season", () => {
-    expect(yearOf({ "date-parts": [[2001, 5], [2003]] })).toBe(2001);
-    expect(yearOf({ raw: "Spring 2004" })).toBe(2004);
-    expect(yearOf({ raw: "no year" })).toBeNull();
-    expect(yearOf({ "date-parts": [[2010, 21]], season: "Spring" })).toBe(2010);
-    expect(yearOf({ "date-parts": [[9999]], raw: "2001" })).toBeNull();
+    expect(yearOf({ "date-parts": [[2001, 5], [2003]] })).toEqual(Option.some(2001));
+    expect(yearOf({ raw: "Spring 2004" })).toEqual(Option.some(2004));
+    expect(yearOf({ raw: "no year" })).toEqual(Option.none());
+    expect(yearOf({ "date-parts": [[2010, 21]], season: "Spring" })).toEqual(Option.some(2010));
+    expect(yearOf({ "date-parts": [[9999]], raw: "2001" })).toEqual(Option.none());
   });
 
   it("reads a range's end year only when it differs from its start", () => {

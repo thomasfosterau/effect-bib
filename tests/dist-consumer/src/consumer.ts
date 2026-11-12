@@ -68,6 +68,17 @@ type Equals<A, B> =
   (<X>() => X extends A ? 1 : 2) extends <X>() => X extends B ? 1 : 2 ? true : false;
 type Not<T extends boolean> = T extends true ? false : true;
 
+/**
+ * `true` when `K` is an optional key of `T` whose present value is exactly
+ * `V`: the wire shape's optional slot, asserted without spelling `V | undefined`.
+ */
+type OptionalSlot<T, K extends keyof T, V> =
+  Equals<Exclude<T[K], undefined>, V> extends true
+    ? Partial<Pick<T, K>> extends Pick<T, K>
+      ? true
+      : false
+    : false;
+
 declare const raw: string;
 declare const client: HttpClient.HttpClient;
 
@@ -85,7 +96,6 @@ export const forms = Option.map(isbn, isbnForms);
 export const record: BiblioRecord = fromCslJson({ type: "book", title: "Sapiens" });
 export const limited: BiblioRecord = fromCslJson({ type: "book" }, { maxAuthors: 500 });
 export const csl = toCslJson(record);
-type IdentifierSlot = BiblioRecord["identifiers"]["isbn"];
 export const markup: RichText = parseCslMarkup("<i>Sapiens</i>");
 
 // ── parse ─────────────────────────────────────────────────────────────────
@@ -136,37 +146,22 @@ export type Checks = [
   /** _isbnIsBranded */ Assert<Not<Equals<Isbn, string>>>,
   /** _doiIsBranded */ Assert<Not<Equals<Doi, string>>>,
   /** _brandsAreDistinct */ Assert<Not<Equals<Isbn, Doi>>>,
-  // oxlint-disable-next-line effect/prefer-option-over-null -- asserts the record's own optional-key wire shape
-  /** _identifierSlotIsBranded */ Assert<Equals<IdentifierSlot, Isbn | undefined>>,
+  /** _identifierSlotIsBranded */ Assert<OptionalSlot<BiblioRecord["identifiers"], "isbn", Isbn>>,
   /** _itemTypeIsClosed */ Assert<Equals<Extract<CslItemType, "book">, "book">>,
   /** _pubMedAndArxivAreBranded */ Assert<Not<Equals<Pmid, string>>>,
   /** _pmidIsNotPmcid */ Assert<Not<Equals<Pmid, Pmcid>>>,
   /** _arxivIsBranded */ Assert<Not<Equals<Arxiv, string>>>,
-  // oxlint-disable-next-line effect/prefer-option-over-null -- asserts the record's own optional-key wire shape
-  /** _pmidSlot */ Assert<Equals<BiblioRecord["identifiers"]["pmid"], Pmid | undefined>>,
-  // oxlint-disable-next-line effect/prefer-option-over-null -- asserts the record's own optional-key wire shape
-  /** _pmcidSlot */ Assert<Equals<BiblioRecord["identifiers"]["pmcid"], Pmcid | undefined>>,
-  // oxlint-disable-next-line effect/prefer-option-over-null -- asserts the record's own optional-key wire shape
-  /** _arxivSlot */ Assert<Equals<BiblioRecord["identifiers"]["arxiv"], Arxiv | undefined>>,
-  // oxlint-disable-next-line effect/prefer-option-over-null -- asserts the record's own optional-key wire shape
-  /** _citationKey */ Assert<Equals<BiblioRecord["citation-key"], string | undefined>>,
-  // oxlint-disable-next-line effect/prefer-option-over-null -- asserts the record's own optional-key wire shape
-  /** _itemId */ Assert<Equals<BiblioRecord["id"], string | number | undefined>>,
-  // oxlint-disable-next-line effect/prefer-option-over-null -- asserts the record's own optional-key wire shape
-  /** _standardVariable */ Assert<Equals<BiblioRecord["archive_location"], string | undefined>>,
-  /** _nameVariable */ Assert<
-    // oxlint-disable-next-line effect/prefer-option-over-null -- asserts the record's own optional-key wire shape
-    Equals<BiblioRecord["executive-producer"], readonly CslName[] | undefined>
-  >,
-  // oxlint-disable-next-line effect/prefer-option-over-null -- asserts the record's own optional-key wire shape
-  /** _dateVariable */ Assert<Equals<BiblioRecord["available-date"], CslDate | undefined>>,
-  /** _categories */ Assert<
-    // oxlint-disable-next-line effect/prefer-option-over-null -- asserts the record's own optional-key wire shape
-    Equals<BiblioRecord["categories"], readonly string[] | undefined>
-  >,
+  /** _pmidSlot */ Assert<OptionalSlot<BiblioRecord["identifiers"], "pmid", Pmid>>,
+  /** _pmcidSlot */ Assert<OptionalSlot<BiblioRecord["identifiers"], "pmcid", Pmcid>>,
+  /** _arxivSlot */ Assert<OptionalSlot<BiblioRecord["identifiers"], "arxiv", Arxiv>>,
+  /** _citationKey */ Assert<OptionalSlot<BiblioRecord, "citation-key", string>>,
+  /** _itemId */ Assert<OptionalSlot<BiblioRecord, "id", string | number>>,
+  /** _standardVariable */ Assert<OptionalSlot<BiblioRecord, "archive_location", string>>,
+  /** _nameVariable */ Assert<OptionalSlot<BiblioRecord, "executive-producer", readonly CslName[]>>,
+  /** _dateVariable */ Assert<OptionalSlot<BiblioRecord, "available-date", CslDate>>,
+  /** _categories */ Assert<OptionalSlot<BiblioRecord, "categories", readonly string[]>>,
   /** _outcomeIsTagged */ Assert<Equals<ParseOutcome["outcome"], "parsed" | "skipped">>,
-  // oxlint-disable-next-line effect/prefer-option-over-null -- asserts the outcome's own optional-key shape
-  /** _outcomePosition */ Assert<Equals<ParseOutcome["position"], SourcePosition | undefined>>,
+  /** _outcomePosition */ Assert<OptionalSlot<ParseOutcome, "position", SourcePosition>>,
   /** _skipReasons */ Assert<
     Equals<SkipReason, "no-identifier" | "no-title" | "malformed" | "too-large" | "truncated">
   >,
@@ -175,10 +170,9 @@ export type Checks = [
     Equals<keyof RecordLimits & keyof ParseOptions, keyof RecordLimits>
   >,
   /** _parseTakesOptions */ Assert<
-    // oxlint-disable-next-line effect/prefer-option-over-null -- asserts an optional parameter's shape
-    Equals<Parameters<typeof parseBibliographicFile>[2], ParseOptions | undefined>
+    OptionalSlot<Parameters<typeof parseBibliographicFile>, 2, ParseOptions>
   >,
-  /** _bestKeepsTheCandidateType */ Assert<Equals<NonNullable<typeof best>["id"], number>>,
+  /** _bestKeepsTheCandidateType */ Assert<Equals<Option.Option.Value<typeof best>["id"], number>>,
   /** _bibliographyEntries */ Assert<
     Equals<(typeof bibliography.entries)[number]["label"], Option.Option<string>>
   >,
@@ -206,8 +200,7 @@ export type Checks = [
   >,
   /** _pageFailsOnTheTypedChannel */ Assert<Equals<Effect.Error<typeof page>, LookupError>>,
   /** _resolverIsOptional */ Assert<
-    // oxlint-disable-next-line effect/prefer-option-over-null -- asserts an optional option's shape
-    Equals<BiblioLookupOptions["resolveAddresses"], ResolveAddresses | undefined>
+    OptionalSlot<BiblioLookupOptions, "resolveAddresses", ResolveAddresses>
   >,
   /** _resolverCannotFail */ Assert<Equals<Effect.Error<ReturnType<ResolveAddresses>>, never>>,
   /** _recoveredNeverFails */ Assert<Equals<Effect.Error<typeof recovered>, never>>,

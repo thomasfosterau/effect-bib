@@ -176,12 +176,12 @@ describe("matchConfidence", () => {
 describe("bestConfidentMatch", () => {
   const incoming = { title: "Sapiens", authors: ["Yuval Noah Harari"] };
 
-  it("returns null when no candidate is a confident match", () => {
+  it("returns Option.none() when no candidate is a confident match", () => {
     const result = bestConfidentMatch(incoming, [
       { id: "a", title: "A Different Book", authors: ["Someone Else"] },
       { id: "b", title: "Sapiens", authors: ["A Different Harari Impostor"] },
     ]);
-    expect(result).toBeNull();
+    expect(result).toEqual(Option.none());
   });
 
   it("picks the highest-confidence confident candidate regardless of order", () => {
@@ -191,7 +191,7 @@ describe("bestConfidentMatch", () => {
       // Confident and exact on both axes.
       { id: "strong", title: "Sapiens", authors: ["Yuval Noah Harari"] },
     ]);
-    expect(result?.id).toBe("strong");
+    expect(Option.map(result, ({ id }) => id)).toEqual(Option.some("strong"));
   });
 });
 
