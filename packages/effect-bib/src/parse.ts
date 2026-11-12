@@ -49,6 +49,7 @@
 
 import * as Arr from "effect/Array";
 import * as HashMap from "effect/HashMap";
+import * as Iterable from "effect/Iterable";
 import * as Match from "effect/Match";
 import * as MutableHashMap from "effect/MutableHashMap";
 import * as Option from "effect/Option";
@@ -66,6 +67,7 @@ import {
   decodePmcid,
   decodePmid,
 } from "./identifiers.ts";
+import { rowBreak } from "./csv-rows.ts";
 import { limitOr } from "./limits.ts";
 import {
   type BiblioRecord,
@@ -743,33 +745,48 @@ export function parseCslYaml(content: string, options: ParseOptions = {}): Parse
 
 // ── Reading-list CSV ──────────────────────────────────────────────────
 
+/** A cell scan's state: the cells closed so far, the open cell's text and whether a quoted span just closed. */
+interface CsvCells {
+  readonly cells: string[];
+  readonly cell: string;
+  readonly joined: boolean;
+}
+
+/**
+ * Reads one token of a CSV line: a comma (ends a cell), a quoted span, or
+ * plain text. A quoted span runs to its closing quote (or the line's end
+ * while it is open); two spans side by side are a `""` escape, which reads
+ * as one quote between them.
+ */
+function csvToken(scan: CsvCells, token: string): CsvCells {
+  if (token === ",") {
+    // The cells grow in place: copying them per comma would be quadratic in a hostile line.
+    scan.cells.push(scan.cell);
+    return { cells: scan.cells, cell: "", joined: false };
+  }
+  if (token[0] !== '"') return { cells: scan.cells, cell: scan.cell + token, joined: false };
+  const closed = token.length > 1 && token.endsWith('"');
+  return {
+    cells: scan.cells,
+    cell: `${scan.cell}${scan.joined ? '"' : ""}${token.slice(1, closed ? -1 : undefined)}`,
+    joined: closed,
+  };
+}
+
 /**
  * Parses one CSV line into its cells, honouring `"…"` quoting and the
- * `""` escaped-quote convention. Pure character scan — no regex
- * backtracking, so a hostile line can't blow up CPU.
+ * `""` escaped-quote convention. The line is read as a lazy stream of its
+ * tokens (a quoted span, a comma, a run of anything else), so it costs
+ * time in the number of tokens and holds no element per character; the
+ * spans are unambiguous (`[^"]*` stops at the first quote), so no pattern
+ * backtracks: a hostile line can't blow up CPU or memory.
  */
 function parseCsvLine(line: string): string[] {
-  const cells: string[] = [];
-  let cur = "";
-  let inQuote = false;
-  // oxlint-disable-next-line effect/imperative-loops -- RFC-4180 cell scanner: it needs to skip the second character of a `""` escape (`i++`), which a fold cannot express, and `line.split("")` would allocate one array element per UTF-16 unit of a line bounded only by MAX_INPUT_LENGTH (8 MB) — a memory-DoS regression on a hostile single-line file.
-  for (let i = 0; i < line.length; i++) {
-    const c = line[i];
-    if (inQuote) {
-      if (c === '"') {
-        if (line[i + 1] === '"') {
-          cur += '"';
-          i++;
-        } else inQuote = false;
-      } else cur += c;
-    } else if (c === '"') inQuote = true;
-    else if (c === ",") {
-      cells.push(cur);
-      cur = "";
-    } else cur += c;
-  }
-  cells.push(cur);
-  return cells;
+  const start: CsvCells = { cells: [], cell: "", joined: false };
+  const end = Iterable.reduce(line.matchAll(/"[^"]*(?:"|$)|,|[^",]+/g), start, (scan, token) =>
+    csvToken(scan, token[0]),
+  );
+  return [...end.cells, end.cell];
 }
 
 /** One logical CSV row: its text and the offset of its first character. */
@@ -780,31 +797,27 @@ interface CsvRow {
 
 /**
  * Splits CSV content into logical rows. A quoted cell may span physical
- * lines (an embedded newline), so we track quote state across the join.
- * Stops past `maxRows` rows.
+ * lines (an embedded newline), so a row ends at the first line break outside
+ * a quote (see {@link rowBreak}). Stops past `maxRows` rows.
  */
-// reason: an irreducible single-pass row scanner — the quote-state + CRLF +
-// cap branches are RFC-4180 row splitting and share a running buffer.
-// fallow-ignore-next-line complexity
 function splitCsvRows(content: string, maxRows: number): CsvRow[] {
-  const rows: CsvRow[] = [];
-  let cur = "";
-  let start = 0;
-  let inQuote = false;
-  // oxlint-disable-next-line effect/imperative-loops -- RFC-4180 row scanner: it needs to skip the `\n` of a CRLF pair (`i++`), which a fold cannot express, and `content.split("")` would allocate one array element per UTF-16 unit of an input bounded only by the input cap — a memory-DoS regression.
-  for (let i = 0; i < content.length; i++) {
-    const c = content[i];
-    if (c === '"') inQuote = !inQuote;
-    if ((c === "\n" || c === "\r") && !inQuote) {
-      if (c === "\r" && content[i + 1] === "\n") i++; // CRLF
-      if (Str.isNonEmpty(cur)) rows.push({ text: cur, offset: start });
-      cur = "";
-      start = i + 1;
-      if (rows.length > maxRows) break;
-    } else cur += c;
-  }
-  if (Str.isNonEmpty(cur)) rows.push({ text: cur, offset: start });
-  return rows;
+  const rows = Arr.unfold({ offset: 0, count: 0 }, ({ offset, count }) => {
+    if (offset >= content.length || count > maxRows) return Option.none();
+    const found = rowBreak(content, offset);
+    const text = content.slice(
+      offset,
+      Option.match(found, { onNone: () => content.length, onSome: ([start]) => start }),
+    );
+    const next = Option.match(found, {
+      onNone: () => content.length,
+      onSome: ([, after]) => after,
+    });
+    return Option.some([
+      { text, offset },
+      { offset: next, count: count + (Str.isNonEmpty(text) ? 1 : 0) },
+    ] as const);
+  });
+  return rows.filter((row) => Str.isNonEmpty(row.text));
 }
 
 /** Header aliases we accept for each logical column (lower-cased, trimmed). */
