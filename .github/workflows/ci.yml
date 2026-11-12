@@ -4,8 +4,9 @@ name: CI
 # gate in AGENTS.md#verification (format + lint, build, type gates, the oracle
 # corpora, unit tests + coverage, the executed docs examples, the audit), so a
 # local run and CI are the same thing. The library runs it on both the current
-# LTS and the latest Node release (`engines.node` is `>=22`, covering both);
-# the final `ci` job folds the matrix into one stable check for the ruleset.
+# LTS and the latest Node release (`engines.node` is `>=22`, covering both).
+# Each leg is its own check, `ci (node lts)` and `ci (node latest)`, and the
+# ruleset requires both by name.
 # Nothing here needs a database or a secret: the lookup sources are exercised
 # against a stubbed `FetchHttpClient`, never the network.
 
@@ -24,7 +25,7 @@ concurrency:
 permissions: {}
 
 jobs:
-  test:
+  ci:
     name: ci (node ${{ matrix.node }})
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -65,17 +66,3 @@ jobs:
             vp-task-v1-${{ runner.os }}-${{ matrix.node }}-
       - name: CI
         run: vp run ci
-
-  # The one required check: green only when every matrix leg is.
-  ci:
-    name: ci
-    needs: [test]
-    if: always()
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions: {}
-    steps:
-      - name: Every matrix leg passed
-        env:
-          RESULT: ${{ needs.test.result }}
-        run: test "$RESULT" = success
