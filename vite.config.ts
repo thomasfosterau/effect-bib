@@ -161,14 +161,6 @@ export default defineConfig({
           "effecttsgo/strict-effect-provide": "off",
         },
       },
-      // Tests keep each helper next to the cases it serves rather than
-      // hoisting it out of the `describe` it reads as part of.
-      {
-        files: ["packages/effect-bib/tests/**", "tests/dist-consumer/**"],
-        rules: {
-          "unicorn/consistent-function-scoping": "off",
-        },
-      },
       // The type-equality idiom `(<X>() => X extends A ? 1 : 2) extends …`
       // needs its single-use type parameter: that is how it compares types.
       {

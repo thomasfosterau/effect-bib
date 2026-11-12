@@ -43,6 +43,10 @@ function expectParsed(outcome: ParseOutcome) {
 
 // ── BibTeX ────────────────────────────────────────────────────────────
 
+/** A JSON document nested `depth` arrays deep. */
+const nested = (depth: number) =>
+  `@book{x, title={${"{".repeat(depth - 2)}T${"}".repeat(depth - 2)}}, isbn={9780062316097}}`;
+
 describe("parseBibtex", () => {
   it("maps a book entry with an ISBN to a CSL book record with structured names", () => {
     const outcomes = parseBibtex(`
@@ -165,8 +169,6 @@ describe("parseBibtex", () => {
   });
 
   it("treats nesting deeper than the grammar's cap like an unbalanced tail", () => {
-    const nested = (depth: number) =>
-      `@book{x, title={${"{".repeat(depth - 2)}T${"}".repeat(depth - 2)}}, isbn={9780062316097}}`;
     expect(expectParsed(parseBibtex(nested(32))[0]).title).toBe("T");
     expect(parseBibtex(nested(33))).toEqual([]);
   });
@@ -555,6 +557,25 @@ describe("format independence", () => {
 
 // ── Resource bounds / dispatch ────────────────────────────────────────
 
+/** `n` BibTeX book entries, each with an ISBN. */
+const bibtex = (n: number) =>
+  Arr.makeBy(n, (i) => `@book{k${i}, title={T}, isbn={9780062316097}}`).join("\n");
+
+/** A Zotero-JSON array of `n` items, each with an ISBN. */
+const json = (n: number) =>
+  `[${Arr.makeBy(n, () => `{ "title": "T", "ISBN": "9780062316097" }`).join(",")}]`;
+
+/** A CSV document of `n` rows with an ISBN column. */
+const csv = (n: number) => ["title,isbn", ...Arr.makeBy(n, () => "T,9780062316097")].join("\n");
+
+/** A RIS document of `n` book records, each with an ISBN. */
+const risDoc = (n: number) =>
+  Arr.makeBy(n, () => "TY  - BOOK\nTI  - T\nSN  - 9780062316097\nER  - ").join("\n");
+
+/** The skip reason of each outcome, or `"parsed"` for a parsed one. */
+const reasons = (outcomes: readonly ParseOutcome[]) =>
+  outcomes.map((outcome) => (outcome.outcome === "skipped" ? outcome.reason : "parsed"));
+
 describe("parseBibliographicFile resource bounds", () => {
   it("reports an upload over the input-length cap as one too-large outcome", () => {
     const huge = `@book{x, title={t}, isbn={9780062316097}}`.padEnd(MAX_INPUT_LENGTH + 1, " ");
@@ -596,21 +617,12 @@ describe("parseBibliographicFile resource bounds", () => {
 
   it("caps every format at the caller's record cap, with a truncated outcome only past it", () => {
     const options = { maxRecords: 2 };
-    const bibtex = (n: number) =>
-      Arr.makeBy(n, (i) => `@book{k${i}, title={T}, isbn={9780062316097}}`).join("\n");
-    const json = (n: number) =>
-      `[${Arr.makeBy(n, () => `{ "title": "T", "ISBN": "9780062316097" }`).join(",")}]`;
-    const csv = (n: number) => ["title,isbn", ...Arr.makeBy(n, () => "T,9780062316097")].join("\n");
-    const ris = (n: number) =>
-      Arr.makeBy(n, () => "TY  - BOOK\nTI  - T\nSN  - 9780062316097\nER  - ").join("\n");
-    const reasons = (outcomes: readonly ParseOutcome[]) =>
-      outcomes.map((outcome) => (outcome.outcome === "skipped" ? outcome.reason : "parsed"));
     Arr.forEach(
       [
         [bibtex, "bibtex"],
         [json, "zotero-json"],
         [csv, "csv"],
-        [ris, "ris"],
+        [risDoc, "ris"],
       ] as const,
       ([make, format]) => {
         expect(reasons(parseBibliographicFile(make(2), format, options))).toEqual([

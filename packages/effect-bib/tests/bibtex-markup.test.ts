@@ -152,6 +152,10 @@ describe("the italic flip-flop", () => {
 /** A CSL-JSON item as these tests write it. */
 type CslInput = Readonly<Record<string, string | ReadonlyArray<Readonly<Record<string, string>>>>>;
 
+/** Renders a CSL input to HTML through the BibTeX markup writer. */
+const html = (item: CslInput) =>
+  toHtml(renderReferenceRich(fromCslJson(item), { style: vancouverStyle }));
+
 describe("Vancouver rich output", () => {
   const record = fromCslJson({
     type: "article-journal",
@@ -177,8 +181,6 @@ describe("Vancouver rich output", () => {
   });
 
   it("keeps markup in every reference class", () => {
-    const html = (item: CslInput) =>
-      toHtml(renderReferenceRich(fromCslJson(item), { style: vancouverStyle }));
     expect(
       html({
         type: "book",

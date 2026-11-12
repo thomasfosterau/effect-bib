@@ -31,6 +31,10 @@ import rayResponseBody from "../fixtures/crossref-ray-2004.json" with { type: "j
 const decodeResponse = Schema.decodeUnknownSync(CrossrefResponse);
 const REQUESTED_DOI = expectSome(decodeDoi("10.1037/0003-066x.59.1.29"), "a DOI");
 
+/** The CSL type a Crossref work of the given `type` normalises to. */
+const of = (type: string) =>
+  expectSome(normaliseCrossrefRecord({ message: { title: ["X"], type } }, REQUESTED_DOI)).type;
+
 describe("normaliseCrossrefRecord", () => {
   it("normalises a real journal-article response into a CSL record", () => {
     const response = decodeResponse(rayResponseBody);
@@ -57,8 +61,6 @@ describe("normaliseCrossrefRecord", () => {
   });
 
   it("maps book / chapter / conference / thesis types", () => {
-    const of = (type: string) =>
-      expectSome(normaliseCrossrefRecord({ message: { title: ["X"], type } }, REQUESTED_DOI)).type;
     expect(of("book")).toBe("book");
     expect(of("book-chapter")).toBe("chapter");
     expect(of("proceedings-article")).toBe("paper-conference");

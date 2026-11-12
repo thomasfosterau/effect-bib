@@ -225,14 +225,15 @@ describe("parseRefer", () => {
   });
 });
 
-describe("parseBibliographicFile and the stream", () => {
-  const chunked = (text: string, size: number): Stream.Stream<string> =>
-    Stream.fromIterable(
-      globalThis.Array.from({ length: Math.ceil(text.length / size) }, (_, index) =>
-        text.slice(index * size, (index + 1) * size),
-      ),
-    );
+/** Splits `text` into a stream of `size`-character chunks. */
+const chunked = (text: string, size: number): Stream.Stream<string> =>
+  Stream.fromIterable(
+    globalThis.Array.from({ length: Math.ceil(text.length / size) }, (_, index) =>
+      text.slice(index * size, (index + 1) * size),
+    ),
+  );
 
+describe("parseBibliographicFile and the stream", () => {
   it.effect.each([
     ["medline", MEDLINE],
     ["refer", REFER],

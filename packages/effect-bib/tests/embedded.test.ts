@@ -228,13 +228,13 @@ describe("precedence", () => {
   });
 });
 
-describe("COinS", () => {
-  /** A COinS span for the KEV pairs. */
-  const span = (pairs: Readonly<Record<string, string>>): string =>
-    `<span class="Z3988" title="${R.toEntries(pairs)
-      .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
-      .join("&amp;")}"></span>`;
+/** A COinS span for the KEV pairs. */
+const span = (pairs: Readonly<Record<string, string>>): string =>
+  `<span class="Z3988" title="${R.toEntries(pairs)
+    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+    .join("&amp;")}"></span>`;
 
+describe("COinS", () => {
   it("reads one record per span: journal articles, books and chapters", () => {
     const { coins } = readEmbeddedMetadata(
       page(
@@ -379,14 +379,14 @@ describe("links", () => {
   });
 });
 
-describe("linear scanning", () => {
-  /** Milliseconds `run` takes. */
-  const time = (run: () => void): number => {
-    const start = performance.now();
-    run();
-    return performance.now() - start;
-  };
+/** Milliseconds `run` takes. */
+const time = (run: () => void): number => {
+  const start = performance.now();
+  run();
+  return performance.now() - start;
+};
 
+describe("linear scanning", () => {
   it.each([
     ["unclosed script tags", "<script>".repeat(400_000)],
     ["script openers with no '>'", "<script ".repeat(400_000)],

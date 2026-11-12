@@ -117,24 +117,24 @@ describe("CSV rows", () => {
   });
 });
 
-describe("streaming splits", () => {
-  /** The outcomes of streaming `text` in chunks of `size` characters. */
-  const streamed = (text: string, size: number, format: "bibtex" | "csv") =>
-    Effect.map(
-      Stream.runCollect(
-        parseBibliographicStream(
-          Stream.fromIterable(
-            Arr.makeBy(Math.ceil(text.length / size), (index) =>
-              text.slice(index * size, (index + 1) * size),
-            ),
+/** The outcomes of streaming `text` in chunks of `size` characters. */
+const streamed = (text: string, size: number, format: "bibtex" | "csv") =>
+  Effect.map(
+    Stream.runCollect(
+      parseBibliographicStream(
+        Stream.fromIterable(
+          Arr.makeBy(Math.ceil(text.length / size), (index) =>
+            text.slice(index * size, (index + 1) * size),
           ),
-          format,
-          { mode: "lenient" },
         ),
+        format,
+        { mode: "lenient" },
       ),
-      summary,
-    );
+    ),
+    summary,
+  );
 
+describe("streaming splits", () => {
   it.effect("closes a parenthesised entry at its parenthesis and a braced one at its brace", () =>
     Effect.gen(function* () {
       const text =
@@ -172,15 +172,27 @@ describe("streaming splits", () => {
   );
 });
 
-describe("YAML collections", () => {
-  /** A lenient parse of `source`: each outcome's title, authors and issued date, or its skip reason. */
-  const yaml = (source: string) =>
-    parseCslYaml(source, { mode: "lenient" }).map((outcome) =>
-      outcome.outcome === "parsed"
-        ? [outcome.record.title, outcome.record.author ?? null, outcome.record.issued ?? null]
-        : [outcome.outcome, outcome.reason],
-    );
+/** A lenient parse of `source`: each outcome's title, authors and issued date, or its skip reason. */
+const yaml = (source: string) =>
+  parseCslYaml(source, { mode: "lenient" }).map((outcome) =>
+    outcome.outcome === "parsed"
+      ? [outcome.record.title, outcome.record.author ?? null, outcome.record.issued ?? null]
+      : [outcome.outcome, outcome.reason],
+  );
 
+/** The fastest of three runs, in milliseconds, of a parse of `count` short entries. */
+const best = (count: number): number => {
+  const source = Arr.makeBy(count, (n) => `- e${n}`).join("\n");
+  return Math.min(
+    ...Arr.makeBy(3, () => {
+      const start = performance.now();
+      parseCslYaml(source, { mode: "lenient" });
+      return performance.now() - start;
+    }),
+  );
+};
+
+describe("YAML collections", () => {
   it("reads nested flow collections and quoted items with commas", () => {
     expect(
       yaml(
@@ -222,17 +234,6 @@ describe("YAML collections", () => {
     expect(parseCslYaml(block, { mode: "lenient" })).toHaveLength(2000);
   });
   it("reads a long block sequence in linear time", () => {
-    /** The fastest of three runs, in milliseconds, of a parse of `count` short entries. */
-    const best = (count: number): number => {
-      const source = Arr.makeBy(count, (n) => `- e${n}`).join("\n");
-      return Math.min(
-        ...Arr.makeBy(3, () => {
-          const start = performance.now();
-          parseCslYaml(source, { mode: "lenient" });
-          return performance.now() - start;
-        }),
-      );
-    };
     best(1000);
     const small = best(5000);
     const large = best(50_000);

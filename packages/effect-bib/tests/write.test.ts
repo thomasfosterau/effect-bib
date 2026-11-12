@@ -198,6 +198,9 @@ const BIBLATEX_KEYS = [
   "PMCID",
 ];
 
+/** A book record with the given citation key. */
+const keyed = (key: string) => fromCslJson({ type: "book", title: "T", "citation-key": key });
+
 describe("toBibtex", () => {
   it("writes a volume of a multi-volume work as a maintitle, and reads it back", () => {
     const source = [
@@ -280,7 +283,6 @@ describe("toBibtex", () => {
       author: [{ family: "Darwin", given: "Charles" }],
       issued: { "date-parts": [[1859]] },
     });
-    const keyed = (key: string) => fromCslJson({ type: "book", title: "T", "citation-key": key });
     const keys = toBibtex([anonymous, anonymous, keyed("a b,c"), keyed("ab,c"), fromCslJson({})])
       .split("\n")
       .filter((line) => line.startsWith("@"));
@@ -490,10 +492,10 @@ describe("CSL YAML", () => {
   });
 });
 
-describe("CSL YAML reader edge cases", () => {
-  /** The single record a lenient read yields, or the outcome when it is not one. */
-  const one = (yaml: string) => parseCslYaml(yaml, { mode: "lenient" });
+/** The single record a lenient read yields, or the outcome when it is not one. */
+const one = (yaml: string) => parseCslYaml(yaml, { mode: "lenient" });
 
+describe("CSL YAML reader edge cases", () => {
   it("reads quoted escapes, multi-line scalars and null values", () => {
     const [outcome] = one(
       [
