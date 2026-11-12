@@ -26,7 +26,7 @@ Invoke everything else through `vp` (`vp exec` instead of `npx`; `vp run <task>`
 
 ## CI expectations
 
-[ci.yml](.github/workflows/ci.yml) runs one job, the gates in [AGENTS.md#verification](AGENTS.md#verification) minus the local fallow audit. Every workflow defaults to `permissions: {}`, pins each action to a commit SHA, checks out without persisted credentials (except the Release job, whose Changesets step pushes), sets Node as `"*"` with `check-latest` (never `latest`, which can resolve to a pre-release) and never runs the Release job for Dependabot; CI needs no secret, so Dependabot PRs run it safely. `uvx zizmor --offline .github` audits the workflows (config in `.github/zizmor.yml`). [release.yml](.github/workflows/release.yml) runs changesets/action on `trunk`: it opens the "Version Packages" PR while unreleased changesets exist and publishes once it merges, via npm trusted publishing (OIDC) from the protected `release` environment — see [PUBLISHING.md](PUBLISHING.md).
+[ci.yml](.github/workflows/ci.yml) runs one command, `vp run ci`: the root `ci` task in `vite.config.ts`, which chains the gates in [AGENTS.md#verification](AGENTS.md#verification) (minus the local fallow audit), fail-fast, so `vp run ci` locally is the same run. It runs on a Node matrix, `lts` and `latest` (`vp env use` resolves `latest` to the newest released Current line, never a pre-release), as the checks `ci (node lts)` and `ci (node latest)`; a final `ci` job, the ruleset's required check, passes only when both do. Every workflow defaults to `permissions: {}`, pins each action to a commit SHA, checks out without persisted credentials (except the Release job, whose Changesets step pushes), and never runs the Release job for Dependabot; CI needs no secret, so Dependabot PRs run it safely. `uvx zizmor --offline .github` audits the workflows (config in `.github/zizmor.yml`). [release.yml](.github/workflows/release.yml) runs changesets/action on `trunk`: it opens the "Version Packages" PR while unreleased changesets exist and publishes once it merges, via npm trusted publishing (OIDC) from the protected `release` environment — see [PUBLISHING.md](PUBLISHING.md).
 
 ## Pre-PR checklist
 
@@ -38,6 +38,7 @@ Invoke everything else through `vp` (`vp exec` instead of `npx`; `vp run <task>`
 ## Running individual checks
 
 ```sh
+vp run ci                                  # the whole CI run (every gate, in order, fail-fast)
 vp lint                                    # oxlint
 vp fmt                                     # oxfmt (writes)
 vp check --fix                             # format + lint, autofix

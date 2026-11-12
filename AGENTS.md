@@ -33,7 +33,7 @@ A `<repo>#NNN` cite in a comment (`website#NNN`, `gardeneria#NNN`) is an issue i
 
 ## Verification
 
-Before you report work as done, run the gates below in order (CI's order, `.github/workflows/ci.yml`) and quote each command with its final pass/fail. If a gate can't run here, say which and why in the PR body; never imply it ran.
+Steps 1–6 are the root `ci` task in `vite.config.ts` (`vp run ci`, fail-fast, plus the oracle-corpora fetch before the tests), the one command `.github/workflows/ci.yml` runs. Before you report work as done, run the gates below in order and quote each command with its final pass/fail. If a gate can't run here, say which and why in the PR body; never imply it ran.
 
 1. `vp check`
 2. `vp run -r build`
