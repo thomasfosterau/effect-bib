@@ -760,8 +760,12 @@ function bibliographyIds(
  * (`2004a`) that the bibliography repeats. Numeric styles number sources in
  * order of first citation and compress runs (`[1–3, 5]`). Note styles render
  * a source's first note in full, later notes short, and a repeat of the
- * source just cited as "ibid.". `nocite` adds uncited records to the
- * bibliography.
+ * source just cited as "ibid.", with each cite's position reported.
+ * A cluster is `{ cites: [{ id, locator?, label?, prefix?, suffix?, mode? }] }`,
+ * with `mode` one of `normal`, `suppress-author`, `author-only` and
+ * `author-in-text` (narrative: `Ray (2004)`). `options.nocite` (ids, or
+ * `"*"`) adds uncited records to the bibliography, and `options.locale`
+ * defaults to `enLocale`.
  *
  * @example
  * ```ts

@@ -67,13 +67,14 @@ Read the installed package before writing Effect code, and never guess at an Eff
 
 ## Documentation surfaces
 
-- `README.md` (root) — landing page and project overview.
-- `packages/effect-bib/README.md` — the npm-facing API reference; its snippets are excerpts of the executed `@example`s, so update both together.
+- `README.md` (root) — landing page and project overview, kept short (what it is, install, one example, a packages table, links).
+- `packages/effect-bib/README.md` — the npm-facing page, short by the owner's rule (#178): what it is, install, one minimal example, a table of entry points, and links, every link absolute (it is published to npm). No API detail: that goes in per-export doc comments (docgen), and longer how-tos in `docs/*.md`. Its example is an excerpt of an executed `@example` (`renderReference` in `src/render/render.ts`), so update both together.
+- `docs/*.md` — the long-form guides (records and identifiers, parsing and writing, rendering and citations, dedup, lookup, compatibility and scope). Their snippets are copied from executed `@example`s where possible; a snippet that is only illustrative says so. This root `docs/` is committed; the docgen output under `packages/*/docs/` is a different, gitignored directory.
 - `packages/effect-bib/AGENTS.md` — the package's boundary, invariants and terms (`packages/effect-bib/CLAUDE.md` imports it).
 - `CONTRIBUTING.md` — setup, commands, the branch and changeset procedure, CI expectations, individual checks.
 - `AGENTS.md` (this file) — guidance for any coding agent; `.claude/CLAUDE.md` — Claude Code only (hooks, plugins, worktrees, session limits), importing this file, `CONTRIBUTING.md` and `README.md`.
 - `PUBLISHING.md` — the release pipeline and one-time owner setup; `SECURITY.md` — reporting and the security posture.
-- Decisions go in issue comments. No `docs/` tree (docgen output is gitignored).
+- Decisions go in issue comments.
 
 ---
 

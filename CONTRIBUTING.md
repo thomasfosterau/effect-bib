@@ -33,7 +33,7 @@ Invoke everything else through `vp` (`vp exec` instead of `npx`; `vp run <task>`
 1. The gates in [AGENTS.md#verification](AGENTS.md#verification), in order, each passing.
 2. A changeset (`pnpm changeset`) for every change to a published package's behaviour.
 3. `git fetch origin trunk && git rebase origin/trunk`.
-4. Docs: the package `README.md` for any exported change (and an `@example` on a new entry point); the package `AGENTS.md` for a new term or invariant; `@since` on every new export.
+4. Docs: the export's doc comment (signature-level facts, defaults, bounds) and, for a how-to, the matching `docs/*.md` guide; the package `README.md` only for a change to the install, the example or the entry points (and an `@example` on a new entry point); the package `AGENTS.md` for a new term or invariant; `@since` on every new export.
 
 ## Running individual checks
 
