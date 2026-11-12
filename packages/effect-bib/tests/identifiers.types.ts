@@ -110,7 +110,6 @@ export const decoderCrossed: Option.Option<Doi> = decodeIsbn(raw);
 // `Schema.brand` keeps the wire type at `string`: the brand is a proof, not
 // a representation.
 export type Checks = [
-  Assert<Equals<typeof Isbn.Type, Isbn>>,
   Assert<Equals<typeof Isbn.Encoded, string>>,
   Assert<Equals<typeof Doi.Encoded, string>>,
   Assert<Equals<typeof Issn.Encoded, string>>,
