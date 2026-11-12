@@ -81,7 +81,7 @@ function negotiate(
     new URL(url),
     { source: "doi", allowHop: Option.some(isAgencyHop), resolveAddresses },
     ({ response }): Effect.Effect<Option.Option<Schema.Json>, LookupFailed> => {
-      if (response.status === 404) return Effect.succeed(Option.none());
+      if (response.status === 404) return Effect.succeedNone;
       if (response.status < 200 || response.status >= 300)
         return Effect.fail(failed(`upstream returned HTTP ${response.status}`));
       return readBoundedText(response, MAX_INPUT_LENGTH, "doi").pipe(
@@ -90,7 +90,7 @@ function negotiate(
             Effect.mapError(() => failed("doi response was not JSON")),
           ),
         ),
-        Effect.map(Option.some),
+        Effect.asSome,
       );
     },
   );

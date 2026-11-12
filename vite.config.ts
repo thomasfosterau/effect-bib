@@ -13,6 +13,25 @@
 import { defineConfig } from "vite-plus";
 import { recommended } from "@effect/tsgo/oxlint-presets";
 import effect from "@enfect/oxlint";
+import * as Arr from "effect/Array";
+import * as R from "effect/Record";
+
+/** One rule setting of the `@effect/tsgo` preset. */
+type RuleSetting = NonNullable<typeof recommended.rules>[string];
+
+/**
+ * The same setting at `error`, its options kept; `off` stays off. (The preset
+ * ships its rules as `"warn"` / `"error"` strings.)
+ */
+const atError = (setting: RuleSetting): RuleSetting =>
+  Arr.isArray(setting) ? ["error", ...setting.slice(1)] : setting === "off" ? setting : "error";
+
+/**
+ * The `@effect/tsgo` preset with every rule it enables at `error`: lint to
+ * zero (#169) keeps no warn tier, so a rule the preset ships at `warn` fails
+ * the gate like any other.
+ */
+const tsgoAtError = { ...recommended, rules: R.map(recommended.rules ?? {}, atError) };
 
 export default defineConfig({
   // Staged-file checks run by `vp staged` (pre-commit): format with fixes,
@@ -38,7 +57,7 @@ export default defineConfig({
     ],
   },
   lint: {
-    extends: [recommended, effect.configs.recommended],
+    extends: [tsgoAtError, effect.configs.recommended],
     plugins: ["typescript", "unicorn", "oxc", "import", "promise", "vitest", "jsdoc"],
     categories: {
       correctness: "error",
@@ -47,13 +66,13 @@ export default defineConfig({
     },
     rules: {
       "eslint/no-unused-vars": [
-        "warn",
+        "error",
         {
           argsIgnorePattern: "^_",
           varsIgnorePattern: "^_",
         },
       ],
-      "eslint/prefer-const": "warn",
+      "eslint/prefer-const": "error",
       // The `Buffer` global is typed `any` wherever a consumer loads
       // @cloudflare/workers-types next to @types/node (every application this
       // library serves), so every call on it is unchecked there. The library
@@ -106,13 +125,6 @@ export default defineConfig({
       // so an `unknown` error channel cannot land (the public
       // `ResolveAddresses` was the last, #136).
       "effecttsgo/any-unknown-in-error-context": "error",
-      // Lint to zero (#169): each preset rule cleared of its sites is held at
-      // `error` here until the whole preset flips.
-      "effecttsgo/prefer-typed-schema-decoder": "error",
-      "typescript/no-explicit-any": "off",
-      "typescript/no-empty-object-type": "off",
-      "typescript/ban-ts-comment": "off",
-      "unicorn/no-empty-file": "off",
       "vite-plus/prefer-vite-plus-imports": "error",
     },
     overrides: [
@@ -165,20 +177,11 @@ export default defineConfig({
           "typescript/no-unnecessary-type-parameters": "off",
         },
       },
-      // Config comments describe task wiring, not commented-out tests.
-      {
-        files: ["**/vite.config.ts"],
-        rules: {
-          "vitest/no-commented-out-tests": "off",
-        },
-      },
-      // Type-level tests: every binding exists to be assigned, never read,
-      // and an expect-error directive IS the assertion there — the one place
-      // the preset's ban on it does not apply.
+      // Type-level tests: an expect-error directive IS the assertion there —
+      // the one place the preset's ban on it does not apply.
       {
         files: ["**/*.types.ts"],
         rules: {
-          "eslint/no-unused-vars": "off",
           "effect/avoid-ts-ignore": "off",
         },
       },

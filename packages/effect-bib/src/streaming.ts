@@ -49,7 +49,10 @@ import {
  *
  * @since 0.1.0
  */
-export class InputTooLarge extends Schema.TaggedError<InputTooLarge>()("InputTooLarge", {
+export class InputTooLarge extends Schema.TaggedError<
+  InputTooLarge,
+  { readonly brand: unique symbol }
+>()("InputTooLarge", {
   format: Schema.String,
   maxInputLength: Schema.Finite,
   message: Schema.String,

@@ -279,9 +279,9 @@ export function hopRefusal(url: URL, policy: FetchPolicy): Effect.Effect<Option.
   const syntactic = urlRefusal(url);
   if (Option.isSome(syntactic)) return Effect.succeed(syntactic);
   if (Option.isSome(policy.allowHop) && !policy.allowHop.value(url))
-    return Effect.succeed(Option.some(`a host outside the allow-list (${url.hostname})`));
+    return Effect.succeedSome(`a host outside the allow-list (${url.hostname})`);
   const resolve = policy.resolveAddresses;
-  if (Option.isNone(resolve) || isIpLiteral(url.hostname)) return Effect.succeed(Option.none());
+  if (Option.isNone(resolve) || isIpLiteral(url.hostname)) return Effect.succeedNone;
   return resolve
     .value(url.hostname)
     .pipe(
