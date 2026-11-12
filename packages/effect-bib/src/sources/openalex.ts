@@ -199,10 +199,10 @@ function openAlexAuthorName(author: {
   readonly display_name: string;
   readonly orcid?: unknown;
 }): Option.Option<CslName> {
-  const base = parsePersonName(author.display_name);
-  if (base === null) return Option.none();
   const orcid = Option.flatMap(decodeString(author.orcid), decodeOrcid);
-  return Option.some(Option.isSome(orcid) ? { ...base, orcid: orcid.value } : base);
+  return Option.map(parsePersonName(author.display_name), (base) =>
+    Option.isSome(orcid) ? { ...base, orcid: orcid.value } : base,
+  );
 }
 
 /** Bounded, ordered author list from `authorships[]`. */

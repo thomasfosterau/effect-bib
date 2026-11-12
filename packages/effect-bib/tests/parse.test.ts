@@ -13,6 +13,7 @@
  */
 
 import * as Arr from "effect/Array";
+import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { assert, describe, expect, it } from "vite-plus/test";
 import {
@@ -267,7 +268,7 @@ describe("parseZoteroJson", () => {
     );
     const issued = expectParsed(outcomes[0]).issued;
     expect(issued).toEqual({ raw: "Spring 2015" });
-    expect(yearOf(issued)).toBe(2015);
+    expect(yearOf(issued)).toEqual(Option.some(2015));
   });
 
   it("reads an import-mode item in full, and the first valid ISBN of a list", () => {

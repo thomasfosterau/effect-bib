@@ -210,20 +210,18 @@ export function convertIsbn13To10(isbn13: string): Option.Option<string> {
 export interface IsbnForms {
   /** The ISBN-13 form, always present. */
   readonly isbn13: string;
-  /** The ISBN-10 form, or `null` when the ISBN-13 has none (a `979` prefix). */
-  // oxlint-disable-next-line effect/prefer-option-over-null -- cross-slice: apps/api consumes `isbn10` as a plain nullable
-  readonly isbn10: string | null;
+  /** The ISBN-10 form, or `Option.none()` when the ISBN-13 has none (a `979` prefix). */
+  readonly isbn10: Option.Option<string>;
 }
 
 /**
  * Both canonical forms of a proven {@link Isbn}: the 13-form always, the
- * 10-form when it exists. `isbn10` is `null`, not an `Option`, by contract
- * (a stable shape existing consumers rely on).
+ * 10-form as an `Option`, present when it exists.
  *
  * @since 0.1.0
  */
 export function isbnForms(isbn: Isbn): IsbnForms {
-  return { isbn13: isbn, isbn10: Option.getOrNull(convertIsbn13To10(isbn)) };
+  return { isbn13: isbn, isbn10: convertIsbn13To10(isbn) };
 }
 
 /**
@@ -242,7 +240,7 @@ export function isbnForms(isbn: Isbn): IsbnForms {
  * assert.strictEqual(Option.getOrNull(isbn), "9780062316097")
  *
  * // Both forms are recoverable from the proven value.
- * assert.deepStrictEqual(Option.map(isbn, isbnForms), Option.some({ isbn13: "9780062316097", isbn10: "0062316095" }))
+ * assert.deepStrictEqual(Option.map(isbn, isbnForms), Option.some({ isbn13: "9780062316097", isbn10: Option.some("0062316095") }))
  *
  * // A checksum failure is `Option.none()`, never a throw.
  * assert.strictEqual(Option.isNone(decodeIsbn("978-0-06-231609-8")), true)

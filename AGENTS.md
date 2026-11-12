@@ -6,8 +6,8 @@ A `<repo>#NNN` cite in a comment (`website#NNN`, `gardeneria#NNN`) is an issue i
 
 ## Common pitfalls
 
-- **The Effect lint preset has no allowances left.** `@enfect/oxlint` (`effect.configs.recommended`, the `effect/*` rules) and `@effect/tsgo`'s `recommended` run at their own levels in `vite.config.ts`: every `effect/*` rule is at `error` (#137), `prefer-namespace-imports` included (#167). The file-scoped overrides left (bare-Node configs and fixtures, the type-level `*.types.ts` tests, the test-run helpers in `packages/effect-bib/tests/effect.ts`) are can't-applies, each with its reason beside it. A finding is fixed in code, not suppressed: the two per-site exceptions (`prefer-option-over-null` on the plain-nullable seams, `no-unknown-parameters` on the public total decoders) are listed in the package AGENTS.md, and a new one needs the same written contract.
-- **Package-local rules live in [`packages/effect-bib/AGENTS.md`](packages/effect-bib/AGENTS.md)**: the `BiblioRecord` wire contract, the browser-safe root entry and its forbidden-module list, total decoders, the plain-nullable seams (and why `effect/prefer-option-over-null` stays at `error`), the doc-comment rules (`@since`, `@example`, hover summaries). Read it before touching `packages/effect-bib`.
+- **The Effect lint preset has no allowances left.** `@enfect/oxlint` (`effect.configs.recommended`, the `effect/*` rules) and `@effect/tsgo`'s `recommended` run at their own levels in `vite.config.ts`: every `effect/*` rule is at `error` (#137), `prefer-namespace-imports` included (#167). The file-scoped overrides left (bare-Node configs and fixtures, the type-level `*.types.ts` tests, the test-run helpers in `packages/effect-bib/tests/effect.ts`) are can't-applies, each with its reason beside it. A finding is fixed in code, not suppressed: `prefer-option-over-null` has no exception left (#168); the one per-site exception, `no-unknown-parameters` on the public total decoders, is listed in the package AGENTS.md (#169 tracks it), and a new one needs the same written contract.
+- **Package-local rules live in [`packages/effect-bib/AGENTS.md`](packages/effect-bib/AGENTS.md)**: the `BiblioRecord` wire contract, the browser-safe root entry and its forbidden-module list, total decoders, `Option` for every absent value, the doc-comment rules (`@since`, `@example`, hover summaries). Read it before touching `packages/effect-bib`.
 - **This package emits declarations; the application never did.** `tests/dist-consumer` type-checks a consumer fixture against the emitted `dist/` declarations with `Equals<…>` assertions on the brands and the service shape (a brand that emits as `string`, or a service that emits as `any`, fails there rather than in an application). `vp run check` builds `dist/` first (the check depends on `@thomasfosterau/effect-bib#build`) and fails outright if the entry declarations are missing, rather than falling back to `src/` (#22).
 - **No application vocabulary.** No WEMI / spine mapping, no `owner_id`, no database rows, no ingest operations, no app paths in doc comments. Those stay in the apps; the package stops at the CSL record.
 - **Every external version lives in `pnpm-workspace.yaml`'s catalog** (`catalogMode: strict`; manifests carry only `catalog:`, `catalog:peers` or `workspace:*`). After editing it, run `pnpm install` and commit `pnpm-lock.yaml`, or CI fails with `ERR_PNPM_LOCKFILE_CONFIG_MISMATCH`.
@@ -16,7 +16,14 @@ A `<repo>#NNN` cite in a comment (`website#NNN`, `gardeneria#NNN`) is an issue i
 
 ## Conventions
 
-- Optional members are `?: T | undefined`, never bare `?: T` (`exactOptionalPropertyTypes`).
+- A value that can be absent is an `Option`, never `T | null` or `T | undefined` (`effect/prefer-option-over-null`, at `error` with no exceptions, #168). Optional members are spelled:
+  - an optional Option-valued property: `x?: Option.Option<T>` (no `| undefined`);
+  - an options-object member: `readonly x?: T` (no `| undefined`, no `Option`; under `exactOptionalPropertyTypes` a caller holding `undefined` omits the key);
+  - an optional function parameter: `x?: T`;
+  - a wire-shape schema (a JSON document, `BiblioRecord`) keeps its native optional keys.
+
+  A type-level test asserts an optional slot with `OptionalSlot<T, K, V>` (key optional, present value exactly `V`), not `Equals<T[K], V | undefined>`.
+
 - Effect modules are namespace imports: `import * as Option from "effect/Option"`, under the module's full name, except the six with a canonical alias (`effect/prefer-namespace-imports`, #167): `Arr` (`effect/Array`), `P` (`effect/Predicate`), `R` (`effect/Record`), `Str` (`effect/String`), `Eq` (`effect/Equal`) and `Bool` (`effect/Boolean`). The aliases leave the global `Array`, `Record` and `String` unshadowed, so the dictionary rules see a bare `Record<string, unknown>`: name it from its owner (a `Schema.Record`'s `.Type`, `NonNullable<BiblioRecord["extra"]>`) instead.
 - Relative imports carry their `.ts` extension (`rewriteRelativeImportExtensions`).
 - Tests import from `vite-plus/test`, never `vitest` (lint-enforced by `vite-plus/prefer-vite-plus-imports`).

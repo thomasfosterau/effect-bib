@@ -230,12 +230,11 @@ export function formatNameList(names: readonly CslName[], opts: NameListOptions)
  */
 export function issuedYearText(issued: Option.Option<CslDate>, locale: Locale): string {
   const date = Option.getOrUndefined(issued);
-  // `yearOf` still takes/returns plain values — it is consumed by apps/api.
   const year = yearOf(date);
-  if (year === null) return date?.literal ?? locale.noDate;
+  if (Option.isNone(year)) return date?.literal ?? locale.noDate;
   return Option.match(Option.flatMap(issued, endYearOf), {
-    onNone: () => year.toString(),
-    onSome: (end) => `${year}–${end}`,
+    onNone: () => year.value.toString(),
+    onSome: (end) => `${year.value}–${end}`,
   });
 }
 
@@ -385,7 +384,7 @@ export function issuedYearWithSuffix(record: BiblioRecord, ctx: RenderContext): 
   const year = issuedYearText(Option.fromNullishOr(record.issued), ctx.locale);
   const suffix = ctx.yearSuffix ?? "";
   if (Str.isEmpty(suffix)) return year;
-  return yearOf(record.issued) === null ? `${year}-${suffix}` : `${year}${suffix}`;
+  return Option.isNone(yearOf(record.issued)) ? `${year}-${suffix}` : `${year}${suffix}`;
 }
 
 /**

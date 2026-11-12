@@ -45,8 +45,9 @@ import {
   toPlainText,
   vancouverStyle,
 } from "@thomasfosterau/effect-bib";
+import * as Arr from "effect/Array";
 import * as Option from "effect/Option";
-import { expectPresent } from "./assert.ts";
+import { expectSome } from "./assert.ts";
 
 /** A record from loose CSL-JSON. */
 const csl = fromCslJson;
@@ -110,7 +111,13 @@ const records: ReadonlyArray<readonly [string, BiblioRecord]> = [
 
 /** The record cited as `id`. */
 const recordOf = (id: string): BiblioRecord =>
-  expectPresent(records.find(([key]) => key === id)?.[1], `record ${id}`);
+  expectSome(
+    Option.map(
+      Arr.findFirst(records, ([key]) => key === id),
+      ([, record]) => record,
+    ),
+    `record ${id}`,
+  );
 
 /** The plain text of each rendered cluster. */
 const texts = (
@@ -549,6 +556,6 @@ describe("note citations", () => {
       "Ray, O. (2004). Can loneliness be lethal? Nature, 431(7006), 231-232. https://doi.org/10.1038/431231a.",
       "Harari, Sapiens, p. 5.",
     ]);
-    expect(getStyle("chicago-notes")).toBe(chicagoNotesStyle);
+    expect(getStyle("chicago-notes")).toEqual(Option.some(chicagoNotesStyle));
   });
 });
