@@ -308,11 +308,27 @@ const at = (outcome: ParseOutcome, position: SourcePosition): ParseOutcome => ({
 
 /**
  * Parses raw file `content` of the given `format` into a list of
- * per-entry {@link ParseOutcome}s. Pure: no network, no database. Over the
- * input-length cap the input yields one `too-large` outcome; otherwise
- * every recognised entry yields exactly one outcome, up to the record cap,
- * then one `truncated` outcome if more entries followed. `options` sets the
- * {@link ParseMode} and the bounds.
+ * per-entry {@link ParseOutcome}s. Pure: no network, no database. `format`
+ * is an {@link ImportFormat} (`"bibtex" | "zotero-json" | "csl-yaml" |
+ * "csv" | "ris" | "medline" | "refer"`); each format's own parser is exported
+ * too, and `detectFormat` guesses a format from the content. Over the
+ * input-length cap (`maxInputLength`, default {@link MAX_INPUT_LENGTH}) the
+ * input yields one `too-large` outcome; otherwise every recognised entry
+ * yields exactly one outcome, up to the record cap (`maxRecords`, default
+ * {@link MAX_RECORDS}), then one `truncated` outcome if more entries
+ * followed; an entry (or a whole JSON or CSV file) that could not be read is
+ * `malformed`. `options` sets the {@link ParseMode} and the bounds. In
+ * `import` mode (the default) a record needs a title and an ISBN or DOI, else
+ * it is skipped (`no-title` / `no-identifier`); in `lenient` mode every entry
+ * the format admits is a record, as a document's bibliography needs. CSL-JSON
+ * and CSL YAML items are read in full with `fromCslJson` in either mode (an
+ * item with no `type` takes one from its identifier in `import` mode). An
+ * entry's key (BibTeX's citation key, RIS `ID`, a CSV `key` / `citation key`
+ * / `id` column, CSL-JSON `id` / `citation-key`) is the record's `id` and
+ * `citation-key`. Each outcome's `position` is the entry's
+ * {@link SourcePosition} (`offset`, `line`, `column` of a BibTeX entry's `@`,
+ * an RIS `TY` line, the first line of a MEDLINE or Refer record, or a CSV
+ * row; CSL-JSON has none).
  *
  * @example
  * ```ts
@@ -504,6 +520,32 @@ function structuredNames(raw: readonly string[], maxAuthors: number): CslName[] 
  * `citation-key`, and each outcome carries the position of its entry's `@`.
  * In the default `import` mode an entry still needs a title and an ISBN or
  * DOI; in `lenient` mode every entry is a record.
+ *
+ * BibLaTeX's field semantics follow Pandoc's reading. The list fields
+ * `publisher`, `location` / `address`, `institution` and `organization`
+ * split at each top-level `and` and join with `; ` (`Routledge and Kegan
+ * Paul` → `Routledge; Kegan Paul`); the publisher is every one of `school`,
+ * `institution`, `organization`, `howpublished` and `publisher` present, in
+ * that order. A multi-volume `@book` (one with a `maintitle`) takes the
+ * `maintitle` as its `title` and its own title as the `volume-title`; a
+ * contained entry (`@inbook`, `@incollection`, …) takes the `maintitle` as
+ * its `container-title` and its `booktitle` as the `volume-title`.
+ * `collection-title` is the `series` alone; `volume` and `part` read as
+ * `7.2`. The localisation keys are spelled out (`type = {patentus}` → `U.S.
+ * patent`, `pubstate = {inpress}` → `in press`, `series = {newseries}` →
+ * `new series`, `series = {3}` → `3rd series`). The language is `langid`,
+ * else the legacy `hyphenation`, else `language`, with a `langidopts`
+ * `variant` setting a Babel language's region (`english` with
+ * `variant=british` → `en-GB`). An `eprint` of type `arxiv` / `pubmed` and
+ * the `pmid` / `pmcid` fields fill `identifiers` when they validate; `type`
+ * fills `genre`, `eventtitle` fills `event-title`. Entry types map to CSL
+ * types as Pandoc and citeproc-js map them.
+ *
+ * Brace nesting is capped at 32 levels (deeper nesting stops the scan like an
+ * unbalanced tail). The scanner is a grammar in `@thomasfosterau/effect-parse`
+ * combinators. With the `bibtexMarkup` option on, text fields keep BibTeX's
+ * formatting as CSL markup (see {@link ParseOptions}); `toBibtex`
+ * writes the same markup back as LaTeX, so the two round-trip.
  *
  * @example
  * ```ts

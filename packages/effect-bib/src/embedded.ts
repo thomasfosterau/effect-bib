@@ -707,7 +707,16 @@ function toRecord(found: Item, options: EmbeddedOptions): BiblioRecord {
  * (`options.url`) as its `URL` when none is given — and one record per COinS
  * span. Records are stamped `provenance.source: "html"`. Pure and total: a
  * page with no metadata yields `{ page: Option.none(), coins: [] }`, and a
- * page longer than `options.maxInputLength` yields nothing.
+ * page longer than `options.maxInputLength` (default `MAX_INPUT_LENGTH`)
+ * yields nothing, and `options.maxRecords` (default `MAX_RECORDS`) caps the
+ * COinS records. A `URL` is kept only as an absolute `http(s)` link (a
+ * relative one is resolved against `options.url`); a `javascript:`, `data:`
+ * or other link is dropped, from every source. Every value goes through
+ * `fromCslJson`, so text is sanitised and identifiers validated; the page
+ * record carries `provenance.retrievedBy: { identifierType: "url", identifier:
+ * options.url }` when `options.url` is given. The page is scanned as text in
+ * linear time and never executed; an opening tag longer than 64 KiB is
+ * skipped.
  *
  * @example
  * ```ts

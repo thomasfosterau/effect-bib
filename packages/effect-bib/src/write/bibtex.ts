@@ -534,7 +534,12 @@ function writeEntry(record: BiblioRecord, key: string, dialect: BibtexDialect): 
  *
  * What a `.bib` file cannot hold is left out: an ORCID, `categories`, the
  * CSL variables with no BibLaTeX field (`archive`, `call-number`, …) and the
- * provenance. A name's particle reads back as a dropping particle unless
+ * provenance. CSL markup becomes LaTeX (`<i>` → `\emph{…}`, a `nocase` span →
+ * a case-protecting `{…}` group) and the specials are escaped. A key already
+ * used gets a letter suffix (`darwin1859origin`, `darwin1859origina`). A record
+ * with a `volume-title` is written, in the BibLaTeX dialect, as a `maintitle`
+ * and a `title` (or, in a contained entry, a `maintitle` and a `booktitle`),
+ * the reader's mapping in reverse. A name's particle reads back as a dropping particle unless
  * every particle in the entry is non-dropping (then `useprefix=true`).
  *
  * @example

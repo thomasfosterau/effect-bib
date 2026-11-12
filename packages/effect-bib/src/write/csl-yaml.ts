@@ -19,7 +19,8 @@ const toJson = Schema.decodeUnknownOption(Schema.Json);
  * CSL-JSON ({@link toCslJson}) in YAML form, between `---` and `...`
  * markers, so the text is both a Pandoc bibliography file and a Markdown
  * front-matter block. Strings are double-quoted (so no title reads as a
- * number or a date), `date-parts` are flow lists. Pure and total.
+ * number or a date), `date-parts` are flow lists, and `parseCslYaml(toCslYaml(records))`
+ * keeps every field the format models. Pure and total.
  *
  * @example
  * ```ts

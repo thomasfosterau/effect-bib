@@ -132,7 +132,7 @@ function writeRecord(record: BiblioRecord): string {
  * (corporate) name as written; the date as `PY` (the year) and `DA`
  * (`YYYY/MM/DD/`); the page range as `SP` / `EP`; the ISBN and ISSN each as
  * an `SN`; the record's own key as `ID`. Text variables are written plain,
- * their CSL markup dropped, since RIS has none. Pure and total.
+ * their CSL markup dropped, since RIS has none. `parseRis(toRis(records))` keeps every field RIS models. Pure and total.
  *
  * @example
  * ```ts

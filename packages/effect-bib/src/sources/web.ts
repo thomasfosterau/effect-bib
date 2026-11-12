@@ -99,7 +99,7 @@ function readPage({
  * resolver is a best-effort pre-check. To close that gap on Node, give the
  * lookup layer an `HttpClient` whose transport checks the address it
  * actually connects to (an undici `Agent` whose `connect.lookup` refuses
- * non-public addresses; see the package README).
+ * non-public addresses; see `docs/lookup.md` in the repository).
  *
  * @since 0.1.0
  */

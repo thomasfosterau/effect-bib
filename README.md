@@ -8,7 +8,7 @@ Reference management on [Effect](https://effect.website): typed CSL-JSON records
 
 | Package | Purpose |
 | --- | --- |
-| [`@thomasfosterau/effect-bib`](packages/effect-bib/README.md) | CSL-JSON records as Effect Schema (the full CSL 1.0.2 variable set, citation keys), validated ISBN / DOI / ISSN / ORCID / PubMed / arXiv identifiers, BibTeX / RIS / CSV / CSL-JSON parsing (an import policy or a lenient bibliography read), same-work dedup scoring and APA / Vancouver / Chicago rendering with in-text citations (`.`, browser-safe), plus Crossref / OpenAlex / OpenLibrary lookup over Effect's `HttpClient` (`./sources`). Peer: `effect`. |
+| [`@thomasfosterau/effect-bib`](packages/effect-bib/README.md) | CSL-JSON records, validated identifiers, file parsers and writers, dedup scoring, APA / Vancouver / Chicago rendering (`.`, browser-safe), and Crossref / OpenAlex / OpenLibrary lookup over `HttpClient` (`./sources`). Peer: `effect`. |
 
 ## Install
 
@@ -34,7 +34,11 @@ const record = fromCslJson({ type: "book", title: "Sapiens", ISBN: "978006231609
 renderReference(record, { style: apaStyle }); // "(n.d.). Sapiens."
 ```
 
-The lookup service, the file parsers, dedup scoring and the full API are in the [package README](packages/effect-bib/README.md).
+The file parsers, dedup scoring, lookup and the rest are in the [guides](docs/); the API detail is in the per-export doc comments.
+
+## Guides
+
+[Records and identifiers](docs/records.md), [parsing and writing](docs/parsing.md), [rendering and citations](docs/rendering.md), [dedup](docs/dedup.md), [lookup](docs/lookup.md) and [compatibility and scope](docs/compatibility.md) are in [`docs/`](docs/).
 
 ## Development
 
