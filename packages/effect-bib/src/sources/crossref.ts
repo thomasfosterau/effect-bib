@@ -21,6 +21,7 @@ import * as Effect from "effect/Effect";
 import * as HashMap from "effect/HashMap";
 import * as Option from "effect/Option";
 import * as P from "effect/Predicate";
+import * as R from "effect/Record";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 import type * as Types from "effect/Types";
@@ -116,17 +117,24 @@ const CrossrefAuthor = Schema.Struct({
 });
 const decodeCrossrefAuthor = Schema.decodeUnknownOption(CrossrefAuthor);
 
+/** One name member as a `[key, text]` entry when the upstream value is text, else nothing. */
+function nameEntry(key: string, value: Option.Option<string>): Array<readonly [string, string]> {
+  return Arr.fromOption(Option.map(value, (text) => [key, text] as const));
+}
+
 /** Builds a structured {@link CslName} from a Crossref author `{ given, family, name, ORCID }` object. */
 function crossrefAuthorName(author: typeof CrossrefAuthor.Type): Option.Option<CslName> {
   const hasStructured = P.isString(author.family) || P.isString(author.given);
-  return readCslName({
-    family: author.family,
-    given: author.given,
-    // Some entries (organisations) carry a single `name` instead of
-    // family/given — fall back to it as the CSL `literal` form.
-    literal: hasStructured ? undefined : author.name,
-    orcid: author.ORCID,
-  });
+  return readCslName(
+    R.fromEntries([
+      ...nameEntry("family", decodeString(author.family)),
+      ...nameEntry("given", decodeString(author.given)),
+      // Some entries (organisations) carry a single `name` instead of
+      // family/given — fall back to it as the CSL `literal` form.
+      ...nameEntry("literal", hasStructured ? Option.none() : decodeString(author.name)),
+      ...nameEntry("orcid", decodeString(author.ORCID)),
+    ]),
+  );
 }
 
 /**
@@ -265,7 +273,7 @@ export function normaliseCrossrefRecord(
       type: crossrefType(decodeString(message.type)),
       title: title.value,
       containerTitle: firstString(Option.fromNullishOr(message["container-title"])),
-      publisher: sanitiseText(message.publisher),
+      publisher: Option.flatMap(decodeString(message.publisher), sanitiseText),
       volume: stringField(decodeStringField(message.volume)),
       issue: stringField(decodeStringField(message.issue)),
       page: stringField(decodeStringField(message.page)),

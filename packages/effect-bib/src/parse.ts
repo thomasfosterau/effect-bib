@@ -662,7 +662,7 @@ export function parseZoteroJson(content: string, options: ParseOptions = {}): Pa
         Option.orElse(decodeCslItemArray(data.value), () =>
           Option.map(decodeCslEnvelope(data.value), (envelope) => envelope.items),
         ),
-        (): readonly unknown[] => [],
+        (): readonly Schema.Json[] => [],
       ),
       config,
     );
@@ -670,7 +670,7 @@ export function parseZoteroJson(content: string, options: ParseOptions = {}): Pa
 }
 
 /** The outcomes of a list of CSL items (from CSL-JSON or CSL YAML), up to the record cap. */
-function cslItemOutcomes(all: readonly unknown[], config: Settings): ParseOutcome[] {
+function cslItemOutcomes(all: readonly Schema.Json[], config: Settings): ParseOutcome[] {
   const [items, truncated] = capped(all, config);
   const outcomes = Arr.map(items, (item): ParseOutcome => {
     if (!P.isObjectOrArray(item)) return { outcome: "skipped", reason: "malformed" };
@@ -709,21 +709,21 @@ function cslImportOutcome(
 }
 
 /** Decodes an untrusted JSON document body; `None` when the text is not JSON. */
-const decodeJsonBody = Schema.decodeUnknownOption(Schema.fromJsonString(Schema.Unknown));
+const decodeJsonBody = Schema.decodeUnknownOption(Schema.fromJsonString(Schema.Json));
 
 /** A parsed CSL body that is a bare array of items. */
-const decodeCslItemArray = Schema.decodeUnknownOption(Schema.Array(Schema.Unknown));
+const decodeCslItemArray = Schema.decodeUnknownOption(Schema.Array(Schema.Json));
 
 /** A parsed CSL body that is a `{ items: [...] }` envelope. */
 const decodeCslEnvelope = Schema.decodeUnknownOption(
-  Schema.Struct({ items: Schema.Array(Schema.Unknown) }),
+  Schema.Struct({ items: Schema.Array(Schema.Json) }),
 );
 
 // ── CSL YAML ──────────────────────────────────────────────────────────
 
 /** A parsed CSL YAML body: a `references:` mapping (Pandoc's form). */
 const decodeCslReferences = Schema.decodeUnknownOption(
-  Schema.Struct({ references: Schema.Array(Schema.Unknown) }),
+  Schema.Struct({ references: Schema.Array(Schema.Json) }),
 );
 
 /**

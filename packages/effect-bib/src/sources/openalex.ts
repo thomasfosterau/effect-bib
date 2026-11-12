@@ -138,10 +138,10 @@ const decodeOpenAlexSource = Schema.decodeUnknownOption(
 
 /** Reads the display name of an OpenAlex `{ source: { display_name } }` / `{ display_name }` location object. */
 function locationDisplayName(location: typeof OpenAlexLocation.Type): Option.Option<string> {
-  const direct = sanitiseText(location.display_name);
+  const direct = Option.flatMap(decodeString(location.display_name), sanitiseText);
   if (Option.isSome(direct)) return direct;
   return Option.flatMap(decodeOpenAlexSource(location.source), (source) =>
-    sanitiseText(source.display_name),
+    Option.flatMap(decodeString(source.display_name), sanitiseText),
   );
 }
 
@@ -173,11 +173,15 @@ interface OpenAlexBiblioFields {
 /** Volume / issue / page range from OpenAlex's `biblio` sub-object. */
 function openAlexBiblio(work: OpenAlexWork): OpenAlexBiblioFields {
   const biblio = decodeOpenAlexBiblio(work.biblio);
-  const first = Option.flatMap(biblio, (b) => sanitiseText(b.first_page));
-  const last = Option.flatMap(biblio, (b) => sanitiseText(b.last_page));
+  const first = Option.flatMap(biblio, (b) =>
+    Option.flatMap(decodeString(b.first_page), sanitiseText),
+  );
+  const last = Option.flatMap(biblio, (b) =>
+    Option.flatMap(decodeString(b.last_page), sanitiseText),
+  );
   return {
-    volume: Option.flatMap(biblio, (b) => sanitiseText(b.volume)),
-    issue: Option.flatMap(biblio, (b) => sanitiseText(b.issue)),
+    volume: Option.flatMap(biblio, (b) => Option.flatMap(decodeString(b.volume), sanitiseText)),
+    issue: Option.flatMap(biblio, (b) => Option.flatMap(decodeString(b.issue), sanitiseText)),
     page: Option.map(first, (start) =>
       Option.match(last, { onNone: () => start, onSome: (end) => `${start}-${end}` }),
     ),
@@ -227,7 +231,10 @@ const decodeNumber = Schema.decodeUnknownOption(Schema.Finite);
  * @since 0.1.0
  */
 export function normaliseOpenAlexRecord(work: OpenAlexWork): Option.Option<BiblioRecord> {
-  const title = Option.firstSomeOf([sanitiseText(work.title), sanitiseText(work.display_name)]);
+  const title = Option.firstSomeOf([
+    Option.flatMap(decodeString(work.title), sanitiseText),
+    Option.flatMap(decodeString(work.display_name), sanitiseText),
+  ]);
   if (Option.isNone(title)) return Option.none();
 
   const author = openAlexAuthors(Option.fromNullishOr(work.authorships));

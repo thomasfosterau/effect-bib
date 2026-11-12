@@ -97,35 +97,43 @@ const MIN_PUBLICATION_YEAR = 1;
 /** Guard against absurd future years. */
 const MAX_PUBLICATION_YEAR = 2200;
 
+/** Narrows a JSON value to an array. */
+const isJsonArray = (value: Schema.Json): value is Schema.JsonArray => Arr.isArray(value);
+
+/** Narrows a JSON value to a plain object (not an array). */
+const isJsonObject = (value: Schema.Json): value is Schema.JsonObject =>
+  P.isObject(value) && !Arr.isArray(value);
+
+/** Decodes one untrusted field as a string; `None` for anything else. */
+const decodeString = Schema.decodeUnknownOption(Schema.String);
+
 /**
- * Trims an untrusted free-text value, collapses its whitespace and clamps
- * it to `maxLength` (default {@link MAX_TEXT_FIELD_LENGTH}).
- * `Option.none()` for empty / whitespace-only or non-string input.
+ * Trims a free-text value, collapses its whitespace and clamps it to
+ * `maxLength` (default {@link MAX_TEXT_FIELD_LENGTH}). `Option.none()` for
+ * empty / whitespace-only text. A value of unknown type is decoded as a
+ * string first (`Schema.decodeUnknownOption(Schema.String)`), then
+ * sanitised.
  *
  * @since 0.1.0
  */
 export function sanitiseText(
-  // oxlint-disable-next-line effect/no-unknown-parameters -- untrusted-input boundary: a total sanitiser over any upstream value (see "The untrusted-input boundary" in packages/effect-bib/AGENTS.md)
-  value: unknown,
+  value: string,
   maxLength: number = MAX_TEXT_FIELD_LENGTH,
 ): Option.Option<string> {
-  if (!P.isString(value)) return Option.none();
   const collapsed = value.replace(/\s+/g, " ").trim();
   if (Str.isEmpty(collapsed)) return Option.none();
   return Option.some(collapsed.slice(0, limitOr(Option.some(maxLength), MAX_TEXT_FIELD_LENGTH)));
 }
 
 /**
- * Coerces an untrusted value to a plausible publication year, or
- * `Option.none()`. Accepts a number or a numeric string; rejects
- * non-integers and years outside {@link MIN_PUBLICATION_YEAR} …
- * {@link MAX_PUBLICATION_YEAR}.
+ * Coerces a number or a numeric string to a plausible publication year, or
+ * `Option.none()`; rejects non-integers and years outside
+ * {@link MIN_PUBLICATION_YEAR} … {@link MAX_PUBLICATION_YEAR}.
  *
  * @since 0.1.0
  */
-// oxlint-disable-next-line effect/no-unknown-parameters -- untrusted-input boundary: a total sanitiser over any upstream value (see "The untrusted-input boundary" in packages/effect-bib/AGENTS.md)
-export function sanitiseYear(value: unknown): Option.Option<number> {
-  const n = P.isNumber(value) ? value : P.isString(value) ? Number(value) : NaN;
+export function sanitiseYear(value: string | number): Option.Option<number> {
+  const n = P.isNumber(value) ? value : Number(value);
   if (!Number.isInteger(n)) return Option.none();
   if (n < MIN_PUBLICATION_YEAR || n > MAX_PUBLICATION_YEAR) return Option.none();
   return Option.some(n);
@@ -615,17 +623,17 @@ export function makeCslName(parts: {
   readonly orcid?: unknown;
 }): Option.Option<CslName> {
   const name: Types.Mutable<CslName> = {};
-  const family = sanitiseText(parts.family);
+  const family = Option.flatMap(decodeString(parts.family), sanitiseText);
   if (Option.isSome(family)) name.family = family.value;
-  const given = sanitiseText(parts.given);
+  const given = Option.flatMap(decodeString(parts.given), sanitiseText);
   if (Option.isSome(given)) name.given = given.value;
-  const dropping = sanitiseText(parts.droppingParticle);
+  const dropping = Option.flatMap(decodeString(parts.droppingParticle), sanitiseText);
   if (Option.isSome(dropping)) name["dropping-particle"] = dropping.value;
-  const nonDropping = sanitiseText(parts.nonDroppingParticle);
+  const nonDropping = Option.flatMap(decodeString(parts.nonDroppingParticle), sanitiseText);
   if (Option.isSome(nonDropping)) name["non-dropping-particle"] = nonDropping.value;
-  const suffix = sanitiseText(parts.suffix);
+  const suffix = Option.flatMap(decodeString(parts.suffix), sanitiseText);
   if (Option.isSome(suffix)) name.suffix = suffix.value;
-  const literal = sanitiseText(parts.literal);
+  const literal = Option.flatMap(decodeString(parts.literal), sanitiseText);
   if (Option.isSome(literal)) name.literal = literal.value;
   if (P.isString(parts.orcid)) {
     const orcid = decodeOrcid(parts.orcid);
@@ -846,8 +854,7 @@ const decodeUnknownArray = Schema.decodeUnknownOption(Schema.Array(Schema.Unknow
  *
  * @since 0.1.0
  */
-// oxlint-disable-next-line effect/no-unknown-parameters -- untrusted-input boundary: a total decoder over any CSL name value (see "The untrusted-input boundary" in packages/effect-bib/AGENTS.md)
-export function readCslName(entry: unknown): Option.Option<CslName> {
+export function readCslName(entry: Schema.Json): Option.Option<CslName> {
   return Option.flatMap(decodeCslNameInput(entry), (obj) =>
     makeCslName({
       family: obj.family,
@@ -868,21 +875,14 @@ export function readCslName(entry: unknown): Option.Option<CslName> {
  *
  * @since 0.1.0
  */
-export function readCslNameArray(
-  // oxlint-disable-next-line effect/no-unknown-parameters -- untrusted-input boundary: a total decoder over any CSL name-list value (see "The untrusted-input boundary" in packages/effect-bib/AGENTS.md)
-  value: unknown,
-  maxNames: number = MAX_AUTHORS,
-): CslName[] {
+export function readCslNameArray(value: Schema.Json, maxNames: number = MAX_AUTHORS): CslName[] {
   const cap = limitOr(Option.some(maxNames), MAX_AUTHORS);
-  return Option.match(decodeUnknownArray(value), {
-    onNone: (): CslName[] => [],
-    onSome: (entries) =>
-      // Scans no further than the cap: a hostile list cannot make every entry cost.
-      Arr.filterMap(entries, (entry): Result.Result<CslName, void> => {
-        const name = readCslName(entry);
-        return Option.isNone(name) ? Result.failVoid : Result.succeed(name.value);
-      }).slice(0, cap),
-  });
+  if (!isJsonArray(value)) return [];
+  // Scans no further than the cap: a hostile list cannot make every entry cost.
+  return Arr.filterMap(value, (entry): Result.Result<CslName, void> => {
+    const name = readCslName(entry);
+    return Option.isNone(name) ? Result.failVoid : Result.succeed(name.value);
+  }).slice(0, cap);
 }
 
 /** Folds an empty name list to `None` for the record spread. */
@@ -931,9 +931,9 @@ function fromCslDateValue(obj: typeof CslDateInput.Type): Option.Option<CslDate>
   if (Option.isSome(season)) date.season = season.value;
   const circa = decodeCirca(obj.circa);
   if (Option.isSome(circa)) date.circa = circa.value;
-  const literal = sanitiseText(obj.literal);
+  const literal = Option.flatMap(decodeString(obj.literal), sanitiseText);
   if (Option.isSome(literal)) date.literal = literal.value;
-  const raw = sanitiseText(obj.raw);
+  const raw = Option.flatMap(decodeString(obj.raw), sanitiseText);
   if (Option.isSome(raw)) date.raw = raw.value;
   return Arr.isArrayEmpty(Struct.keys(date)) ? Option.none() : Option.some(date);
 }
@@ -979,16 +979,24 @@ function fromCslDateValue(obj: typeof CslDateInput.Type): Option.Option<CslDate>
  *
  * @since 0.1.0
  */
-// oxlint-disable-next-line effect/no-unknown-parameters -- untrusted-input boundary: the lenient interop decoder takes any value by contract (see "The untrusted-input boundary" in packages/effect-bib/AGENTS.md)
-export function fromCslJson(item: unknown, limits: RecordLimits = {}): BiblioRecord {
-  const provenance: Provenance = { source: "csl-json" };
-  if (!P.isObjectOrArray(item)) {
-    return { type: "document", identifiers: {}, provenance };
+export function fromCslJson(item: Schema.Json, limits: RecordLimits = {}): BiblioRecord {
+  // An array reads as its index keys (which land in `extra`), exactly as an
+  // object would; every key is re-checked in `fromCslJsonObject`.
+  if (isJsonArray(item)) {
+    return fromCslJsonObject(
+      R.fromEntries(Arr.map(item, (value, index) => [String(index), value] as const)),
+      limits,
+    );
   }
-  // `isObjectOrArray` proved a non-null object or array; every key is read as
-  // `unknown` and re-checked below, and an array reads as its index keys
-  // (which land in `extra`), exactly as an object would.
-  const obj: CslJsonItem = Arr.isArray(item) ? { ...item } : item;
+  if (isJsonObject(item)) return fromCslJsonObject(item, limits);
+  return { type: "document", identifiers: {}, provenance: CSL_JSON_PROVENANCE };
+}
+
+/** The provenance every {@link fromCslJson} record is stamped with. */
+const CSL_JSON_PROVENANCE: Provenance = { source: "csl-json" };
+
+/** Reads a CSL-JSON item object into a {@link BiblioRecord}. */
+function fromCslJsonObject(obj: Schema.JsonObject, limits: RecordLimits): BiblioRecord {
   const rawType = obj.type;
   const type: CslItemType = P.isString(rawType) && isCslItemType(rawType) ? rawType : "document";
   const maxFieldLength = limitOr(
@@ -1006,20 +1014,17 @@ export function fromCslJson(item: unknown, limits: RecordLimits = {}): BiblioRec
     ...readCslNames(obj, limitOr(Option.fromUndefinedOr(limits.maxAuthors), MAX_AUTHORS)),
     ...readCslDates(obj),
     identifiers: readCslIdentifiers(obj, strings.values),
-    provenance,
+    provenance: CSL_JSON_PROVENANCE,
     ...passthrough,
   };
 }
-
-/** A CSL string value. */
-const decodeString = Schema.decodeUnknownOption(Schema.String);
 
 /** A CSL item `id`: text or a finite number. */
 const decodeItemId = Schema.decodeUnknownOption(Schema.Union([Schema.String, Schema.Finite]));
 
 /** Reads the item-level members: the `id` and the `categories` tags. */
 function readCslItemMembers(
-  obj: CslJsonItem,
+  obj: Schema.JsonObject,
   maxFieldLength: number,
 ): Pick<BiblioRecord, "id" | "categories"> {
   const members: Types.Mutable<Pick<BiblioRecord, "id" | "categories">> = {};
@@ -1031,7 +1036,11 @@ function readCslItemMembers(
     onNone: (): string[] => [],
     onSome: (values) =>
       Arr.getSomes(
-        values.slice(0, MAX_CATEGORIES).map((value) => sanitiseText(value, maxFieldLength)),
+        values
+          .slice(0, MAX_CATEGORIES)
+          .map((value) =>
+            Option.flatMap(decodeString(value), (text) => sanitiseText(text, maxFieldLength)),
+          ),
       ),
   });
   if (Arr.isArrayNonEmpty(categories)) members.categories = categories;
@@ -1045,7 +1054,7 @@ interface CslStrings {
 }
 
 /** Reads the modelled CSL string variables, sanitised, falling back to their legacy aliases. */
-function readCslStrings(obj: CslJsonItem, maxFieldLength: number): CslStrings {
+function readCslStrings(obj: Schema.JsonObject, maxFieldLength: number): CslStrings {
   const read = (key: string): Option.Option<string> =>
     sanitiseCslString(decodeCslStringValue(obj[key]), maxFieldLength);
   const values: Types.Mutable<Partial<Record<CslStringVar, string>>> = R.fromEntries(
@@ -1066,7 +1075,7 @@ function readCslStrings(obj: CslJsonItem, maxFieldLength: number): CslStrings {
 
 /** Reads the modelled CSL name variables into structured name lists. */
 function readCslNames(
-  obj: CslJsonItem,
+  obj: Schema.JsonObject,
   maxNames: number,
 ): Partial<Record<CslNameVar, readonly CslName[]>> {
   return R.fromEntries(
@@ -1081,7 +1090,7 @@ function readCslNames(
 }
 
 /** Reads the modelled CSL date variables into structured dates. */
-function readCslDates(obj: CslJsonItem): Partial<Record<CslDateVar, CslDate>> {
+function readCslDates(obj: Schema.JsonObject): Partial<Record<CslDateVar, CslDate>> {
   return R.fromEntries(
     Arr.filterMap(CSL_DATE_VARS, (key): Result.Result<readonly [CslDateVar, CslDate], void> => {
       const date = Option.flatMap(decodeCslDateInput(obj[key]), fromCslDateValue);
@@ -1096,7 +1105,7 @@ function readCslDates(obj: CslJsonItem): Partial<Record<CslDateVar, CslDate>> {
  * `number` (`arXiv:2101.01234`) or an arxiv.org `URL`.
  */
 function readCslIdentifiers(
-  obj: CslJsonItem,
+  obj: Schema.JsonObject,
   strings: Partial<Record<CslStringVar, string>>,
 ): RecordIdentifiers {
   const identifiers: Types.Mutable<RecordIdentifiers> = {};
@@ -1136,7 +1145,7 @@ function readCslIdentifiers(
 }
 
 /** Captures the CSL keys the model doesn't consume (nor read as an alias) into the passthrough map. */
-function collectCslExtra(obj: CslJsonItem, aliased: HashSet.HashSet<string>): RecordExtra {
+function collectCslExtra(obj: Schema.JsonObject, aliased: HashSet.HashSet<string>): RecordExtra {
   return R.filter(
     obj,
     (_value, key) => !HashSet.has(KNOWN_CSL_KEYS, key) && !HashSet.has(aliased, key),
