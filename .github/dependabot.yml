@@ -42,8 +42,8 @@
 # The published peer range (`catalogs.peers.effect`) is a deliberate floor,
 # not a version to chase: change it by hand, with a changeset.
 #
-# Every entry assigns the owner (`assignees`): the Auto-assign workflow skips
-# Dependabot's PRs, so this is how they are assigned.
+# Every entry assigns the owner (`assignees`), so the owner is looped in on
+# each Dependabot PR; a PR opened in the owner's name needs no assignment.
 #
 # `cooldown` takes whole days only, so it is 1 day: longer than
 # pnpm-workspace.yaml's `minimumReleaseAge` (480 minutes, 8 hours), so a
