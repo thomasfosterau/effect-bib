@@ -50,7 +50,7 @@ catalog:
   # GHSA-587h-7wmj-h5pm (a high that fails `pnpm audit`). Read the `components` table in
   # node_modules/@effect/tsgo/dist/effect-tsgo.cjs before bumping any of the
   # three.
-  "@effect/tsgo": 0.67.7
+  "@effect/tsgo": 0.69.0
   # `it.effect` / `it.live` / `layer` for the unit suite (#190). Peers `effect` (same minor as the pin below) and `vitest >=5 <6`; moves with the `effect` Dependabot group.
   "@effect/vitest": 4.1.4
   # The Effect lint rules (`effect/*`, anti-slop included), registered as an
