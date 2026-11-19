@@ -1,15 +1,9 @@
 #!/usr/bin/env bash
 #
-# Publish every workspace package under packages/* — the `publish-script` the
-# Release workflow hands to changesets/action once the "Version Packages" PR
-# has merged (see PUBLISHING.md).
-#
-# `pnpm pack` resolves the workspace's `catalog:` / `workspace:` specifiers and
-# `publishConfig`; `npm publish` of the tarball performs the OIDC exchange (the
-# Release job pins npm). No `--provenance`: an explicit request fails the
-# publish from a private repository. Idempotent: a package already on npm at
-# its current version is skipped, and every tarball is packed before the first
-# publish, so a pack failure publishes nothing. See PUBLISHING.md.
+# Packs every package under packages/* (`pnpm pack` resolves `catalog:` /
+# `workspace:` and `publishConfig`) and publishes the tarballs with npm, which
+# performs the OIDC exchange. Skips versions already on npm. No `--provenance`:
+# an explicit request fails from a private repository.
 set -euo pipefail
 
 out="$PWD/.release"
@@ -24,10 +18,8 @@ for dir in packages/*/; do
     continue
   fi
   echo "pack: $name@$version"
-  # `--config.ignore-scripts=true`: no `prepack` / `prepare` / `postpack` runs
-  # in the id-token job (none is defined today). `pnpm pack` has no
-  # `--ignore-scripts` flag (pnpm 11 rejects it as an unknown option), so the
-  # setting is passed as config; the tarball is byte-identical either way.
+  # No lifecycle scripts in the id-token job; `pnpm pack` has no
+  # `--ignore-scripts` flag.
   (cd "$dir" && pnpm pack --config.ignore-scripts=true --pack-destination "$out")
 done
 

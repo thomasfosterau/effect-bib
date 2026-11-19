@@ -1,15 +1,5 @@
 name: CI
 
-# ONE command: `vp run ci`, the root task in vite.config.ts that chains every
-# gate in AGENTS.md#verification (format + lint, build, type gates, the oracle
-# corpora, unit tests + coverage, the executed docs examples, the audit), so a
-# local run and CI are the same thing. The library runs it on both the current
-# LTS and the latest Node release (`engines.node` is `>=22`, covering both).
-# Each leg is its own check, `ci (node lts)` and `ci (node latest)`, and the
-# ruleset requires both by name.
-# Nothing here needs a database or a secret: the lookup sources are exercised
-# against a stubbed `FetchHttpClient`, never the network.
-
 on:
   pull_request:
   push:
@@ -20,8 +10,6 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/trunk' }}
 
-# No permissions by default; each job grants only what it needs. CI needs no
-# secret and no OIDC token, so a Dependabot PR runs it safely.
 permissions: {}
 
 jobs:
@@ -34,35 +22,25 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # `vp env use` resolves `lts` to the newest LTS line and `latest` to
-        # the newest released Current line (never a pre-release).
         node: [lts, latest]
     env:
-      # A modest ceiling for every Node process in the pipeline. NODE_OPTIONS
-      # is inherited by every child, including each vitest fork.
       NODE_OPTIONS: --max-old-space-size=2048
       VITEST_MAX_WORKERS: 2
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
-      # `cache: true` restores the pnpm store (keyed on pnpm-lock.yaml); the
-      # `vite-plus` pin comes from the catalog. The install is frozen and keeps
-      # lifecycle scripts on (the type gate needs the Effect-patched `tsc` that
-      # `prepare` produces).
       - uses: voidzero-dev/setup-vp@v1.22.0
         with:
           version-file: pnpm-workspace.yaml
           node-version: ${{ matrix.node }}
           cache: true
-          run-install: |
-            - args: ["--frozen-lockfile"]
+          run-install: true
       - name: Restore the Vite+ task cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        uses: actions/cache@v6.1.0
         with:
           path: node_modules/.vite/task-cache
           key: vp-task-v1-${{ runner.os }}-${{ matrix.node }}-${{ github.sha }}
           restore-keys: |
             vp-task-v1-${{ runner.os }}-${{ matrix.node }}-
-      - name: CI
-        run: vp run ci
+      - run: vp run ci

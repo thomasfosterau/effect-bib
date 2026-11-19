@@ -1,17 +1,9 @@
-# zizmor (GitHub Actions static analysis) configuration. Run it with
-# `uvx zizmor --offline .github`; every workflow should
-# report no findings beyond what is configured away here, each with its reason.
+# `uvx zizmor --offline .github` should report nothing beyond what is configured here.
 rules:
   dependabot-cooldown:
     config:
-      # The owner's supply-chain policy: pnpm holds a new version for 8 hours
-      # (`minimumReleaseAge: 480` in pnpm-workspace.yaml) and Dependabot's
-      # cooldown, which counts whole days, waits 1 — longer than pnpm, so a
-      # Dependabot PR never proposes a version pnpm would refuse.
       days: 1
   adhoc-packages:
     ignore:
-      # The Release job installs one exactly pinned npm (11.20.0) for the OIDC
-      # exchange `npm publish` performs; it is not a project dependency and
-      # has no lockfile to live in. See PUBLISHING.md.
+      # The publish job installs one exactly pinned npm for the OIDC exchange.
       - release.yml
