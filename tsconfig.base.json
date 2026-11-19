@@ -1,10 +1,7 @@
 {
   "$schema": "./node_modules/@effect/tsgo/schema.json",
   "compilerOptions": {
-    // Copied from the website application (via effect-drizzle-ext) so the
-    // library compiles under exactly the options its consumers use. `erasableSyntaxOnly` because the
-    // apps load TypeScript under Node's strip-only loader; a library file that
-    // uses enums / namespaces / parameter properties would fail there.
+    // Consumers load TypeScript under Node's strip-only loader.
     "erasableSyntaxOnly": true,
     "module": "preserve",
     "moduleResolution": "bundler",
@@ -12,7 +9,7 @@
     "lib": ["esnext", "dom", "dom.iterable"],
     // Source imports are written `./x.ts`; the build rewrites them to `./x.js`
     // in the emitted JavaScript. The emitted `.d.ts` keeps `./x.ts`, which
-    // both `bundler` and `nodenext` consumers resolve (verified 2026-09-18).
+    // both `bundler` and `nodenext` consumers resolve.
     "rewriteRelativeImportExtensions": true,
     "allowJs": true,
     "checkJs": false,
@@ -62,7 +59,7 @@
           "instanceOfSchema": "warning",
           "newPromise": "warning",
           "nodeBuiltinImport": "warning",
-          "preferSchemaOverJson": "warning",
+          "globalJsonInEffect": "warning",
           "processEnv": "warning",
           "processEnvInEffect": "warning",
           "unsafeEffectTypeAssertion": "warning",

@@ -1,26 +1,8 @@
 /**
- * The BibTeX / BibLaTeX oracle (#91): `parseBibtex` against Pandoc's own
- * BibLaTeX → CSL reading of three external corpora — biber's test `.bib`
- * files and Better BibTeX's import fixtures (both vendored, with their
- * licences, under `tests/fixtures/bibtex/`), and Pandoc's `biblatex-*`
- * test cases (GPL: read from the checkout `vp run oracles:fetch` makes,
- * never vendored). Pandoc's CSL-JSON for every file is committed under
- * `tests/fixtures/bibtex/oracle/` (`scripts/pandoc-oracle.sh` regenerates
- * it).
- *
- * Each entry is compared field by field after the normalisation the
- * documented differences call for (titles case-folded, since Pandoc
- * sentence-cases English titles; markup stripped; dashes in page ranges
- * unified). Every remaining difference is listed in
- * `tests/fixtures/bibtex/divergences.json`, and the test pins that list
- * exactly: a new divergence fails, and so does one that went away (shrink
- * the list; `ORACLE_BASELINE=write` rewrites it). The categories behind the
- * list are documented in `tests/fixtures/bibtex/README.md`.
- *
- * Every corpus file, with or without an oracle, must also read totally:
- * no throw, one outcome per entry.
- *
- * @module tests/unit/biblio-bibtex-oracle
+ * `parseBibtex` against Pandoc's BibLaTeX → CSL reading of biber's and Better
+ * BibTeX's fixtures (vendored) and Pandoc's own cases (`oracles:fetch`).
+ * Every remaining difference is pinned in `fixtures/bibtex/divergences.json`
+ * (`ORACLE_BASELINE=write` rewrites it); its README explains the categories.
  */
 
 import * as fs from "node:fs";

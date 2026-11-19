@@ -1,23 +1,6 @@
-# pnpm workspace — the published package(s) under packages/* plus the
-# dist-consumer declaration check under tests/*.
-#
-# The `catalog:` protocol pins versions that MUST be singletons across the
-# workspace. Effect especially: two copies of `effect` break Context / Layer /
-# Schema identity at runtime, so every package references `catalog:`.
-#
-# EVERY external dependency version lives here — package.json files reference
-# only `catalog:` / `catalog:peers` (or `workspace:*` for internal packages).
-# `catalogMode: strict` makes `pnpm add` enforce this at add time and
-# `pnpm install` reject non-catalog specifiers. After editing this catalog,
-# ALWAYS run `pnpm install` and commit the regenerated pnpm-lock.yaml — a stale
-# lockfile fails CI at once with ERR_PNPM_LOCKFILE_CONFIG_MISMATCH.
-#
-# Versions are kept in lockstep with the preferenceflow application's catalog
-# (the freshest of the three consuming applications) wherever the two overlap
-# (effect, the TypeScript 6/7 pair, fallow; vite-plus and @effect/tsgo have
-# since moved ahead of them) — the
-# apps consume this library, so the library builds against exactly what they
-# run.
+# Every external version lives here; package.json files reference only
+# `catalog:`, `catalog:peers` or `workspace:*`. After editing, run `vp install`
+# and commit pnpm-lock.yaml.
 packages:
   - packages/*
   - tests/*
@@ -27,114 +10,53 @@ catalogMode: strict
 catalog:
   "@changesets/changelog-github": ^1.0.1
   "@changesets/cli": ^3.0.3
-  # Compiles AND executes every JSDoc `@example` in packages/*/src (the
-  # `docgen` task). Its `typescript` peer (`^5`) resolves to the TS6 alias
-  # below, which pnpm tolerates via `peerDependencyRules`; the JS API it uses
-  # is unchanged in 6. 4.1 depends on `effect` / `@effect/platform-node`
-  # ^4.1.1, which the `effect` override forces onto the catalog singleton, so
-  # it moves with (never ahead of) the `effect` entry below.
+  # Depends on `effect`, which the override forces onto the catalog singleton,
+  # so it moves with the `effect` entry.
   "@effect/docgen": ^4.1.4
   "@effect/language-service": ^0.87.5
-  # Effect Language Service as a native (TypeScript-Go) binary — the TS7 side
-  # of the 6/7 split. `effect-tsgo patch` overwrites the native `tsc` binary
-  # with an Effect-patched build matched by gitHead, so this pins in lockstep
-  # with `@typescript/native` below (0.55.0 ships against typescript 7.0.2, and
-  # also 7.1.0-dev.20261019.1) and with the `oxlint` and `oxlint-tsgolint` that
-  # `vite-plus` pulls in: each @effect/tsgo release ships artifacts for an
-  # explicit set of component versions and hard-errors
-  # (UnsupportedTargetPackageVersionError) on anything else, failing `pnpm
-  # install` itself rather than a later task. 0.55.0 supports oxlint
-  # 1.87.0–1.89.0 and oxlint-tsgolint 7.0.2003 / 7.0.2004, so vite-plus 1.4.0
-  # (oxlint 1.89.0, tsgolint 7.0.2004) is the pairing; vite-plus 1.0.x
-  # (oxlint 1.85.0) is no longer supported, and vite-plus <=1.0.0 carries
-  # GHSA-587h-7wmj-h5pm (a high that fails `pnpm audit`). Read the `components` table in
-  # node_modules/@effect/tsgo/dist/effect-tsgo.cjs before bumping any of the
-  # three.
+  # `effect-tsgo patch` (in `prepare`) supports only the `@typescript/native`,
+  # oxlint and oxlint-tsgolint versions in the `components` table of
+  # node_modules/@effect/tsgo/dist/effect-tsgo.cjs, and fails the install
+  # otherwise: move it, `@typescript/native` and `vite-plus` together.
   "@effect/tsgo": 0.69.0
-  # `it.effect` / `it.live` / `layer` for the unit suite (#190). Peers `effect` (same minor as the pin below) and `vitest >=5 <6`; moves with the `effect` Dependabot group.
   "@effect/vitest": 4.1.4
-  # The Effect lint rules (`effect/*`, anti-slop included), registered as an
-  # oxlint JS plugin by `vite.config.ts`; replaces
-  # `@mpsuesser/oxlint-plugin-effect`. Depends on `effect` exactly (0.9.0 →
-  # 4.1.0), which the `effect` override forces onto the catalog singleton: it
-  # lints fine on that copy. Runs inside vite-plus's oxlint but ranges its
-  # plugin API (`@oxlint/plugins ^1.85.0`), so Dependabot moves it on its own.
   "@enfect/oxlint": ^0.10.0
-  # The BibTeX scanner's parser combinators (#72). Peers `effect ^4.0.0`.
-  # The version the workspace builds and tests against; the published
-  # package declares the `catalogs.peers` range instead (#162).
+  # The dev pin; the published range is in `catalogs.peers`.
   "@thomasfosterau/effect-parse": 0.6.1
   "@types/node": ^26.6.6
-  # The coverage provider must equal the `vitest` that vite-plus bundles (see
-  # the vite-plus note below), so it moves with vite-plus, by hand: vite-plus
-  # ships no provider, and its `test --coverage` startup guard throws on any
-  # version other than its bundled vitest's (1.4.0 → 5.0.5). Its own peer
-  # (`vitest: <same version>`) cannot catch a skew here, for two reasons: the
-  # `vitest: "catalog:"` override rewrites that peer to the catalog version,
-  # and `peerDependencyRules` (`allowAny: vitest`, below) accepts any `vitest`
-  # version whatever range the peer declares.
+  # Must equal the `vitest` vite-plus pins, or `vp test --coverage` refuses
+  # to start.
   "@vitest/coverage-istanbul": 5.1.0
   effect: 4.1.4
   fallow: 3.43.1
-  # Exists only for docgen: `@effect/docgen` requires it as a peer and spawns
-  # the `tsx` binary itself to run each example. Scripts never invoke it;
-  # they run TypeScript with `vpx <file>.ts`.
+  # Only for docgen, which spawns it to run each example.
   tsx: ^4.23.15
-  # TypeScript 6/7 side-by-side: TS7 (the native Go compiler) ships no JS API
-  # until 7.1, so JS-API consumers (@effect/language-service, @effect/docgen)
-  # stay on TS6 while native `tsc` type-checks AND emits this library's
-  # `dist/`. The alias keeps the package importable as `typescript`
-  # name-stable at the TS6 JS compiler (bin `tsc6`); `@typescript/native` is
-  # TS7 (bin `tsc`). Pinned exact: @typescript/native's gitHead must match
-  # @effect/tsgo's bundled binary.
+  # TS7 (`tsc`, native) type-checks and emits `dist/`; the TS6 alias serves
+  # the JS-API consumers (the language service, docgen). Exact pins: see the
+  # @effect/tsgo note.
   typescript: "npm:@typescript/typescript6@6.0.2"
   "@typescript/native": "npm:typescript@7.0.2"
-  # vite-plus pins `oxlint`, `oxfmt`, `oxlint-tsgolint` and `vitest` to exact
-  # versions, so this entry — not a catalog entry of its own — is what decides
-  # the oxlint version `effect-tsgo patch --oxlint` has to support (see the
-  # @effect/tsgo note above): 1.0.0 carries oxlint 1.85.0, 1.1.0 1.87.0, 1.2.0
-  # and 1.3.0 1.88.0, 1.4.0 1.89.0. `vite` is the same release under its aliased core
-  # package, and `vitest` must match vite-plus's exact pin (1.4.0 → 5.0.5) because the
-  # `vitest: "catalog:"` override forces every resolution to the catalog
-  # singleton. `@vitest/coverage-istanbul` (above) moves with it to the same
-  # version: bumping vite-plus means reading its new `vitest` pin from
-  # node_modules/vite-plus/package.json and setting `vite`, `vitest` and the
-  # coverage provider with it.
+  # vite-plus pins its oxlint, oxfmt, oxlint-tsgolint and vitest exactly;
+  # `vitest` and `@vitest/coverage-istanbul` follow its vitest pin.
   vite-plus: 1.6.0
-  vite: npm:@voidzero-dev/vite-plus-core@1.4.0
+  vite: npm:@voidzero-dev/vite-plus-core@1.6.0
   vitest: 5.1.0
 
-# Peer ranges the PUBLISHED package declares. Kept as a named catalog so the
-# strict catalog mode still governs them while they stay ranges. `pnpm pack`
-# replaces `catalog:peers` with these ranges in the published manifest.
-# `effect` is `^4.0.0` by policy: raise it only when a dependency requires a
-# newer one, naming that dependency here (none does: the optional peer
-# @thomasfosterau/effect-parse peers on `effect ^4.0.0`). Proved by running
-# `vp run check` and the unit suites with the `effect` pin above set to 4.0.0.
-#
-# `@thomasfosterau/effect-parse` is an OPTIONAL peer (#162): only the root
-# entry's parsers (`src/bibtex/`) import it, through its `/Parser`, `/Token`
-# and `/Compiler` subpaths, so a consumer of `./record` alone never installs
-# it, and a consumer that also uses effect-parse shares one copy. The range is
-# every release whose API the scanner uses; proved by running `vp run check`
-# and the unit suites with the catalog pin above set to 0.4.1. Widen it (with
-# a changeset) once a new minor passes the same run.
+# Published peer ranges. `effect` stays `^4.0.0` unless a dependency needs
+# newer (name it here). Each floor is proved by running the gates with the
+# dev pin set to it; widen the effect-parse range (with a changeset) once a new
+# minor passes.
 catalogs:
   peers:
     "@thomasfosterau/effect-parse": ^0.4.1 || ^0.5.0
     effect: ^4.0.0
 
 overrides:
-  # undici <8.12.2 — GHSA-xjj6-f33q-929c (high): an unhandled error on a
-  # response with excessive content-encodings is a denial of service
-  # (effect-bib#117). Reached transitively (@effect/platform-node > undici), whose
-  # range admits the fix but whose lockfile resolution stayed below it.
-  # Drop once that resolution reaches >=8.12.2 on its own.
+  # GHSA-xjj6-f33q-929c, reached through @effect/platform-node. Drop once
+  # the resolution reaches it on its own.
   undici: ^8.12.2
-  # `effect` MUST be a singleton (see the header): force every resolution to
-  # the catalog version so a hoisting reshuffle cannot introduce a second copy.
+  # Two copies of `effect` break Context / Layer / Schema identity.
   effect: "catalog:"
-  # The `@*` keys are the form `vp migrate` manages under pnpm.
   vite@*: "catalog:"
   vitest@*: "catalog:"
 nodeLinker: hoisted
@@ -145,20 +67,14 @@ peerDependencyRules:
   allowAny:
     - vite
     - vitest
-    # @effect/docgen declares `typescript: ^5`; the workspace's `typescript`
-    # is the TS6 alias (see the catalog note).
+    # @effect/docgen declares `typescript: ^5`.
     - typescript
   allowedVersions:
     vite: "*"
     vitest: "*"
     typescript: "*"
 
-# Supply-chain delay (owner's policy, gardeneria#1149, relaxed to 8 hours on
-# 2026-10-30): hold newly published versions for 480 MINUTES before pnpm will
-# install them. Dependabot's `cooldown` (.github/dependabot.yml) takes whole
-# days only, so it waits 1 day: longer than this, so a Dependabot PR never
-# proposes a version pnpm would still refuse.
+# Hold new versions for 8 hours; Dependabot's 1-day cooldown is longer.
 minimumReleaseAge: 480
 minimumReleaseAgeExclude:
-  # @thomasfosterau/* is first-party — exempt so our own releases install immediately.
   - "@thomasfosterau/*"

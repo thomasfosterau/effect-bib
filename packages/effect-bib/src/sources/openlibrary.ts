@@ -16,8 +16,6 @@
  * @since 0.1.0
  */
 
-// Refit onto the CSL-aligned `BiblioRecord` (website#1070, website#574).
-
 import * as Arr from "effect/Array";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";

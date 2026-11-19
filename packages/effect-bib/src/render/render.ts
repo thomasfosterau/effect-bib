@@ -16,8 +16,6 @@
  * @since 0.1.0
  */
 
-// website#1072. That determinism is the property the snapshot fixtures pin.
-
 import * as Arr from "effect/Array";
 import * as Option from "effect/Option";
 import * as Order from "effect/Order";

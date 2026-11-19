@@ -19,8 +19,6 @@
  * @since 0.1.0
  */
 
-// See website#1072.
-
 import * as Option from "effect/Option";
 import * as Str from "effect/String";
 import { type BiblioRecord, yearOf } from "../../record.ts";

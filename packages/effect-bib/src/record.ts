@@ -24,8 +24,6 @@
  * @since 0.1.0
  */
 
-// See website#1069.
-
 import * as Arr from "effect/Array";
 import * as HashSet from "effect/HashSet";
 import * as Option from "effect/Option";

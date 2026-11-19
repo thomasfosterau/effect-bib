@@ -1,9 +1,7 @@
 /**
- * Unit tests for #96: BibTeX formatting as CSL markup (the opt-in
- * `bibtexMarkup` parse option), the italic flip-flop in the HTML and
- * Markdown adapters, and Vancouver's rich output.
- *
- * @module tests/unit/biblio-bibtex-markup
+ * BibTeX formatting as CSL markup (the opt-in `bibtexMarkup` option), the
+ * italic flip-flop in the HTML and Markdown adapters, and Vancouver's rich
+ * output.
  */
 
 import * as Option from "effect/Option";

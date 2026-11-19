@@ -15,8 +15,6 @@
  * @since 0.1.0
  */
 
-// See website#1072.
-
 export * from "./types.ts";
 export * from "./locale.ts";
 export * from "./format.ts";

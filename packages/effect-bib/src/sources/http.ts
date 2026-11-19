@@ -12,8 +12,6 @@
  * @since 0.1.0
  */
 
-// See website#1070.
-
 import * as Arr from "effect/Array";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";

@@ -105,7 +105,7 @@ describe("parseBibtex", () => {
     ]);
   });
 
-  it("rejects a checksum-invalid ISBN as no-identifier (B2 checksum gate)", () => {
+  it("rejects a checksum-invalid ISBN as no-identifier", () => {
     expect(parseBibtex(`@book{x, title={t}, isbn={9780140449137}}`)[0]).toMatchObject({
       outcome: "skipped",
       reason: "no-identifier",
@@ -477,7 +477,7 @@ describe("lenient mode and citation keys", () => {
       "citation-key": "doe2020",
       identifiers: { pmid: "15371539" },
     });
-    // Read in full, as in lenient mode (#82).
+    // Read in full, as in lenient mode.
     expect(imported.genre).toBe("PhD thesis");
     expect(parseZoteroJson(toJsonText([1]), { mode: "lenient" })).toEqual([
       { outcome: "skipped", reason: "malformed" },
@@ -510,7 +510,7 @@ describe("lenient mode and citation keys", () => {
   });
 });
 
-// ── Format independence (the B2 proof) ────────────────────────────────
+// ── Format independence ────────────────────────────────
 
 describe("format independence", () => {
   it("a BibTeX and an RIS fixture of the same works project to equal CSL-JSON", () => {

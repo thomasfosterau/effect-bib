@@ -1,11 +1,7 @@
 /**
- * Unit tests for `BiblioLookup.byUrl` (`src/sources/web.ts`) and the request
- * policy it runs under (`src/sources/fetch-policy.ts`, #111): every refusal
- * the policy makes, on the first URL and on a redirect hop, and the bounds
- * (redirects, size, content type, time). The network is stubbed at
- * `FetchHttpClient.Fetch`; no test here reaches the network.
- *
- * @module tests/unit/biblio-sources-web
+ * `byUrl` and the request policy (`src/sources/fetch-policy.ts`): every
+ * refusal, on the first URL and on a redirect hop, and the bounds. The
+ * network is stubbed at `FetchHttpClient.Fetch`.
  */
 
 import { it } from "@effect/vitest";

@@ -1,15 +1,15 @@
 ## Summary
 
-Describe what changed and why. If this closes an issue, add `Closes #N` so it auto-closes on merge to `trunk`.
+What changed and why; `Closes #N` for an issue it resolves.
 
 ## Verification
 
-Run the gates in [AGENTS.md#verification](https://github.com/thomasfosterau/effect-bib/blob/trunk/AGENTS.md#verification) in order and list each command with its final pass/fail. If a gate couldn't run, say which and why.
+Run the gates in [docs/CONTRIBUTING.md](https://github.com/thomasfosterau/effect-bib/blob/trunk/docs/CONTRIBUTING.md#before-pushing) in order and list each command with its final pass/fail. If a gate couldn't run, say which and why.
 
 ## Changeset
 
-Every change to a published package's behaviour carries a changeset under `.changeset/`. Changes to doc comments that reach the emitted `.d.ts` (TSDoc) take a `patch` changeset; other docs-only changes (READMEs, guidance), CI and tooling need none. Write "none" with the reason otherwise.
+The changeset added, or "none" with the reason ([rules](https://github.com/thomasfosterau/effect-bib/blob/trunk/docs/CONTRIBUTING.md#changesets)).
 
 ## Notes
 
-Anything reviewers should pay special attention to: exported signatures, declaration-emit shape (the identifier brands), the `BiblioRecord` wire shape (website persists it — any change is a major), peer ranges, behaviour ported from an application that must stay byte-compatible.
+Anything reviewers should check closely: exported signatures, the identifier brands in the emitted declarations, the `BiblioRecord` wire shape (any change is a major), peer ranges.

@@ -1,15 +1,6 @@
 /**
- * Unit tests for the Crossref CSL-native source client
- * (`src/sources/crossref.ts`, biblio B3, website#1070).
- *
- * `crossref-ray-2004.json` is a **live-recorded fixture** (captured
- * 2026-07-23 from `https://api.crossref.org/works/10.1037%2F0003-066x.59.1.29`)
- * — Ray (2004), "How the Mind Hurts and Heals the Body.", also used by
- * `openalex.test.ts`'s cross-source companion fixture for the dedup
- * coherence proof in `coherence.test.ts`. The network is stubbed at
- * `FetchHttpClient.Fetch`; no test here reaches the network.
- *
- * @module tests/unit/biblio-sources-crossref
+ * Fixtures are live-recorded Crossref responses; the network is stubbed at
+ * `FetchHttpClient.Fetch`.
  */
 
 import { it } from "@effect/vitest";
