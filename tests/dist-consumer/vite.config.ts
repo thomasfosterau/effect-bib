@@ -5,7 +5,7 @@ import { defineConfig } from "vite-plus";
  * `paths` point at are absent. Without them TypeScript falls back to normal
  * resolution, reaches the workspace link to `packages/effect-bib` and its
  * `exports` into `src/`, and passes against the sources instead of the
- * declarations (#22).
+ * declarations.
  */
 const dist = "../../packages/effect-bib/dist";
 const assertEmitted =

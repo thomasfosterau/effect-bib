@@ -15,8 +15,6 @@
  * @since 0.1.0
  */
 
-// website#1072. The pure, plain-TypeScript posture matches `dedup-match.ts`.
-
 import * as Arr from "effect/Array";
 import * as HashMap from "effect/HashMap";
 import * as Option from "effect/Option";

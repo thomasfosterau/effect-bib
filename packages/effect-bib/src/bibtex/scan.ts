@@ -80,7 +80,7 @@ interface Macros {
  * this depth rather than recursive: effect-parse's interpreter recurses once
  * per nesting level, and an unbounded `Parser.suspend` grammar overflows the
  * stack (`RangeError`) at a few thousand levels, so a hostile 5 KB `{{{…`
- * would throw (effect-parse#14). Deeper nesting is treated like an
+ * would throw. Deeper nesting is treated like an
  * unbalanced tail.
  */
 const MAX_BRACE_DEPTH = 32;

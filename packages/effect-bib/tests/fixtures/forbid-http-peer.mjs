@@ -1,14 +1,11 @@
 /**
- * Node module-resolution hooks that make the modules formerly under
- * `effect/unstable/*` (`effect/http`, `effect/sql`, ...) unresolvable; the set
+ * Node module-resolution hooks that make the `effect` platform modules
+ * (`effect/http`, `effect/sql`, ...) unresolvable; the set
  * is `forbidden-effect-modules.mjs`.
  *
- * Registered by `tests/entry-points.test.ts` in a child process so the built
- * entry points can be loaded against a dependency set where the HTTP surface
- * simply is not there. That is a stronger statement than reading imports out
- * of the source: it exercises the real artifact, so it also catches a graph
- * that only reaches `effect/http` through `effect`'s own internals.
- * Copied from the effect-jsonapi library.
+ * Registered by `tests/entry-points.test.ts` in a child process, so loading
+ * the built entries also catches a graph that reaches `effect/http` only
+ * through `effect`'s own internals.
  */
 import { register } from "node:module";
 import { FORBIDDEN_SPECIFIER } from "./forbidden-effect-modules.mjs";
@@ -16,7 +13,7 @@ import { FORBIDDEN_SPECIFIER } from "./forbidden-effect-modules.mjs";
 // The pattern reaches the hooks thread through `initialize`'s `data`, so no
 // value is spliced into the hook source. `FORBID_ALSO`, when set, is a second
 // pattern blocked alongside it: the `./record` cases pass
-// `@thomasfosterau/effect-parse` there (#162).
+// `@thomasfosterau/effect-parse` there.
 const also = process.env["FORBID_ALSO"];
 const source =
   also === undefined ? FORBIDDEN_SPECIFIER.source : `(?:${FORBIDDEN_SPECIFIER.source})|(?:${also})`;

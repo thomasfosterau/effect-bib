@@ -1,21 +1,8 @@
 /**
- * Mechanical proof that the entry-point split keeps its promise: the root
- * entry (`.`) resolves `effect` and `@thomasfosterau/effect-parse` (whose
- * own built graph is walked too) and nothing else — never one of the modules formerly under `effect/unstable/*`
- * (`fixtures/forbidden-effect-modules.mjs`)
- * and never a `sources/` module — so a browser bundle that imports it never
- * loads the lookup clients. The `./sources` entry is where
- * `effect/http` is allowed to appear. The `./record` entry is the record
- * model alone and resolves `effect` and nothing else, so a consumer that only
- * holds records never needs `@thomasfosterau/effect-parse` (#162).
- *
- * The property is a packaging commitment, and a comment asserting it would
- * rot within two releases — one `import type` from `./sources/errors.ts`
- * added to `record.ts` is enough to break it silently. So this walks the real
- * import graph instead. Adapted from the effect-jsonapi library's
- * `test/entry-points.test.ts`.
- *
- * @module effect-bib/tests/entry-points
+ * Walks the real import graphs (source and built) to prove the entry-point
+ * split: `.` reaches only `effect` and effect-parse, never `sources/` or an
+ * `effect` platform module (`fixtures/forbidden-effect-modules.mjs`);
+ * `./record` reaches only `effect`.
  */
 
 import { spawnSync } from "node:child_process";
@@ -122,7 +109,7 @@ const graphFrom = (entry: string, dir: string): Graph => {
   };
 };
 
-/** The root entry's one dependency besides `effect`: the BibTeX scanner's combinators (#72). */
+/** The root entry's one dependency besides `effect`: the BibTeX scanner's combinators. */
 const EFFECT_PARSE = "@thomasfosterau/effect-parse";
 
 /** Matches effect-parse and every subpath of it, for the module-resolution hook. */
@@ -159,7 +146,7 @@ describe("root entry point", () => {
 
   // The subpaths, not the barrel: the barrel loads every effect-parse module
   // (the binary, bit and streaming parsers included) for the three the
-  // scanner uses (#162).
+  // scanner uses.
   it("imports effect-parse through its subpaths, never its root barrel", () => {
     expect(nonEffect(root)).not.toContain(EFFECT_PARSE);
     expect(nonEffect(root)).toContain(`${EFFECT_PARSE}/Parser`);
@@ -295,7 +282,7 @@ describe("package exports map", () => {
   });
 
   // An optional peer, not a dependency: a `./record` consumer installs no
-  // effect-parse, and one that has its own shares the copy (#162).
+  // effect-parse, and one that has its own shares the copy.
   it("declares effect-parse as an optional peer and not as a dependency", () => {
     expect(manifest.dependencies).toBeUndefined();
     expect(R.keys(manifest.peerDependencies ?? {})).toContain(EFFECT_PARSE);
@@ -334,7 +321,7 @@ const loadWithoutEffectParse = (entry: string) =>
  * `test:coverage` tasks depend on `build`, so `vp run` always has `dist/`
  * here. A bare `vp test` may not, and there the cases are reported as
  * skipped rather than silently passing; under `CI` they run regardless, so a
- * missing `dist/` fails instead of skipping (#22).
+ * missing `dist/` fails instead of skipping.
  */
 describe("built artifact", () => {
   const built = path.join(DIST, "index.js");

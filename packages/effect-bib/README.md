@@ -2,7 +2,8 @@
 
 Bibliographic toolkit on Effect: CSL-JSON records as Effect Schema, checksummed ISBN / DOI / ISSN / ORCID identifiers, BibTeX / RIS / CSV / CSL-JSON / CSL YAML parsing and BibTeX / BibLaTeX / RIS / CSL YAML writing, same-work dedup scoring, APA / Vancouver / Chicago rendering, and Crossref / OpenAlex / OpenLibrary lookup over Effect's `HttpClient`.
 
-**Disclaimer:** This repository and package have been created using Claude Code. The package's API and functionality is in flux, so expect churn and breaking changes.
+> [!CAUTION]
+> Experimental and pre-1.0, largely written with Claude Code. The API may change between minor versions.
 
 ## Install
 
@@ -10,7 +11,7 @@ Bibliographic toolkit on Effect: CSL-JSON records as Effect Schema, checksummed 
 pnpm add @thomasfosterau/effect-bib @thomasfosterau/effect-parse effect
 ```
 
-Peers: `effect` `^4.0.0`, and [`@thomasfosterau/effect-parse`](https://github.com/thomasfosterau/effect-parse) `^0.4.1 || ^0.5.0` (the BibTeX scanner's combinators) as an optional peer: the root entry needs it, `./record` does not. Node.js 22 or newer.
+Peers: `effect` `^4.0.0`, and [`@thomasfosterau/effect-parse`](https://github.com/thomasfosterau/effect-parse) `^0.4.1 || ^0.5.0` (the BibTeX scanner's combinators) as an optional peer: the root entry needs it, `./record` does not.
 
 ## Example
 
@@ -41,4 +42,4 @@ assert.strictEqual(renderReference(record, { style: apaStyle }), "(n.d.). Sapien
 
 - Guides: [records and identifiers](https://github.com/thomasfosterau/effect-bib/blob/trunk/docs/records.md), [parsing and writing](https://github.com/thomasfosterau/effect-bib/blob/trunk/docs/parsing.md), [rendering and citations](https://github.com/thomasfosterau/effect-bib/blob/trunk/docs/rendering.md), [dedup](https://github.com/thomasfosterau/effect-bib/blob/trunk/docs/dedup.md), [lookup](https://github.com/thomasfosterau/effect-bib/blob/trunk/docs/lookup.md), [compatibility and scope](https://github.com/thomasfosterau/effect-bib/blob/trunk/docs/compatibility.md)
 - API reference: the per-export doc comments (hover in your editor, or [the source](https://github.com/thomasfosterau/effect-bib/blob/trunk/packages/effect-bib/src))
-- [Changelog](https://github.com/thomasfosterau/effect-bib/blob/trunk/packages/effect-bib/CHANGELOG.md), [security policy](https://github.com/thomasfosterau/effect-bib/blob/trunk/SECURITY.md), [contributing](https://github.com/thomasfosterau/effect-bib/blob/trunk/CONTRIBUTING.md), [MIT licence](https://github.com/thomasfosterau/effect-bib/blob/trunk/LICENSE)
+- [Changelog](https://github.com/thomasfosterau/effect-bib/blob/trunk/packages/effect-bib/CHANGELOG.md), [security policy](https://github.com/thomasfosterau/effect-bib/blob/trunk/docs/SECURITY.md), [contributing](https://github.com/thomasfosterau/effect-bib/blob/trunk/docs/CONTRIBUTING.md), [MIT licence](https://github.com/thomasfosterau/effect-bib/blob/trunk/LICENSE)

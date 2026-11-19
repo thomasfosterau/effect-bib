@@ -26,10 +26,6 @@
  * @since 0.1.0
  */
 
-// website#1070, website#574. `lookupOpenAlexByDoi` is what the cross-source
-// dedup coherence test exercises directly against the same Crossref-resolved
-// work.
-
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";

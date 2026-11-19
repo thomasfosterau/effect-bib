@@ -1,16 +1,6 @@
 /**
- * Unit tests for the composed {@link BiblioLookup} service
- * (`src/sources/service.ts`, biblio B3, website#1070).
- *
- * Covers the CSL-native surface `byIsbnRecord` / `byDoiRecord` / `byTitle`
- * (the pre-B3 flat `byIsbn` / `byDoi` compatibility methods were removed once
- * B4 (website#1071) migrated `apps/api`'s `ingest.ts` onto `byIsbnRecord`).
- *
- * Reuses the live-recorded OpenLibrary/Crossref/OpenAlex fixtures from the
- * sibling per-source test files. The network is stubbed at
- * `FetchHttpClient.Fetch`; no test here reaches the network.
- *
- * @module tests/unit/biblio-sources-service
+ * Reuses the per-source live-recorded fixtures; the network is stubbed at
+ * `FetchHttpClient.Fetch`.
  */
 
 import { it } from "@effect/vitest";

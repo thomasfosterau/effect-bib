@@ -58,7 +58,7 @@ jobs:
         with:
           version-file: pnpm-workspace.yaml
           node-version: lts
-          cache: true
+          cache: false
           run-install: |
             - args: ["--frozen-lockfile", "--ignore-scripts"]
       - name: Create or update the version PR
@@ -99,7 +99,7 @@ jobs:
         with:
           version-file: pnpm-workspace.yaml
           node-version: lts
-          cache: true
+          cache: false
           run-install: |
             - args: ["--frozen-lockfile", "--ignore-scripts"]
       # Trusted publishing needs npm >= 11.5.1; pinned exactly, bumped by hand.

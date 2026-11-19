@@ -11,8 +11,6 @@
  * @since 0.1.0
  */
 
-// See website#1072.
-
 import type { Locale } from "./types.ts";
 
 /**

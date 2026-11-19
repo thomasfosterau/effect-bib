@@ -2,7 +2,7 @@
  * The request policy every lookup that follows a server-chosen URL applies:
  * `byUrl` (a caller-supplied page) and DOI content negotiation (a resolver
  * redirect). It is the server-side request forgery (SSRF) boundary, so it
- * lives in the library rather than in the caller's `HttpClient` (#111).
+ * lives in the library rather than in the caller's `HttpClient`.
  *
  * A URL is fetched only when it is `http` or `https`, carries no
  * credentials, uses its scheme's default port, and names a host that is not

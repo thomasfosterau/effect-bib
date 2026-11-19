@@ -1,14 +1,6 @@
 /**
- * Cross-source dedup coherence proof (biblio B3, website#1070 "done when").
- *
- * The same work — Ray (2004), "How the Mind Hurts and Heals the Body.",
- * DOI `10.1037/0003-066x.59.1.29` — normalised independently from its
- * **Crossref** and **OpenAlex** live-recorded fixtures must score as a
- * confident same-work match under the existing `dedup-match.ts` scorer.
- * This is the proof that B3's two DOI-capable sources emit records the
- * B2 dedup module agrees on, not just records that individually validate.
- *
- * @module tests/unit/biblio-sources-coherence
+ * The same work normalised independently from its Crossref and OpenAlex
+ * fixtures must score as a confident same-work match.
  */
 
 import { describe, expect, it } from "vite-plus/test";

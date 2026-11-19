@@ -6,9 +6,8 @@
  * @since 0.1.0
  */
 
-// A leaf module (website#1070): no dependency on the per-source clients or on
-// `service.ts`, so `openlibrary.ts` / `crossref.ts` / `openalex.ts` and the
-// composed service can all import it without a circular dependency.
+// A leaf module, so the per-source clients and the service can all import it
+// without a cycle.
 
 import * as Schema from "effect/Schema";
 

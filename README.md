@@ -1,14 +1,9 @@
 # effect-bib
 
-Reference management on [Effect](https://effect.website): typed CSL-JSON records, checksummed bibliographic identifiers, import from the common reference-manager formats, same-work deduplication, citation rendering, and lookup against the open scholarly metadata services.
+Reference management on [Effect](https://effect.website): typed CSL-JSON records, checksummed bibliographic identifiers, import and export of the common reference-manager formats, same-work deduplication, citation rendering, and lookup against open scholarly metadata services.
 
-**Disclaimer:** this repository and its packages have been created using Claude Code. The API is in flux; expect churn and breaking changes.
-
-## Packages
-
-| Package | Purpose |
-| --- | --- |
-| [`@thomasfosterau/effect-bib`](packages/effect-bib/README.md) | CSL-JSON records, validated identifiers, file parsers and writers, dedup scoring, APA / Vancouver / Chicago rendering (`.`, browser-safe), and Crossref / OpenAlex / OpenLibrary lookup over `HttpClient` (`./sources`). Peer: `effect`. |
+> [!CAUTION]
+> Experimental and pre-1.0, largely written with Claude Code. The API may change between minor versions.
 
 ## Install
 
@@ -16,7 +11,7 @@ Reference management on [Effect](https://effect.website): typed CSL-JSON records
 pnpm add @thomasfosterau/effect-bib effect
 ```
 
-`effect` `^4.0.0` is a peer dependency; Node.js 22 or newer is required.
+`effect` `^4.0.0` is a peer; `@thomasfosterau/effect-parse` is an optional peer, needed by the root entry's parsers.
 
 ## Example
 
@@ -25,30 +20,23 @@ import * as assert from "node:assert";
 import * as Option from "effect/Option";
 import { apaStyle, decodeIsbn, fromCslJson, renderReference } from "@thomasfosterau/effect-bib";
 
-// A proven identifier is a distinct type from the string it came from.
 assert.strictEqual(Option.getOrNull(decodeIsbn("0-06-231609-5")), "9780062316097");
 
-// Any CSL-JSON item decodes, never throwing; the ISBN is checksummed into its branded slot.
 const record = fromCslJson({ type: "book", title: "Sapiens", ISBN: "9780062316097" });
-
-// Rendering is a pure function of (record, style, locale).
 assert.strictEqual(renderReference(record, { style: apaStyle }), "(n.d.). Sapiens.");
 ```
 
-The file parsers, dedup scoring, lookup and the rest are in the [guides](docs/); the API detail is in the per-export doc comments.
+## Packages
 
-## Guides
+| Package | Entry points |
+| --- | --- |
+| [`@thomasfosterau/effect-bib`](packages/effect-bib/README.md) | `.` (records, identifiers, parsers and writers, dedup, rendering; browser-safe), `./record` (the record model alone, `effect` only), `./sources` (Crossref / OpenAlex / OpenLibrary lookup over `HttpClient`) |
 
-[Records and identifiers](docs/records.md), [parsing and writing](docs/parsing.md), [rendering and citations](docs/rendering.md), [dedup](docs/dedup.md), [lookup](docs/lookup.md) and [compatibility and scope](docs/compatibility.md) are in [`docs/`](docs/).
+## Docs
 
-## Development
+- Guides: [records and identifiers](docs/records.md), [parsing and writing](docs/parsing.md), [rendering](docs/rendering.md), [dedup](docs/dedup.md), [lookup](docs/lookup.md), [compatibility and scope](docs/compatibility.md). The API reference is the per-export doc comments.
+- [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md): workflow, toolchain, guidelines and gates.
+- [docs/SECURITY.md](docs/SECURITY.md) and [docs/PUBLISHING.md](docs/PUBLISHING.md).
+- [AGENTS.md](AGENTS.md): notes for coding agents.
 
-The workspace runs on pnpm and [Vite+](https://viteplus.dev) (`vp`): `vp check` formats and lints, `vp run check` type-checks the sources and the emitted declarations, `vp run -r test:coverage` runs the unit tests, and `vp run -r docgen` compiles and executes every documentation example. Setup and the individual checks are in [CONTRIBUTING.md](CONTRIBUTING.md); conventions for coding agents are in [AGENTS.md](AGENTS.md).
-
-Releases go through [changesets](https://github.com/changesets/changesets) and npm trusted publishing; see [PUBLISHING.md](PUBLISHING.md). To report a vulnerability, see [SECURITY.md](SECURITY.md).
-
-The package was extracted from `thomasfosterau/website` with its git history. The website, gardeneria and preferenceflow applications consume it, and the workspace copies their toolchain (pnpm with a strict catalog, Vite+, the TypeScript 6/7 split, the Effect oxlint preset, fallow) so the library builds against what they run.
-
-## License
-
-[MIT](LICENSE)
+[MIT](LICENSE.md)

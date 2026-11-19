@@ -13,9 +13,6 @@
  * @since 0.1.0
  */
 
-// Typed data inputs are website#1072's "no network at render time" acceptance
-// criterion.
-
 import type * as Option from "effect/Option";
 import type { BiblioRecord } from "../record.ts";
 import type { RichText } from "./rich.ts";

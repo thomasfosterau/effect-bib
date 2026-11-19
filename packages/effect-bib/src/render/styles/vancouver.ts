@@ -19,9 +19,6 @@
  * @since 0.1.0
  */
 
-// website#1072. Rendering the same records in two structurally different styles
-// is what the golden tests exercise.
-
 import * as Option from "effect/Option";
 import * as Str from "effect/String";
 import type { BiblioRecord } from "../../record.ts";

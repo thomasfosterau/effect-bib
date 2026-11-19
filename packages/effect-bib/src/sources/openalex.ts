@@ -23,9 +23,6 @@
  * @since 0.1.0
  */
 
-// website#1070: the modern scholarly-graph source, added alongside the
-// OpenLibrary/Crossref refit.
-
 import * as Arr from "effect/Array";
 import * as Effect from "effect/Effect";
 import * as HashMap from "effect/HashMap";

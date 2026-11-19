@@ -1,18 +1,7 @@
 /**
- * Unit tests for the OpenAlex source client (`src/sources/openalex.ts`,
- * biblio B3, website#1070) — the new modern scholarly-graph source.
- *
- * `openalex-ray-2004.json` is a **live-recorded fixture** (captured
- * 2026-07-23 from `https://api.openalex.org/works/doi:10.1037/0003-066x.59.1.29`)
- * — the OpenAlex side of the same Ray (2004) work `crossref.test.ts` uses,
- * exercised together in `coherence.test.ts`. `openalex-search-sapiens.json`
- * is a live-recorded `GET /works?search=...` envelope (captured the same
- * day) covering the search/ranked-candidates path, including a
- * `book-review` result type outside the modelled vocabulary (the
- * `document` fallback). The network is stubbed at `FetchHttpClient.Fetch`;
- * no test here reaches the network.
- *
- * @module tests/unit/biblio-sources-openalex
+ * Fixtures are live-recorded OpenAlex responses (the search one includes a
+ * `book-review`, outside the modelled vocabulary); the network is stubbed at
+ * `FetchHttpClient.Fetch`.
  */
 
 import { it } from "@effect/vitest";

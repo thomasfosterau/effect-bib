@@ -1,6 +1,6 @@
 # BibTeX / BibLaTeX oracle corpus
 
-The inputs and the reference output for `tests/bibtex-oracle.test.ts` (#91), which checks `parseBibtex` against Pandoc's own BibLaTeX → CSL reading, entry by entry.
+The inputs and the reference output for `tests/bibtex-oracle.test.ts`, which checks `parseBibtex` against Pandoc's own BibLaTeX → CSL reading, entry by entry.
 
 ## Corpora
 
@@ -24,17 +24,17 @@ Pandoc's cases are GPL, so they are used as an oracle only: their inputs are rea
 
 **Normalised away** (presentation, not reading): titles (`title`, `title-short`, `container-title`, `collection-title`, `event-title`, `original-title`) and `genre` compare case-insensitively, since Pandoc sentence-cases English titles; CSL markup is stripped; Pandoc's smart quotes (`’`, `“”`) compare as straight quotes; page ranges compare with one kind of dash; run-together initials (`T.S.` / `T. S.`); an ISBN compares as its canonical ISBN-13 (ours is the first valid ISBN of the field, made canonical); an entry Pandoc leaves untyped compares as `document`.
 
-**Gaps in `parseBibtex`**, each an issue (fixing one shrinks the list):
+**Gaps in `parseBibtex`** (fixing one shrinks the list):
 
-- BibLaTeX's field semantics (#102) now follow Pandoc's reading. What remains of the `language`, `publisher`, `genre` and title entries is listed below or is a separate gap: an unmapped `langid` (`sanskrit`), which Pandoc keeps as written and we keep in `extra`; a `language` field, which we read as the language and Pandoc ignores; BibLaTeX's country keys in `location`; and the braces Pandoc keeps in some values.
-- BibLaTeX's extended name format (`family=…, given=…`): #103. Most `author` / `editor` entries.
-- Dates beyond EDTF level 0 (era years, times, open starts, unspecified digits): #104. Most `issued`, `accessed`, `original-date`, `event-date` entries.
-- A doubly-braced verbatim field (`doi = {{…}}`) loses its identifier: #105.
-- A parenthesised entry (`@article(…)`) loses its fields: #100.
+- BibLaTeX's field semantics follow Pandoc's reading. What remains of the `language`, `publisher`, `genre` and title entries is listed below or is a separate gap: an unmapped `langid` (`sanskrit`), which Pandoc keeps as written and we keep in `extra`; a `language` field, which we read as the language and Pandoc ignores; BibLaTeX's country keys in `location`; and the braces Pandoc keeps in some values.
+- BibLaTeX's extended name format (`family=…, given=…`). Most `author` / `editor` entries.
+- Dates beyond EDTF level 0 (era years, times, open starts, unspecified digits). Most `issued`, `accessed`, `original-date`, `event-date` entries.
+- A doubly-braced verbatim field (`doi = {{…}}`) loses its identifier.
+- A parenthesised entry (`@article(…)`) loses its fields.
 
 **Deliberate differences** (stay listed):
 
-- `title-short`: Pandoc derives one from a title with a subtitle when there is no `shorttitle`; we keep only a declared one, since a derived short title is a guess (#102).
+- `title-short`: Pandoc derives one from a title with a subtitle when there is no `shorttitle`; we keep only a declared one, since a derived short title is a guess.
 - `number`: we write an arXiv `eprint` as `number: "arXiv:<id>"` (as Zotero does); Pandoc writes no number.
 - `@set` entries yield no record (ours), where Pandoc reads them: the `(missing)` entries in biber's `sets.bib`, `skips.bib` and `examples.bib`.
 - `issue`: an `@article` with both `number` and `issue` takes `number` as its issue; Pandoc joins them (`number, issue`).

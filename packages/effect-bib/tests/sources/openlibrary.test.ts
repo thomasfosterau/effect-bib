@@ -1,16 +1,6 @@
 /**
- * Unit tests for the OpenLibrary CSL-native source client
- * (`src/sources/openlibrary.ts`, biblio B3, website#1070).
- *
- * `openlibrary-ulysses-edition.json` / `openlibrary-ulysses-author.json`
- * are **live-recorded fixtures** (captured 2026-07-23 from
- * `https://openlibrary.org/isbn/9780199535675.json` and
- * `https://openlibrary.org/authors/OL31827A.json`) — a real edition that
- * carries the direct author reference, publish places, and subjects the
- * B3 lift adds. The network is stubbed at `FetchHttpClient.Fetch`; no test
- * here reaches the network.
- *
- * @module tests/unit/biblio-sources-openlibrary
+ * Fixtures are live-recorded OpenLibrary responses; the network is stubbed
+ * at `FetchHttpClient.Fetch`.
  */
 
 import { it } from "@effect/vitest";
