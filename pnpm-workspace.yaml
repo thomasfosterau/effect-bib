@@ -39,7 +39,7 @@ catalog:
   # vite-plus pins its oxlint, oxfmt, oxlint-tsgolint and vitest exactly;
   # `vitest` and `@vitest/coverage-istanbul` follow its vitest pin.
   vite-plus: 1.6.0
-  vite: npm:@voidzero-dev/vite-plus-core@1.4.0
+  vite: npm:@voidzero-dev/vite-plus-core@1.6.0
   vitest: 5.1.0
 
 # Published peer ranges. `effect` stays `^4.0.0` unless a dependency needs

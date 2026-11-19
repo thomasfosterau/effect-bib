@@ -7,3 +7,8 @@ rules:
     ignore:
       # The publish job installs one exactly pinned npm for the OIDC exchange.
       - release.yml
+  # Exact tags; .github/workflows/actions.lock pins each to its commit.
+  unpinned-uses:
+    config:
+      policies:
+        "*": ref-pin
