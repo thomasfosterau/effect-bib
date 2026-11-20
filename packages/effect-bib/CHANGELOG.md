@@ -1,5 +1,11 @@
 # @thomasfosterau/effect-bib
 
+## 0.2.1
+
+### Patch Changes
+
+- [#210](https://github.com/thomasfosterau/effect-bib/pull/210) [`f3bcf16`](https://github.com/thomasfosterau/effect-bib/commit/f3bcf16753641628052bacc7d9c0a07e9ae9c370) Thanks [@thomasfosterau](https://github.com/thomasfosterau)! - Drop issue references from doc comments in the emitted declarations.
+
 ## 0.2.0
 
 ### Minor Changes
