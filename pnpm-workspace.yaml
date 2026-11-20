@@ -15,10 +15,10 @@ catalog:
   "@effect/docgen": ^4.1.4
   "@effect/language-service": ^0.87.5
   # `effect-tsgo patch` (in `prepare`) supports only the `@typescript/native`,
-  # oxlint and oxlint-tsgolint versions in the `components` table of
+  # oxlint and tsrs versions in the `components` table of
   # node_modules/@effect/tsgo/dist/effect-tsgo.cjs, and fails the install
   # otherwise: move it, `@typescript/native` and `vite-plus` together.
-  "@effect/tsgo": 0.70.0
+  "@effect/tsgo": 0.73.2
   "@effect/vitest": 4.1.4
   "@enfect/oxlint": ^0.10.0
   # The dev pin; the published range is in `catalogs.peers`.
@@ -26,7 +26,7 @@ catalog:
   "@types/node": ^26.6.6
   # Must equal the `vitest` vite-plus pins, or `vp test --coverage` refuses
   # to start.
-  "@vitest/coverage-istanbul": 5.1.1
+  "@vitest/coverage-istanbul": 5.1.0
   effect: 4.1.4
   fallow: 3.43.2
   # Only for docgen, which spawns it to run each example.
@@ -36,11 +36,12 @@ catalog:
   # @effect/tsgo note.
   typescript: "npm:@typescript/typescript6@6.0.2"
   "@typescript/native": "npm:typescript@7.0.2"
-  # vite-plus pins its oxlint, oxfmt, oxlint-tsgolint and vitest exactly;
-  # `vitest` and `@vitest/coverage-istanbul` follow its vitest pin.
+  # `vite`, `vitest` and `@vitest/coverage-istanbul` equal what vite-plus
+  # itself depends on (`npm view vite-plus@<v> dependencies`); `vite` no longer
+  # equals vite-plus.
   vite-plus: 1.7.0
-  vite: npm:@voidzero-dev/vite-plus-core@1.6.0
-  vitest: 5.1.1
+  vite: npm:@voidzero-dev/vite-plus-core@8.3.8000
+  vitest: 5.1.0
 
 # Published peer ranges. `effect` stays `^4.0.0` unless a dependency needs
 # newer (name it here). Each floor is proved by running the gates with the
@@ -74,13 +75,9 @@ skills:
   dirs: [.claude/skills]
 peerDependencyRules:
   allowAny:
-    - vite
-    - vitest
     # @effect/docgen declares `typescript: ^5`.
     - typescript
   allowedVersions:
-    vite: "*"
-    vitest: "*"
     typescript: "*"
 
 # Hold new versions for 24 hours; Dependabot's cooldown matches it.
