@@ -53,7 +53,7 @@ Say in the PR body which gates couldn't run. CI ([ci.yml](../.github/workflows/c
 
 ## Changesets
 
-Every change to the published package's behaviour, or to doc comments that reach the emitted `.d.ts`, carries a changeset (`vp exec changeset`); CI, tooling and other docs changes need none. Changing the `BiblioRecord` wire shape is a major. Never version or publish by hand: the Release workflow opens the "chore: version packages" PR, and merging it publishes ([PUBLISHING.md](PUBLISHING.md)).
+Every change to the published package's behaviour, or to doc comments that reach the emitted `.d.ts`, carries a changeset (`vp exec changeset`); CI, tooling and other docs changes need none. Changing the `BiblioRecord` wire shape is a major. Never version or publish by hand: the Release workflow opens the "chore: version packages" PR, and merging it publishes with `vp run release` (`vp pm publish -r`, then `changeset git-tag`; there is no publish script). `vp run release:dry-run` shows what it would publish ([PUBLISHING.md](PUBLISHING.md)).
 
 ## Dependencies
 

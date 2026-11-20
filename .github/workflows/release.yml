@@ -35,7 +35,7 @@ jobs:
       contents: read
     outputs:
       mode: ${{ steps.mode.outputs.mode }}
-    env: &env # Otherwise pnpm 11 may re-install with lifecycle scripts before `pnpm run`.
+    env: &env # Otherwise pnpm may re-install with lifecycle scripts before `pnpm run`.
       pnpm_config_verify_deps_before_run: "false"
     steps:
       - uses: actions/checkout@v7.0.1
@@ -118,14 +118,12 @@ jobs:
           cache: false
           run-install: |
             - args: ["--frozen-lockfile", "--ignore-scripts"]
-      # Trusted publishing needs npm >= 11.5.1; pinned exactly, bumped by hand.
-      - name: Upgrade npm
-        run: npm install -g npm@11.20.0
-      - name: Build
-        run: vp run -r build
+      # `vp run release` (vite.config.ts): builds, publishes each unpublished
+      # version with `vp pm publish -r` (pnpm resolves `catalog:` / `workspace:`
+      # and does the OIDC exchange and provenance itself), then `changeset
+      # git-tag` reports the new tags through CHANGESETS_OUTPUT, and the action
+      # pushes them and creates the releases.
       - name: Publish to npm
         uses: changesets/action/publish@v2.1.2
         with:
-          script: pnpm run release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          script: vp run release

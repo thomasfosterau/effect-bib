@@ -9,7 +9,6 @@
   "type": "module",
   "scripts": {
     "version": "changeset version && vp fmt && pnpm install --lockfile-only",
-    "release": "bash scripts/release.sh",
     "prepare": "vp config && effect-tsgo patch --typescript --oxlint"
   },
   "devDependencies": {
@@ -35,5 +34,5 @@
       "version": "lts"
     }
   },
-  "packageManager": "pnpm@11.18.0"
+  "packageManager": "pnpm@12.21.0"
 }
