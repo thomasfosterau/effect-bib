@@ -11,6 +11,7 @@ Read [README.md](README.md) and [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) fir
 
 - `vp run check` and the tests build `dist/` first; `tests/entry-points.test.ts` and the dist-consumer fixture check the built output, not `src/`.
 - `vp run -r docgen` executes every `@example`: one that throws or fails to type-check is a red gate.
+- Publish only through the Release workflow (`vp run release`: `vp pm publish -r`, then `changeset git-tag`). Release-path registry calls go through `vp pm`, never `npm` / `pnpm` directly.
 - The BibTeX oracle test needs `oracles:fetch` (network); it skips locally without it and fails under CI.
 - Write idiomatic Effect v4 and read `node_modules/effect` rather than guessing an API. Non-idiomatic code you find outside your change (hand-rolled utilities Effect provides, ad-hoc error handling, `null` where `Option` fits) gets an issue listing the sites and the replacement, unless the fix is trivial.
 

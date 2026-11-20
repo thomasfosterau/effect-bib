@@ -15,7 +15,7 @@ The package exists to read data nobody controls (uploaded bibliographic files, p
 
 ## Supply chain
 
-- Releases use npm trusted publishing (OIDC), through `pnpm publish`, from a protected `release` environment that needs manual approval; there is no `NPM_TOKEN`. Only the publish job holds `id-token: write`.
+- Releases use npm trusted publishing (OIDC), through `vp pm publish` (`vp run release`), from a protected `release` environment that needs manual approval; there is no `NPM_TOKEN`. Only the publish job holds `id-token: write`.
 - The release jobs install with `--ignore-scripts`, so no dependency's lifecycle script runs there, and restore no cache CI could have written; `allowBuilds` in `pnpm-workspace.yaml` names the only dependencies whose install scripts may run in CI.
 - Workflows default to `permissions: {}`, check out with `persist-credentials: false`, and pin actions by exact tag, locked to commits by `.github/workflows/actions.lock`.
 - Installs are frozen against `pnpm-lock.yaml`; `minimumReleaseAge` holds new versions for 24 hours, and Dependabot waits a day.
