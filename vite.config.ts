@@ -151,8 +151,9 @@ export default defineConfig({
       },
       // Every package's `check`, including the dist-consumer check of the
       // emitted declarations.
+      // Then the root configs (tsconfig.config.json), which no package covers.
       check: {
-        command: "echo 'check: every type gate green'",
+        command: "tsc -p tsconfig.config.json",
         dependsOn: ["@thomasfosterau/effect-bib#check", "@reference-manager/dist-consumer#check"],
         cache: false,
       },
