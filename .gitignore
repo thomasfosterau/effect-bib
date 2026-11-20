@@ -31,8 +31,6 @@ dist/
 # Generated API documentation (`vp run -r docgen`): compiled and executed as
 # a gate, never committed — the doc comments are the API reference. (The root `docs/` holds the committed guides; only `packages/*/docs/` is ignored.)
 packages/*/docs/
-# `pnpm pack` output staged by scripts/release.sh.
-.release/
 *.tgz
 
 # Fetched oracle corpora (`oracles:fetch`): GPL test cases read at
