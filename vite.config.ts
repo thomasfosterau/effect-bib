@@ -126,9 +126,13 @@ export default defineConfig({
         },
       },
     ],
+    // `typeCheck` stays off: vite-plus 1.7.0's tsrs reports every Effect
+    // language-service warning as an error, which
+    // `ignoreEffectWarningsInTscExitCode` can't relax and no override can
+    // scope. `vp run check` is the type gate.
     options: {
       typeAware: true,
-      typeCheck: true,
+      typeCheck: false,
     },
     jsPlugins: [
       {
@@ -147,8 +151,9 @@ export default defineConfig({
       },
       // Every package's `check`, including the dist-consumer check of the
       // emitted declarations.
+      // Then the root configs (tsconfig.config.json), which no package covers.
       check: {
-        command: "echo 'check: every type gate green'",
+        command: "tsc -p tsconfig.config.json",
         dependsOn: ["@thomasfosterau/effect-bib#check", "@reference-manager/dist-consumer#check"],
         cache: false,
       },
