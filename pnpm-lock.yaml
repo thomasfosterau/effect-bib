@@ -195,8 +195,8 @@ catalogs:
       specifier: ^0.10.0
       version: 0.10.0
     '@thomasfosterau/effect-parse':
-      specifier: 0.6.1
-      version: 0.6.1
+      specifier: 0.6.2
+      version: 0.6.2
     '@types/node':
       specifier: ^26.6.6
       version: 26.6.6
@@ -291,7 +291,7 @@ importers:
         version: 4.1.4(effect@4.1.4)(vitest@5.1.0)
       '@thomasfosterau/effect-parse':
         specifier: 'catalog:'
-        version: 0.6.1(effect@4.1.4)
+        version: 0.6.2(effect@4.1.4)
       '@types/node':
         specifier: 'catalog:'
         version: 26.6.6
@@ -1184,9 +1184,9 @@ packages:
     peerDependencies:
       '@testing-library/dom': '>=7.21.4'
 
-  '@thomasfosterau/effect-parse@0.6.1':
-    resolution: {integrity: sha512-UIthSDPfrrtixQXAt1zlo7EFC1GHclnpvYQYu0ojiEpM5Qb6DfFMi6+2m8elKQOYayl0YYtEThOTGFs1Ftm4Ew==}
-    engines: {node: '>=22', pnpm: '>=11'}
+  '@thomasfosterau/effect-parse@0.6.2':
+    resolution: {integrity: sha512-v/fMXkcN96G/2waTEOSlY4+CBhw/ndBKbjtSWKn3U6Q4vZJePTKFZFIgSIxKOmvgdmFDBokNqQIv84NigzYvqg==}
+    engines: {node: '>=22'}
     peerDependencies:
       effect: 4.1.4
 
@@ -2357,10 +2357,12 @@ packages:
   yuku-core@0.19.0:
     resolution: {integrity: sha512-kYK9e1XdfirNhkipzW0wmMcSWcVF/CWnuugodfVYRCUwvoBefweL9HzB96OiKEhsx78V5WbUxbJqlizMX869Qg==}
     engines: {node: '>=14.18.0'}
+    deprecated: 'Yuku is now one package with one core. Use "yuku" instead: https://yuku.fyi/javascript/. Existing installs keep working but get no more fixes.'
 
   yuku-parser@0.19.0:
     resolution: {integrity: sha512-XrBh9ZiQK5mJVRxZBAvD6LwRyAYrK3MFtH3+onyuxFL5hFD44EC3QOmIC1FjTj6H2MMwq46/NAI+NZxLZPZgxg==}
     engines: {node: '>=14.18.0'}
+    deprecated: 'Yuku is now one package with one core. Use "yuku" instead: https://yuku.fyi/javascript/. Existing installs keep working but get no more fixes.'
 
 snapshots:
 
@@ -2994,7 +2996,7 @@ snapshots:
     dependencies:
       '@testing-library/dom': 10.4.2
 
-  '@thomasfosterau/effect-parse@0.6.1(effect@4.1.4)':
+  '@thomasfosterau/effect-parse@0.6.2(effect@4.1.4)':
     dependencies:
       effect: 4.1.4
 
