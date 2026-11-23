@@ -22,7 +22,7 @@ catalog:
   "@effect/vitest": 4.1.4
   "@enfect/oxlint": ^0.10.0
   # The dev pin; the published range is in `catalogs.peers`.
-  "@thomasfosterau/effect-parse": 0.6.1
+  "@thomasfosterau/effect-parse": 0.6.2
   "@types/node": ^26.6.6
   # Must equal the `vitest` vite-plus pins, or `vp test --coverage` refuses
   # to start.
