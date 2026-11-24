@@ -18,7 +18,7 @@ catalog:
   # oxlint and tsrs versions in the `components` table of
   # node_modules/@effect/tsgo/dist/effect-tsgo.cjs, and fails the install
   # otherwise: move it, `@typescript/native` and `vite-plus` together.
-  "@effect/tsgo": 0.73.2
+  "@effect/tsgo": 0.73.4
   "@effect/vitest": 4.1.4
   "@enfect/oxlint": ^0.10.0
   # The dev pin; the published range is in `catalogs.peers`.
@@ -26,7 +26,7 @@ catalog:
   "@types/node": ^26.6.6
   # Must equal the `vitest` vite-plus pins, or `vp test --coverage` refuses
   # to start.
-  "@vitest/coverage-istanbul": 5.1.0
+  "@vitest/coverage-istanbul": 5.1.1
   effect: 4.1.4
   fallow: 3.46.0
   # Only for docgen, which spawns it to run each example.
@@ -41,7 +41,7 @@ catalog:
   # equals vite-plus.
   vite-plus: 1.7.0
   vite: npm:@voidzero-dev/vite-plus-core@8.3.8000
-  vitest: 5.1.0
+  vitest: 5.1.1
 
 # Published peer ranges. `effect` stays `^4.0.0` unless a dependency needs
 # newer (name it here). Each floor is proved by running the gates with the
