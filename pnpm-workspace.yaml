@@ -28,7 +28,7 @@ catalog:
   # to start.
   "@vitest/coverage-istanbul": 5.1.1
   effect: 4.1.4
-  fallow: 3.46.0
+  fallow: 3.48.0
   # Only for docgen, which spawns it to run each example.
   tsx: ^4.23.15
   # TS7 (`tsc`, native) type-checks and emits `dist/`; the TS6 alias serves
