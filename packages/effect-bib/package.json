@@ -68,7 +68,6 @@
     "@types/node": "catalog:",
     "@vitest/coverage-istanbul": "catalog:",
     "effect": "catalog:",
-    "tsx": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   },

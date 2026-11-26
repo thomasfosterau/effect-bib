@@ -42,7 +42,7 @@ export default defineConfig({
       },
       // Compiles and executes every JSDoc `@example`; docs/ is gitignored.
       docgen: {
-        command: "docgen",
+        command: 'PATH="$(cd ../../scripts/bin && pwd):$PATH" docgen',
         cache: { input: cacheInputs, output: ["docs/**"] },
       },
       // Pandoc's BibLaTeX test cases (GPL, so never vendored) for
