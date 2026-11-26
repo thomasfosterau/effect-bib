@@ -29,8 +29,6 @@ catalog:
   "@vitest/coverage-istanbul": 5.1.1
   effect: 4.1.4
   fallow: 3.48.0
-  # Only for docgen, which spawns it to run each example.
-  tsx: ^4.23.15
   # TS7 (`tsc`, native) type-checks and emits `dist/`; the TS6 alias serves
   # the JS-API consumers (the language service, docgen). Exact pins: see the
   # @effect/tsgo note.
@@ -40,7 +38,7 @@ catalog:
   # itself depends on (`npm view vite-plus@<v> dependencies`); `vite` no longer
   # equals vite-plus.
   vite-plus: 1.8.0
-  vite: npm:@voidzero-dev/vite-plus-core@8.3.8000
+  vite: npm:@voidzero-dev/vite-plus-core@8.3.8001
   vitest: 5.1.1
 
 # Published peer ranges. `effect` stays `^4.0.0` unless a dependency needs
@@ -53,9 +51,6 @@ catalogs:
     effect: ^4.0.0
 
 overrides:
-  # GHSA-xjj6-f33q-929c, reached through @effect/platform-node. Drop once
-  # the resolution reaches it on its own.
-  undici: ^8.12.2
   # Two copies of `effect` break Context / Layer / Schema identity.
   effect: "catalog:"
   vite@*: "catalog:"
@@ -74,13 +69,22 @@ permissions:
 skills:
   dirs: [.claude/skills]
 peerDependencyRules:
-  allowAny:
-    # @effect/docgen declares `typescript: ^5`.
-    - typescript
   allowedVersions:
-    typescript: "*"
+    # docgen's `tsconfck` never calls the API that needs this optional peer.
+    "tsconfck>typescript": "6"
 
 # Hold new versions for 24 hours; Dependabot's cooldown matches it.
 minimumReleaseAge: 1440
 minimumReleaseAgeExclude:
   - "@thomasfosterau/*"
+# Vite+ selects Node.js (.node-version) and pnpm (packageManager); pnpm
+# must not download or switch to its own.
+runtimeOnFail: ignore
+pmOnFail: ignore
+# docgen runs its examples with `tsx`, which scripts/bin/tsx stands in for
+# (through vpx), so its `tsx` peer is optional and never installed.
+packageExtensions:
+  "@effect/docgen":
+    peerDependenciesMeta:
+      tsx:
+        optional: true
