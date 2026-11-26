@@ -39,7 +39,7 @@ catalog:
   # equals vite-plus.
   vite-plus: 1.8.0
   vite: npm:@voidzero-dev/vite-plus-core@8.3.8001
-  vitest: 5.1.1
+  vitest: 5.1.2
 
 # Published peer ranges. `effect` stays `^4.0.0` unless a dependency needs
 # newer (name it here). Each floor is proved by running the gates with the
