@@ -3,12 +3,12 @@
  * that sat under `effect/unstable/*` before rc.118, and every directory or
  * `effect/encoding` module that `effect` has added since (4.1: `crypto`,
  * `graphql`, `jose`; `Csv`, `JsonArray`, `Json5`, `Jsonc`, `Tar`, `Xml`,
- * `Zip`), so the browser-safe root admits only the stable core. Shared by
- * `entry-points.test.ts` (the import-graph walker) and `forbid-http-peer.mjs`
- * (the resolver hooks), and checked against the installed `effect` by a drift
- * test so a new directory in a later release cannot slip past it. The check is
- * containment: on an older 4.x (down to the 4.0.0 peer floor) the list names
- * modules that release does not have yet.
+ * `Zip`; 4.1.6: `chat`, `protobuf`), so the browser-safe root admits only
+ * the stable core. Shared by `entry-points.test.ts` (the import-graph walker)
+ * and `forbid-http-peer.mjs` (the resolver hooks), and checked against the
+ * installed `effect` by a drift test so a new directory in a later release
+ * cannot slip past it. The check is containment: on an older 4.x (down to the
+ * 4.0.0 peer floor) the list names modules that release does not have yet.
  *
  * `effect/testing` is left out (always stable), and so are the stable
  * `effect/encoding/{Base64,Base64Url,Hex,EncodingError}` modules; the rest of
@@ -18,6 +18,7 @@
 /** Directories of `effect/` (`effect/<dir>` and `effect/<dir>/*`) that were unstable or are newer. */
 export const FORBIDDEN_DIRECTORIES = [
   "ai",
+  "chat",
   "cli",
   "cluster",
   "crypto",
@@ -31,6 +32,7 @@ export const FORBIDDEN_DIRECTORIES = [
   "observability",
   "persistence",
   "process",
+  "protobuf",
   "reactivity",
   "rpc",
   "schema",
