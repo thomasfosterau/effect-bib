@@ -12,14 +12,14 @@ catalog:
   "@changesets/cli": ^3.0.3
   # Depends on `effect`, which the override forces onto the catalog singleton,
   # so it moves with the `effect` entry.
-  "@effect/docgen": ^4.1.4
+  "@effect/docgen": ^4.1.6
   "@effect/language-service": ^0.87.5
   # `effect-tsgo patch` (in `prepare`) supports only the `@typescript/native`,
   # oxlint and tsrs versions in the `components` table of
   # node_modules/@effect/tsgo/dist/effect-tsgo.cjs, and fails the install
   # otherwise: move it, `@typescript/native` and `vite-plus` together.
   "@effect/tsgo": 0.73.4
-  "@effect/vitest": 4.1.4
+  "@effect/vitest": 4.1.6
   "@enfect/oxlint": ^0.10.0
   # The dev pin; the published range is in `catalogs.peers`.
   "@thomasfosterau/effect-parse": 0.6.2
@@ -27,7 +27,7 @@ catalog:
   # Must equal the `vitest` vite-plus pins, or `vp test --coverage` refuses
   # to start.
   "@vitest/coverage-istanbul": 5.1.1
-  effect: 4.1.4
+  effect: 4.1.6
   fallow: 3.48.0
   # TS7 (`tsc`, native) type-checks and emits `dist/`; the TS6 alias serves
   # the JS-API consumers (the language service, docgen). Exact pins: see the
